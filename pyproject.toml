@@ -6,6 +6,7 @@ authors = [
 description = "Pixel-perfect, branded PDFs for ERPNext rendered through a real Chromium engine (bypasses the Frappe PDF wrapper)."
 requires-python = ">=3.10"
 readme = "README.md"
+license = { file = "license.txt" }
 dynamic = ["version"]
 dependencies = [
     # Primary engine. Chromium itself is installed separately: `playwright install chromium`.
@@ -17,6 +18,9 @@ dependencies = [
 [build-system]
 requires = ["flit_core >=3.4,<4"]
 build-backend = "flit_core.buildapi"
+
+[tool.flit.module]
+name = "brandpdf"
 
 [tool.bench.frappe-dependencies]
 frappe = ">=15.0.0,<16.0.0"

@@ -110,7 +110,7 @@ def render_css(html, out, exe):
     with sync_playwright() as p:
         b = _launch(p, exe); pg = b.new_page()
         pg.set_content(html, wait_until="load")
-        try: pg.evaluate("document.fonts.ready")
+        try: pg.evaluate("async () => { if (document.fonts) { await document.fonts.ready; } }")
         except Exception as e: print("  (fonts.ready warn:", e, ")")
         pg.pdf(path=out, format="A4", print_background=True, prefer_css_page_size=True,
                display_header_footer=False, margin={"top":"0","bottom":"0","left":"0","right":"0"})
@@ -121,7 +121,7 @@ def render_native(html, out, exe):
     with sync_playwright() as p:
         b = _launch(p, exe); pg = b.new_page()
         pg.set_content(html, wait_until="load")
-        try: pg.evaluate("document.fonts.ready")
+        try: pg.evaluate("async () => { if (document.fonts) { await document.fonts.ready; } }")
         except Exception as e: print("  (fonts.ready warn:", e, ")")
         pg.pdf(path=out, format="A4", print_background=True,
                display_header_footer=True, header_template="<span></span>",

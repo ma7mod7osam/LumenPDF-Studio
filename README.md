@@ -13,11 +13,17 @@ A custom Frappe/ERPNext v15 app that renders pixel-perfect, branded PDFs (Quotat
 - WeasyPrint rejected (not Chromium → throws away the verified proof).
 
 ## Repo layout
+This repo **is** the installable Frappe app (repo root = app root):
+- `pyproject.toml`, `license.txt` — app packaging.
+- `brandpdf/` — the Python package (engine, api, job, template, button).
 - `docs/PLAN.md` — the approved, consolidated build plan (read this first).
-- `docs/QA-REVIEW.md` — adversarial review: blockers, highs, fixes.
-- `docs/PLANNER.md`, `docs/EXECUTER.md` — raw role outputs.
-- `reference/quotation-reference.html` — the Chromium-verified quotation HTML to build the template from.
+- `docs/CODE-REVIEW.md` — adversarial code review of the scaffold + the fixes applied.
+- `docs/QA-REVIEW.md`, `docs/PLANNER.md`, `docs/EXECUTER.md` — planning-phase role outputs.
+- `docs/INSTALL.md` — install & run on Cloudways. `docs/PHASE2-DOCTYPES.md` — the no-code config spine.
+- `reference/quotation-reference.html` — the Chromium-verified HTML the template was built from.
 - `m0-spike/` — the de-risking spike (see below).
+
+Install with `bench get-app /path/to/this-repo` → `bench --site <site> install-app brandpdf` (see `docs/INSTALL.md`).
 
 ## The one thing that de-risks everything: M0
 Before any app code, run the **M0 spike** on the real server:

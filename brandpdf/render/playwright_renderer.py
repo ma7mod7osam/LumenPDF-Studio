@@ -1,8 +1,9 @@
 """Primary engine: in-process headless Chromium via Playwright.
 
-Runs ONLY inside the background 'long' queue worker (never the web process) so a single
-Chromium is launched per render and memory stays bounded (PLAN H7). The font-readiness
-gate (document.fonts.ready) removes the top cause of blurry/fallback fonts (PLAN H5).
+Runs ONLY inside the background 'long' queue worker (a fresh browser is launched per render
+for leak-safety; PLAN H2 — persistent-browser pooling is a later optimization). Two fixes
+from code review: the font-readiness gate now actually AWAITS document.fonts.ready (B3), and
+the configured render timeout is applied to set_content/pdf (H3).
 """
 from brandpdf.render.base import BaseRenderer
 from brandpdf.config import conf
@@ -13,6 +14,7 @@ class PlaywrightRenderer(BaseRenderer):
         from playwright.sync_api import sync_playwright
 
         options = options or {}
+        timeout_ms = int((conf("render_timeout") or 120) * 1000)
         launch = {"args": ["--no-sandbox", "--disable-dev-shm-usage"]}
         exe = conf("chromium_path")
         if exe:
@@ -22,10 +24,12 @@ class PlaywrightRenderer(BaseRenderer):
             browser = p.chromium.launch(**launch)
             try:
                 page = browser.new_page()
-                # 'load' (not 'networkidle') + explicit font gate is the correct readiness signal.
-                page.set_content(html, wait_until="load")
+                page.set_default_timeout(timeout_ms)
+                page.set_content(html, wait_until="load", timeout=timeout_ms)
+                # Actually await the font promise (B3) — otherwise the gate is a no-op and
+                # Arabic can render in a fallback face.
                 try:
-                    page.evaluate("document.fonts && document.fonts.ready")
+                    page.evaluate("async () => { if (document.fonts) { await document.fonts.ready; } }")
                 except Exception:
                     pass
                 return page.pdf(

@@ -5,6 +5,10 @@
   native-footer is the documented upgrade). Rendered by Playwright with
   prefer_css_page_size + print_background + margin:0 -> true full-bleed.
   Context: `doc` (the Quotation), `branding` (dict from render_html.get_branding).
+  Banner src uses a relative /files path that assets.inline_images() base64-inlines
+  (the worker has no request base URL, so relative refs are resolved by inlining).
+  NOTE: the @import web font works only if the worker has egress; bundling a self-hosted
+  woff2 (Cairo/Montserrat) is the documented hardening step (PLAN M2).
 -#}
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Montserrat:wght@300;400;500;600;700;800&display=swap');
@@ -40,7 +44,8 @@
   table.bs-items td.num { text-align:right; white-space:nowrap; }
   table.bs-items tbody tr { break-inside:avoid; }
   table.bs-items tbody tr:nth-child(even) td { background-color:#eef6fc !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
-  table.bs-items tbody td * { font-weight:normal !important; background:transparent !important; border:0 !important; color:{{ branding.navy }} !important; }
+  /* Neutralize stray formatting pasted into item data, but leave our own name/desc styles (L3). */
+  table.bs-items tbody td *:not(.it-name):not(.it-desc) { font-weight:normal !important; background:transparent !important; border:0 !important; color:{{ branding.navy }} !important; }
   table.bs-items .it-name { font-weight:600 !important; }
   table.bs-items .it-desc { color:#6b6b6e !important; font-size:7pt; line-height:1.4; }
 
@@ -52,8 +57,8 @@
 </style>
 
 <table class="bs-page">
-  <thead><tr><td><img class="bs-banner" src="{{ frappe.utils.get_url() }}{{ branding.header_image }}"></td></tr></thead>
-  <tfoot><tr><td><img class="bs-banner" src="{{ frappe.utils.get_url() }}{{ branding.footer_image }}"></td></tr></tfoot>
+  <thead><tr><td><img class="bs-banner" src="{{ branding.header_image }}"></td></tr></thead>
+  <tfoot><tr><td><img class="bs-banner" src="{{ branding.footer_image }}"></td></tr></tfoot>
   <tbody><tr><td>
     <div class="bs-content">
 
@@ -127,7 +132,7 @@
       {% if doc.get("terms") %}
       <div style="margin-top:7mm; font-size:7.5pt; color:#6b6b6e; line-height:1.5;">
         <div style="font-size:7pt; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:{{ branding.primary }}; margin-bottom:3px;">Terms &amp; Conditions</div>
-        {{ doc.terms }}
+        {{ frappe.utils.sanitize_html(doc.terms) }}
       </div>
       {% endif %}
 

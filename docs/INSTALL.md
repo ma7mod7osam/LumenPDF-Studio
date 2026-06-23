@@ -8,7 +8,7 @@ The whole design hinges on one validation (PLAN §7). On the server:
 
 ```bash
 cd ~/frappe-bench
-./env/bin/pip install playwright pymupdf
+./env/bin/pip install -r /path/to/BrandPDF-ERPNext/m0-spike/requirements.txt
 ./env/bin/playwright install chromium          # browser only, no root
 ./env/bin/python /path/to/BrandPDF-ERPNext/m0-spike/m0_spike.py
 ```
@@ -19,13 +19,12 @@ Chromium was driven without root. If Playwright won't use the system Chromium, s
 ## 1. Install the app
 ```bash
 cd ~/frappe-bench
-bench get-app brandpdf /path/to/BrandPDF-ERPNext/brandpdf      # or a git remote
-./env/bin/pip install playwright requests
-./env/bin/playwright install chromium                          # if not already from M0
+bench get-app /path/to/BrandPDF-ERPNext        # app root == repo root; or a git remote
+./env/bin/playwright install chromium          # browser only (Python deps install via the app)
 bench --site <your-site> install-app brandpdf
 bench build --app brandpdf
 bench --site <your-site> migrate
-bench restart
+bench restart                                  # ensure a 'long' queue worker is running
 ```
 
 ## 2. Configure (site_config.json)
