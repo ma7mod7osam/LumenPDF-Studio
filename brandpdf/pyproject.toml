@@ -1,0 +1,22 @@
+[project]
+name = "brandpdf"
+authors = [
+    { name = "BSTC", email = "support@bstc-bh.com" },
+]
+description = "Pixel-perfect, branded PDFs for ERPNext rendered through a real Chromium engine (bypasses the Frappe PDF wrapper)."
+requires-python = ">=3.10"
+readme = "README.md"
+dynamic = ["version"]
+dependencies = [
+    # Primary engine. Chromium itself is installed separately: `playwright install chromium`.
+    "playwright>=1.40.0",
+    # Used only by the Gotenberg fallback engine.
+    "requests>=2.28.0",
+]
+
+[build-system]
+requires = ["flit_core >=3.4,<4"]
+build-backend = "flit_core.buildapi"
+
+[tool.bench.frappe-dependencies]
+frappe = ">=15.0.0,<16.0.0"

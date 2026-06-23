@@ -1,0 +1,128 @@
+<!--
+  Chromium-VERIFIED reference quotation HTML for BrandPDF (Phase 1, BSTC).
+  Renders correctly in real Chromium (headless): header banner repeats on every page,
+  footer banner at the bottom, full-bleed (@page margin:0), backgrounds print,
+  blue table header, zebra rows, blue grand-total bar, EN/AR.
+
+  NOTE (per docs/QA-REVIEW.md B1): the <tfoot> footer does NOT pin to the bottom of a
+  SHORT/last page. The M0 spike must validate switching the footer to a
+  `position:fixed; bottom:0` band before this becomes the production template.
+  This file is the structural starting point; keep the <thead> header as-is.
+
+  Engine call (Playwright): set_content(html, wait_until="load");
+  await page.evaluate("document.fonts.ready");
+  page.pdf(format="A4", print_background=True, prefer_css_page_size=True,
+           margin={top:0,bottom:0,left:0,right:0}, display_header_footer=False)
+-->
+<style>
+  @page { size: A4; margin: 0; }
+  html, body { margin:0 !important; padding:0 !important; height:100%; }
+  img { max-width:100%; }
+
+  table.bs-page { width:100%; height:100%; border-collapse:collapse; }
+  table.bs-page > thead > tr > td, table.bs-page > tfoot > tr > td, table.bs-page > tbody > tr > td { padding:0; border:0; }
+  table.bs-page > tbody > tr > td { vertical-align:top; height:100%; }
+  .bs-banner { width:100%; display:block; }
+
+  .bs-content { font-family:'Montserrat','Segoe UI',Arial,sans-serif; color:#1A1E2A; font-size:8.5pt; padding:6mm 14mm 6mm 14mm; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+
+  table.bs-head { width:100%; border-collapse:collapse; margin-bottom:8mm; }
+  table.bs-head td { border:0; vertical-align:top; padding:0; }
+  .bs-title { font-size:23pt; font-weight:800; letter-spacing:1px; line-height:1; color:#1A1E2A; }
+  .bs-title-ar { font-family:'Cairo','Tajawal',Tahoma,sans-serif; font-size:12pt; font-weight:600; color:#1C75BC; direction:rtl; margin-top:6px; }
+  table.bs-meta { display:inline-block; text-align:left; border:1px solid #cfe5f6; border-collapse:collapse; font-size:8pt; }
+  table.bs-meta td { border:1px solid #cfe5f6; padding:3px 7px; }
+  table.bs-meta td.k { font-weight:600; }
+
+  .bs-billto { margin-bottom:6mm; }
+  .bs-billto .lbl { font-size:7pt; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:#1C75BC; margin-bottom:3px; }
+  .bs-billto .name { font-size:10pt; font-weight:700; }
+  .bs-billto .addr { color:#6b6b6e; font-size:8pt; line-height:1.5; }
+
+  table.bs-items { width:100%; border-collapse:collapse; margin-bottom:6mm; table-layout:fixed; }
+  table.bs-items th, table.bs-items td { word-wrap:break-word; }
+  table.bs-items thead th { background-color:#1C75BC !important; color:#fff !important; font-weight:600; font-size:7.5pt; padding:6px 8px; text-align:left; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  table.bs-items thead th.num { text-align:right; }
+  table.bs-items tbody td { padding:6px 8px; border-bottom:1px solid #cfe5f6; vertical-align:top; font-weight:normal; }
+  table.bs-items td.num { text-align:right; white-space:nowrap; }
+  table.bs-items tbody tr:nth-child(even) td { background-color:#eef6fc !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  table.bs-items tbody tr { break-inside:avoid; }
+  table.bs-items tbody td * { font-weight:normal !important; background:transparent !important; border:0 !important; color:#1A1E2A !important; }
+  table.bs-items .it-name { font-weight:600 !important; }
+  table.bs-items .it-desc { color:#6b6b6e !important; font-size:7pt; line-height:1.4; }
+
+  table.bs-tot { width:100%; border-collapse:collapse; font-size:8pt; }
+  table.bs-tot td { padding:4px 8px; border:0; }
+  table.bs-tot td.lbl { color:#6b6b6e; text-align:right; }
+  table.bs-tot td.val { text-align:right; white-space:nowrap; font-weight:600; }
+  table.bs-tot tr.grand { break-inside:avoid; }
+</style>
+
+<table class="bs-page">
+  <thead><tr><td><img class="bs-banner" src="{{ frappe.utils.get_url() }}/files/2Header.png"></td></tr></thead>
+  <tfoot><tr><td><img class="bs-banner" src="{{ frappe.utils.get_url() }}/files/2Footer.png"></td></tr></tfoot>
+  <tbody><tr><td>
+    <div class="bs-content">
+
+      <table class="bs-head"><tr>
+        <td style="text-align:left;">
+          <div class="bs-title">QUOTATION</div>
+          <div class="bs-title-ar">عرض سعر</div>
+        </td>
+        <td style="text-align:right;">
+          <table class="bs-meta">
+            <tr><td class="k">Quotation No</td><td>{{ doc.name }}</td></tr>
+            <tr><td class="k">Date</td><td>{{ doc.get_formatted("transaction_date") }}</td></tr>
+            {% if doc.get("valid_till") %}<tr><td class="k">Valid Till</td><td>{{ doc.get_formatted("valid_till") }}</td></tr>{% endif %}
+          </table>
+        </td>
+      </tr></table>
+
+      <div class="bs-billto">
+        <div class="lbl">Quotation To</div>
+        <div class="name">{{ doc.get("customer_name") or doc.get("party_name") }}</div>
+        {% if doc.get("address_display") %}<div class="addr">{{ doc.get("address_display") }}</div>{% endif %}
+      </div>
+
+      <table class="bs-items">
+        <thead>
+          <tr>
+            <th style="width:6%">#</th>
+            <th style="width:40%">Item &amp; Description</th>
+            <th class="num" style="width:12%">Qty</th>
+            <th class="num" style="width:20%">Rate</th>
+            <th class="num" style="width:22%">Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in doc.items %}
+          {% set nm = (row.item_name or "") | striptags | trim %}
+          {% set desc = (row.get("description") or "") | striptags | trim %}
+          <tr>
+            <td class="num">{{ loop.index }}</td>
+            <td><div class="it-name">{{ nm }}</div>{% if desc and desc != nm %}<div class="it-desc">{{ desc }}</div>{% endif %}</td>
+            <td class="num">{{ row.get_formatted("qty") }} {{ row.get("uom") }}</td>
+            <td class="num">{{ row.get_formatted("rate") }}</td>
+            <td class="num">{{ row.get_formatted("amount") }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      <table style="width:100%; border-collapse:collapse;"><tr>
+        <td style="border:0;"></td>
+        <td style="border:0; width:82mm;">
+          <table class="bs-tot">
+            <tr><td class="lbl">Subtotal</td><td class="val">{{ doc.get_formatted("total") }}</td></tr>
+            {% for tax in doc.taxes %}{% if tax.tax_amount %}<tr><td class="lbl">VAT 10%</td><td class="val">{{ tax.get_formatted("tax_amount") }}</td></tr>{% endif %}{% endfor %}
+            <tr class="grand">
+              <td style="background-color:#1C75BC !important; color:#fff !important; font-weight:700; font-size:10pt; text-align:right; padding:6px 8px; -webkit-print-color-adjust:exact;">Grand Total</td>
+              <td style="background-color:#1C75BC !important; color:#fff !important; font-weight:700; font-size:10pt; text-align:right; white-space:nowrap; padding:6px 8px; -webkit-print-color-adjust:exact;">{{ doc.get_formatted("grand_total") }}</td>
+            </tr>
+          </table>
+        </td>
+      </tr></table>
+
+    </div>
+  </td></tr></tbody>
+</table>
