@@ -19,9 +19,13 @@ def default_options() -> dict:
 
 
 def get_renderer() -> BaseRenderer:
-    engine = (conf("engine") or "playwright").lower()
+    engine = (conf("engine") or "playwright").lower().replace("-", "_")
     if engine == "gotenberg":
         from brandpdf.render.gotenberg_renderer import GotenbergRenderer
         return GotenbergRenderer()
+    if engine in ("frappe_chrome", "frappe"):
+        # Reuse the host's own Chrome PDF pipeline (works on Frappe Cloud, no browser to install).
+        from brandpdf.render.frappe_chrome_renderer import FrappeChromeRenderer
+        return FrappeChromeRenderer()
     from brandpdf.render.playwright_renderer import PlaywrightRenderer
     return PlaywrightRenderer()

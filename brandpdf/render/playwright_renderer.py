@@ -7,33 +7,50 @@ failure in the Error Log is self-explanatory (no log-digging needed).
 """
 import glob
 import os
+import shutil
 
 from brandpdf.render.base import BaseRenderer
 from brandpdf.config import conf
 
-# Full chrome first (launches headless fine), then the headless-shell, then system installs.
+# /usr/bin/chromium-browser on Ubuntu is a snap stub, not a real binary — never use it.
+_SNAP_STUB = "/usr/bin/chromium-browser"
+
+# A real Chromium can live in many places on a managed host. Full chrome first, then the
+# headless-shell, then system installs.
 _GLOBS = [
     "~/.cache/ms-playwright/**/chrome-linux*/chrome",
     "/home/frappe/.cache/ms-playwright/**/chrome-linux*/chrome",
+    "/ms-playwright/**/chrome-linux*/chrome",
+    "/opt/**/chrome-linux*/chrome",
     "~/.cache/ms-playwright/**/chrome-headless-shell",
     "/home/frappe/.cache/ms-playwright/**/chrome-headless-shell",
+    "/ms-playwright/**/chrome-headless-shell",
+    "/snap/chromium/current/usr/lib/chromium-browser/chrome",
+    "/usr/lib/chromium/chrome",
+    "/usr/lib/chromium/chromium",
     "/usr/bin/chromium",
-    "/usr/bin/chromium-browser",
     "/usr/bin/google-chrome-stable",
     "/usr/bin/google-chrome",
-    "/usr/lib/chromium/chromium",
 ]
 
 
 def _find_chromium():
     found = []
-    for pat in _GLOBS:
+    patterns = list(_GLOBS)
+    bp = os.environ.get("PLAYWRIGHT_BROWSERS_PATH")
+    if bp:
+        patterns = [bp + "/**/chrome-linux*/chrome", bp + "/**/chrome-headless-shell"] + patterns
+    for pat in patterns:
         try:
             for p in glob.glob(os.path.expanduser(pat), recursive=True):
-                if os.path.isfile(p) and p not in found:
+                if os.path.isfile(p) and p != _SNAP_STUB and p not in found:
                     found.append(p)
         except Exception:
             pass
+    for name in ("chromium", "google-chrome-stable", "google-chrome", "chrome"):
+        w = shutil.which(name)
+        if w and w != _SNAP_STUB and w not in found:
+            found.append(w)
     return found
 
 
