@@ -129,10 +129,10 @@
         </tr>
       </table>
 
-      {% if doc.get("terms") %}
+      {% if terms_html %}
       <div style="margin-top:7mm; font-size:7.5pt; color:#6b6b6e; line-height:1.5;">
         <div style="font-size:7pt; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:{{ branding.primary }}; margin-bottom:3px;">Terms &amp; Conditions</div>
-        {{ frappe.utils.sanitize_html(doc.terms) }}
+        {{ terms_html | safe }}
       </div>
       {% endif %}
 

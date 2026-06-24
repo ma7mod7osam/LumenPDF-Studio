@@ -7,6 +7,7 @@ app templates dir (B1); only the branding banner images are base64-inlined (allo
 import os
 
 import frappe
+from frappe.utils.html_utils import sanitize_html
 
 from brandpdf import assets
 from brandpdf.defaults import DEFAULT_BRANDING, TEMPLATE_MAP  # noqa: F401 (re-export)
@@ -20,7 +21,15 @@ def render_html(doc) -> str:
     # A "body" template is raw Jinja authored ONLY by System Manager (BrandPDF Template write
     # perm is locked to that role) — body authors are trusted as developers (review #1).
     src = _read_template(value) if kind == "file" else value
-    html = frappe.render_template(src, {"doc": doc, "branding": branding})
+    terms_raw = doc.get("terms")
+    context = {
+        "doc": doc,
+        "branding": branding,
+        # Sanitize here (Python). frappe.utils.sanitize_html is NOT callable inside the
+        # Jinja sandbox, so we pre-render it and the template uses {{ terms_html | safe }}.
+        "terms_html": sanitize_html(terms_raw) if terms_raw else "",
+    }
+    html = frappe.render_template(src, context)
     # Only inline the known branding banners — not arbitrary <img> from document content.
     allowed = {branding.get("header_image"), branding.get("footer_image")}
     return assets.inline_images(html, allowed={a for a in allowed if a})
