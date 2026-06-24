@@ -1,12 +1,40 @@
 """Primary engine: in-process headless Chromium via Playwright.
 
-Runs ONLY inside the background 'long' queue worker (a fresh browser is launched per render
-for leak-safety; PLAN H2 — persistent-browser pooling is a later optimization). Two fixes
-from code review: the font-readiness gate now actually AWAITS document.fonts.ready (B3), and
-the configured render timeout is applied to set_content/pdf (H3).
+Managed-host hardening: at render time we look for an existing Chromium (Frappe Cloud ships
+one) and launch THAT via executable_path when Playwright's own download is missing/blocked.
+If no browser can be found, the raised error lists exactly what was searched/found, so the
+failure in the Error Log is self-explanatory (no log-digging needed).
 """
+import glob
+import os
+
 from brandpdf.render.base import BaseRenderer
 from brandpdf.config import conf
+
+# Full chrome first (launches headless fine), then the headless-shell, then system installs.
+_GLOBS = [
+    "~/.cache/ms-playwright/**/chrome-linux*/chrome",
+    "/home/frappe/.cache/ms-playwright/**/chrome-linux*/chrome",
+    "~/.cache/ms-playwright/**/chrome-headless-shell",
+    "/home/frappe/.cache/ms-playwright/**/chrome-headless-shell",
+    "/usr/bin/chromium",
+    "/usr/bin/chromium-browser",
+    "/usr/bin/google-chrome-stable",
+    "/usr/bin/google-chrome",
+    "/usr/lib/chromium/chromium",
+]
+
+
+def _find_chromium():
+    found = []
+    for pat in _GLOBS:
+        try:
+            for p in glob.glob(os.path.expanduser(pat), recursive=True):
+                if os.path.isfile(p) and p not in found:
+                    found.append(p)
+        except Exception:
+            pass
+    return found
 
 
 class PlaywrightRenderer(BaseRenderer):
@@ -15,19 +43,32 @@ class PlaywrightRenderer(BaseRenderer):
 
         options = options or {}
         timeout_ms = int((conf("render_timeout") or 120) * 1000)
-        launch = {"args": ["--no-sandbox", "--disable-dev-shm-usage"]}
+
         exe = conf("chromium_path")
+        candidates = _find_chromium()
+        if not exe and candidates:
+            exe = candidates[0]  # reuse the host's existing Chromium
+
+        launch = {"args": ["--no-sandbox", "--disable-dev-shm-usage"]}
         if exe:
             launch["executable_path"] = exe
 
         with sync_playwright() as p:
-            browser = p.chromium.launch(**launch)
+            try:
+                browser = p.chromium.launch(**launch)
+            except Exception as e:
+                raise RuntimeError(
+                    "BrandPDF: could not launch Chromium. "
+                    f"site_config brandpdf_chromium_path={conf('chromium_path')!r}; "
+                    f"used executable_path={exe!r}; "
+                    f"chromium found on disk={candidates or 'NONE'}. "
+                    "If NONE, this host blocks the browser — switch to the Gotenberg engine. "
+                    f"Original error: {e}"
+                ) from e
             try:
                 page = browser.new_page()
                 page.set_default_timeout(timeout_ms)
                 page.set_content(html, wait_until="load", timeout=timeout_ms)
-                # Actually await the font promise (B3) — otherwise the gate is a no-op and
-                # Arabic can render in a fallback face.
                 try:
                     page.evaluate("async () => { if (document.fonts) { await document.fonts.ready; } }")
                 except Exception:
