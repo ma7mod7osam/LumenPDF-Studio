@@ -1,13 +1,21 @@
 # Phase 2 — Config DocTypes (the no-code spine)
 
-> Build these **on the live bench** with `bench --site <site> make-doctype` (or the Desk
-> DocType UI) so the JSON is generated correctly. Do NOT hand-write the JSON — that's how
-> you ship broken metadata. This file is the spec to build from, only after M0–M3 prove the
-> BSTC Quotation loop (PLAN §5).
+> **These are now built programmatically** (no hand-written JSON) by
+> `brandpdf/setup/install_config.py`. Run it on the bench after M0–M3 prove the BSTC loop:
+>
+> ```bash
+> bench set-config -g developer_mode 1 && bench restart
+> bench --site <site> execute brandpdf.setup.install_config.run
+> bench --site <site> migrate          # then commit the generated brandpdf/brandpdf/doctype/* JSON
+> ```
+> Can't enable developer_mode? Create Custom DocTypes instead:
+> `bench --site <site> execute brandpdf.setup.install_config.run --kwargs "{'as_custom': True}"`
+>
+> The creator also **seeds** a standard "Quotation - BSTC" template + a Quotation mapping, so
+> the app routes through the spine immediately. `brandpdf/resolver.py` already reads these
+> (branding by `doc.company`, template via mapping) with graceful fallback to Phase-1 defaults.
 
-When these exist, update `render_html.get_branding()` to read `BrandPDF Settings` by
-`doc.company`, and add a resolver that picks the template via `BrandPDF Mapping`. The public
-function signatures don't change.
+The field spec each DocType is built from (kept here as the source of truth):
 
 ---
 

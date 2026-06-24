@@ -1,12 +1,8 @@
 """Resolve a document -> branded HTML.
 
-Phase 1: a static DocType->template map + default branding (BSTC).
-Phase 2: resolve template via `BrandPDF Mapping` and branding via `BrandPDF Settings`.
-
-Security (code review B1): the template is chosen SERVER-SIDE from TEMPLATE_MAP only — never
-from client input — and `_read_template` confines reads to the app's templates dir.
-Only the branding banner images are base64-inlined (allowlist), so document content cannot
-cause arbitrary local files to be embedded (H4).
+Branding + template are resolved via `brandpdf.resolver` (Phase-2 DocTypes when present,
+else Phase-1 defaults below). Security: file templates are confined to the app templates dir
+(B1); only the branding banner images are base64-inlined (allowlist, H4).
 """
 import os
 
@@ -14,12 +10,12 @@ import frappe
 
 from brandpdf import assets
 
-# Paths are relative to the brandpdf package dir (apps/brandpdf/brandpdf/).
+# Phase 1 fallback map. Paths are app-relative (apps/brandpdf/brandpdf/).
 TEMPLATE_MAP = {
     "Quotation": "templates/brandpdf/quotation_bstc.html",
 }
 
-# Phase 1 branding defaults (Phase 2 reads BrandPDF Settings by company, with this as fallback).
+# Phase 1 fallback branding (resolver overrides per-company via BrandPDF Settings).
 DEFAULT_BRANDING = {
     "primary": "#1C75BC",
     "navy": "#1A1E2A",
@@ -30,20 +26,15 @@ DEFAULT_BRANDING = {
 
 
 def render_html(doc) -> str:
-    relpath = TEMPLATE_MAP.get(doc.doctype)
-    if not relpath:
-        frappe.throw(f"No BrandPDF template configured for {doc.doctype}")
-    src = _read_template(relpath)
-    branding = get_branding(doc)
+    from brandpdf import resolver  # lazy import to avoid an import cycle
+
+    branding = resolver.resolve_branding(doc)
+    kind, value = resolver.resolve_template(doc)
+    src = _read_template(value) if kind == "file" else value
     html = frappe.render_template(src, {"doc": doc, "branding": branding})
     # Only inline the known branding banners — not arbitrary <img> from document content.
     allowed = {branding.get("header_image"), branding.get("footer_image")}
     return assets.inline_images(html, allowed={a for a in allowed if a})
-
-
-def get_branding(doc) -> dict:
-    # Phase 2 hook: look up BrandPDF Settings for doc.company here; fall back to defaults.
-    return dict(DEFAULT_BRANDING)
 
 
 def _read_template(relpath: str) -> str:

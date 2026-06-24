@@ -6,14 +6,20 @@ app_email = "support@bstc-bh.com"
 app_license = "MIT"
 
 # ---------------------------------------------------------------------------
-# Client: inject the "Download Branded PDF" button on enabled DocTypes.
-# Phase 1 ships Quotation; add more here (or drive from BrandPDF Mapping in Phase 2).
+# Client: a global script adds the "Download Branded PDF" button to every DocType
+# that has an enabled BrandPDF Mapping (Phase 2); with no mappings it falls back to
+# Quotation. See public/js/brandpdf_button.js.
 # ---------------------------------------------------------------------------
-doctype_js = {
-    "Quotation": "public/js/brandpdf_button.js",
+app_include_js = "/assets/brandpdf/js/brandpdf_button.js"
+
+# Standard BrandPDF templates are read-only (duplicate to edit).
+doc_events = {
+    "BrandPDF Template": {
+        "validate": "brandpdf.resolver.protect_standard_template",
+    },
 }
 
-# Scheduler: clean up expired private render files (Phase 1 keeps it simple/no-op safe).
+# Scheduler: clean up expired private render files.
 scheduler_events = {
     "daily": [
         "brandpdf.pdf_job.cleanup_expired_files",

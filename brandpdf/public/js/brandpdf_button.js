@@ -1,12 +1,27 @@
-// Adds a "Download Branded PDF" button to the form, POSTs to the queued endpoint,
-// and polls for the private file URL (PLAN H6/H7). No GET/window.open of the endpoint.
+// Global desk script: registers a "Download Branded PDF" button on every DocType that has
+// an enabled BrandPDF Mapping (falls back to Quotation). POSTs to the queued endpoint and
+// polls for the private file URL (PLAN H6/H7). No GET/window.open of the endpoint itself.
 
-frappe.ui.form.on("Quotation", {
-    refresh(frm) {
-        if (frm.is_new()) return;
-        frm.add_custom_button(__("Download Branded PDF"), () => brandpdf_generate(frm));
-    },
-});
+frappe.provide("brandpdf");
+
+(function () {
+    if (brandpdf._wired) return;
+    brandpdf._wired = true;
+
+    frappe.call({
+        method: "brandpdf.api.enabled_doctypes",
+        callback(r) {
+            (r.message || ["Quotation"]).forEach(function (dt) {
+                frappe.ui.form.on(dt, {
+                    refresh(frm) {
+                        if (frm.is_new()) return;
+                        frm.add_custom_button(__("Download Branded PDF"), () => brandpdf_generate(frm));
+                    },
+                });
+            });
+        },
+    });
+})();
 
 function brandpdf_generate(frm) {
     frappe.dom.freeze(__("Generating branded PDF…"));

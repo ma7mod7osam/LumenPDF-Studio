@@ -2,16 +2,12 @@
 managed box can't be OOM'd by concurrent clicks (PLAN H7). The button POSTs via
 frappe.call and polls for a private, user-scoped file URL (PLAN H6).
 
-Security (from code review): there is NO client-supplied template path — the template is
-resolved server-side from an allowlist (B1). The job result is scoped to the requesting
-user so one user cannot read another's PDF (B2).
+Enabled doctypes are resolved from BrandPDF Mapping (Phase 2), falling back to ["Quotation"].
+No client-supplied template path (B1). Job result is scoped to the requesting user (B2).
 """
 import frappe
 
 from brandpdf import config
-
-# Phase 1 allowlist. Phase 2 derives this from enabled BrandPDF Mapping rows.
-ALLOWED_DOCTYPES = {"Quotation"}
 
 
 @frappe.whitelist()
@@ -37,17 +33,25 @@ def get_job_result(job_id: str):
     if not state:
         return {"status": "unknown"}
     if state.get("_user") != frappe.session.user:
-        # don't leak existence/ownership
         frappe.throw("Not found.", frappe.PermissionError)
     return {k: v for k, v in state.items() if k != "_user"}
+
+
+@frappe.whitelist()
+def enabled_doctypes():
+    """Used by the form button to know where to render itself."""
+    from brandpdf import resolver
+    return resolver.enabled_doctypes()
 
 
 # --- internals -------------------------------------------------------------
 
 def _authorize(doctype: str, name: str):
+    from brandpdf import resolver
+
     if frappe.session.user == "Guest":
         frappe.throw("Login required.", frappe.PermissionError)
-    if doctype not in ALLOWED_DOCTYPES:
+    if doctype not in resolver.enabled_doctypes():
         frappe.throw(f"BrandPDF is not enabled for {doctype}.", frappe.PermissionError)
     frappe.get_doc(doctype, name).check_permission("read")
 
