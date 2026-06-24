@@ -129,6 +129,34 @@
         </tr>
       </table>
 
+      {% if doc.payment_schedule %}
+      <div style="margin-top:6mm;">
+        <div style="font-size:7pt; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:{{ branding.primary }}; margin-bottom:3px;">Payment Schedule</div>
+        <table class="bs-items">
+          <thead>
+            <tr>
+              <th style="width:6%">#</th>
+              <th style="width:46%">Payment Term</th>
+              <th class="num" style="width:18%">Due Date</th>
+              <th class="num" style="width:12%">Portion %</th>
+              <th class="num" style="width:18%">Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for ps in doc.payment_schedule %}
+            <tr>
+              <td class="num"><bdi>{{ loop.index }}</bdi></td>
+              <td><div class="it-name">{{ (ps.get("payment_term") or ps.get("description") or "") | striptags }}</div></td>
+              <td class="num"><bdi>{{ ps.get_formatted("due_date") }}</bdi></td>
+              <td class="num"><bdi>{{ ps.get_formatted("invoice_portion") }}</bdi></td>
+              <td class="num"><bdi>{{ ps.get_formatted("payment_amount") }}</bdi></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% endif %}
+
       {% if terms_html %}
       <div style="margin-top:7mm; font-size:7.5pt; color:#6b6b6e; line-height:1.5;">
         <div style="font-size:7pt; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:{{ branding.primary }}; margin-bottom:3px;">Terms &amp; Conditions</div>
