@@ -40,11 +40,12 @@ Permissions: read = All; write = System Manager. Missing record → safe default
 ## 2. BrandPDF Template  (the library)
 | Field | Type | Notes |
 |---|---|---|
-| template_name | Data | unique |
+| template_name | Data | primary key (autoname) |
 | target_doctype | Link → DocType | |
 | language | Select | en / ar / bilingual |
-| source_type | Select | jinja / print_format |
-| body | Code (HTML/Jinja) | the template |
+| source_type | Select | **html_body / jinja_file** |
+| jinja_path | Data | app-relative path (when source_type = jinja_file) |
+| body | Code (HTML/Jinja) | the template (when source_type = html_body); **System-Manager-authored = trusted as developer** |
 | is_standard | Check | shipped starters; **read-only — clone to edit** |
 
 Permissions: write = System Manager only. Standard templates ship as fixtures AND are
@@ -57,6 +58,7 @@ clobber a user's work.
 | target_doctype | Link → DocType | |
 | template | Link → BrandPDF Template | |
 | enabled | Check | |
+| priority | Int | lower wins among overlapping mappings (deterministic precedence) |
 | auto_attach | Check | attach PDF on submit |
 | replace_print_pdf | Check | route Print>PDF through us |
 | replace_email_attach | Check | swap email attachment |

@@ -11,17 +11,25 @@ frappe.provide("brandpdf");
     frappe.call({
         method: "brandpdf.api.enabled_doctypes",
         callback(r) {
-            (r.message || ["Quotation"]).forEach(function (dt) {
-                frappe.ui.form.on(dt, {
-                    refresh(frm) {
-                        if (frm.is_new()) return;
-                        frm.add_custom_button(__("Download Branded PDF"), () => brandpdf_generate(frm));
-                    },
-                });
+            const dts = r.message || ["Quotation"];
+            dts.forEach(function (dt) {
+                frappe.ui.form.on(dt, { refresh: brandpdf_add_button });
             });
+            // The current form's refresh already fired before this async call returned, so
+            // add the button to it now (the dominant "open form by URL" path) — review #4.
+            if (window.cur_frm && cur_frm.doctype && dts.indexOf(cur_frm.doctype) > -1) {
+                brandpdf_add_button(cur_frm);
+            }
         },
     });
 })();
+
+function brandpdf_add_button(frm) {
+    if (frm.is_new()) return;
+    // Dedup: refresh fires on every reload/save/workflow action — review #6.
+    if (frm.custom_buttons && frm.custom_buttons[__("Download Branded PDF")]) return;
+    frm.add_custom_button(__("Download Branded PDF"), () => brandpdf_generate(frm));
+}
 
 function brandpdf_generate(frm) {
     frappe.dom.freeze(__("Generating branded PDF…"));

@@ -39,9 +39,10 @@ def get_job_result(job_id: str):
 
 @frappe.whitelist()
 def enabled_doctypes():
-    """Used by the form button to know where to render itself."""
+    """Used by the form button to know where to render itself. Filtered to doctypes the
+    caller can read, so the button never appears where a click would 403 (review #7)."""
     from brandpdf import resolver
-    return resolver.enabled_doctypes()
+    return [dt for dt in resolver.enabled_doctypes() if frappe.has_permission(dt, "read")]
 
 
 # --- internals -------------------------------------------------------------

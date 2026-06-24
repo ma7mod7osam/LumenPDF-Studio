@@ -1,35 +1,24 @@
 """Resolve a document -> branded HTML.
 
 Branding + template are resolved via `brandpdf.resolver` (Phase-2 DocTypes when present,
-else Phase-1 defaults below). Security: file templates are confined to the app templates dir
-(B1); only the branding banner images are base64-inlined (allowlist, H4).
+else Phase-1 defaults from `brandpdf.defaults`). Security: file templates are confined to the
+app templates dir (B1); only the branding banner images are base64-inlined (allowlist, H4).
 """
 import os
 
 import frappe
 
 from brandpdf import assets
-
-# Phase 1 fallback map. Paths are app-relative (apps/brandpdf/brandpdf/).
-TEMPLATE_MAP = {
-    "Quotation": "templates/brandpdf/quotation_bstc.html",
-}
-
-# Phase 1 fallback branding (resolver overrides per-company via BrandPDF Settings).
-DEFAULT_BRANDING = {
-    "primary": "#1C75BC",
-    "navy": "#1A1E2A",
-    "header_image": "/files/2Header.png",
-    "footer_image": "/files/2Footer.png",
-    "rtl": True,
-}
+from brandpdf.defaults import DEFAULT_BRANDING, TEMPLATE_MAP  # noqa: F401 (re-export)
 
 
 def render_html(doc) -> str:
-    from brandpdf import resolver  # lazy import to avoid an import cycle
+    from brandpdf import resolver  # lazy import: resolver imports defaults, not this module
 
     branding = resolver.resolve_branding(doc)
     kind, value = resolver.resolve_template(doc)
+    # A "body" template is raw Jinja authored ONLY by System Manager (BrandPDF Template write
+    # perm is locked to that role) — body authors are trusted as developers (review #1).
     src = _read_template(value) if kind == "file" else value
     html = frappe.render_template(src, {"doc": doc, "branding": branding})
     # Only inline the known branding banners — not arbitrary <img> from document content.

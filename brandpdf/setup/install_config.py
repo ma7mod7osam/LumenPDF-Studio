@@ -1,12 +1,13 @@
 """Phase-2 config spine — programmatic DocType creator.
 
-Per PLAN/PHASE2 docs we do NOT hand-write DocType JSON. Run this ONCE on the bench; in
-developer_mode it creates the DocTypes AND exports their JSON into the app for version
-control (then commit them). Idempotent.
+Per PLAN/PHASE2 docs we do NOT hand-write DocType JSON. The app must be installed & migrated
+first (so the BrandPDF Module Def exists). Then, in developer_mode, this creates the DocTypes
+AND exports their JSON into the app for version control. Idempotent.
 
+    # app already installed & migrated (Module Def 'BrandPDF' exists)
     bench set-config -g developer_mode 1 && bench restart
     bench --site <site> execute brandpdf.setup.install_config.run
-    bench --site <site> migrate
+    bench --site <site> migrate          # re-imports the exported JSON
     # commit the generated brandpdf/brandpdf/doctype/* JSON
 
 Can't enable developer_mode? Create Custom DocTypes instead (DB-only, exportable as fixtures):
@@ -20,9 +21,9 @@ SETTINGS_FIELDS = [
     {"fieldname": "header_image", "fieldtype": "Attach Image", "label": "Header Image"},
     {"fieldname": "footer_image", "fieldtype": "Attach Image", "label": "Footer Image"},
     {"fieldname": "colors_cb", "fieldtype": "Column Break"},
-    {"fieldname": "primary_color", "fieldtype": "Data", "label": "Primary Color", "default": "#1C75BC"},
-    {"fieldname": "secondary_color", "fieldtype": "Data", "label": "Secondary Color", "default": "#1A1E2A"},
-    {"fieldname": "font_family", "fieldtype": "Data", "label": "Font Family", "default": "Montserrat"},
+    {"fieldname": "primary_color", "fieldtype": "Data", "label": "Primary Color (hex)", "default": "#1C75BC", "description": "e.g. #1C75BC"},
+    {"fieldname": "secondary_color", "fieldtype": "Data", "label": "Secondary Color (hex)", "default": "#1A1E2A", "description": "e.g. #1A1E2A"},
+    {"fieldname": "font_family", "fieldtype": "Select", "label": "Font Family", "options": "Montserrat\nCairo\nArial\nTahoma", "default": "Montserrat"},
     {"fieldname": "page_sb", "fieldtype": "Section Break", "label": "Page"},
     {"fieldname": "page_size", "fieldtype": "Select", "label": "Page Size", "options": "A4\nLetter", "default": "A4"},
     {"fieldname": "rtl", "fieldtype": "Check", "label": "Right-to-Left (Arabic)", "default": "1"},
@@ -31,7 +32,8 @@ SETTINGS_FIELDS = [
 ]
 
 TEMPLATE_FIELDS = [
-    {"fieldname": "template_name", "fieldtype": "Data", "label": "Template Name", "reqd": 1, "unique": 1, "in_list_view": 1},
+    # autoname makes template_name the primary key, so no separate unique flag (review #12).
+    {"fieldname": "template_name", "fieldtype": "Data", "label": "Template Name", "reqd": 1, "in_list_view": 1},
     {"fieldname": "target_doctype", "fieldtype": "Link", "label": "Target DocType", "options": "DocType", "reqd": 1, "in_list_view": 1},
     {"fieldname": "language", "fieldtype": "Select", "label": "Language", "options": "en\nar\nbilingual", "default": "bilingual"},
     {"fieldname": "is_standard", "fieldtype": "Check", "label": "Is Standard (read-only)", "read_only": 1},
@@ -51,6 +53,7 @@ MAPPING_FIELDS = [
     {"fieldname": "target_doctype", "fieldtype": "Link", "label": "Target DocType", "options": "DocType", "reqd": 1, "in_list_view": 1},
     {"fieldname": "template", "fieldtype": "Link", "label": "Template", "options": "BrandPDF Template", "reqd": 1, "in_list_view": 1},
     {"fieldname": "enabled", "fieldtype": "Check", "label": "Enabled", "default": "1", "in_list_view": 1},
+    {"fieldname": "priority", "fieldtype": "Int", "label": "Priority (lower wins)", "default": "0", "in_list_view": 1},
     {"fieldname": "behavior_sb", "fieldtype": "Section Break", "label": "Behavior"},
     {"fieldname": "auto_attach", "fieldtype": "Check", "label": "Auto-attach PDF on Submit"},
     {"fieldname": "replace_print_pdf", "fieldtype": "Check", "label": "Replace Print > PDF"},
@@ -62,6 +65,8 @@ MAPPING_FIELDS = [
 
 def run(as_custom=False):
     as_custom = bool(as_custom)
+    if not frappe.db.exists("Module Def", "BrandPDF"):
+        frappe.throw("Install and migrate the app first — Module Def 'BrandPDF' is missing.")
     if not as_custom and not frappe.conf.get("developer_mode"):
         frappe.throw(
             "Enable developer_mode first (bench set-config -g developer_mode 1; bench restart) so the "
@@ -107,7 +112,8 @@ def _perms():
 
 
 def _seed():
-    """Wire the BSTC Quotation out of the box: a standard (read-only) template + a mapping."""
+    """Wire the BSTC Quotation out of the box: a standard (read-only) template + a mapping.
+    Insert is_new() so the read-only guard returns early — no special flag needed."""
     tname = "Quotation - BSTC"
     if not frappe.db.exists("BrandPDF Template", tname):
         t = frappe.get_doc(
@@ -121,13 +127,12 @@ def _seed():
                 "jinja_path": "templates/brandpdf/quotation_bstc.html",
             }
         )
-        t.flags.brandpdf_allow_standard_edit = True
         t.flags.ignore_permissions = True
         t.insert()
         print("  seeded template:", tname)
     if not frappe.db.exists("BrandPDF Mapping", {"target_doctype": "Quotation"}):
         m = frappe.get_doc(
-            {"doctype": "BrandPDF Mapping", "target_doctype": "Quotation", "template": tname, "enabled": 1}
+            {"doctype": "BrandPDF Mapping", "target_doctype": "Quotation", "template": tname, "enabled": 1, "priority": 0}
         )
         m.flags.ignore_permissions = True
         m.insert()

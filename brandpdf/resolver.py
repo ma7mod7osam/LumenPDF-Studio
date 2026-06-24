@@ -1,14 +1,15 @@
 """Phase-2 resolution with graceful Phase-1 fallback.
 
-Every lookup is wrapped so the app works whether or not the config DocTypes exist yet:
-- enabled_doctypes(): target doctypes of enabled mappings (else ["Quotation"]).
-- resolve_branding(doc): BrandPDF Settings by doc.company (else DEFAULT_BRANDING).
-- resolve_template(doc): first enabled mapping whose conditions all match (else TEMPLATE_MAP).
+Every lookup is wrapped so the app works whether or not the config DocTypes exist yet.
 Condition matching is a structured fieldname/operator/value matcher — never eval (PLAN H8).
 """
+import re
+
 import frappe
 
-from brandpdf.render_html import DEFAULT_BRANDING, TEMPLATE_MAP
+from brandpdf.defaults import DEFAULT_BRANDING, TEMPLATE_MAP
+
+_HEX = re.compile(r"^#[0-9A-Fa-f]{6}$")
 
 
 def enabled_doctypes():
@@ -29,9 +30,10 @@ def resolve_branding(doc):
             name = frappe.db.get_value("BrandPDF Settings", {"company": company})
             if name:
                 s = frappe.get_doc("BrandPDF Settings", name)
-                if s.get("primary_color"):
+                # Validate hex so a bad value can't break the rendered CSS (review #8).
+                if _HEX.match(s.get("primary_color") or ""):
                     branding["primary"] = s.primary_color
-                if s.get("secondary_color"):
+                if _HEX.match(s.get("secondary_color") or ""):
                     branding["navy"] = s.secondary_color
                 if s.get("header_image"):
                     branding["header_image"] = s.header_image
@@ -39,7 +41,7 @@ def resolve_branding(doc):
                     branding["footer_image"] = s.footer_image
                 branding["rtl"] = bool(s.get("rtl"))
     except Exception:
-        frappe.log_error(title="BrandPDF branding resolve failed")
+        frappe.log_error(title="BrandPDF branding resolve failed", message=frappe.get_traceback())
     return branding
 
 
@@ -51,7 +53,7 @@ def resolve_template(doc):
                 "BrandPDF Mapping",
                 filters={"enabled": 1, "target_doctype": doc.doctype},
                 fields=["name", "template"],
-                order_by="modified desc",
+                order_by="priority asc, creation asc",  # deterministic precedence (review #10)
             )
             for m in mappings:
                 if _conditions_match(doc, m["name"]):
@@ -60,7 +62,7 @@ def resolve_template(doc):
                         return ("file", t.jinja_path)
                     return ("body", t.get("body") or "")
     except Exception:
-        frappe.log_error(title="BrandPDF template resolve failed")
+        frappe.log_error(title="BrandPDF template resolve failed", message=frappe.get_traceback())
 
     relpath = TEMPLATE_MAP.get(doc.doctype)
     if not relpath:
@@ -69,8 +71,11 @@ def resolve_template(doc):
 
 
 def protect_standard_template(doc, method=None):
-    """doc_events hook: standard templates are read-only (duplicate to edit)."""
+    """doc_events hook: standard templates are read-only (duplicate to edit) — but never
+    block install/migrate/patch re-syncs, which would abort the migration (review #2)."""
     if doc.get("is_standard") and not doc.is_new():
+        if frappe.flags.in_migrate or frappe.flags.in_install or frappe.flags.in_patch:
+            return
         if not getattr(doc.flags, "brandpdf_allow_standard_edit", False):
             frappe.throw("Standard BrandPDF templates are read-only. Duplicate to edit.")
 
@@ -90,14 +95,19 @@ def _conditions_match(doc, mapping_name):
 def _match(actual, op, expected):
     a = "" if actual is None else str(actual)
     e = "" if expected is None else str(expected)
-    if op == "=":
-        return a == e
-    if op == "!=":
-        return a != e
+    if op in ("=", "!="):
+        # numeric-aware equality so 5.0 == "5" (review #5)
+        try:
+            eq = float(a) == float(e)
+        except (TypeError, ValueError):
+            eq = a == e
+        return eq if op == "=" else (not eq)
     if op == "like":
-        return e.replace("%", "").lower() in a.lower()
+        needle = e.replace("%", "").strip().lower()
+        return bool(needle) and needle in a.lower()  # empty pattern matches nothing, not everything
     if op == "in":
         return a in [x.strip() for x in e.split(",")]
+    # numeric comparisons only (review #5)
     try:
         af, ef = float(a), float(e)
     except (TypeError, ValueError):
