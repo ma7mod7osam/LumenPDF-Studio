@@ -25,3 +25,7 @@ scheduler_events = {
         "brandpdf.pdf_job.cleanup_expired_files",
     ],
 }
+
+# After every deploy/migrate, make sure Playwright's Chromium browser is downloaded
+# (self-heals Frappe Cloud deploys without SSH). Idempotent + non-fatal.
+after_migrate = ["brandpdf.setup.install_browser.ensure_chromium"]
