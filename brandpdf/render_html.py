@@ -1,8 +1,9 @@
 """Resolve a document -> branded HTML.
 
-Branding + template are resolved via `brandpdf.resolver` (Phase-2 DocTypes when present,
-else Phase-1 defaults from `brandpdf.defaults`). Security: file templates are confined to the
-app templates dir (B1); only the branding banner images are base64-inlined (allowlist, H4).
+Branding + template are resolved via `brandpdf.resolver`. A template can be:
+  - a Jinja file (the shipped quotation), or a DB Jinja body, or
+  - a BLOCK format (source_type="blocks") assembled by `brandpdf.blocks` — the no-code maker.
+Falls back to Phase-1 defaults when the config DocTypes don't exist yet.
 """
 import os
 
@@ -17,20 +18,19 @@ def render_html(doc) -> str:
     from brandpdf import resolver  # lazy import: resolver imports defaults, not this module
 
     branding = resolver.resolve_branding(doc)
-    kind, value = resolver.resolve_template(doc)
-    # A "body" template is raw Jinja authored ONLY by System Manager (BrandPDF Template write
-    # perm is locked to that role) — body authors are trusted as developers (review #1).
-    src = _read_template(value) if kind == "file" else value
     terms_raw = doc.get("terms")
-    context = {
-        "doc": doc,
-        "branding": branding,
-        # Sanitize here (Python). frappe.utils.sanitize_html is NOT callable inside the
-        # Jinja sandbox, so we pre-render it and the template uses {{ terms_html | safe }}.
-        "terms_html": sanitize_html(terms_raw) if terms_raw else "",
-    }
-    html = frappe.render_template(src, context)
-    # Only inline the known branding banners — not arbitrary <img> from document content.
+    terms_html = sanitize_html(terms_raw) if terms_raw else ""
+
+    kind, value = resolver.resolve_template(doc)
+    if kind == "blocks":
+        from brandpdf import blocks as blocks_mod
+        tmpl = frappe.get_doc("BrandPDF Template", value)
+        html = blocks_mod.render_blocks(doc, branding, tmpl.get("blocks"), terms_html)
+    else:
+        # A "body" template is raw Jinja authored ONLY by System Manager (trusted, review #1).
+        src = _read_template(value) if kind == "file" else value
+        html = frappe.render_template(src, {"doc": doc, "branding": branding, "terms_html": terms_html})
+
     allowed = {branding.get("header_image"), branding.get("footer_image")}
     return assets.inline_images(html, allowed={a for a in allowed if a})
 

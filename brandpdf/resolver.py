@@ -58,6 +58,8 @@ def resolve_template(doc):
             for m in mappings:
                 if _conditions_match(doc, m["name"]):
                     t = frappe.get_doc("BrandPDF Template", m["template"])
+                    if t.get("source_type") == "blocks":
+                        return ("blocks", t.name)
                     if t.get("source_type") == "jinja_file" and t.get("jinja_path"):
                         return ("file", t.jinja_path)
                     return ("body", t.get("body") or "")

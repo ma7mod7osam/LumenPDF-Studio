@@ -38,9 +38,17 @@ TEMPLATE_FIELDS = [
     {"fieldname": "language", "fieldtype": "Select", "label": "Language", "options": "en\nar\nbilingual", "default": "bilingual"},
     {"fieldname": "is_standard", "fieldtype": "Check", "label": "Is Standard (read-only)", "read_only": 1},
     {"fieldname": "src_sb", "fieldtype": "Section Break", "label": "Source"},
-    {"fieldname": "source_type", "fieldtype": "Select", "label": "Source Type", "options": "html_body\njinja_file", "default": "html_body"},
+    {"fieldname": "source_type", "fieldtype": "Select", "label": "Source Type", "options": "blocks\nhtml_body\njinja_file", "default": "blocks"},
+    {"fieldname": "blocks", "fieldtype": "Table", "label": "Blocks (compose your format)", "options": "BrandPDF Block", "depends_on": "eval:doc.source_type=='blocks'"},
     {"fieldname": "jinja_path", "fieldtype": "Data", "label": "Jinja File Path (app-relative)", "depends_on": "eval:doc.source_type=='jinja_file'"},
     {"fieldname": "body", "fieldtype": "Code", "label": "Body (HTML/Jinja)", "options": "HTML", "depends_on": "eval:doc.source_type=='html_body'"},
+]
+
+BLOCK_FIELDS = [
+    {"fieldname": "block_type", "fieldtype": "Select", "label": "Block", "reqd": 1, "in_list_view": 1,
+     "options": "header_banner\ntitle\ncustomer\nitems\ntotals\npayment_schedule\nterms\nsignature\nspacer\ncustom_html\nfooter_banner"},
+    {"fieldname": "label", "fieldtype": "Data", "label": "Label / Title (optional)", "in_list_view": 1},
+    {"fieldname": "content", "fieldtype": "Code", "label": "Custom HTML (for the custom_html block)", "options": "HTML"},
 ]
 
 CONDITION_FIELDS = [
@@ -73,8 +81,9 @@ def run(as_custom=False):
             "DocType JSON exports into the app for version control — or re-run with as_custom=True to "
             "create Custom DocTypes without developer_mode."
         )
-    # Order matters: referenced DocTypes (Template, Condition) must exist before Mapping.
+    # Order matters: child/referenced DocTypes must exist before the ones that link them.
     _ensure("BrandPDF Settings", SETTINGS_FIELDS, as_custom)
+    _ensure("BrandPDF Block", BLOCK_FIELDS, as_custom, istable=1)
     _ensure("BrandPDF Template", TEMPLATE_FIELDS, as_custom, autoname="field:template_name")
     _ensure("BrandPDF Mapping Condition", CONDITION_FIELDS, as_custom, istable=1)
     _ensure("BrandPDF Mapping", MAPPING_FIELDS, as_custom)
@@ -137,3 +146,24 @@ def _seed():
         m.flags.ignore_permissions = True
         m.insert()
         print("  seeded mapping: Quotation ->", tname)
+
+    # Editable BLOCK-based starter so anyone can compose a format by adding/reordering blocks.
+    # Not mapped by default (the working jinja format stays active); point the Quotation
+    # mapping's Template at this when you're ready to use the maker.
+    bname = "Quotation - Editable"
+    if not frappe.db.exists("BrandPDF Template", bname):
+        from brandpdf.blocks import default_blocks
+        bt = frappe.get_doc(
+            {
+                "doctype": "BrandPDF Template",
+                "template_name": bname,
+                "target_doctype": "Quotation",
+                "language": "bilingual",
+                "is_standard": 0,
+                "source_type": "blocks",
+                "blocks": [{"block_type": blk["block_type"]} for blk in default_blocks()],
+            }
+        )
+        bt.flags.ignore_permissions = True
+        bt.insert()
+        print("  seeded editable block template:", bname)
