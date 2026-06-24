@@ -15,7 +15,8 @@ from brandpdf.render.base import default_options, get_renderer
 from brandpdf.render_html import render_html
 
 
-def generate(job_id, doctype, docname, user, _retry=0):
+def generate(job_token, doctype, docname, user, _retry=0):
+    job_id = job_token  # frappe.enqueue reserves 'job_id', so callers pass ours as 'job_token'
     lock = "brandpdf_render_lock_" + (frappe.local.site or "site")
     if not _acquire(lock, job_id):
         # Another render holds the lock. Re-enqueue; the single long worker runs it next.
@@ -23,7 +24,7 @@ def generate(job_id, doctype, docname, user, _retry=0):
             frappe.enqueue(
                 "brandpdf.pdf_job.generate", queue="long",
                 timeout=(conf("render_timeout") or 120) + 30,
-                job_id=job_id, doctype=doctype, docname=docname, user=user, _retry=_retry + 1,
+                job_token=job_id, doctype=doctype, docname=docname, user=user, _retry=_retry + 1,
             )
         else:
             set_state(job_id, {"status": "error", "message": "Renderer busy; please retry."}, user)

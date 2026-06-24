@@ -19,7 +19,7 @@ def request_pdf(doctype: str, name: str):
         "brandpdf.pdf_job.generate",
         queue="long",
         timeout=(config.conf("render_timeout") or 120) + 30,
-        job_id=job_id,
+        job_token=job_id,  # NOTE: 'job_id' is reserved by frappe.enqueue, so pass ours as 'job_token'
         doctype=doctype,
         docname=name,
         user=frappe.session.user,
