@@ -1,24 +1,17 @@
 {#-
   BrandPDF — Quotation template (Phase 1, BSTC).
-  Footer model: <thead> header + <tfoot> footer + height:100% (M0-verified: pins on a single
-  page, the common quotation case). Multi-page last-page footer follows content (v1 limit;
-  native-footer is the documented upgrade). Rendered by Playwright with
-  prefer_css_page_size + print_background + margin:0 -> true full-bleed.
-  Context: `doc` (the Quotation), `branding` (dict from render_html.get_branding).
-  Banner src uses a relative /files path that assets.inline_images() base64-inlines
-  (the worker has no request base URL, so relative refs are resolved by inlining).
-  NOTE: the @import web font works only if the worker has egress; bundling a self-hosted
-  woff2 (Cairo/Montserrat) is the documented hardening step (PLAN M2).
+  Simple top-to-bottom flow: header banner, content, footer banner. This renders cleanly on
+  BOTH the frappe_chrome engine (Frappe Cloud) and Playwright. @page{margin:0} gives full-bleed
+  banners. Header shows on page 1; footer follows the content (it does not repeat on every page
+  in this model — that needs the Playwright/Gotenberg engine with table thead/tfoot).
+  Context: `doc`, `branding` (render_html.get_branding), `terms_html` (pre-sanitized).
+  Banner src is a /files path that assets.inline_images() base64-inlines.
 -#}
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Montserrat:wght@300;400;500;600;700;800&display=swap');
   @page { size: A4; margin: 0; }
-  html, body { margin:0 !important; padding:0 !important; height:100%; }
+  html, body { margin:0 !important; padding:0 !important; }
   img { max-width:100%; }
-
-  table.bs-page { width:100%; height:100%; border-collapse:collapse; }
-  table.bs-page > thead > tr > td, table.bs-page > tfoot > tr > td, table.bs-page > tbody > tr > td { padding:0; border:0; }
-  table.bs-page > tbody > tr > td { vertical-align:top; height:100%; }
   .bs-banner { width:100%; display:block; }
 
   .bs-content { font-family:'Montserrat','Segoe UI',Arial,sans-serif; color:{{ branding.navy }}; font-size:8.5pt; padding:6mm 14mm 6mm 14mm; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
@@ -44,7 +37,6 @@
   table.bs-items td.num { text-align:right; white-space:nowrap; }
   table.bs-items tbody tr { break-inside:avoid; }
   table.bs-items tbody tr:nth-child(even) td { background-color:#eef6fc !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
-  /* Neutralize stray formatting pasted into item data, but leave our own name/desc styles (L3). */
   table.bs-items tbody td *:not(.it-name):not(.it-desc) { font-weight:normal !important; background:transparent !important; border:0 !important; color:{{ branding.navy }} !important; }
   table.bs-items .it-name { font-weight:600 !important; }
   table.bs-items .it-desc { color:#6b6b6e !important; font-size:7pt; line-height:1.4; }
@@ -54,116 +46,116 @@
   table.bs-tot td.lbl { color:#6b6b6e; text-align:right; }
   table.bs-tot td.val { text-align:right; white-space:nowrap; font-weight:600; }
   table.bs-tot tr.grand { break-inside:avoid; }
+
+  .bs-sec-lbl { font-size:7pt; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:{{ branding.primary }}; margin-bottom:3px; }
 </style>
 
-<table class="bs-page">
-  <thead><tr><td><img class="bs-banner" src="{{ branding.header_image }}"></td></tr></thead>
-  <tfoot><tr><td><img class="bs-banner" src="{{ branding.footer_image }}"></td></tr></tfoot>
-  <tbody><tr><td>
-    <div class="bs-content">
+<img class="bs-banner" src="{{ branding.header_image }}">
 
-      <table class="bs-head"><tr>
-        <td style="text-align:left;">
-          <div class="bs-title">QUOTATION</div>
-          <div class="bs-title-ar">عرض سعر</div>
-        </td>
-        <td style="text-align:right;">
-          <table class="bs-meta">
-            <tr><td class="k">Quotation No</td><td><bdi>{{ doc.name }}</bdi></td></tr>
-            <tr><td class="k">Date</td><td><bdi>{{ doc.get_formatted("transaction_date") }}</bdi></td></tr>
-            {% if doc.get("valid_till") %}<tr><td class="k">Valid Till</td><td><bdi>{{ doc.get_formatted("valid_till") }}</bdi></td></tr>{% endif %}
-          </table>
-        </td>
-      </tr></table>
+<div class="bs-content">
 
-      <div class="bs-billto">
-        <div class="lbl">Quotation To</div>
-        <div class="name">{{ doc.get("customer_name") or doc.get("party_name") }}</div>
-        {% if doc.get("address_display") %}<div class="addr">{{ doc.address_display }}</div>{% endif %}
-      </div>
-
-      <table class="bs-items">
-        <thead>
-          <tr>
-            <th style="width:6%">#</th>
-            <th style="width:40%">Item &amp; Description</th>
-            <th class="num" style="width:12%">Qty</th>
-            <th class="num" style="width:20%">Rate</th>
-            <th class="num" style="width:22%">Amount</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for row in doc.items %}
-          {% set nm = (row.item_name or "") | striptags | trim %}
-          {% set desc = (row.get("description") or "") | striptags | trim %}
-          <tr>
-            <td class="num"><bdi>{{ loop.index }}</bdi></td>
-            <td>
-              <div class="it-name">{{ nm }}</div>
-              {% if desc and desc != nm %}<div class="it-desc">{{ desc }}</div>{% endif %}
-            </td>
-            <td class="num"><bdi>{{ row.get_formatted("qty") }} {{ row.get("uom") }}</bdi></td>
-            <td class="num"><bdi>{{ row.get_formatted("rate") }}</bdi></td>
-            <td class="num"><bdi>{{ row.get_formatted("amount") }}</bdi></td>
-          </tr>
-          {% endfor %}
-        </tbody>
+  <table class="bs-head"><tr>
+    <td style="text-align:left;">
+      <div class="bs-title">QUOTATION</div>
+      <div class="bs-title-ar">عرض سعر</div>
+    </td>
+    <td style="text-align:right;">
+      <table class="bs-meta">
+        <tr><td class="k">Quotation No</td><td><bdi>{{ doc.name }}</bdi></td></tr>
+        <tr><td class="k">Date</td><td><bdi>{{ doc.get_formatted("transaction_date") }}</bdi></td></tr>
+        {% if doc.get("valid_till") %}<tr><td class="k">Valid Till</td><td><bdi>{{ doc.get_formatted("valid_till") }}</bdi></td></tr>{% endif %}
       </table>
+    </td>
+  </tr></table>
 
-      <table style="width:100%; border-collapse:collapse;">
-        <tr>
-          <td style="border:0;"></td>
-          <td style="border:0; width:82mm;">
-            <table class="bs-tot">
-              <tr><td class="lbl">Subtotal</td><td class="val"><bdi>{{ doc.get_formatted("total") }}</bdi></td></tr>
-              {% if doc.get("discount_amount") %}<tr><td class="lbl">Discount</td><td class="val"><bdi>- {{ doc.get_formatted("discount_amount") }}</bdi></td></tr>{% endif %}
-              {% for tax in doc.taxes %}{% if tax.tax_amount %}
-              <tr><td class="lbl">{{ (tax.description or "") | striptags }}</td><td class="val"><bdi>{{ tax.get_formatted("tax_amount") }}</bdi></td></tr>
-              {% endif %}{% endfor %}
-              <tr class="grand">
-                <td style="background-color:{{ branding.primary }} !important; color:#fff !important; font-weight:700; font-size:10pt; text-align:right; padding:6px 8px; -webkit-print-color-adjust:exact; print-color-adjust:exact;">Grand Total</td>
-                <td style="background-color:{{ branding.primary }} !important; color:#fff !important; font-weight:700; font-size:10pt; text-align:right; white-space:nowrap; padding:6px 8px; -webkit-print-color-adjust:exact; print-color-adjust:exact;"><bdi>{{ doc.get_formatted("grand_total") }}</bdi></td>
-              </tr>
-            </table>
-          </td>
-        </tr>
-      </table>
+  <div class="bs-billto">
+    <div class="lbl">Quotation To</div>
+    <div class="name">{{ doc.get("customer_name") or doc.get("party_name") }}</div>
+    {% if doc.get("address_display") %}<div class="addr">{{ doc.address_display }}</div>{% endif %}
+  </div>
 
-      {% if doc.payment_schedule %}
-      <div style="margin-top:6mm;">
-        <div style="font-size:7pt; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:{{ branding.primary }}; margin-bottom:3px;">Payment Schedule</div>
-        <table class="bs-items">
-          <thead>
-            <tr>
-              <th style="width:6%">#</th>
-              <th style="width:46%">Payment Term</th>
-              <th class="num" style="width:18%">Due Date</th>
-              <th class="num" style="width:12%">Portion %</th>
-              <th class="num" style="width:18%">Amount</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for ps in doc.payment_schedule %}
-            <tr>
-              <td class="num"><bdi>{{ loop.index }}</bdi></td>
-              <td><div class="it-name">{{ (ps.get("payment_term") or ps.get("description") or "") | striptags }}</div></td>
-              <td class="num"><bdi>{{ ps.get_formatted("due_date") }}</bdi></td>
-              <td class="num"><bdi>{{ ps.get_formatted("invoice_portion") }}</bdi></td>
-              <td class="num"><bdi>{{ ps.get_formatted("payment_amount") }}</bdi></td>
-            </tr>
-            {% endfor %}
-          </tbody>
+  <table class="bs-items">
+    <thead>
+      <tr>
+        <th style="width:6%">#</th>
+        <th style="width:40%">Item &amp; Description</th>
+        <th class="num" style="width:12%">Qty</th>
+        <th class="num" style="width:20%">Rate</th>
+        <th class="num" style="width:22%">Amount</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in doc.items %}
+      {% set nm = (row.item_name or "") | striptags | trim %}
+      {% set desc = (row.get("description") or "") | striptags | trim %}
+      <tr>
+        <td class="num"><bdi>{{ loop.index }}</bdi></td>
+        <td>
+          <div class="it-name">{{ nm }}</div>
+          {% if desc and desc != nm %}<div class="it-desc">{{ desc }}</div>{% endif %}
+        </td>
+        <td class="num"><bdi>{{ row.get_formatted("qty") }} {{ row.get("uom") }}</bdi></td>
+        <td class="num"><bdi>{{ row.get_formatted("rate") }}</bdi></td>
+        <td class="num"><bdi>{{ row.get_formatted("amount") }}</bdi></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <table style="width:100%; border-collapse:collapse;">
+    <tr>
+      <td style="border:0;"></td>
+      <td style="border:0; width:82mm;">
+        <table class="bs-tot">
+          <tr><td class="lbl">Subtotal</td><td class="val"><bdi>{{ doc.get_formatted("total") }}</bdi></td></tr>
+          {% if doc.get("discount_amount") %}<tr><td class="lbl">Discount</td><td class="val"><bdi>- {{ doc.get_formatted("discount_amount") }}</bdi></td></tr>{% endif %}
+          {% for tax in doc.taxes %}{% if tax.tax_amount %}
+          <tr><td class="lbl">{{ (tax.description or "") | striptags }}</td><td class="val"><bdi>{{ tax.get_formatted("tax_amount") }}</bdi></td></tr>
+          {% endif %}{% endfor %}
+          <tr class="grand">
+            <td style="background-color:{{ branding.primary }} !important; color:#fff !important; font-weight:700; font-size:10pt; text-align:right; padding:6px 8px; -webkit-print-color-adjust:exact; print-color-adjust:exact;">Grand Total</td>
+            <td style="background-color:{{ branding.primary }} !important; color:#fff !important; font-weight:700; font-size:10pt; text-align:right; white-space:nowrap; padding:6px 8px; -webkit-print-color-adjust:exact; print-color-adjust:exact;"><bdi>{{ doc.get_formatted("grand_total") }}</bdi></td>
+          </tr>
         </table>
-      </div>
-      {% endif %}
+      </td>
+    </tr>
+  </table>
 
-      {% if terms_html %}
-      <div style="margin-top:7mm; font-size:7.5pt; color:#6b6b6e; line-height:1.5;">
-        <div style="font-size:7pt; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:{{ branding.primary }}; margin-bottom:3px;">Terms &amp; Conditions</div>
-        {{ terms_html | safe }}
-      </div>
-      {% endif %}
+  {% if doc.payment_schedule %}
+  <div style="margin-top:6mm;">
+    <div class="bs-sec-lbl">Payment Schedule</div>
+    <table class="bs-items">
+      <thead>
+        <tr>
+          <th style="width:6%">#</th>
+          <th style="width:46%">Payment Term</th>
+          <th class="num" style="width:18%">Due Date</th>
+          <th class="num" style="width:12%">Portion %</th>
+          <th class="num" style="width:18%">Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for ps in doc.payment_schedule %}
+        <tr>
+          <td class="num"><bdi>{{ loop.index }}</bdi></td>
+          <td><div class="it-name">{{ (ps.get("payment_term") or ps.get("description") or "") | striptags }}</div></td>
+          <td class="num"><bdi>{{ ps.get_formatted("due_date") }}</bdi></td>
+          <td class="num"><bdi>{{ ps.get_formatted("invoice_portion") }}</bdi></td>
+          <td class="num"><bdi>{{ ps.get_formatted("payment_amount") }}</bdi></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
 
-    </div>
-  </td></tr></tbody>
-</table>
+  {% if terms_html %}
+  <div style="margin-top:7mm; font-size:7.5pt; color:#6b6b6e; line-height:1.5;">
+    <div class="bs-sec-lbl">Terms &amp; Conditions</div>
+    {{ terms_html | safe }}
+  </div>
+  {% endif %}
+
+</div>
+
+<img class="bs-banner" src="{{ branding.footer_image }}">
