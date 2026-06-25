@@ -112,6 +112,25 @@ def get_format(name=None, target_doctype="Quotation"):
     return {"name": None, "definition": None}
 
 
+@frappe.whitelist()
+def doctype_fields(doctype="Quotation"):
+    """List a doctype's value-bearing fields so the builder's Field element can offer ANY field.
+    Layout/container fieldtypes are skipped; `name` (the ID) is added."""
+    _require_manager()
+    if not doctype or not frappe.db.exists("DocType", doctype):
+        return []
+    skip = {
+        "Section Break", "Column Break", "Tab Break", "HTML", "Table", "Table MultiSelect",
+        "Button", "Heading", "Fold", "Image", "Geolocation", "Signature", "Barcode",
+    }
+    out = [{"fieldname": "name", "label": "ID (name)"}]
+    for df in frappe.get_meta(doctype).fields:
+        if df.fieldtype in skip or not df.fieldname:
+            continue
+        out.append({"fieldname": df.fieldname, "label": df.label or df.fieldname})
+    return out
+
+
 def _require_manager():
     if "System Manager" not in frappe.get_roles():
         frappe.throw("Only System Manager can edit print formats.", frappe.PermissionError)

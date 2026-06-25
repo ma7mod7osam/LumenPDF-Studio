@@ -14,17 +14,26 @@ frappe.pages['brandpdf-builder'].on_page_load = function (wrapper) {
 		'width:100%;height:calc(100vh - 110px);border:0;background:#0f1420;border-radius:8px';
 	page.main.append(iframe);
 
-	// Push the currently-active design into the builder once it loads.
+	// Push the active design + the doctype's full field list into the builder once it loads.
 	iframe.addEventListener('load', function () {
 		frappe.call({
 			method: 'brandpdf.api.get_format',
 			callback: function (r) {
-				if (r.message && r.message.definition) {
-					iframe.contentWindow.postMessage(
-						{ type: 'brandpdf-load', definition: r.message.definition },
-						origin
-					);
+				var def = r.message && r.message.definition;
+				var target = (def && def.target_doctype) || 'Quotation';
+				if (def) {
+					iframe.contentWindow.postMessage({ type: 'brandpdf-load', definition: def }, origin);
 				}
+				frappe.call({
+					method: 'brandpdf.api.doctype_fields',
+					args: { doctype: target },
+					callback: function (f) {
+						iframe.contentWindow.postMessage(
+							{ type: 'brandpdf-fields', fields: f.message || [] },
+							origin
+						);
+					},
+				});
 			},
 		});
 	});
