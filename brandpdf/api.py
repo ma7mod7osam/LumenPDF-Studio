@@ -62,12 +62,18 @@ def save_format(definition, name=None):
     if not tmpl_name:
         frappe.throw("Give the format a name.")
     target = definition.get("target_doctype") or "Quotation"
+    _validate_image_srcs(definition)
     payload = json.dumps(definition)
 
     if frappe.db.exists("BrandPDF Template", tmpl_name):
         t = frappe.get_doc("BrandPDF Template", tmpl_name)
         if t.get("is_standard"):
             frappe.throw("That name is a standard template. Use a different name.")
+        if t.get("source_type") and t.source_type != "blocks":
+            frappe.throw(
+                f"A template named '{tmpl_name}' already exists as a {t.source_type} template. "
+                "Choose a different name so it isn't overwritten."
+            )
         t.target_doctype = target
         t.source_type = "blocks"
         t.definition = payload
@@ -109,6 +115,25 @@ def get_format(name=None, target_doctype="Quotation"):
 def _require_manager():
     if "System Manager" not in frappe.get_roles():
         frappe.throw("Only System Manager can edit print formats.", frappe.PermissionError)
+
+
+def _validate_image_srcs(definition):
+    """Images must be uploaded site files (/files/..), not arbitrary URLs — so a saved design
+    can't make the render worker fetch a remote/internal URL (SSRF)."""
+    srcs = []
+    dbr = (definition.get("branding") or {}) if isinstance(definition, dict) else {}
+    for k in ("header_image", "footer_image"):
+        if dbr.get(k):
+            srcs.append(dbr[k])
+    for bl in (definition.get("blocks") or []):
+        if isinstance(bl, dict) and bl.get("type") == "image":
+            s = (bl.get("settings") or {}).get("src")
+            if s:
+                srcs.append(s)
+    for s in srcs:
+        s = str(s).strip()
+        if s and not (s.startswith("/files/") or s.startswith("/private/files/")):
+            frappe.throw(f"Images must be uploaded files (path starting /files/). Got: {s[:80]}")
 
 
 def _activate_mapping(target, tmpl_name):

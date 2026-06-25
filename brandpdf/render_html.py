@@ -38,7 +38,8 @@ def render_html(doc) -> str:
         src = _read_template(value) if kind == "file" else value
         html = frappe.render_template(src, {"doc": doc, "branding": branding, "terms_html": terms_html})
 
-    return assets.inline_images(html, allowed={a for a in allowed if a})
+    html = assets.inline_images(html, allowed={a for a in allowed if a})
+    return assets.neutralize_remote(html)  # block remaining server-side fetches (SSRF defense)
 
 
 def _read_template(relpath: str) -> str:

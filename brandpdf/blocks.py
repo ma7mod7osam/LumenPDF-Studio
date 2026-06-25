@@ -106,8 +106,9 @@ def _b_customer(doc, b, row, ctx):
     out.append(f'<div class="name">{frappe.utils.escape_html(name)}</div>')
     addr = doc.get("address_display")
     if addr:
-        # address_display is system-generated HTML (<br> line breaks) -> render raw.
-        out.append(f'<div class="addr">{addr}</div>')
+        # address_display is system HTML; sanitize (keeps <br>, strips scripts/handlers).
+        from frappe.utils.html_utils import sanitize_html
+        out.append(f'<div class="addr">{sanitize_html(addr)}</div>')
     contact = doc.get("contact_display")
     if contact:
         out.append(f'<div class="addr">Attn: {frappe.utils.escape_html(contact)}</div>')
@@ -269,6 +270,7 @@ _ALIGN = {"left", "center", "right", "justify"}
 _BORDER_STYLE = {"solid", "dashed", "dotted", "double", "none"}
 _WEIGHT = {"400", "500", "600", "700", "800", "normal", "bold"}
 _WIDTH = re.compile(r"^\d+(\.\d+)?(mm|%|px|cm)$")
+_FONTS = {"Montserrat", "Cairo", "Arial", "Tahoma"}  # allow-list (font is injected into <style>)
 
 
 def _esc(s):
@@ -450,7 +452,8 @@ def _d_customer(doc, b, s, ctx):
     out = [f'<div class="bs-billto"><div class="lbl" style="color:{primary}">{heading}</div><div class="name">{name}</div>']
     addr = doc.get("address_display")
     if addr:
-        out.append(f'<div class="addr">{addr}</div>')
+        from frappe.utils.html_utils import sanitize_html
+        out.append(f'<div class="addr">{sanitize_html(addr)}</div>')
     out.append("</div>")
     return "".join(out)
 
@@ -590,7 +593,7 @@ def _branding_from_def(definition, doc):
         b["header_image"] = dbr["header_image"]
     if dbr.get("footer_image"):
         b["footer_image"] = dbr["footer_image"]
-    if dbr.get("font"):
+    if dbr.get("font") in _FONTS:  # allow-list: font is interpolated into a <style> block
         b["font"] = dbr["font"]
     return b
 
@@ -603,6 +606,8 @@ def collect_image_srcs(definition):
             definition = json.loads(definition)
         except Exception:
             return set()
+    if not isinstance(definition, dict):
+        return set()
     srcs = set()
     dbr = definition.get("branding") or {}
     for k in ("header_image", "footer_image"):
@@ -620,6 +625,8 @@ def render_definition(doc, definition, terms_html=""):
     """Render a builder DEFINITION (dict or JSON str) to HTML — matches the builder preview."""
     if isinstance(definition, str):
         definition = json.loads(definition)
+    if not isinstance(definition, dict):
+        return ""
     branding = _branding_from_def(definition, doc)
     ctx = {"terms_html": terms_html}
     parts = [base_css(branding)]
@@ -635,7 +642,12 @@ def render_definition(doc, definition, terms_html=""):
             parts.append('<div class="bs-content">')
             open_[0] = True
 
-    for bl in definition.get("blocks") or []:
+    blocks_list = definition.get("blocks")
+    if not isinstance(blocks_list, list):
+        blocks_list = []
+    for bl in blocks_list:
+        if not isinstance(bl, dict):
+            continue
         t = bl.get("type")
         fn = DEF_RENDERERS.get(t)
         if not fn:

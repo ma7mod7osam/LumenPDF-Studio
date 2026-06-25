@@ -92,7 +92,6 @@ def run(as_custom=False):
         ("BrandPDF Mapping Condition", lambda: _ensure("BrandPDF Mapping Condition", CONDITION_FIELDS, as_custom, istable=1)),
         ("BrandPDF Mapping", lambda: _ensure("BrandPDF Mapping", MAPPING_FIELDS, as_custom)),
         ("seed", _seed),
-        ("builder page", _ensure_page),
     ]
     failures = []
     for label, fn in steps:
@@ -178,56 +177,6 @@ def _sync_fields(name, fields):
 def _perms():
     return [{"role": "System Manager", "read": 1, "write": 1, "create": 1, "delete": 1,
              "report": 1, "export": 1, "print": 1, "email": 1, "share": 1}]
-
-
-PAGE_SCRIPT = """
-frappe.pages['brandpdf-builder'].on_page_load = function(wrapper) {
-  var page = frappe.ui.make_app_page({parent: wrapper, title: 'BrandPDF Builder', single_column: true});
-  var iframe = document.createElement('iframe');
-  iframe.src = '/assets/brandpdf/builder/index.html';
-  iframe.style.cssText = 'width:100%;height:calc(100vh - 110px);border:0;background:#0f1420;border-radius:8px';
-  page.main.append(iframe);
-  iframe.addEventListener('load', function() {
-    frappe.call({method: 'brandpdf.api.get_format', callback: function(r) {
-      if (r.message && r.message.definition) {
-        iframe.contentWindow.postMessage({type: 'brandpdf-load', definition: r.message.definition}, '*');
-      }
-    }});
-  });
-  window.addEventListener('message', function(e) {
-    var d = e.data || {};
-    if (d.type === 'brandpdf-save') {
-      frappe.call({
-        method: 'brandpdf.api.save_format',
-        args: {definition: JSON.stringify(d.definition)},
-        callback: function() {
-          frappe.show_alert({message: __('Format saved & activated'), indicator: 'green'});
-          iframe.contentWindow.postMessage({type: 'brandpdf-saved'}, '*');
-        }
-      });
-    }
-  });
-};
-"""
-
-
-def _ensure_page():
-    """A desk Page that hosts the visual builder (iframe) and bridges Save/Load to the API."""
-    if frappe.db.exists("Page", "brandpdf-builder"):
-        p = frappe.get_doc("Page", "brandpdf-builder")
-        if (p.get("script") or "") != PAGE_SCRIPT:
-            p.script = PAGE_SCRIPT
-            p.flags.ignore_permissions = True
-            p.save()
-        return
-    p = frappe.get_doc({
-        "doctype": "Page", "name": "brandpdf-builder", "page_name": "brandpdf-builder",
-        "title": "BrandPDF Builder", "module": "BrandPDF", "standard": "No",
-        "script": PAGE_SCRIPT, "roles": [{"role": "System Manager"}],
-    })
-    p.flags.ignore_permissions = True
-    p.insert()
-    print("  created page: brandpdf-builder")
 
 
 def _seed():
