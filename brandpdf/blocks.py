@@ -562,6 +562,12 @@ def _d_signature(doc, b, s, ctx):
     )
 
 
+def _e_pagenum(doc, b, s, ctx):
+    # {p}=current page, {n}=total. ctx carries them; defaults to 1/1 (single page until merge).
+    fmt = s.get("format") or "Page {p} of {n}"
+    return _esc(fmt).replace("{p}", str(ctx.get("page", 1))).replace("{n}", str(ctx.get("total", 1)))
+
+
 DEF_RENDERERS = {
     "header_banner": _d_header_banner,
     "footer_banner": _d_footer_banner,
@@ -579,6 +585,7 @@ DEF_RENDERERS = {
     "divider": _e_divider,
     "box": _e_box,
     "table": _e_table,
+    "pagenum": _e_pagenum,
     "spacer": _e_spacer,
     "custom_html": _e_box,  # back-compat: old custom_html == box content
 }
