@@ -92,9 +92,21 @@ def run(as_custom=False):
     print(f"BrandPDF config DocTypes ready (custom={as_custom}).")
 
 
+def ensure_config():
+    """after_migrate hook: create/upgrade the BrandPDF config DocTypes automatically on every
+    deploy, as Custom DocTypes (no developer_mode, no manual command). Non-fatal by design —
+    a failure here must never abort a site migration."""
+    try:
+        if not frappe.db.exists("Module Def", "BrandPDF"):
+            return
+        run(as_custom=True)
+    except Exception:
+        frappe.log_error(title="BrandPDF: ensure_config failed", message=frappe.get_traceback())
+
+
 def _ensure(name, fields, as_custom, istable=0, autoname=None):
     if frappe.db.exists("DocType", name):
-        print("  exists:", name)
+        _sync_fields(name, fields)
         return
     doc = frappe.get_doc(
         {
@@ -113,6 +125,19 @@ def _ensure(name, fields, as_custom, istable=0, autoname=None):
     doc.flags.ignore_permissions = True
     doc.insert()
     print("  created:", name)
+
+
+def _sync_fields(name, fields):
+    """Add any fields missing from an already-created DocType (handles app upgrades, e.g. the
+    new Blocks table). Uses Custom Fields so it works on standard or custom DocTypes without
+    developer_mode."""
+    existing = {f.fieldname for f in frappe.get_meta(name).fields}
+    missing = [f for f in fields if f["fieldname"] not in existing]
+    if not missing:
+        return
+    from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
+    create_custom_fields({name: missing}, ignore_validate=True)
+    print("  added fields on", name, ":", [f["fieldname"] for f in missing])
 
 
 def _perms():

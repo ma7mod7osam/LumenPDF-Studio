@@ -26,6 +26,10 @@ scheduler_events = {
     ],
 }
 
-# After every deploy/migrate, make sure Playwright's Chromium browser is downloaded
-# (self-heals Frappe Cloud deploys without SSH). Idempotent + non-fatal.
-after_migrate = ["brandpdf.setup.install_browser.ensure_chromium"]
+# After every deploy/migrate: (1) create/upgrade the BrandPDF config DocTypes (the format
+# builder screens) as Custom DocTypes — no command needed; (2) make sure a Chromium is
+# available for the Playwright engine. Both idempotent + non-fatal.
+after_migrate = [
+    "brandpdf.setup.install_config.ensure_config",
+    "brandpdf.setup.install_browser.ensure_chromium",
+]
