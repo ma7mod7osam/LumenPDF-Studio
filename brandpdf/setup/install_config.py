@@ -82,14 +82,47 @@ def run(as_custom=False):
             "create Custom DocTypes without developer_mode."
         )
     # Order matters: child/referenced DocTypes must exist before the ones that link them.
-    _ensure("BrandPDF Settings", SETTINGS_FIELDS, as_custom)
-    _ensure("BrandPDF Block", BLOCK_FIELDS, as_custom, istable=1)
-    _ensure("BrandPDF Template", TEMPLATE_FIELDS, as_custom, autoname="field:template_name")
-    _ensure("BrandPDF Mapping Condition", CONDITION_FIELDS, as_custom, istable=1)
-    _ensure("BrandPDF Mapping", MAPPING_FIELDS, as_custom)
-    _seed()
-    frappe.db.commit()
-    print(f"BrandPDF config DocTypes ready (custom={as_custom}).")
+    # Each step is isolated + committed on success so one failure can't roll back the rest or
+    # leave a half-installed state that silently re-fails every migrate (review: medium finding).
+    steps = [
+        ("BrandPDF Settings", lambda: _ensure("BrandPDF Settings", SETTINGS_FIELDS, as_custom)),
+        ("BrandPDF Block", lambda: _ensure("BrandPDF Block", BLOCK_FIELDS, as_custom, istable=1)),
+        ("BrandPDF Template", lambda: _ensure("BrandPDF Template", TEMPLATE_FIELDS, as_custom, autoname="field:template_name")),
+        ("BrandPDF Mapping Condition", lambda: _ensure("BrandPDF Mapping Condition", CONDITION_FIELDS, as_custom, istable=1)),
+        ("BrandPDF Mapping", lambda: _ensure("BrandPDF Mapping", MAPPING_FIELDS, as_custom)),
+        ("seed", _seed),
+    ]
+    failures = []
+    for label, fn in steps:
+        try:
+            fn()
+            frappe.db.commit()
+        except Exception:
+            frappe.db.rollback()
+            failures.append(label)
+            frappe.log_error(title=f"BrandPDF install step failed: {label}", message=frappe.get_traceback())
+    ok = _integrity_check()
+    if failures or not ok:
+        print("BrandPDF config: completed WITH ISSUES — failed steps:", failures, "(see Error Log)")
+    else:
+        print(f"BrandPDF config DocTypes ready (custom={as_custom}).")
+    return failures
+
+
+def _integrity_check():
+    """Log a clear report if the config didn't fully materialize, so a half-installed state is
+    visible instead of silently re-failing each deploy."""
+    expected = ["BrandPDF Settings", "BrandPDF Block", "BrandPDF Template", "BrandPDF Mapping Condition", "BrandPDF Mapping"]
+    missing = [d for d in expected if not frappe.db.exists("DocType", d)]
+    gaps = []
+    if frappe.db.exists("DocType", "BrandPDF Template"):
+        frappe.clear_cache(doctype="BrandPDF Template")  # avoid stale meta after create/alter
+        if "blocks" not in {f.fieldname for f in frappe.get_meta("BrandPDF Template").fields}:
+            gaps.append("BrandPDF Template.blocks")
+    if missing or gaps:
+        frappe.log_error(title="BrandPDF config incomplete", message=f"missing DocTypes={missing}; field gaps={gaps}")
+        return False
+    return True
 
 
 def ensure_config():

@@ -65,11 +65,11 @@ def base_css(b):
 # --- individual block renderers -------------------------------------------
 
 def _b_header_banner(doc, b, row, ctx):
-    return f'<img class="bs-banner" src="{b.get("header_image", "")}">'
+    return f'<img class="bs-banner" src="{frappe.utils.escape_html(b.get("header_image") or "")}">'
 
 
 def _b_footer_banner(doc, b, row, ctx):
-    return f'<img class="bs-banner" src="{b.get("footer_image", "")}">'
+    return f'<img class="bs-banner" src="{frappe.utils.escape_html(b.get("footer_image") or "")}">'
 
 
 def _b_title(doc, b, row, ctx):
@@ -113,12 +113,13 @@ def _b_items(doc, b, row, ctx):
         '<th class="num" style="width:22%">Amount</th></tr></thead><tbody>'
     )
     body = []
-    for i, it in enumerate(doc.items, start=1):
-        nm = frappe.utils.escape_html((it.item_name or ""))
+    for i, it in enumerate(doc.get("items") or [], start=1):
+        name_txt = frappe.utils.strip_html_tags(it.item_name or "").strip()
+        nm = frappe.utils.escape_html(name_txt)
         desc = (it.get("description") or "")
         desc_txt = frappe.utils.strip_html_tags(desc).strip() if desc else ""
         desc_html = ""
-        if desc_txt and desc_txt != (it.item_name or ""):
+        if desc_txt and desc_txt != name_txt:  # strip+trim BOTH sides (match the reference template)
             desc_html = f'<div class="it-desc">{frappe.utils.escape_html(desc_txt)}</div>'
         body.append(
             f'<tr><td class="num">{i}</td>'
@@ -135,7 +136,7 @@ def _b_totals(doc, b, row, ctx):
     lines = [f'<tr><td class="lbl">Subtotal</td><td class="val"><bdi>{doc.get_formatted("total")}</bdi></td></tr>']
     if doc.get("discount_amount"):
         lines.append(f'<tr><td class="lbl">Discount</td><td class="val"><bdi>- {doc.get_formatted("discount_amount")}</bdi></td></tr>')
-    for tax in doc.taxes:
+    for tax in (doc.get("taxes") or []):
         if tax.tax_amount:
             d = frappe.utils.escape_html(frappe.utils.strip_html_tags(tax.description or ""))
             lines.append(f'<tr><td class="lbl">{d}</td><td class="val"><bdi>{tax.get_formatted("tax_amount")}</bdi></td></tr>')
