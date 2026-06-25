@@ -41,8 +41,8 @@ def generate(job_token, doctype, docname, user, _retry=0):
             set_state(job_id, {"status": "error", "message": "You are not permitted to print this document."}, user)
             return
 
-        html = render_html(doc)
-        pdf_bytes = get_renderer().render(html, default_options())
+        from brandpdf.compose import compose_pdf
+        pdf_bytes = compose_pdf(doc)  # applies running header/footer + page numbers when configured
         file_url = _save_private_file(doc, pdf_bytes, docname)
         set_state(job_id, {"status": "done", "file_url": file_url}, user)
     except Exception:

@@ -418,11 +418,15 @@ def _e_spacer(doc, b, s, ctx):
 # --- smart blocks honoring builder settings --------------------------------
 
 def _d_header_banner(doc, b, s, ctx):
-    return f'<img class="bs-banner" src="{_esc(b.get("header_image") or "")}">' if b.get("header_image") else ""
+    if b.get("header_image"):
+        return f'<img class="bs-banner" src="{_esc(b.get("header_image"))}">'
+    return f'<div style="width:100%;height:30mm;background:{b.get("primary", "#1C75BC")};-webkit-print-color-adjust:exact;print-color-adjust:exact;"></div>'
 
 
 def _d_footer_banner(doc, b, s, ctx):
-    return f'<img class="bs-banner" src="{_esc(b.get("footer_image") or "")}">' if b.get("footer_image") else ""
+    if b.get("footer_image"):
+        return f'<img class="bs-banner" src="{_esc(b.get("footer_image"))}">'
+    return f'<div style="width:100%;height:30mm;background:{b.get("navy", "#1A1E2A")};-webkit-print-color-adjust:exact;print-color-adjust:exact;"></div>'
 
 
 def _d_title(doc, b, s, ctx):
@@ -676,20 +680,27 @@ def render_definition(doc, definition, terms_html=""):
     return "".join(parts)
 
 
-def _render_absolute(doc, definition, branding, ctx):
-    """Free-canvas layout: every block is absolutely positioned by its pos {x,y,w,h} in mm."""
+def _absolute_page_html(doc, branding, blocks_list, ctx, grow=False, top_mm=0.0, bottom_mm=0.0, y_shift=0.0):
+    """Render blocks absolutely positioned on an A4 page.
+    grow=True -> page may flow onto multiple pages (min-height, no clipping).
+    top_mm/bottom_mm reserve @page margins so a flowing body stays clear of the running header/
+    footer bands on EVERY page; y_shift offsets each block's top so page-1 positions stay correct
+    once a top margin is reserved."""
     font = branding.get("font") or "Montserrat"
     navy = branding.get("navy", "#1A1E2A")
     parts = [base_css(branding)]
+    if top_mm or bottom_mm:
+        parts.append(f"<style>@page{{margin:{_fmt_num(top_mm)}mm 0mm {_fmt_num(bottom_mm)}mm 0mm;}}</style>")
+    if grow:
+        container = "position:relative;width:210mm;min-height:%smm;" % _fmt_num(297 - top_mm - bottom_mm)
+    else:
+        container = "position:relative;width:210mm;height:297mm;overflow:hidden;"
     parts.append(
-        f'<div style="position:relative;width:210mm;height:297mm;overflow:hidden;'
+        f'<div style="{container}'
         f"font-family:'{font}','Segoe UI',Arial,sans-serif;color:{navy};font-size:8.5pt;"
         f'-webkit-print-color-adjust:exact;print-color-adjust:exact;">'
     )
-    blocks_list = definition.get("blocks")
-    if not isinstance(blocks_list, list):
-        blocks_list = []
-    for bl in blocks_list:
+    for bl in (blocks_list or []):
         if not isinstance(bl, dict):
             continue
         t = bl.get("type")
@@ -699,7 +710,7 @@ def _render_absolute(doc, definition, branding, ctx):
         inner = fn(doc, branding, bl.get("settings") or {}, ctx)
         pos = bl.get("pos") or {}
         x = _num(pos.get("x"), 0)
-        y = _num(pos.get("y"), 0)
+        y = _num(pos.get("y"), 0) - y_shift
         w = _num(pos.get("w"), 180)
         h = _num(pos.get("h"))
         box = f"position:absolute;left:{_fmt_num(x)}mm;top:{_fmt_num(y)}mm;width:{_fmt_num(w)}mm;"
@@ -709,3 +720,11 @@ def _render_absolute(doc, definition, branding, ctx):
         parts.append(f'<div style="{box}{wrap}">{inner}</div>')
     parts.append("</div>")
     return "".join(parts)
+
+
+def _render_absolute(doc, definition, branding, ctx):
+    """Free-canvas layout: every block is absolutely positioned by its pos {x,y,w,h} in mm."""
+    blocks_list = definition.get("blocks")
+    if not isinstance(blocks_list, list):
+        blocks_list = []
+    return _absolute_page_html(doc, branding, blocks_list, ctx, grow=False)
