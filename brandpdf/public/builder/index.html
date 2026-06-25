@@ -381,7 +381,19 @@ function renderBrand(){const b=state.branding;
 function zoom(d){scale=Math.min(1.6,Math.max(.4,scale+d));document.getElementById("paperwrap").style.transform=`scale(${scale})`;document.getElementById("zoomv").textContent=Math.round(scale*100)+"%";}
 function definition(){return{name:document.getElementById("fmtName").value,branding:state.branding,blocks:state.blocks.map(b=>({type:b.type,settings:b.settings,style:b.style}))};}
 function exportJSON(){const blob=new Blob([JSON.stringify(definition(),null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=(document.getElementById("fmtName").value||"format")+".json";a.click();}
-function save(){const def=definition();if(window.frappe&&frappe.call){frappe.call({method:"brandpdf.api.save_format",args:{definition:def},callback:()=>frappe.show_alert({message:"Format saved",indicator:"green"})});}else{console.log("DEFINITION",def);alert("Saved (demo) — definition logged to console.");}}
+const EMBED=(window.parent&&window.parent!==window);
+function save(){const def=definition();
+  if(EMBED){window.parent.postMessage({type:"brandpdf-save",definition:def},"*");flashSaved();return;}
+  if(window.frappe&&frappe.call){frappe.call({method:"brandpdf.api.save_format",args:{definition:JSON.stringify(def)},callback:()=>frappe.show_alert({message:"Format saved",indicator:"green"})});return;}
+  console.log("DEFINITION",def);alert("Saved (demo) - definition logged to console.");}
+function flashSaved(){const b=document.querySelector(".btn.primary");if(!b)return;const t=b.textContent;b.textContent="✓ Saved";setTimeout(function(){b.textContent=t;},1400);}
+function loadDefinition(def){try{
+  if(def.branding)state.branding=Object.assign({primary:"#1C75BC",navy:"#1A1E2A",font:"Montserrat",header_image:"",footer_image:""},def.branding);
+  if(Array.isArray(def.blocks))state.blocks=def.blocks.map(function(b){return{id:"b"+(idc++),type:b.type,settings:b.settings||(DSET[b.type]?DSET[b.type]():{}),style:b.style||dstyle(b.type)};});
+  if(def.name)document.getElementById("fmtName").value=def.name;
+  selId=null;render();renderProps();renderBrand();
+}catch(e){console.error("BrandPDF load failed",e);}}
+window.addEventListener("message",function(e){const d=e.data||{};if(d.type==="brandpdf-load"&&d.definition)loadDefinition(d.definition);if(d.type==="brandpdf-saved")flashSaved();});
 
 buildPalette();render();renderProps();renderBrand();zoom(0);
 </script>

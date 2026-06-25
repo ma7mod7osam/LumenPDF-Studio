@@ -5,6 +5,8 @@ frappe.call and polls for a private, user-scoped file URL (PLAN H6).
 Enabled doctypes are resolved from BrandPDF Mapping (Phase 2), falling back to ["Quotation"].
 No client-supplied template path (B1). Job result is scoped to the requesting user (B2).
 """
+import json
+
 import frappe
 
 from brandpdf import config
@@ -43,6 +45,86 @@ def enabled_doctypes():
     caller can read, so the button never appears where a click would 403 (review #7)."""
     from brandpdf import resolver
     return [dt for dt in resolver.enabled_doctypes() if frappe.has_permission(dt, "read")]
+
+
+# --- visual builder: save / load formats -----------------------------------
+
+@frappe.whitelist()
+def save_format(definition, name=None):
+    """Persist a builder design as a BrandPDF Template (source_type=blocks) and make it the
+    active format for its target doctype. System Manager only (templates affect all printing)."""
+    _require_manager()
+    if isinstance(definition, str):
+        definition = json.loads(definition)
+    if not isinstance(definition, dict):
+        frappe.throw("Invalid format definition.")
+    tmpl_name = (name or definition.get("name") or "Custom Format").strip()
+    if not tmpl_name:
+        frappe.throw("Give the format a name.")
+    target = definition.get("target_doctype") or "Quotation"
+    payload = json.dumps(definition)
+
+    if frappe.db.exists("BrandPDF Template", tmpl_name):
+        t = frappe.get_doc("BrandPDF Template", tmpl_name)
+        if t.get("is_standard"):
+            frappe.throw("That name is a standard template. Use a different name.")
+        t.target_doctype = target
+        t.source_type = "blocks"
+        t.definition = payload
+        t.flags.ignore_permissions = True
+        t.save()
+    else:
+        t = frappe.get_doc({
+            "doctype": "BrandPDF Template", "template_name": tmpl_name, "target_doctype": target,
+            "source_type": "blocks", "is_standard": 0, "definition": payload,
+        })
+        t.flags.ignore_permissions = True
+        t.insert()
+
+    _activate_mapping(target, tmpl_name)
+    frappe.db.commit()
+    return {"name": tmpl_name, "target_doctype": target, "activated": True}
+
+
+@frappe.whitelist()
+def get_format(name=None, target_doctype="Quotation"):
+    """Return a saved design to load into the builder. With a name, that template; otherwise the
+    active design for the doctype (so the builder opens on what's currently live)."""
+    _require_manager()
+    if name and frappe.db.exists("BrandPDF Template", name):
+        t = frappe.get_doc("BrandPDF Template", name)
+        if t.get("definition"):
+            return {"name": t.name, "definition": json.loads(t.definition)}
+    maps = frappe.get_all(
+        "BrandPDF Mapping", filters={"target_doctype": target_doctype, "enabled": 1},
+        fields=["template"], order_by="priority asc", limit=1,
+    )
+    if maps:
+        t = frappe.get_doc("BrandPDF Template", maps[0]["template"])
+        if t.get("definition"):
+            return {"name": t.name, "definition": json.loads(t.definition)}
+    return {"name": None, "definition": None}
+
+
+def _require_manager():
+    if "System Manager" not in frappe.get_roles():
+        frappe.throw("Only System Manager can edit print formats.", frappe.PermissionError)
+
+
+def _activate_mapping(target, tmpl_name):
+    existing = frappe.get_all(
+        "BrandPDF Mapping", filters={"target_doctype": target}, pluck="name", order_by="priority asc", limit=1
+    )
+    if existing:
+        m = frappe.get_doc("BrandPDF Mapping", existing[0])
+        m.template = tmpl_name
+        m.enabled = 1
+        m.flags.ignore_permissions = True
+        m.save()
+    else:
+        m = frappe.get_doc({"doctype": "BrandPDF Mapping", "target_doctype": target, "template": tmpl_name, "enabled": 1, "priority": 0})
+        m.flags.ignore_permissions = True
+        m.insert()
 
 
 # --- internals -------------------------------------------------------------
