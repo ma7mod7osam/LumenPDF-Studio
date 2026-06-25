@@ -5,11 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>BrandPDF Builder</title>
 <style>
-  :root{
-    --bg:#0f1420; --panel:#151b2b; --panel2:#1b2236; --line:#26304a; --line2:#2f3b59;
-    --ink:#e8edf7; --mut:#8a96b2; --mut2:#5f6c8c; --accent:#2f7bf6; --accent2:#1C75BC;
-    --ok:#2ecc8f; --danger:#ef5e6e; --paper:#fff; --shadow:0 18px 50px rgba(0,0,0,.45); --radius:10px;
-  }
+  :root{--bg:#0f1420;--panel:#151b2b;--panel2:#1b2236;--line:#26304a;--line2:#2f3b59;--ink:#e8edf7;--mut:#8a96b2;--mut2:#5f6c8c;--accent:#2f7bf6;--ok:#2ecc8f;--paper:#fff;--shadow:0 18px 50px rgba(0,0,0,.45)}
   *{box-sizing:border-box}
   html,body{height:100%;margin:0}
   body{background:var(--bg);color:var(--ink);font-family:'Inter','Segoe UI',system-ui,Arial,sans-serif;font-size:13px;-webkit-font-smoothing:antialiased;overflow:hidden}
@@ -18,17 +14,15 @@
   .brand{display:flex;align-items:center;gap:9px;font-weight:700}
   .brand .dot{width:22px;height:22px;border-radius:6px;background:linear-gradient(135deg,#2f7bf6,#1C75BC);display:grid;place-items:center;font-size:12px;color:#fff;font-weight:800}
   .brand small{color:var(--mut);font-weight:500}
-  .fmt-name{background:var(--panel2);border:1px solid var(--line2);color:var(--ink);border-radius:8px;padding:6px 10px;font-size:13px;min-width:200px}
+  .fmt-name{background:var(--panel2);border:1px solid var(--line2);color:var(--ink);border-radius:8px;padding:6px 10px;font-size:13px;min-width:190px}
   .top .spacer{flex:1}
-  .sel{background:var(--panel2);border:1px solid var(--line2);color:var(--ink);border-radius:8px;padding:6px 10px;font-size:12.5px}
-  .btn{border:1px solid var(--line2);background:var(--panel2);color:var(--ink);border-radius:8px;padding:7px 13px;font-size:12.5px;cursor:pointer;font-weight:600;display:inline-flex;align-items:center;gap:7px}
+  .btn{border:1px solid var(--line2);background:var(--panel2);color:var(--ink);border-radius:8px;padding:7px 13px;font-size:12.5px;cursor:pointer;font-weight:600}
   .btn:hover{border-color:#42527a}
   .btn.primary{background:linear-gradient(135deg,#2f7bf6,#1C75BC);border-color:transparent}
   .btn.ghost{background:transparent}
   .zoom{display:flex;align-items:center;gap:6px;color:var(--mut)}
   .zoom button{width:26px;height:26px;border-radius:7px;border:1px solid var(--line2);background:var(--panel2);color:var(--ink);cursor:pointer;font-size:14px}
-
-  .body{display:grid;grid-template-columns:230px 1fr 312px;min-height:0}
+  .body{display:grid;grid-template-columns:222px 1fr 300px;min-height:0}
   .rail{background:var(--panel);border-right:1px solid var(--line);overflow:auto}
   .rail.right{border-right:0;border-left:1px solid var(--line)}
   .rail h4{margin:0;padding:14px 16px 4px;font-size:10.5px;letter-spacing:1.4px;text-transform:uppercase;color:var(--mut2);font-weight:700}
@@ -40,55 +34,54 @@
   .pblock svg{width:19px;height:19px;stroke:#9db4e6;fill:none;stroke-width:1.7;margin-bottom:4px}
   .pblock span{display:block;font-size:10.5px;color:var(--mut);font-weight:600}
   .hint{padding:8px 16px 16px;color:var(--mut2);font-size:11px;line-height:1.5}
-
-  .stage{background:radial-gradient(circle at 1px 1px,#1a2236 1px,transparent 0) 0 0/22px 22px,var(--bg);overflow:auto;position:relative;padding:34px 20px 90px}
+  .stage{background:radial-gradient(circle at 1px 1px,#1a2236 1px,transparent 0) 0 0/22px 22px,var(--bg);overflow:auto;position:relative;padding:34px 30px 120px}
   .paperwrap{margin:0 auto;width:max-content;transform-origin:top center}
-  .paper{width:210mm;min-height:297mm;background:var(--paper);color:#1A1E2A;box-shadow:var(--shadow);border-radius:2px;position:relative;overflow:hidden;font-family:'Montserrat','Segoe UI',Arial,sans-serif}
-  .blk{position:relative;outline:1.5px dashed transparent;transition:outline-color .1s}
+  .paper{width:210mm;height:297mm;background:var(--paper);color:#1A1E2A;box-shadow:var(--shadow);position:relative;overflow:hidden;font-family:'Montserrat','Segoe UI',Arial,sans-serif;font-size:8.5pt;
+    background-image:linear-gradient(#0000000a 1px,transparent 1px),linear-gradient(90deg,#0000000a 1px,transparent 1px);background-size:5mm 5mm}
+  .blk{position:absolute;outline:1px dashed transparent;cursor:move}
   .blk:hover{outline-color:#bcd2ff}
-  .blk.sel{outline:2px solid var(--accent)}
-  .blk .tools{position:absolute;top:4px;right:4px;display:none;gap:3px;z-index:5}
+  .blk.sel{outline:2px solid var(--accent);z-index:50}
+  .blk .tools{position:absolute;top:-1px;right:-1px;display:none;gap:3px;z-index:6;transform:translateY(-100%)}
   .blk:hover .tools,.blk.sel .tools{display:flex}
-  .blk .tools button{width:24px;height:24px;border-radius:6px;border:0;background:#1A1E2Aee;color:#fff;cursor:pointer;font-size:12px;display:grid;place-items:center}
+  .blk .tools button{width:22px;height:22px;border-radius:5px;border:0;background:#1A1E2Aee;color:#fff;cursor:pointer;font-size:11px}
   .blk .tools button:hover{background:var(--accent)}
-  .blk .tag{position:absolute;top:4px;left:4px;display:none;background:var(--accent);color:#fff;font-size:9.5px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;padding:2px 7px;border-radius:5px;z-index:5}
+  .blk .tag{position:absolute;top:-1px;left:-1px;display:none;background:var(--accent);color:#fff;font-size:9px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;padding:1px 6px;border-radius:4px;z-index:6;transform:translateY(-100%)}
   .blk:hover .tag,.blk.sel .tag{display:block}
-  .blk.drag-over{outline:2px solid var(--ok)}
   .blk [contenteditable]:focus{outline:2px solid var(--accent);outline-offset:-2px}
-  .empty{padding:70px 20px;text-align:center;color:#9aa6c2}
-
+  .rh{position:absolute;width:11px;height:11px;background:#fff;border:2px solid var(--accent);border-radius:2px;z-index:7}
+  .rh.e{right:-6px;top:calc(50% - 5px);cursor:ew-resize}
+  .rh.s{bottom:-6px;left:calc(50% - 5px);cursor:ns-resize}
+  .rh.se{right:-6px;bottom:-6px;cursor:nwse-resize}
   .tabs{display:flex;gap:4px;padding:10px 12px 0}
   .tab{flex:1;text-align:center;padding:8px;border-radius:8px 8px 0 0;cursor:pointer;color:var(--mut);font-weight:600;font-size:12px;border:1px solid transparent;border-bottom:0}
   .tab.on{background:var(--panel);color:var(--ink);border-color:var(--line)}
-  .props{padding:6px 16px 40px}
+  .props{padding:6px 16px 50px}
   .ptitle{font-weight:700;margin:12px 2px 2px;font-size:13px}
-  .fld{margin:11px 0}
+  .fld{margin:10px 0}
   .fld label{display:block;font-size:11px;color:var(--mut);margin-bottom:5px;font-weight:600}
   .fld input[type=text],.fld textarea,.fld select{width:100%;background:var(--panel2);border:1px solid var(--line2);color:var(--ink);border-radius:8px;padding:8px 10px;font-size:12.5px;font-family:inherit}
-  .fld textarea{min-height:80px;resize:vertical}
-  .row2{display:flex;gap:8px}.row2>*{flex:1;margin:11px 0}
-  .chk{display:flex;align-items:center;gap:8px;padding:5px 0;font-size:12.5px;color:var(--ink)}
+  .fld textarea{min-height:70px;resize:vertical}
+  .row2{display:flex;gap:8px}.row2>*{flex:1;margin:10px 0}
+  .chk{display:flex;align-items:center;gap:8px;padding:5px 0;font-size:12.5px}
   .chk input{width:15px;height:15px;accent-color:var(--accent)}
   .color{display:flex;align-items:center;gap:8px}
   .color input[type=color]{width:34px;height:30px;border:1px solid var(--line2);border-radius:7px;background:none;padding:2px;cursor:pointer}
   .seg{display:flex;border:1px solid var(--line2);border-radius:8px;overflow:hidden}
   .seg button{flex:1;background:var(--panel2);color:var(--mut);border:0;padding:7px 4px;cursor:pointer;font-size:11.5px}
   .seg button.on{background:var(--accent);color:#fff}
-  .stygrp{margin-top:16px;border-top:1px solid var(--line);padding-top:6px}
+  .stygrp{margin-top:14px;border-top:1px solid var(--line);padding-top:4px}
   .styhead{font-size:10px;letter-spacing:1.2px;text-transform:uppercase;color:var(--mut2);font-weight:700;margin:8px 2px}
   .tablebtns{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:8px}
   .tablebtns button{background:var(--panel2);border:1px solid var(--line2);color:var(--ink);border-radius:8px;padding:7px;cursor:pointer;font-size:12px}
   .noselect{color:var(--mut2);text-align:center;padding:36px 16px;font-size:12px;line-height:1.6}
-  .delblk{margin-top:18px;width:100%;border:1px solid #5a2a32;background:#2a1820;color:#ff9aa6;border-radius:8px;padding:9px;cursor:pointer;font-weight:600}
-
-  /* ===== document CSS (scoped to .paper, mirrors blocks.py) ===== */
+  .delblk{margin-top:16px;width:100%;border:1px solid #5a2a32;background:#2a1820;color:#ff9aa6;border-radius:8px;padding:9px;cursor:pointer;font-weight:600}
+  /* document CSS (scoped to .paper) */
   .paper img{max-width:100%}
   .paper .bs-banner{width:100%;display:block}
-  .paper .bs-content{color:#1A1E2A;font-size:8.5pt;padding:6mm 14mm}
-  .paper table.bs-head{width:100%;border-collapse:collapse;margin-bottom:8mm}
-  .paper table.bs-head td{border:0;vertical-align:top;padding:0}
   .paper .bs-title{font-size:23pt;font-weight:800;letter-spacing:1px;line-height:1;color:#1A1E2A}
   .paper .bs-title-ar{font-family:'Cairo','Tajawal',Tahoma,sans-serif;font-size:12pt;font-weight:600;direction:rtl;margin-top:6px}
+  .paper table.bs-head{width:100%;border-collapse:collapse}
+  .paper table.bs-head td{border:0;vertical-align:top;padding:0}
   .paper table.bs-meta{display:inline-block;text-align:left;border:1px solid #cfe5f6;border-collapse:collapse;font-size:8pt}
   .paper table.bs-meta td{border:1px solid #cfe5f6;padding:3px 7px}
   .paper table.bs-meta td.k{font-weight:600}
@@ -101,14 +94,13 @@
   .paper table.bs-items thead th.num{text-align:right}
   .paper table.bs-items tbody td{padding:6px 8px;border-bottom:1px solid #cfe5f6;vertical-align:top}
   .paper table.bs-items td.num{text-align:right;white-space:nowrap}
-  .paper .it-name{font-weight:600}
-  .paper .it-desc{color:#6b6b6e;font-size:7pt;line-height:1.4}
+  .paper .it-name{font-weight:600}.paper .it-desc{color:#6b6b6e;font-size:7pt;line-height:1.4}
   .paper table.bs-tot{width:100%;border-collapse:collapse;font-size:8pt}
   .paper table.bs-tot td{padding:4px 8px;border:0}
   .paper table.bs-tot td.lbl{color:#6b6b6e;text-align:right}
   .paper table.bs-tot td.val{text-align:right;white-space:nowrap;font-weight:600}
   .paper .bs-sec-lbl{font-size:7pt;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:3px}
-  .paper .bs-sign-box{display:inline-block;min-width:60mm;text-align:center;border-top:1.5px solid #1A1E2A;padding-top:4px;font-size:8.5pt;font-weight:600;margin-top:14mm}
+  .paper .bs-sign-box{display:block;text-align:center;border-top:1.5px solid #1A1E2A;padding-top:4px;font-size:8.5pt;font-weight:600}
   .ph-banner{width:100%;height:30mm;display:flex;align-items:center;justify-content:center;color:#ffffffcc;font-size:9pt;letter-spacing:2px;text-transform:uppercase}
 </style>
 </head>
@@ -118,281 +110,177 @@
     <div class="brand"><span class="dot">B</span> BrandPDF <small>Builder</small></div>
     <input class="fmt-name" id="fmtName" value="Quotation - Custom">
     <div class="spacer"></div>
-    <div class="zoom"><button onclick="zoom(-.1)">−</button><span id="zoomv">90%</span><button onclick="zoom(.1)">+</button></div>
-    <select class="sel" id="sample"><option>Sample: Quotation</option></select>
+    <div class="zoom"><button onclick="zoom(-.1)">−</button><span id="zoomv">80%</span><button onclick="zoom(.1)">+</button></div>
     <button class="btn ghost" onclick="exportJSON()">⇩ Export</button>
     <button class="btn primary" onclick="save()">✓ Save</button>
   </div>
   <div class="body">
     <div class="rail"><h4>Insert</h4><div id="palette"></div>
-      <div class="hint">Click to add. Click a block on the page to edit it. Drag the ⋮⋮ handle to reorder. Table cells are editable right on the page.</div></div>
+      <div class="hint">Click to add a block. <b>Drag</b> it anywhere on the page. Select it, then drag the blue handles to <b>resize</b>, or set exact X/Y/W/H on the right.</div></div>
     <div class="stage" id="stage"><div class="paperwrap" id="paperwrap"><div class="paper" id="paper"></div></div></div>
     <div class="rail right">
-      <div class="tabs">
-        <div class="tab on" data-tab="block" onclick="setTab('block')">Block</div>
-        <div class="tab" data-tab="brand" onclick="setTab('brand')">Branding</div>
-      </div>
+      <div class="tabs"><div class="tab on" data-tab="block" onclick="setTab('block')">Block</div><div class="tab" data-tab="brand" onclick="setTab('brand')">Branding</div></div>
       <div class="props" id="propsBlock"></div>
       <div class="props" id="propsBrand" style="display:none"></div>
     </div>
   </div>
 </div>
 <script>
-/* ===== sample data ===== */
+const PXMM=96/25.4;
 const SAMPLE={name:"SAL-QTN-2026-00006",transaction_date:"25-06-2026",valid_till:"25-07-2026",customer_name:"Hasan Najem",company:"BSTC W.L.L",
   address_display:"Seef 436, Road 3620, Building 925<br>SR360 Tower, Office 112, Bahrain",total:"BHD 1,685.000",grand_total:"BHD 1,853.500",
-  items:[{n:"CCTV",q:"1 Service",r:"BHD 0.000",a:"BHD 0.000"},
-    {n:"HIKVISION 6 MP ColorVu 3.0 Fixed Bullet Network Camera",q:"38 Pcs",r:"BHD 27.500",a:"BHD 1,045.000",d:"High quality imaging, 8 MP"},
-    {n:"HIKVISION 64-ch 2U 4K AcuSense NVR",q:"2 Pcs",r:"BHD 322.500",a:"BHD 645.000"}],
+  items:[{n:"CCTV",q:"1 Service",r:"BHD 0.000",a:"BHD 0.000"},{n:"HIKVISION 6 MP ColorVu 3.0 Fixed Bullet Network Camera",q:"38 Pcs",r:"BHD 27.500",a:"BHD 1,045.000",d:"High quality imaging, 8 MP"},{n:"HIKVISION 64-ch 2U 4K AcuSense NVR",q:"2 Pcs",r:"BHD 322.500",a:"BHD 645.000"}],
   taxes:[{desc:"VAT 10%",amt:"BHD 168.500"}],
   payment_schedule:[{t:"Advance",due:"25-06-2026",pct:"50.0",amt:"BHD 926.750"},{t:"On Delivery",due:"25-07-2026",pct:"50.0",amt:"BHD 926.750"}],
   terms:"Prices valid for 30 days. Payment due Net 30. Warranty per manufacturer terms."};
-const FIELDS=[{f:"name",l:"Quotation No",v:SAMPLE.name},{f:"customer_name",l:"Customer Name",v:SAMPLE.customer_name},
-  {f:"transaction_date",l:"Date",v:SAMPLE.transaction_date},{f:"valid_till",l:"Valid Till",v:SAMPLE.valid_till},
-  {f:"grand_total",l:"Grand Total",v:SAMPLE.grand_total},{f:"total",l:"Subtotal",v:SAMPLE.total},{f:"company",l:"Company",v:SAMPLE.company}];
+const FIELDS=[{f:"name",l:"Quotation No",v:SAMPLE.name},{f:"customer_name",l:"Customer Name",v:SAMPLE.customer_name},{f:"transaction_date",l:"Date",v:SAMPLE.transaction_date},{f:"valid_till",l:"Valid Till",v:SAMPLE.valid_till},{f:"grand_total",l:"Grand Total",v:SAMPLE.grand_total},{f:"total",l:"Subtotal",v:SAMPLE.total},{f:"company",l:"Company",v:SAMPLE.company}];
 function fieldVal(f){const x=FIELDS.find(z=>z.f===f);return x?x.v:"";}
-
-/* ===== registry ===== */
-const ICONS={
-  heading:'<path d="M6 4v16M18 4v16M6 12h12"/>',
-  text:'<line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="14" y2="17"/>',
-  field:'<rect x="3" y="8" width="18" height="8" rx="2"/><line x1="7" y1="12" x2="11" y2="12"/>',
-  image:'<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M21 17l-5-5-4 4-2-2-4 4"/>',
-  divider:'<line x1="4" y1="12" x2="20" y2="12"/>',
-  box:'<rect x="4" y="5" width="16" height="14" rx="2"/>',
-  table:'<rect x="3" y="4" width="18" height="16" rx="1"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="9" x2="9" y2="20"/>',
-  spacer:'<line x1="12" y1="4" x2="12" y2="20"/><polyline points="8,8 12,4 16,8"/><polyline points="8,16 12,20 16,16"/>',
-  header_banner:'<rect x="3" y="5" width="18" height="6" rx="1"/><line x1="3" y1="15" x2="14" y2="15"/><line x1="3" y1="19" x2="10" y2="19"/>',
-  footer_banner:'<line x1="10" y1="5" x2="21" y2="5"/><line x1="14" y1="9" x2="21" y2="9"/><rect x="3" y="13" width="18" height="6" rx="1"/>',
-  customer:'<circle cx="12" cy="8" r="3"/><path d="M5 20c0-3.3 3.1-6 7-6s7 2.7 7 6"/>',
-  items:'<rect x="3" y="4" width="18" height="16" rx="1"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="9" x2="9" y2="20"/>',
-  totals:'<line x1="13" y1="6" x2="20" y2="6"/><line x1="13" y1="11" x2="20" y2="11"/><rect x="13" y="15" width="7" height="4" rx="1"/><path d="M4 6h6l-6 7h6"/>',
-  payment_schedule:'<rect x="3" y="5" width="18" height="16" rx="1"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="8" y1="3" x2="8" y2="7"/><line x1="16" y1="3" x2="16" y2="7"/>',
-  terms:'<line x1="5" y1="6" x2="19" y2="6"/><line x1="5" y1="10" x2="19" y2="10"/><line x1="5" y1="14" x2="15" y2="14"/>',
-  signature:'<path d="M4 17c4 0 5-9 8-9s2 6 4 6 2-3 4-3"/><line x1="3" y1="21" x2="21" y2="21"/>',
-};
-const META={heading:{l:"Heading"},text:{l:"Text"},field:{l:"Field"},image:{l:"Image"},divider:{l:"Line"},box:{l:"Box"},table:{l:"Table"},spacer:{l:"Spacer"},
-  header_banner:{l:"Header"},customer:{l:"Customer"},items:{l:"Items"},totals:{l:"Totals"},payment_schedule:{l:"Payment"},terms:{l:"Terms"},signature:{l:"Signature"},footer_banner:{l:"Footer"},title:{l:"Title"}};
-const ELEM=["heading","text","field","image","divider","box","table","spacer"];
+const ICONS={heading:'<path d="M6 4v16M18 4v16M6 12h12"/>',text:'<line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="14" y2="17"/>',field:'<rect x="3" y="8" width="18" height="8" rx="2"/><line x1="7" y1="12" x2="11" y2="12"/>',image:'<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M21 17l-5-5-4 4-2-2-4 4"/>',divider:'<line x1="4" y1="12" x2="20" y2="12"/>',box:'<rect x="4" y="5" width="16" height="14" rx="2"/>',table:'<rect x="3" y="4" width="18" height="16" rx="1"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="9" x2="9" y2="20"/>',header_banner:'<rect x="3" y="5" width="18" height="6" rx="1"/><line x1="3" y1="15" x2="14" y2="15"/>',footer_banner:'<line x1="10" y1="5" x2="21" y2="5"/><rect x="3" y="13" width="18" height="6" rx="1"/>',customer:'<circle cx="12" cy="8" r="3"/><path d="M5 20c0-3.3 3.1-6 7-6s7 2.7 7 6"/>',items:'<rect x="3" y="4" width="18" height="16" rx="1"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="9" x2="9" y2="20"/>',totals:'<line x1="13" y1="6" x2="20" y2="6"/><rect x="13" y="15" width="7" height="4" rx="1"/><path d="M4 6h6l-6 7h6"/>',payment_schedule:'<rect x="3" y="5" width="18" height="16" rx="1"/><line x1="3" y1="9" x2="21" y2="9"/>',terms:'<line x1="5" y1="6" x2="19" y2="6"/><line x1="5" y1="10" x2="19" y2="10"/><line x1="5" y1="14" x2="15" y2="14"/>',signature:'<path d="M4 17c4 0 5-9 8-9s2 6 4 6 2-3 4-3"/><line x1="3" y1="21" x2="21" y2="21"/>',title:'<line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="13" y2="12"/>'};
+const META={heading:{l:"Heading"},text:{l:"Text"},field:{l:"Field"},image:{l:"Image"},divider:{l:"Line"},box:{l:"Box"},table:{l:"Table"},header_banner:{l:"Header"},customer:{l:"Customer"},items:{l:"Items"},totals:{l:"Totals"},payment_schedule:{l:"Payment"},terms:{l:"Terms"},signature:{l:"Signature"},footer_banner:{l:"Footer"},title:{l:"Title"}};
+const ELEM=["heading","text","field","image","divider","box","table"];
 const BLOCKS=["header_banner","title","customer","items","totals","payment_schedule","terms","signature","footer_banner"];
-const BANNER=new Set(["header_banner","footer_banner"]);
-
-function base(){return{align:"",size:"",weight:"",italic:false,color:"",bg:"",mt:"",mb:"",pad:"",width:"",border:{on:false,w:1,color:"#cfe5f6",style:"solid",radius:0}};}
-const DSET={
-  header_banner:()=>({}),footer_banner:()=>({}),
-  title:()=>({text:"QUOTATION",showArabic:true,arabic:"عرض سعر",meta:{name:true,date:true,valid_till:true},align:"split"}),
-  customer:()=>({heading:"Quotation To"}),
-  items:()=>({cols:{qty:true,rate:true,amount:true,desc:true},zebra:true,headerColor:"primary"}),
-  totals:()=>({grandColor:"primary"}),payment_schedule:()=>({}),terms:()=>({heading:"Terms & Conditions"}),
-  signature:()=>({label:"Authorized Signature"}),
-  heading:()=>({text:"Section heading",level:"h2"}),
-  text:()=>({text:"Add your text here.\nYou can write multiple lines."}),
-  field:()=>({field:"customer_name",prefix:""}),
-  image:()=>({src:"",width:40}),
-  divider:()=>({thickness:1,color:"#cfe5f6",lstyle:"solid"}),
-  box:()=>({html:"<b>Note</b><br>Bank: BSTC W.L.L &middot; IBAN BH00 XXXX"}),
-  table:()=>({cols:["Specification","Value"],rows:[["Warranty","1 Year"],["Lead time","2 weeks"]],headerBg:"primary"}),
-  spacer:()=>({height:8}),
-};
-function dstyle(t){const s=base();
-  if(t==="heading"){s.size=15;s.weight="700";}
-  if(t==="text"||t==="field")s.size=9;
-  if(t==="image")s.align="left";
-  if(t==="divider"){s.mt=3;s.mb=3;}
-  if(t==="box"){s.pad=3;s.bg="#f4f8fc";s.size=8;s.border={on:true,w:1,color:"#cfe5f6",style:"solid",radius:6};}
-  return s;}
-let idc=1; function blk(t){return{id:"b"+(idc++),type:t,settings:DSET[t](),style:dstyle(t)};}
+function base(){return{align:"",size:"",weight:"",italic:false,color:"",bg:"",pad:"",border:{on:false,w:1,color:"#cfe5f6",style:"solid",radius:0}};}
+const DSET={header_banner:()=>({}),footer_banner:()=>({}),title:()=>({text:"QUOTATION",showArabic:true,arabic:"عرض سعر",meta:{name:true,date:true,valid_till:true},align:"split"}),customer:()=>({heading:"Quotation To"}),items:()=>({cols:{desc:true,qty:true,rate:true,amount:true},zebra:true,headerColor:"primary"}),totals:()=>({grandColor:"primary"}),payment_schedule:()=>({}),terms:()=>({heading:"Terms & Conditions"}),signature:()=>({label:"Authorized Signature"}),heading:()=>({text:"Section heading",level:"h2"}),text:()=>({text:"Add your text here."}),field:()=>({field:"customer_name",prefix:""}),image:()=>({src:"",width:100}),divider:()=>({thickness:1,color:"#cfe5f6",lstyle:"solid"}),box:()=>({html:"<b>Note</b><br>Bank: BSTC W.L.L &middot; IBAN BH00 XXXX"}),table:()=>({cols:["Specification","Value"],rows:[["Warranty","1 Year"],["Lead time","2 weeks"]],headerBg:"primary"})};
+function dstyle(t){const s=base();if(t==="heading"){s.size=15;s.weight="700";}if(t==="text"||t==="field")s.size=9;if(t==="box"){s.pad=3;s.bg="#f4f8fc";s.size=8;s.border={on:true,w:1,color:"#cfe5f6",style:"solid",radius:6};}return s;}
+let idc=1;function mk(t,pos){return{id:"b"+(idc++),type:t,settings:DSET[t](),style:dstyle(t),pos:pos};}
 function esc(s){return(s==null?"":String(s)).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
 
-/* ===== state ===== */
-let selId=null,tab="block",scale=.9;
-let state={branding:{primary:"#1C75BC",navy:"#1A1E2A",font:"Montserrat",header_image:"",footer_image:""},
-  blocks:[blk("header_banner"),blk("title"),blk("customer"),blk("items"),blk("totals"),blk("payment_schedule"),blk("terms"),blk("footer_banner")]};
-function cur(){return state.blocks[selIndex()];}
-function selIndex(){return state.blocks.findIndex(x=>x.id===selId);}
-function blockById(id){return state.blocks.find(b=>b.id===id);}
-
-/* ===== document renderers ===== */
 const R={
   header_banner:(s,b)=>b.header_image?`<img class="bs-banner" src="${esc(b.header_image)}">`:`<div class="ph-banner" style="background:${b.primary}">Header banner</div>`,
   footer_banner:(s,b)=>b.footer_image?`<img class="bs-banner" src="${esc(b.footer_image)}">`:`<div class="ph-banner" style="background:${b.navy}">Footer banner</div>`,
-  title:(s,b)=>{const m=[];if(s.meta.name)m.push(["Quotation No",SAMPLE.name]);if(s.meta.date)m.push(["Date",SAMPLE.transaction_date]);if(s.meta.valid_till)m.push(["Valid Till",SAMPLE.valid_till]);
-    const rows=m.map(([k,v])=>`<tr><td class="k">${esc(k)}</td><td>${esc(v)}</td></tr>`).join("");
-    const left=`<div class="bs-title" style="color:${b.navy}">${esc(s.text)}</div>`+(s.showArabic?`<div class="bs-title-ar" style="color:${b.primary}">${esc(s.arabic)}</div>`:"");
-    if(s.align==="center")return `<div style="text-align:center">${left}</div>`;
-    return `<table class="bs-head"><tr><td style="text-align:left">${left}</td><td style="text-align:right"><table class="bs-meta">${rows}</table></td></tr></table>`;},
+  title:(s,b)=>{const m=[];if(s.meta.name)m.push(["Quotation No",SAMPLE.name]);if(s.meta.date)m.push(["Date",SAMPLE.transaction_date]);if(s.meta.valid_till)m.push(["Valid Till",SAMPLE.valid_till]);const rows=m.map(([k,v])=>`<tr><td class="k">${esc(k)}</td><td>${esc(v)}</td></tr>`).join("");const left=`<div class="bs-title" style="color:${b.navy}">${esc(s.text)}</div>`+(s.showArabic?`<div class="bs-title-ar" style="color:${b.primary}">${esc(s.arabic)}</div>`:"");if(s.align==="center")return `<div style="text-align:center">${left}</div>`;return `<table class="bs-head"><tr><td style="text-align:left">${left}</td><td style="text-align:right"><table class="bs-meta">${rows}</table></td></tr></table>`;},
   customer:(s,b)=>`<div class="bs-billto"><div class="lbl" style="color:${b.primary}">${esc(s.heading)}</div><div class="name">${esc(SAMPLE.customer_name)}</div><div class="addr">${SAMPLE.address_display}</div></div>`,
-  items:(s,b)=>{const cols=[["#","num"],["Item &amp; Description",""]];if(s.cols.qty)cols.push(["Qty","num"]);if(s.cols.rate)cols.push(["Rate","num"]);if(s.cols.amount)cols.push(["Amount","num"]);
-    const hc=s.headerColor==="navy"?b.navy:b.primary;const th=cols.map(c=>`<th class="${c[1]}" style="background:${hc}">${c[0]}</th>`).join("");
-    const rows=SAMPLE.items.map((it,i)=>{let t=`<td class="num">${i+1}</td><td><div class="it-name">${esc(it.n)}</div>`+(s.cols.desc&&it.d?`<div class="it-desc">${esc(it.d)}</div>`:"")+`</td>`;
-      if(s.cols.qty)t+=`<td class="num">${esc(it.q)}</td>`;if(s.cols.rate)t+=`<td class="num">${esc(it.r)}</td>`;if(s.cols.amount)t+=`<td class="num">${esc(it.a)}</td>`;
-      return `<tr${s.zebra&&i%2?' style="background:#eef6fc"':''}>${t}</tr>`;}).join("");
-    return `<table class="bs-items" style="margin-bottom:6mm"><thead><tr>${th}</tr></thead><tbody>${rows}</tbody></table>`;},
-  totals:(s,b)=>{const gc=s.grandColor==="navy"?b.navy:b.primary;let ln=`<tr><td class="lbl">Subtotal</td><td class="val">${esc(SAMPLE.total)}</td></tr>`;
-    SAMPLE.taxes.forEach(t=>ln+=`<tr><td class="lbl">${esc(t.desc)}</td><td class="val">${esc(t.amt)}</td></tr>`);
-    ln+=`<tr><td style="background:${gc};color:#fff;font-weight:700;font-size:10pt;text-align:right;padding:6px 8px">Grand Total</td><td style="background:${gc};color:#fff;font-weight:700;font-size:10pt;text-align:right;padding:6px 8px">${esc(SAMPLE.grand_total)}</td></tr>`;
-    return `<table style="width:100%;border-collapse:collapse"><tr><td></td><td style="width:82mm"><table class="bs-tot">${ln}</table></td></tr></table>`;},
-  payment_schedule:(s,b)=>{const rows=SAMPLE.payment_schedule.map((p,i)=>`<tr${i%2?' style="background:#eef6fc"':''}><td class="num">${i+1}</td><td><div class="it-name">${esc(p.t)}</div></td><td class="num">${esc(p.due)}</td><td class="num">${esc(p.pct)}</td><td class="num">${esc(p.amt)}</td></tr>`).join("");
-    return `<div style="margin-top:6mm"><div class="bs-sec-lbl" style="color:${b.primary}">Payment Schedule</div><table class="bs-items"><thead><tr><th class="num" style="background:${b.primary}">#</th><th style="background:${b.primary}">Payment Term</th><th class="num" style="background:${b.primary}">Due Date</th><th class="num" style="background:${b.primary}">Portion %</th><th class="num" style="background:${b.primary}">Amount</th></tr></thead><tbody>${rows}</tbody></table></div>`;},
+  items:(s,b)=>{const cols=[["#","num"],["Item &amp; Description",""]];if(s.cols.qty)cols.push(["Qty","num"]);if(s.cols.rate)cols.push(["Rate","num"]);if(s.cols.amount)cols.push(["Amount","num"]);const hc=s.headerColor==="navy"?b.navy:b.primary;const th=cols.map(c=>`<th class="${c[1]}" style="background:${hc}">${c[0]}</th>`).join("");const rows=SAMPLE.items.map((it,i)=>{let t=`<td class="num">${i+1}</td><td><div class="it-name">${esc(it.n)}</div>`+(s.cols.desc&&it.d?`<div class="it-desc">${esc(it.d)}</div>`:"")+`</td>`;if(s.cols.qty)t+=`<td class="num">${esc(it.q)}</td>`;if(s.cols.rate)t+=`<td class="num">${esc(it.r)}</td>`;if(s.cols.amount)t+=`<td class="num">${esc(it.a)}</td>`;return `<tr${s.zebra&&i%2?' style="background:#eef6fc"':''}>${t}</tr>`;}).join("");return `<table class="bs-items"><thead><tr>${th}</tr></thead><tbody>${rows}</tbody></table>`;},
+  totals:(s,b)=>{const gc=s.grandColor==="navy"?b.navy:b.primary;let ln=`<tr><td class="lbl">Subtotal</td><td class="val">${esc(SAMPLE.total)}</td></tr>`;SAMPLE.taxes.forEach(t=>ln+=`<tr><td class="lbl">${esc(t.desc)}</td><td class="val">${esc(t.amt)}</td></tr>`);ln+=`<tr><td style="background:${gc};color:#fff;font-weight:700;font-size:10pt;text-align:right;padding:6px 8px">Grand Total</td><td style="background:${gc};color:#fff;font-weight:700;font-size:10pt;text-align:right;padding:6px 8px">${esc(SAMPLE.grand_total)}</td></tr>`;return `<table class="bs-tot">${ln}</table>`;},
+  payment_schedule:(s,b)=>{const rows=SAMPLE.payment_schedule.map((p,i)=>`<tr${i%2?' style="background:#eef6fc"':''}><td class="num">${i+1}</td><td><div class="it-name">${esc(p.t)}</div></td><td class="num">${esc(p.due)}</td><td class="num">${esc(p.pct)}</td><td class="num">${esc(p.amt)}</td></tr>`).join("");return `<div class="bs-sec-lbl" style="color:${b.primary}">Payment Schedule</div><table class="bs-items"><thead><tr><th class="num" style="background:${b.primary}">#</th><th style="background:${b.primary}">Payment Term</th><th class="num" style="background:${b.primary}">Due Date</th><th class="num" style="background:${b.primary}">Portion %</th><th class="num" style="background:${b.primary}">Amount</th></tr></thead><tbody>${rows}</tbody></table>`;},
   terms:(s,b)=>`<div style="font-size:7.5pt;color:#6b6b6e;line-height:1.5"><div class="bs-sec-lbl" style="color:${b.primary}">${esc(s.heading)}</div>${esc(SAMPLE.terms)}</div>`,
-  signature:(s,b)=>`<table style="width:100%;border-collapse:collapse"><tr><td></td><td style="width:60mm;text-align:center"><div class="bs-sign-box">${esc(s.label)}</div></td></tr></table>`,
-  heading:(s)=>esc(s.text),
-  text:(s)=>esc(s.text),
-  field:(s)=>esc((s.prefix||"")+fieldVal(s.field)),
-  image:(s)=>s.src?`<img src="${esc(s.src)}" style="width:${(+s.width||40)}%">`:`<div style="border:1px dashed #b9c6e0;color:#9aa6c2;padding:14px;text-align:center;font-size:8pt">Image — set a URL in properties</div>`,
+  signature:(s,b)=>`<div class="bs-sign-box">${esc(s.label)}</div>`,
+  heading:(s)=>esc(s.text),text:(s)=>esc(s.text),field:(s)=>esc((s.prefix||"")+fieldVal(s.field)),
+  image:(s)=>s.src?`<img src="${esc(s.src)}" style="width:${(+s.width||100)}%">`:`<div style="border:1px dashed #b9c6e0;color:#9aa6c2;padding:14px;text-align:center;font-size:8pt">Image — set a URL</div>`,
   divider:(s)=>`<div style="border-top:${(+s.thickness||1)}px ${s.lstyle||'solid'} ${s.color||'#cfe5f6'}"></div>`,
   box:(s)=>s.html||"",
-  table:(s,b)=>{const cols=s.cols||[],rows=s.rows||[];const hb=s.headerBg==="navy"?b.navy:b.primary;
-    let h=`<table style="width:100%;border-collapse:collapse;font-size:8pt"><thead><tr>`+cols.map((c,ci)=>`<th data-th="1" data-c="${ci}" contenteditable style="background:${hb};color:#fff;padding:5px 8px;text-align:left;border:1px solid ${hb};font-weight:600">${esc(c)}</th>`).join("")+`</tr></thead><tbody>`;
-    h+=rows.map((r,ri)=>`<tr>`+cols.map((c,ci)=>`<td data-td="1" data-r="${ri}" data-c="${ci}" contenteditable style="padding:5px 8px;border:1px solid #cfe5f6">${esc(r[ci]||"")}</td>`).join("")+`</tr>`).join("");
-    return h+`</tbody></table>`;},
-  spacer:(s)=>`<div style="height:${(+s.height||8)}mm"></div>`,
+  table:(s,b)=>{const cols=s.cols||[],rows=s.rows||[];const hb=s.headerBg==="navy"?b.navy:b.primary;let h=`<table style="width:100%;border-collapse:collapse;font-size:8pt;table-layout:fixed"><thead><tr>`+cols.map((c,ci)=>`<th data-th="1" data-c="${ci}" contenteditable style="background:${hb};color:#fff;padding:5px 8px;text-align:left;border:1px solid ${hb};font-weight:600">${esc(c)}</th>`).join("")+`</tr></thead><tbody>`;h+=rows.map((r,ri)=>`<tr>`+cols.map((c,ci)=>`<td data-td="1" data-r="${ri}" data-c="${ci}" contenteditable style="padding:5px 8px;border:1px solid #cfe5f6">${esc(r[ci]||"")}</td>`).join("")+`</tr>`).join("");return h+`</tbody></table>`;}
 };
 
-function styleCss(st,type){if(!st)return "";const p=[];
-  if(st.align)p.push("text-align:"+st.align);
-  if(st.size!=="")p.push("font-size:"+st.size+"pt");
-  if(st.weight)p.push("font-weight:"+st.weight);
-  if(st.italic)p.push("font-style:italic");
-  if(st.color)p.push("color:"+st.color);
-  if(st.bg)p.push("background:"+st.bg);
-  if(st.mt!=="")p.push("margin-top:"+st.mt+"mm");
-  if(st.mb!=="")p.push("margin-bottom:"+st.mb+"mm");
-  if(st.pad!=="")p.push("padding:"+st.pad+"mm");
-  if(st.width)p.push("width:"+st.width);
-  if(st.border&&st.border.on){p.push(`border:${st.border.w}px ${st.border.style} ${st.border.color}`);if(st.border.radius)p.push("border-radius:"+st.border.radius+"px");}
-  if(type==="text"||type==="field"||type==="heading")p.push("white-space:pre-wrap");
-  return p.join(";");}
+let selId=null,tab="block",scale=.8;
+let state={layout:"absolute",branding:{primary:"#1C75BC",navy:"#1A1E2A",font:"Montserrat",header_image:"",footer_image:""},blocks:[
+  mk("header_banner",{x:0,y:0,w:210,h:null}),mk("title",{x:14,y:38,w:182,h:null}),mk("customer",{x:14,y:62,w:120,h:null}),
+  mk("items",{x:14,y:90,w:182,h:null}),mk("totals",{x:104,y:172,w:92,h:null}),mk("payment_schedule",{x:14,y:200,w:182,h:null}),
+  mk("terms",{x:14,y:238,w:140,h:null}),mk("footer_banner",{x:0,y:265,w:210,h:null})]};
+function cur(){return state.blocks.find(x=>x.id===selId);}
+function blockById(id){return state.blocks.find(b=>b.id===id);}
 
-/* ===== render canvas ===== */
+function styleCss(st){if(!st)return "";const p=[];if(st.align)p.push("text-align:"+st.align);if(st.size!=="")p.push("font-size:"+st.size+"pt");if(st.weight)p.push("font-weight:"+st.weight);if(st.italic)p.push("font-style:italic");if(st.color)p.push("color:"+st.color);if(st.bg)p.push("background:"+st.bg);if(st.pad!=="")p.push("padding:"+st.pad+"mm");if(st.border&&st.border.on){p.push(`border:${st.border.w}px ${st.border.style} ${st.border.color}`);if(st.border.radius)p.push("border-radius:"+st.border.radius+"px");}return p.join(";");}
+
 function render(){
   const b=state.branding,paper=document.getElementById("paper");
   paper.style.fontFamily=`'${b.font}','Segoe UI',Arial,sans-serif`;
-  let html="",open=false;
-  const oc=()=>{if(!open){html+='<div class="bs-content">';open=true;}};
-  const cc=()=>{if(open){html+='</div>';open=false;}};
-  if(!state.blocks.length){paper.innerHTML='<div class="empty">Empty page — add elements or blocks from the left.</div>';return;}
-  state.blocks.forEach(bl=>{
-    const inner=(R[bl.type]||(()=>""))(bl.settings,b,bl);
-    const isB=BANNER.has(bl.type);
-    const wrap=isB?"":styleCss(bl.style,bl.type);
-    const shell=`<div class="blk ${bl.id===selId?'sel':''}" data-id="${bl.id}" style="${wrap}"><span class="tag">${META[bl.type].l}</span><div class="tools"><button onclick="move('${bl.id}',-1)">↑</button><button onclick="move('${bl.id}',1)">↓</button><button class="grab" data-grab="${bl.id}">⋮⋮</button><button onclick="del('${bl.id}')">🗑</button></div>${inner}</div>`;
-    if(isB){cc();html+=shell;}else{oc();html+=shell;}
-  });
-  cc();paper.innerHTML=html;
-  paper.querySelectorAll(".blk").forEach(el=>el.addEventListener("click",e=>{if(e.target.closest(".tools"))return;if(el.dataset.id!==selId)select(el.dataset.id);}));
-  wireDrag();wireTable();
+  paper.innerHTML=state.blocks.map(bl=>{
+    const inner=(R[bl.type]||(()=>""))(bl.settings,b,bl);const p=bl.pos||{x:0,y:0,w:180,h:null};
+    const box=`left:${p.x}mm;top:${p.y}mm;width:${p.w}mm;`+(p.h?`height:${p.h}mm;overflow:hidden;`:'');
+    const sel=bl.id===selId;
+    const handles=sel?'<div class="rh e" data-rh="e"></div><div class="rh s" data-rh="s"></div><div class="rh se" data-rh="se"></div>':'';
+    return `<div class="blk ${sel?'sel':''}" data-id="${bl.id}" style="${box}${styleCss(bl.style)}"><span class="tag">${META[bl.type].l}</span><div class="tools"><button title="Front" onclick="toFront(event,'${bl.id}')">▲</button><button title="Delete" onclick="del(event,'${bl.id}')">🗑</button></div>${inner}${handles}</div>`;
+  }).join("");
+  wireTable();
 }
 function wireTable(){
-  document.querySelectorAll('#paper [data-th]').forEach(el=>{el.addEventListener('mousedown',e=>e.stopPropagation());
-    el.addEventListener('input',()=>{const bl=blockById(el.closest('.blk').dataset.id);bl.settings.cols[+el.dataset.c]=el.textContent;});});
-  document.querySelectorAll('#paper [data-td]').forEach(el=>{el.addEventListener('mousedown',e=>e.stopPropagation());
-    el.addEventListener('input',()=>{const bl=blockById(el.closest('.blk').dataset.id);bl.settings.rows[+el.dataset.r][+el.dataset.c]=el.textContent;});});
+  document.querySelectorAll('#paper [data-th]').forEach(el=>{el.addEventListener('input',()=>{blockById(el.closest('.blk').dataset.id).settings.cols[+el.dataset.c]=el.textContent;});});
+  document.querySelectorAll('#paper [data-td]').forEach(el=>{el.addEventListener('input',()=>{blockById(el.closest('.blk').dataset.id).settings.rows[+el.dataset.r][+el.dataset.c]=el.textContent;});});
 }
 
-/* ===== interactions ===== */
-function addBlock(t){const nb=blk(t);const i=selIndex();if(i>=0)state.blocks.splice(i+1,0,nb);else state.blocks.push(nb);selId=nb.id;render();renderProps();}
-function select(id){selId=id;tab="block";setTab("block",true);render();renderProps();}
-function del(id){state.blocks=state.blocks.filter(x=>x.id!==id);if(selId===id)selId=null;render();renderProps();}
-function move(id,d){const i=state.blocks.findIndex(x=>x.id===id),j=i+d;if(j<0||j>=state.blocks.length)return;[state.blocks[i],state.blocks[j]]=[state.blocks[j],state.blocks[i]];render();}
-let dragId=null;
-function wireDrag(){document.querySelectorAll("[data-grab]").forEach(h=>{h.onmousedown=e=>{e.preventDefault();dragId=h.dataset.grab;h.closest(".blk").style.opacity=".5";document.body.style.cursor="grabbing";};});
-  const paper=document.getElementById("paper");
-  paper.onmousemove=e=>{if(!dragId)return;const o=e.target.closest(".blk");paper.querySelectorAll(".blk").forEach(x=>x.classList.remove("drag-over"));if(o&&o.dataset.id!==dragId)o.classList.add("drag-over");};
-  document.onmouseup=e=>{if(!dragId)return;const o=e.target.closest&&e.target.closest(".blk");if(o&&o.dataset.id!==dragId){const f=state.blocks.findIndex(x=>x.id===dragId),t=state.blocks.findIndex(x=>x.id===o.dataset.id);const[m]=state.blocks.splice(f,1);state.blocks.splice(t,0,m);}dragId=null;document.body.style.cursor="";render();};}
+/* drag + resize on the canvas */
+let drag=null;
+document.getElementById("paper").addEventListener("mousedown",function(e){
+  const blk=e.target.closest(".blk");if(!blk)return;
+  if(e.target.closest(".tools"))return;
+  if(e.target.isContentEditable){if(blk.dataset.id!==selId)select(blk.dataset.id);return;}
+  const rh=e.target.closest(".rh");
+  e.preventDefault();
+  if(blk.dataset.id!==selId)select(blk.dataset.id);
+  const b=blockById(blk.dataset.id);if(!b)return;
+  drag={id:b.id,mode:rh?rh.dataset.rh:"move",sx:e.clientX,sy:e.clientY,o:Object.assign({},b.pos)};
+});
+document.addEventListener("mousemove",function(e){
+  if(!drag)return;
+  const dx=(e.clientX-drag.sx)/(scale*PXMM),dy=(e.clientY-drag.sy)/(scale*PXMM);
+  const el=document.querySelector('.blk[data-id="'+drag.id+'"]');const b=blockById(drag.id);if(!el||!b)return;
+  const cur_h=drag.o.h||Math.round(el.offsetHeight/PXMM);
+  if(drag.mode==="move"){const nx=Math.max(0,Math.round(drag.o.x+dx)),ny=Math.max(0,Math.round(drag.o.y+dy));el.style.left=nx+"mm";el.style.top=ny+"mm";drag.pend={x:nx,y:ny,w:b.pos.w,h:b.pos.h};}
+  else if(drag.mode==="e"){const nw=Math.max(10,Math.round(drag.o.w+dx));el.style.width=nw+"mm";drag.pend={x:b.pos.x,y:b.pos.y,w:nw,h:b.pos.h};}
+  else if(drag.mode==="s"){const nh=Math.max(6,Math.round(cur_h+dy));el.style.height=nh+"mm";el.style.overflow="hidden";drag.pend={x:b.pos.x,y:b.pos.y,w:b.pos.w,h:nh};}
+  else if(drag.mode==="se"){const nw=Math.max(10,Math.round(drag.o.w+dx)),nh=Math.max(6,Math.round(cur_h+dy));el.style.width=nw+"mm";el.style.height=nh+"mm";el.style.overflow="hidden";drag.pend={x:b.pos.x,y:b.pos.y,w:nw,h:nh};}
+});
+document.addEventListener("mouseup",function(){if(!drag)return;const d=drag;drag=null;if(d.pend){const b=blockById(d.id);if(b)b.pos=d.pend;renderProps();}});
 
-/* table ops */
+function addBlock(t){let maxB=8;state.blocks.forEach(b=>{const bot=(b.pos.y||0)+(b.pos.h||22);if(bot>maxB)maxB=bot;});const nb=mk(t,{x:14,y:Math.min(maxB+4,270),w:t==="header_banner"||t==="footer_banner"?210:180,h:null});state.blocks.push(nb);selId=nb.id;render();renderProps();}
+function select(id){if(id===selId){renderProps();return;}selId=id;tab="block";setTab("block",true);render();renderProps();}
+function del(e,id){if(e)e.stopPropagation();state.blocks=state.blocks.filter(x=>x.id!==id);if(selId===id)selId=null;render();renderProps();}
+function toFront(e,id){if(e)e.stopPropagation();const i=state.blocks.findIndex(x=>x.id===id);if(i>=0){const[m]=state.blocks.splice(i,1);state.blocks.push(m);render();}}
+function buildPalette(){const groups=[["Elements",ELEM],["Document blocks",BLOCKS.filter(t=>t!=="title")]];document.getElementById("palette").innerHTML=groups.map(g=>`<div class="pgrp">${g[0]}</div><div class="prow">`+g[1].map(t=>`<div class="pblock" onclick="addBlock('${t}')" title="Add ${META[t].l}"><svg viewBox="0 0 24 24">${ICONS[t]||ICONS.text}</svg><span>${META[t].l}</span></div>`).join("")+`</div>`).join("");}
+
+function setTab(t,silent){tab=t;document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("on",x.dataset.tab===t));document.getElementById("propsBlock").style.display=t==="block"?"":"none";document.getElementById("propsBrand").style.display=t==="brand"?"":"none";if(!silent){if(t==="brand")renderBrand();else renderProps();}}
+function setS(k,v){const b=cur();if(!b)return;const p=k.split(".");let o=b.settings;for(let i=0;i<p.length-1;i++)o=o[p[i]];o[p[p.length-1]]=v;render();}
+function setStyle(k,v){const b=cur();if(!b)return;const p=k.split(".");let o=b.style;for(let i=0;i<p.length-1;i++)o=o[p[i]];o[p[p.length-1]]=v;render();}
+function setPos(k,v){const b=cur();if(!b)return;if(v===""){if(k==="h")b.pos.h=null;else return;}else{const n=parseFloat(v);if(isNaN(n))return;b.pos[k]=n;}render();}
+function setAutoH(on){const b=cur();if(!b)return;if(on)b.pos.h=null;else{const el=document.querySelector('.blk[data-id="'+b.id+'"]');b.pos.h=el?Math.round(el.offsetHeight/PXMM):20;}render();renderProps();}
+function setHeadingLevel(lv){const b=cur();b.settings.level=lv;const m={h1:[24,"800"],h2:[15,"700"],h3:[12,"700"],h4:[10,"600"]};b.style.size=m[lv][0];b.style.weight=m[lv][1];render();renderProps();}
+function tx(l,k,v){return `<div class="fld"><label>${l}</label><input type="text" value="${esc(v)}" oninput="setS('${k}',this.value)"></div>`;}
+function ta(l,k,v){return `<div class="fld"><label>${l}</label><textarea oninput="setS('${k}',this.value)">${esc(v)}</textarea></div>`;}
+function ck(l,k,o){return `<label class="chk"><input type="checkbox" ${o?"checked":""} onchange="setS('${k}',this.checked)"> ${l}</label>`;}
+function sg(l,k,v,o){return `<div class="fld"><label>${l}</label><div class="seg">`+o.map(x=>`<button class="${v===x[0]?'on':''}" onclick="setS('${k}','${x[0]}');renderProps()">${x[1]}</button>`).join("")+`</div></div>`;}
+
+function posControls(p){const n=(l,k,v)=>`<div class="fld"><label>${l}</label><input type="text" value="${v===null||v===undefined||v===''?'':v}" oninput="setPos('${k}',this.value)"></div>`;
+  return `<div class="stygrp"><div class="styhead">Position &amp; size (mm)</div><div class="row2">${n('X','x',p.x)}${n('Y','y',p.y)}</div><div class="row2">${n('Width','w',p.w)}${n('Height','h',p.h)}</div><label class="chk"><input type="checkbox" ${p.h===null?'checked':''} onchange="setAutoH(this.checked)"> Auto height (fit content)</label></div>`;}
+function styleControls(st,type){const seg=(l,k,v,o)=>`<div class="fld"><label>${l}</label><div class="seg">`+o.map(x=>`<button class="${v===x[0]?'on':''}" onclick="setStyle('${k}','${x[0]}');renderProps()">${x[1]}</button>`).join("")+`</div></div>`;
+  const num=(l,k,v)=>`<div class="fld"><label>${l}</label><input type="text" value="${v===undefined||v===null?'':v}" oninput="setStyle('${k}',this.value)"></div>`;
+  const col=(l,k,v)=>`<div class="fld"><label>${l}</label><div class="color"><input type="color" value="${v||'#000000'}" oninput="setStyle('${k}',this.value)"><input type="text" value="${esc(v||'')}" placeholder="none" oninput="setStyle('${k}',this.value)"></div></div>`;
+  const ckk=(l,k,o)=>`<label class="chk"><input type="checkbox" ${o?'checked':''} onchange="setStyle('${k}',this.checked);renderProps()"> ${l}</label>`;
+  let h=`<div class="styhead">Style</div>`;h+=seg("Alignment","align",st.align,[["left","Left"],["center","Center"],["right","Right"]]);
+  const showFont=["heading","text","field","box","customer","terms"].includes(type);
+  if(showFont){h+=`<div class="row2">${num("Font size (pt)","size",st.size)}${segW(st.weight)}</div>`;h+=ckk("Italic","italic",st.italic);h+=col("Text color","color",st.color);}
+  h+=col("Background","bg",st.bg);h+=num("Padding (mm)","pad",st.pad);h+=ckk("Border","border.on",st.border.on);
+  if(st.border.on){h+=`<div class="row2">${num("Border width","border.w",st.border.w)}${num("Radius","border.radius",st.border.radius)}</div>`;h+=col("Border color","border.color",st.border.color);h+=seg("Border style","border.style",st.border.style,[["solid","Solid"],["dashed","Dashed"],["dotted","Dotted"]]);}
+  return `<div class="stygrp">`+h+`</div>`;}
+function segW(v){return `<div class="fld"><label>Weight</label><div class="seg">`+[["","Reg"],["600","Semi"],["700","Bold"],["800","Black"]].map(o=>`<button class="${v===o[0]?'on':''}" onclick="setStyle('weight','${o[0]}');renderProps()">${o[1]}</button>`).join("")+`</div></div>`;}
+
+function renderProps(){const host=document.getElementById("propsBlock"),b=cur();
+  if(!b){host.innerHTML=`<div class="noselect">Click a block on the page to edit it,<br>or insert one from the left.</div>`;return;}
+  const s=b.settings,t=b.type;let h=`<div class="ptitle">${META[t].l}</div>`;
+  if(t==="heading"){h+=tx("Text","text",s.text);h+=`<div class="fld"><label>Level</label><div class="seg">`+["h1","h2","h3","h4"].map(l=>`<button class="${s.level===l?'on':''}" onclick="setHeadingLevel('${l}')">${l.toUpperCase()}</button>`).join("")+`</div></div>`;}
+  else if(t==="text"){h+=ta("Text","text",s.text);}
+  else if(t==="field"){h+=`<div class="fld"><label>Document field</label><select onchange="setS('field',this.value)">`+FIELDS.map(f=>`<option value="${f.f}" ${s.field===f.f?'selected':''}>${f.l}</option>`).join("")+`</select></div>`+tx("Prefix","prefix",s.prefix);}
+  else if(t==="image"){h+=tx("Image URL (/files/...)","src",s.src);h+=tx("Width inside box (%)","width",s.width);}
+  else if(t==="divider"){h+=tx("Thickness (px)","thickness",s.thickness);h+=`<div class="fld"><label>Color</label><div class="color"><input type="color" value="${s.color}" oninput="setS('color',this.value)"><input type="text" value="${esc(s.color)}" oninput="setS('color',this.value)"></div></div>`+sg("Style","lstyle",s.lstyle,[["solid","Solid"],["dashed","Dashed"],["dotted","Dotted"]]);}
+  else if(t==="box"){h+=ta("Content (HTML allowed)","html",s.html);}
+  else if(t==="table"){h+=sg("Header color","headerBg",s.headerBg,[["primary","Primary"],["navy","Navy"]]);h+=`<div class="fld"><label>Rows &amp; columns</label><div class="tablebtns"><button onclick="addRow()">+ Row</button><button onclick="addCol()">+ Column</button><button onclick="delRow()">− Row</button><button onclick="delCol()">− Column</button></div></div><div class="hint" style="padding:6px 0 0">Click a cell on the page to edit it.</div>`;}
+  else if(t==="title"){h+=tx("Title text","text",s.text);h+=ck("Show Arabic subtitle","showArabic",s.showArabic);if(s.showArabic)h+=tx("Arabic","arabic",s.arabic);h+=sg("Layout","align",s.align,[["split","Title + Info"],["center","Centered"]]);h+=`<div class="fld"><label>Info box fields</label>`+ck("Quotation No","meta.name",s.meta.name)+ck("Date","meta.date",s.meta.date)+ck("Valid Till","meta.valid_till",s.meta.valid_till)+`</div>`;}
+  else if(t==="customer"){h+=tx("Heading","heading",s.heading);}
+  else if(t==="items"){h+=`<div class="fld"><label>Columns</label>`+ck("Description","cols.desc",s.cols.desc)+ck("Qty","cols.qty",s.cols.qty)+ck("Rate","cols.rate",s.cols.rate)+ck("Amount","cols.amount",s.cols.amount)+`</div>`+ck("Zebra rows","zebra",s.zebra)+sg("Header color","headerColor",s.headerColor,[["primary","Primary"],["navy","Navy"]]);}
+  else if(t==="totals"){h+=sg("Grand-total color","grandColor",s.grandColor,[["primary","Primary"],["navy","Navy"]]);}
+  else if(t==="terms"){h+=tx("Heading","heading",s.heading);}
+  else if(t==="signature"){h+=tx("Label","label",s.label);}
+  else if(t==="header_banner"||t==="footer_banner"){h+=`<div class="noselect" style="padding:14px 0">Uses the banner image from the Branding tab.</div>`;}
+  h+=posControls(b.pos);
+  if(t!=="header_banner"&&t!=="footer_banner")h+=styleControls(b.style,t);
+  h+=`<button class="delblk" onclick="del(null,'${b.id}')">Delete this block</button>`;
+  host.innerHTML=h;}
 function addCol(){const b=cur();b.settings.cols.push("Column");b.settings.rows.forEach(r=>r.push(""));render();}
 function addRow(){const b=cur();b.settings.rows.push(b.settings.cols.map(()=>""));render();}
 function delCol(){const b=cur();if(b.settings.cols.length<=1)return;b.settings.cols.pop();b.settings.rows.forEach(r=>r.pop());render();}
 function delRow(){const b=cur();if(!b.settings.rows.length)return;b.settings.rows.pop();render();}
-
-/* palette */
-function buildPalette(){const groups=[["Elements",ELEM],["Document blocks",BLOCKS.filter(t=>t!=="title")]];
-  document.getElementById("palette").innerHTML=groups.map(g=>`<div class="pgrp">${g[0]}</div><div class="prow">`+g[1].map(t=>`<div class="pblock" onclick="addBlock('${t}')" title="Add ${META[t].l}"><svg viewBox="0 0 24 24">${ICONS[t]||ICONS.text}</svg><span>${META[t].l}</span></div>`).join("")+`</div>`).join("");}
-
-/* ===== properties ===== */
-function setTab(t,silent){tab=t;document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("on",x.dataset.tab===t));
-  document.getElementById("propsBlock").style.display=t==="block"?"":"none";document.getElementById("propsBrand").style.display=t==="brand"?"":"none";
-  if(!silent){if(t==="brand")renderBrand();else renderProps();}}
-function setS(k,v){const b=cur();if(!b)return;const p=k.split(".");let o=b.settings;for(let i=0;i<p.length-1;i++)o=o[p[i]];o[p[p.length-1]]=v;render();}
-function setStyle(k,v){const b=cur();if(!b)return;const p=k.split(".");let o=b.style;for(let i=0;i<p.length-1;i++)o=o[p[i]];o[p[p.length-1]]=v;render();}
-function setHeadingLevel(lv){const b=cur();b.settings.level=lv;const m={h1:[24,"800"],h2:[15,"700"],h3:[12,"700"],h4:[10,"600"]};b.style.size=m[lv][0];b.style.weight=m[lv][1];render();renderProps();}
-
-function tx(lbl,k,v){return `<div class="fld"><label>${lbl}</label><input type="text" value="${esc(v)}" oninput="setS('${k}',this.value)"></div>`;}
-function ta(lbl,k,v){return `<div class="fld"><label>${lbl}</label><textarea oninput="setS('${k}',this.value)">${esc(v)}</textarea></div>`;}
-function ck(lbl,k,on){return `<label class="chk"><input type="checkbox" ${on?"checked":""} onchange="setS('${k}',this.checked)"> ${lbl}</label>`;}
-function sg(lbl,k,v,opts){return `<div class="fld"><label>${lbl}</label><div class="seg">`+opts.map(o=>`<button class="${v===o[0]?'on':''}" onclick="setS('${k}','${o[0]}');renderProps()">${o[1]}</button>`).join("")+`</div></div>`;}
-
-function styleControls(st,type){
-  const seg=(lbl,k,v,opts)=>`<div class="fld"><label>${lbl}</label><div class="seg">`+opts.map(o=>`<button class="${v===o[0]?'on':''}" onclick="setStyle('${k}','${o[0]}');renderProps()">${o[1]}</button>`).join("")+`</div></div>`;
-  const num=(lbl,k,v)=>`<div class="fld"><label>${lbl}</label><input type="text" value="${v===undefined||v===null?'':v}" oninput="setStyle('${k}',this.value)"></div>`;
-  const col=(lbl,k,v)=>`<div class="fld"><label>${lbl}</label><div class="color"><input type="color" value="${v||'#000000'}" oninput="setStyle('${k}',this.value)"><input type="text" value="${esc(v||'')}" placeholder="none" oninput="setStyle('${k}',this.value)"></div></div>`;
-  const ckk=(lbl,k,on)=>`<label class="chk"><input type="checkbox" ${on?'checked':''} onchange="setStyle('${k}',this.checked);renderProps()"> ${lbl}</label>`;
-  let h=`<div class="styhead">Style &amp; layout</div>`;
-  h+=seg("Alignment","align",st.align,[["left","Left"],["center","Center"],["right","Right"]]);
-  const showFont=["heading","text","field","box","customer","terms"].includes(type)||type===undefined;
-  if(showFont){h+=`<div class="row2">${num("Font size (pt)","size",st.size)}${seg2("Weight","weight",st.weight)}</div>`;h+=ckk("Italic","italic",st.italic);h+=col("Text color","color",st.color);}
-  h+=col("Background","bg",st.bg);
-  h+=`<div class="row2">${num("Margin top (mm)","mt",st.mt)}${num("Margin bottom","mb",st.mb)}</div>`;
-  h+=`<div class="row2">${num("Padding (mm)","pad",st.pad)}${num("Width (e.g. 60mm)","width",st.width)}</div>`;
-  h+=ckk("Border","border.on",st.border.on);
-  if(st.border.on){h+=`<div class="row2">${num("Border width (px)","border.w",st.border.w)}${num("Corner radius (px)","border.radius",st.border.radius)}</div>`;
-    h+=col("Border color","border.color",st.border.color);
-    h+=seg("Border style","border.style",st.border.style,[["solid","Solid"],["dashed","Dashed"],["dotted","Dotted"]]);}
-  return `<div class="stygrp">`+h+`</div>`;
-}
-function seg2(lbl,k,v){return `<div class="fld"><label>${lbl}</label><div class="seg">`+[["","Reg"],["600","Semi"],["700","Bold"],["800","Black"]].map(o=>`<button class="${v===o[0]?'on':''}" onclick="setStyle('${k}','${o[0]}');renderProps()">${o[1]}</button>`).join("")+`</div></div>`;}
-
-function renderProps(){
-  const host=document.getElementById("propsBlock"),b=cur();
-  if(!b){host.innerHTML=`<div class="noselect">Select a block on the page to edit it,<br>or insert one from the left.</div>`;return;}
-  const s=b.settings,t=b.type;let h=`<div class="ptitle">${META[t].l}</div>`;
-  if(t==="heading"){h+=tx("Text","text",s.text);h+=`<div class="fld"><label>Level</label><div class="seg">`+["h1","h2","h3","h4"].map(l=>`<button class="${s.level===l?'on':''}" onclick="setHeadingLevel('${l}')">${l.toUpperCase()}</button>`).join("")+`</div></div>`;}
-  else if(t==="text"){h+=ta("Text","text",s.text);}
-  else if(t==="field"){h+=`<div class="fld"><label>Document field</label><select onchange="setS('field',this.value)">`+FIELDS.map(f=>`<option value="${f.f}" ${s.field===f.f?'selected':''}>${f.l}</option>`).join("")+`</select></div>`+tx("Prefix (e.g. 'Ref: ')","prefix",s.prefix);}
-  else if(t==="image"){h+=tx("Image URL (/files/...)","src",s.src);h+=tx("Width (%)","width",s.width);}
-  else if(t==="divider"){h+=`<div class="row2">${tx("Thickness (px)","thickness",s.thickness)}</div>`;h+=`<div class="fld"><label>Color</label><div class="color"><input type="color" value="${s.color}" oninput="setS('color',this.value)"><input type="text" value="${esc(s.color)}" oninput="setS('color',this.value)"></div></div>`;h+=sg("Style","lstyle",s.lstyle,[["solid","Solid"],["dashed","Dashed"],["dotted","Dotted"]]);}
-  else if(t==="box"){h+=ta("Content (HTML allowed)","html",s.html);}
-  else if(t==="table"){h+=sg("Header color","headerBg",s.headerBg,[["primary","Primary"],["navy","Navy"]]);
-    h+=`<div class="fld"><label>Rows &amp; columns</label><div class="tablebtns"><button onclick="addRow()">+ Row</button><button onclick="addCol()">+ Column</button><button onclick="delRow()">− Row</button><button onclick="delCol()">− Column</button></div></div><div class="hint" style="padding:6px 0 0">Click any cell on the page to edit its text.</div>`;}
-  else if(t==="title"){h+=tx("Title text","text",s.text);h+=ck("Show Arabic subtitle","showArabic",s.showArabic);if(s.showArabic)h+=tx("Arabic","arabic",s.arabic);h+=sg("Layout","align",s.align,[["split","Title + Info"],["center","Centered"]]);h+=`<div class="fld"><label>Info box fields</label>`+ck("Quotation No","meta.name",s.meta.name)+ck("Date","meta.date",s.meta.date)+ck("Valid Till","meta.valid_till",s.meta.valid_till)+`</div>`;}
-  else if(t==="customer"){h+=tx("Heading","heading",s.heading);}
-  else if(t==="items"){h+=`<div class="fld"><label>Columns</label>`+ck("Description line","cols.desc",s.cols.desc)+ck("Qty","cols.qty",s.cols.qty)+ck("Rate","cols.rate",s.cols.rate)+ck("Amount","cols.amount",s.cols.amount)+`</div>`+ck("Zebra striped rows","zebra",s.zebra)+sg("Header color","headerColor",s.headerColor,[["primary","Primary"],["navy","Navy"]]);}
-  else if(t==="totals"){h+=sg("Grand-total color","grandColor",s.grandColor,[["primary","Primary"],["navy","Navy"]]);}
-  else if(t==="terms"){h+=tx("Heading","heading",s.heading);}
-  else if(t==="signature"){h+=tx("Signature label","label",s.label);}
-  else if(BANNER.has(t)){h+=`<div class="noselect">Uses the banner image from the <b>Branding</b> tab. If empty, a colored placeholder shows.</div>`;}
-  if(!BANNER.has(t))h+=styleControls(b.style,t);
-  h+=`<button class="delblk" onclick="del('${b.id}')">Delete this block</button>`;
-  host.innerHTML=h;
-}
 function setB(k,v){state.branding[k]=v;render();}
-function renderBrand(){const b=state.branding;
-  document.getElementById("propsBrand").innerHTML=`<div class="ptitle">Branding</div>`+
-    `<div class="fld"><label>Primary color</label><div class="color"><input type="color" value="${b.primary}" oninput="setB('primary',this.value)"><input type="text" value="${esc(b.primary)}" oninput="setB('primary',this.value)"></div></div>`+
-    `<div class="fld"><label>Secondary / navy</label><div class="color"><input type="color" value="${b.navy}" oninput="setB('navy',this.value)"><input type="text" value="${esc(b.navy)}" oninput="setB('navy',this.value)"></div></div>`+
-    `<div class="fld"><label>Font</label><select onchange="setB('font',this.value)">`+["Montserrat","Cairo","Arial","Tahoma"].map(f=>`<option ${b.font===f?'selected':''}>${f}</option>`).join("")+`</select></div>`+
-    `<div class="fld"><label>Header image URL</label><input type="text" value="${esc(b.header_image)}" oninput="setB('header_image',this.value)"></div>`+
-    `<div class="fld"><label>Footer image URL</label><input type="text" value="${esc(b.footer_image)}" oninput="setB('footer_image',this.value)"></div>`+
-    `<div class="hint" style="padding:6px 0 0">In ERPNext these come from BrandPDF Settings (logo upload).</div>`;}
+function renderBrand(){const b=state.branding;document.getElementById("propsBrand").innerHTML=`<div class="ptitle">Branding</div><div class="fld"><label>Primary color</label><div class="color"><input type="color" value="${b.primary}" oninput="setB('primary',this.value)"><input type="text" value="${esc(b.primary)}" oninput="setB('primary',this.value)"></div></div><div class="fld"><label>Secondary / navy</label><div class="color"><input type="color" value="${b.navy}" oninput="setB('navy',this.value)"><input type="text" value="${esc(b.navy)}" oninput="setB('navy',this.value)"></div></div><div class="fld"><label>Font</label><select onchange="setB('font',this.value)">`+["Montserrat","Cairo","Arial","Tahoma"].map(f=>`<option ${b.font===f?'selected':''}>${f}</option>`).join("")+`</select></div><div class="fld"><label>Header image URL</label><input type="text" value="${esc(b.header_image)}" oninput="setB('header_image',this.value)"></div><div class="fld"><label>Footer image URL</label><input type="text" value="${esc(b.footer_image)}" oninput="setB('footer_image',this.value)"></div>`;}
 
-/* ===== misc ===== */
-function zoom(d){scale=Math.min(1.6,Math.max(.4,scale+d));document.getElementById("paperwrap").style.transform=`scale(${scale})`;document.getElementById("zoomv").textContent=Math.round(scale*100)+"%";}
-function definition(){return{name:document.getElementById("fmtName").value,branding:state.branding,blocks:state.blocks.map(b=>({type:b.type,settings:b.settings,style:b.style}))};}
+function zoom(d){scale=Math.min(1.6,Math.max(.35,scale+d));document.getElementById("paperwrap").style.transform=`scale(${scale})`;document.getElementById("zoomv").textContent=Math.round(scale*100)+"%";}
+function definition(){return{name:document.getElementById("fmtName").value,layout:"absolute",branding:state.branding,blocks:state.blocks.map(b=>({type:b.type,settings:b.settings,style:b.style,pos:b.pos}))};}
 function exportJSON(){const blob=new Blob([JSON.stringify(definition(),null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=(document.getElementById("fmtName").value||"format")+".json";a.click();}
 const EMBED=(window.parent&&window.parent!==window);
-function save(){const def=definition();
-  if(EMBED){window.parent.postMessage({type:"brandpdf-save",definition:def},window.location.origin);flashSaved();return;}
-  if(window.frappe&&frappe.call){frappe.call({method:"brandpdf.api.save_format",args:{definition:JSON.stringify(def)},callback:()=>frappe.show_alert({message:"Format saved",indicator:"green"})});return;}
-  console.log("DEFINITION",def);alert("Saved (demo) - definition logged to console.");}
+function save(){const def=definition();if(EMBED){window.parent.postMessage({type:"brandpdf-save",definition:def},window.location.origin);flashSaved();return;}if(window.frappe&&frappe.call){frappe.call({method:"brandpdf.api.save_format",args:{definition:JSON.stringify(def)},callback:()=>frappe.show_alert({message:"Format saved",indicator:"green"})});return;}console.log("DEFINITION",def);alert("Saved (demo) - logged to console.");}
 function flashSaved(){const b=document.querySelector(".btn.primary");if(!b)return;const t=b.textContent;b.textContent="✓ Saved";setTimeout(function(){b.textContent=t;},1400);}
-function loadDefinition(def){try{
-  if(def.branding)state.branding=Object.assign({primary:"#1C75BC",navy:"#1A1E2A",font:"Montserrat",header_image:"",footer_image:""},def.branding);
-  if(Array.isArray(def.blocks))state.blocks=def.blocks.map(function(b){return{id:"b"+(idc++),type:b.type,settings:b.settings||(DSET[b.type]?DSET[b.type]():{}),style:b.style||dstyle(b.type)};});
-  if(def.name)document.getElementById("fmtName").value=def.name;
-  selId=null;render();renderProps();renderBrand();
-}catch(e){console.error("BrandPDF load failed",e);}}
+function loadDefinition(def){try{if(def.branding)state.branding=Object.assign({primary:"#1C75BC",navy:"#1A1E2A",font:"Montserrat",header_image:"",footer_image:""},def.branding);
+  if(Array.isArray(def.blocks))state.blocks=def.blocks.map(function(b,i){return{id:"b"+(idc++),type:b.type,settings:b.settings||(DSET[b.type]?DSET[b.type]():{}),style:b.style||dstyle(b.type),pos:b.pos||{x:14,y:8+i*16,w:180,h:null}};});
+  if(def.name)document.getElementById("fmtName").value=def.name;selId=null;render();renderProps();renderBrand();}catch(e){console.error("BrandPDF load failed",e);}}
 window.addEventListener("message",function(e){if(e.origin!==window.location.origin)return;const d=e.data||{};if(d.type==="brandpdf-load"&&d.definition)loadDefinition(d.definition);if(d.type==="brandpdf-saved")flashSaved();});
 
 buildPalette();render();renderProps();renderBrand();zoom(0);

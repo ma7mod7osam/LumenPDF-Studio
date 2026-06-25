@@ -307,10 +307,11 @@ def _field_value(doc, field):
     return "" if v is None else str(v)
 
 
-def _style_css(style, type_=None):
+def _style_css(style, type_=None, absolute=False):
     """Validate the builder's style object into a safe inline CSS string (mirror of the
     builder's styleCss). Colors are hex-only; sizes/spacings numeric; enums allow-listed —
-    so a saved style can never inject arbitrary CSS."""
+    so a saved style can never inject arbitrary CSS. In absolute (free-canvas) layout, margins
+    and width are skipped (position/size come from the block's pos)."""
     if not isinstance(style, dict):
         style = {}
     p = []
@@ -329,13 +330,15 @@ def _style_css(style, type_=None):
         p.append("color:" + style["color"].strip())
     if _hexok(style.get("bg")):
         p.append("background:" + style["bg"].strip())
-    for key, css in (("mt", "margin-top"), ("mb", "margin-bottom"), ("pad", "padding")):
+    spacing = (("pad", "padding"),) if absolute else (("mt", "margin-top"), ("mb", "margin-bottom"), ("pad", "padding"))
+    for key, css in spacing:
         v = _num(style.get(key))
         if v is not None:
             p.append(f"{css}:{_fmt_num(v)}mm")
-    width = style.get("width")
-    if isinstance(width, str) and _WIDTH.match(width.strip()):
-        p.append("width:" + width.strip())
+    if not absolute:
+        width = style.get("width")
+        if isinstance(width, str) and _WIDTH.match(width.strip()):
+            p.append("width:" + width.strip())
     b = style.get("border") or {}
     if isinstance(b, dict) and b.get("on"):
         bw = _num(b.get("w"), 1)
@@ -629,6 +632,8 @@ def render_definition(doc, definition, terms_html=""):
         return ""
     branding = _branding_from_def(definition, doc)
     ctx = {"terms_html": terms_html}
+    if definition.get("layout") == "absolute":
+        return _render_absolute(doc, definition, branding, ctx)
     parts = [base_css(branding)]
     open_ = [False]
 
@@ -661,4 +666,39 @@ def render_definition(doc, definition, terms_html=""):
             wrap = _style_css(bl.get("style") or {}, t)
             parts.append(f'<div style="{wrap}">{inner}</div>' if wrap else inner)
     close()
+    return "".join(parts)
+
+
+def _render_absolute(doc, definition, branding, ctx):
+    """Free-canvas layout: every block is absolutely positioned by its pos {x,y,w,h} in mm."""
+    font = branding.get("font") or "Montserrat"
+    navy = branding.get("navy", "#1A1E2A")
+    parts = [base_css(branding)]
+    parts.append(
+        f'<div style="position:relative;width:210mm;height:297mm;overflow:hidden;'
+        f"font-family:'{font}','Segoe UI',Arial,sans-serif;color:{navy};font-size:8.5pt;"
+        f'-webkit-print-color-adjust:exact;print-color-adjust:exact;">'
+    )
+    blocks_list = definition.get("blocks")
+    if not isinstance(blocks_list, list):
+        blocks_list = []
+    for bl in blocks_list:
+        if not isinstance(bl, dict):
+            continue
+        t = bl.get("type")
+        fn = DEF_RENDERERS.get(t)
+        if not fn:
+            continue
+        inner = fn(doc, branding, bl.get("settings") or {}, ctx)
+        pos = bl.get("pos") or {}
+        x = _num(pos.get("x"), 0)
+        y = _num(pos.get("y"), 0)
+        w = _num(pos.get("w"), 180)
+        h = _num(pos.get("h"))
+        box = f"position:absolute;left:{_fmt_num(x)}mm;top:{_fmt_num(y)}mm;width:{_fmt_num(w)}mm;"
+        if h:
+            box += f"height:{_fmt_num(h)}mm;overflow:hidden;"
+        wrap = _style_css(bl.get("style") or {}, t, absolute=True)
+        parts.append(f'<div style="{box}{wrap}">{inner}</div>')
+    parts.append("</div>")
     return "".join(parts)
