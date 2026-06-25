@@ -22,16 +22,22 @@ def render_html(doc) -> str:
     terms_html = sanitize_html(terms_raw) if terms_raw else ""
 
     kind, value = resolver.resolve_template(doc)
+    allowed = {branding.get("header_image"), branding.get("footer_image")}
     if kind == "blocks":
         from brandpdf import blocks as blocks_mod
         tmpl = frappe.get_doc("BrandPDF Template", value)
-        html = blocks_mod.render_blocks(doc, branding, tmpl.get("blocks"), terms_html)
+        definition = tmpl.get("definition")
+        if definition:
+            # The visual builder's saved design — render it exactly as previewed.
+            html = blocks_mod.render_definition(doc, definition, terms_html)
+            allowed |= blocks_mod.collect_image_srcs(definition)
+        else:
+            html = blocks_mod.render_blocks(doc, branding, tmpl.get("blocks"), terms_html)
     else:
         # A "body" template is raw Jinja authored ONLY by System Manager (trusted, review #1).
         src = _read_template(value) if kind == "file" else value
         html = frappe.render_template(src, {"doc": doc, "branding": branding, "terms_html": terms_html})
 
-    allowed = {branding.get("header_image"), branding.get("footer_image")}
     return assets.inline_images(html, allowed={a for a in allowed if a})
 
 
