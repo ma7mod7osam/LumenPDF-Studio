@@ -8,22 +8,14 @@
   :root{
     --bg:#0f1420; --panel:#151b2b; --panel2:#1b2236; --line:#26304a; --line2:#2f3b59;
     --ink:#e8edf7; --mut:#8a96b2; --mut2:#5f6c8c; --accent:#2f7bf6; --accent2:#1C75BC;
-    --ok:#2ecc8f; --danger:#ef5e6e; --chip:#202a42;
-    --paper:#ffffff; --shadow:0 18px 50px rgba(0,0,0,.45);
-    --radius:10px;
+    --ok:#2ecc8f; --danger:#ef5e6e; --paper:#fff; --shadow:0 18px 50px rgba(0,0,0,.45); --radius:10px;
   }
   *{box-sizing:border-box}
   html,body{height:100%;margin:0}
-  body{
-    background:var(--bg); color:var(--ink);
-    font-family:'Inter','Segoe UI',system-ui,-apple-system,Arial,sans-serif;
-    font-size:13px; -webkit-font-smoothing:antialiased; overflow:hidden;
-  }
-  .app{display:grid; grid-template-rows:52px 1fr; height:100vh}
-
-  /* ---- top bar ---- */
-  .top{display:flex; align-items:center; gap:14px; padding:0 16px; background:var(--panel); border-bottom:1px solid var(--line)}
-  .brand{display:flex; align-items:center; gap:9px; font-weight:700; letter-spacing:.2px}
+  body{background:var(--bg);color:var(--ink);font-family:'Inter','Segoe UI',system-ui,Arial,sans-serif;font-size:13px;-webkit-font-smoothing:antialiased;overflow:hidden}
+  .app{display:grid;grid-template-rows:52px 1fr;height:100vh}
+  .top{display:flex;align-items:center;gap:14px;padding:0 16px;background:var(--panel);border-bottom:1px solid var(--line)}
+  .brand{display:flex;align-items:center;gap:9px;font-weight:700}
   .brand .dot{width:22px;height:22px;border-radius:6px;background:linear-gradient(135deg,#2f7bf6,#1C75BC);display:grid;place-items:center;font-size:12px;color:#fff;font-weight:800}
   .brand small{color:var(--mut);font-weight:500}
   .fmt-name{background:var(--panel2);border:1px solid var(--line2);color:var(--ink);border-radius:8px;padding:6px 10px;font-size:13px;min-width:200px}
@@ -36,65 +28,60 @@
   .zoom{display:flex;align-items:center;gap:6px;color:var(--mut)}
   .zoom button{width:26px;height:26px;border-radius:7px;border:1px solid var(--line2);background:var(--panel2);color:var(--ink);cursor:pointer;font-size:14px}
 
-  /* ---- body grid ---- */
-  .body{display:grid; grid-template-columns:236px 1fr 296px; min-height:0}
-  .rail{background:var(--panel); border-right:1px solid var(--line); overflow:auto}
+  .body{display:grid;grid-template-columns:230px 1fr 312px;min-height:0}
+  .rail{background:var(--panel);border-right:1px solid var(--line);overflow:auto}
   .rail.right{border-right:0;border-left:1px solid var(--line)}
-  .rail h4{margin:0;padding:14px 16px 8px;font-size:10.5px;letter-spacing:1.4px;text-transform:uppercase;color:var(--mut2);font-weight:700}
-  .palette{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:6px 12px 16px}
-  .pblock{background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:11px 8px;text-align:center;cursor:grab;transition:.12s;user-select:none}
+  .rail h4{margin:0;padding:14px 16px 4px;font-size:10.5px;letter-spacing:1.4px;text-transform:uppercase;color:var(--mut2);font-weight:700}
+  #palette{padding:4px 12px 16px}
+  .pgrp{font-size:9.5px;letter-spacing:1.2px;text-transform:uppercase;color:var(--mut2);font-weight:700;margin:12px 4px 6px}
+  .prow{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .pblock{background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:10px 6px;text-align:center;cursor:pointer;transition:.12s;user-select:none}
   .pblock:hover{border-color:var(--accent);transform:translateY(-1px);background:var(--panel)}
-  .pblock svg{width:20px;height:20px;stroke:#9db4e6;fill:none;stroke-width:1.7;margin-bottom:5px}
-  .pblock span{display:block;font-size:11px;color:var(--mut);font-weight:600}
-  .hint{padding:0 16px 16px;color:var(--mut2);font-size:11px;line-height:1.5}
+  .pblock svg{width:19px;height:19px;stroke:#9db4e6;fill:none;stroke-width:1.7;margin-bottom:4px}
+  .pblock span{display:block;font-size:10.5px;color:var(--mut);font-weight:600}
+  .hint{padding:8px 16px 16px;color:var(--mut2);font-size:11px;line-height:1.5}
 
-  /* ---- canvas ---- */
-  .stage{background:
-      radial-gradient(circle at 1px 1px, #1a2236 1px, transparent 0) 0 0/22px 22px,
-      var(--bg);
-    overflow:auto; position:relative; padding:34px 20px 80px}
-  .paperwrap{margin:0 auto; width:max-content; transform-origin:top center}
-  .paper{
-    width:210mm; min-height:297mm; background:var(--paper); color:#1A1E2A;
-    box-shadow:var(--shadow); border-radius:2px; position:relative; overflow:hidden;
-    font-family:'Montserrat','Segoe UI',Arial,sans-serif;
-  }
-  /* edit shells */
-  .blk{position:relative; outline:1.5px dashed transparent; transition:outline-color .1s}
+  .stage{background:radial-gradient(circle at 1px 1px,#1a2236 1px,transparent 0) 0 0/22px 22px,var(--bg);overflow:auto;position:relative;padding:34px 20px 90px}
+  .paperwrap{margin:0 auto;width:max-content;transform-origin:top center}
+  .paper{width:210mm;min-height:297mm;background:var(--paper);color:#1A1E2A;box-shadow:var(--shadow);border-radius:2px;position:relative;overflow:hidden;font-family:'Montserrat','Segoe UI',Arial,sans-serif}
+  .blk{position:relative;outline:1.5px dashed transparent;transition:outline-color .1s}
   .blk:hover{outline-color:#bcd2ff}
   .blk.sel{outline:2px solid var(--accent)}
-  .blk .tools{position:absolute; top:4px; right:4px; display:none; gap:3px; z-index:5}
+  .blk .tools{position:absolute;top:4px;right:4px;display:none;gap:3px;z-index:5}
   .blk:hover .tools,.blk.sel .tools{display:flex}
   .blk .tools button{width:24px;height:24px;border-radius:6px;border:0;background:#1A1E2Aee;color:#fff;cursor:pointer;font-size:12px;display:grid;place-items:center}
   .blk .tools button:hover{background:var(--accent)}
-  .blk .tag{position:absolute; top:4px; left:4px; display:none; background:var(--accent); color:#fff; font-size:9.5px; font-weight:700; letter-spacing:.4px; text-transform:uppercase; padding:2px 7px; border-radius:5px; z-index:5}
+  .blk .tag{position:absolute;top:4px;left:4px;display:none;background:var(--accent);color:#fff;font-size:9.5px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;padding:2px 7px;border-radius:5px;z-index:5}
   .blk:hover .tag,.blk.sel .tag{display:block}
   .blk.drag-over{outline:2px solid var(--ok)}
-  .dropline{height:2px;background:var(--ok);margin:0 14mm}
+  .blk [contenteditable]:focus{outline:2px solid var(--accent);outline-offset:-2px}
+  .empty{padding:70px 20px;text-align:center;color:#9aa6c2}
 
-  .empty{padding:60px 20px;text-align:center;color:#9aa6c2}
-
-  /* ---- right properties ---- */
-  .props{padding:6px 16px 30px}
   .tabs{display:flex;gap:4px;padding:10px 12px 0}
   .tab{flex:1;text-align:center;padding:8px;border-radius:8px 8px 0 0;cursor:pointer;color:var(--mut);font-weight:600;font-size:12px;border:1px solid transparent;border-bottom:0}
   .tab.on{background:var(--panel);color:var(--ink);border-color:var(--line)}
-  .fld{margin:12px 0}
+  .props{padding:6px 16px 40px}
+  .ptitle{font-weight:700;margin:12px 2px 2px;font-size:13px}
+  .fld{margin:11px 0}
   .fld label{display:block;font-size:11px;color:var(--mut);margin-bottom:5px;font-weight:600}
   .fld input[type=text],.fld textarea,.fld select{width:100%;background:var(--panel2);border:1px solid var(--line2);color:var(--ink);border-radius:8px;padding:8px 10px;font-size:12.5px;font-family:inherit}
-  .fld textarea{min-height:90px;resize:vertical}
-  .row{display:flex;gap:8px;align-items:center}
-  .chk{display:flex;align-items:center;gap:8px;padding:6px 0;font-size:12.5px;color:var(--ink)}
+  .fld textarea{min-height:80px;resize:vertical}
+  .row2{display:flex;gap:8px}.row2>*{flex:1;margin:11px 0}
+  .chk{display:flex;align-items:center;gap:8px;padding:5px 0;font-size:12.5px;color:var(--ink)}
   .chk input{width:15px;height:15px;accent-color:var(--accent)}
   .color{display:flex;align-items:center;gap:8px}
   .color input[type=color]{width:34px;height:30px;border:1px solid var(--line2);border-radius:7px;background:none;padding:2px;cursor:pointer}
   .seg{display:flex;border:1px solid var(--line2);border-radius:8px;overflow:hidden}
-  .seg button{flex:1;background:var(--panel2);color:var(--mut);border:0;padding:7px;cursor:pointer;font-size:12px}
+  .seg button{flex:1;background:var(--panel2);color:var(--mut);border:0;padding:7px 4px;cursor:pointer;font-size:11.5px}
   .seg button.on{background:var(--accent);color:#fff}
+  .stygrp{margin-top:16px;border-top:1px solid var(--line);padding-top:6px}
+  .styhead{font-size:10px;letter-spacing:1.2px;text-transform:uppercase;color:var(--mut2);font-weight:700;margin:8px 2px}
+  .tablebtns{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:8px}
+  .tablebtns button{background:var(--panel2);border:1px solid var(--line2);color:var(--ink);border-radius:8px;padding:7px;cursor:pointer;font-size:12px}
   .noselect{color:var(--mut2);text-align:center;padding:36px 16px;font-size:12px;line-height:1.6}
   .delblk{margin-top:18px;width:100%;border:1px solid #5a2a32;background:#2a1820;color:#ff9aa6;border-radius:8px;padding:9px;cursor:pointer;font-weight:600}
 
-  /* ====== DOCUMENT CSS (mirror of brandpdf/blocks.py base_css), scoped to .paper ====== */
+  /* ===== document CSS (scoped to .paper, mirrors blocks.py) ===== */
   .paper img{max-width:100%}
   .paper .bs-banner{width:100%;display:block}
   .paper .bs-content{color:#1A1E2A;font-size:8.5pt;padding:6mm 14mm}
@@ -105,11 +92,10 @@
   .paper table.bs-meta{display:inline-block;text-align:left;border:1px solid #cfe5f6;border-collapse:collapse;font-size:8pt}
   .paper table.bs-meta td{border:1px solid #cfe5f6;padding:3px 7px}
   .paper table.bs-meta td.k{font-weight:600}
-  .paper .bs-billto{margin-bottom:6mm}
   .paper .bs-billto .lbl{font-size:7pt;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:3px}
   .paper .bs-billto .name{font-size:10pt;font-weight:700}
   .paper .bs-billto .addr{color:#6b6b6e;font-size:8pt;line-height:1.5}
-  .paper table.bs-items{width:100%;border-collapse:collapse;margin-bottom:6mm;table-layout:fixed}
+  .paper table.bs-items{width:100%;border-collapse:collapse;table-layout:fixed}
   .paper table.bs-items th,.paper table.bs-items td{word-wrap:break-word}
   .paper table.bs-items thead th{color:#fff;font-weight:600;font-size:7.5pt;padding:6px 8px;text-align:left}
   .paper table.bs-items thead th.num{text-align:right}
@@ -137,23 +123,10 @@
     <button class="btn ghost" onclick="exportJSON()">⇩ Export</button>
     <button class="btn primary" onclick="save()">✓ Save</button>
   </div>
-
   <div class="body">
-    <!-- LEFT: palette -->
-    <div class="rail">
-      <h4>Add block</h4>
-      <div class="palette" id="palette"></div>
-      <div class="hint">Click a block to add it, or drag it onto the page. Drag the ⋮⋮ handle to reorder.</div>
-    </div>
-
-    <!-- CENTER: canvas -->
-    <div class="stage" id="stage">
-      <div class="paperwrap" id="paperwrap">
-        <div class="paper" id="paper"></div>
-      </div>
-    </div>
-
-    <!-- RIGHT: properties -->
+    <div class="rail"><h4>Insert</h4><div id="palette"></div>
+      <div class="hint">Click to add. Click a block on the page to edit it. Drag the ⋮⋮ handle to reorder. Table cells are editable right on the page.</div></div>
+    <div class="stage" id="stage"><div class="paperwrap" id="paperwrap"><div class="paper" id="paper"></div></div></div>
     <div class="rail right">
       <div class="tabs">
         <div class="tab on" data-tab="block" onclick="setTab('block')">Block</div>
@@ -164,257 +137,253 @@
     </div>
   </div>
 </div>
-
 <script>
-/* ============================ sample document ============================ */
-const SAMPLE = {
-  name:"SAL-QTN-2026-00006", transaction_date:"25-06-2026", valid_till:"25-07-2026",
-  customer_name:"Hasan Najem", address_display:"Seef 436, Road 3620, Building 925<br>SR360 Tower, Office 112, Bahrain",
-  total:"BHD 1,685.000", grand_total:"BHD 1,853.500", discount_amount:"",
-  items:[
-    {n:"CCTV", q:"1 Service", r:"BHD 0.000", a:"BHD 0.000"},
-    {n:"HIKVISION 6 MP ColorVu 3.0 Fixed Bullet Network Camera", q:"38 Pcs", r:"BHD 27.500", a:"BHD 1,045.000", d:"High quality imaging with 8 MP resolution"},
-    {n:"HIKVISION 64-ch 2U 4K AcuSense NVR", q:"2 Pcs", r:"BHD 322.500", a:"BHD 645.000"},
-    {n:"Ultrastar DC HA340 10TB Enterprise HDD", q:"8 Pcs", r:"BHD 165.000", a:"BHD 1,320.000"},
-  ],
-  taxes:[{desc:"VAT 10%", amt:"BHD 168.500"}],
-  payment_schedule:[
-    {t:"Advance", due:"25-06-2026", pct:"50.0", amt:"BHD 926.750"},
-    {t:"On Delivery", due:"25-07-2026", pct:"50.0", amt:"BHD 926.750"},
-  ],
-  terms:"Prices are valid for 30 days. Payment due Net 30. Warranty per manufacturer terms."
-};
+/* ===== sample data ===== */
+const SAMPLE={name:"SAL-QTN-2026-00006",transaction_date:"25-06-2026",valid_till:"25-07-2026",customer_name:"Hasan Najem",company:"BSTC W.L.L",
+  address_display:"Seef 436, Road 3620, Building 925<br>SR360 Tower, Office 112, Bahrain",total:"BHD 1,685.000",grand_total:"BHD 1,853.500",
+  items:[{n:"CCTV",q:"1 Service",r:"BHD 0.000",a:"BHD 0.000"},
+    {n:"HIKVISION 6 MP ColorVu 3.0 Fixed Bullet Network Camera",q:"38 Pcs",r:"BHD 27.500",a:"BHD 1,045.000",d:"High quality imaging, 8 MP"},
+    {n:"HIKVISION 64-ch 2U 4K AcuSense NVR",q:"2 Pcs",r:"BHD 322.500",a:"BHD 645.000"}],
+  taxes:[{desc:"VAT 10%",amt:"BHD 168.500"}],
+  payment_schedule:[{t:"Advance",due:"25-06-2026",pct:"50.0",amt:"BHD 926.750"},{t:"On Delivery",due:"25-07-2026",pct:"50.0",amt:"BHD 926.750"}],
+  terms:"Prices valid for 30 days. Payment due Net 30. Warranty per manufacturer terms."};
+const FIELDS=[{f:"name",l:"Quotation No",v:SAMPLE.name},{f:"customer_name",l:"Customer Name",v:SAMPLE.customer_name},
+  {f:"transaction_date",l:"Date",v:SAMPLE.transaction_date},{f:"valid_till",l:"Valid Till",v:SAMPLE.valid_till},
+  {f:"grand_total",l:"Grand Total",v:SAMPLE.grand_total},{f:"total",l:"Subtotal",v:SAMPLE.total},{f:"company",l:"Company",v:SAMPLE.company}];
+function fieldVal(f){const x=FIELDS.find(z=>z.f===f);return x?x.v:"";}
 
-/* ============================ block registry ============================ */
-const ICONS = {
+/* ===== registry ===== */
+const ICONS={
+  heading:'<path d="M6 4v16M18 4v16M6 12h12"/>',
+  text:'<line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="14" y2="17"/>',
+  field:'<rect x="3" y="8" width="18" height="8" rx="2"/><line x1="7" y1="12" x2="11" y2="12"/>',
+  image:'<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M21 17l-5-5-4 4-2-2-4 4"/>',
+  divider:'<line x1="4" y1="12" x2="20" y2="12"/>',
+  box:'<rect x="4" y="5" width="16" height="14" rx="2"/>',
+  table:'<rect x="3" y="4" width="18" height="16" rx="1"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="9" x2="9" y2="20"/>',
+  spacer:'<line x1="12" y1="4" x2="12" y2="20"/><polyline points="8,8 12,4 16,8"/><polyline points="8,16 12,20 16,16"/>',
   header_banner:'<rect x="3" y="5" width="18" height="6" rx="1"/><line x1="3" y1="15" x2="14" y2="15"/><line x1="3" y1="19" x2="10" y2="19"/>',
-  title:'<line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="13" y2="12"/><rect x="15" y="10" width="5" height="5" rx="1"/>',
+  footer_banner:'<line x1="10" y1="5" x2="21" y2="5"/><line x1="14" y1="9" x2="21" y2="9"/><rect x="3" y="13" width="18" height="6" rx="1"/>',
   customer:'<circle cx="12" cy="8" r="3"/><path d="M5 20c0-3.3 3.1-6 7-6s7 2.7 7 6"/>',
   items:'<rect x="3" y="4" width="18" height="16" rx="1"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="9" x2="9" y2="20"/>',
   totals:'<line x1="13" y1="6" x2="20" y2="6"/><line x1="13" y1="11" x2="20" y2="11"/><rect x="13" y="15" width="7" height="4" rx="1"/><path d="M4 6h6l-6 7h6"/>',
   payment_schedule:'<rect x="3" y="5" width="18" height="16" rx="1"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="8" y1="3" x2="8" y2="7"/><line x1="16" y1="3" x2="16" y2="7"/>',
-  terms:'<line x1="5" y1="6" x2="19" y2="6"/><line x1="5" y1="10" x2="19" y2="10"/><line x1="5" y1="14" x2="15" y2="14"/><line x1="5" y1="18" x2="12" y2="18"/>',
+  terms:'<line x1="5" y1="6" x2="19" y2="6"/><line x1="5" y1="10" x2="19" y2="10"/><line x1="5" y1="14" x2="15" y2="14"/>',
   signature:'<path d="M4 17c4 0 5-9 8-9s2 6 4 6 2-3 4-3"/><line x1="3" y1="21" x2="21" y2="21"/>',
-  spacer:'<line x1="12" y1="4" x2="12" y2="20"/><polyline points="8,8 12,4 16,8"/><polyline points="8,16 12,20 16,16"/>',
-  custom_html:'<polyline points="9,8 5,12 9,16"/><polyline points="15,8 19,12 15,16"/>',
-  footer_banner:'<line x1="10" y1="5" x2="21" y2="5"/><line x1="14" y1="9" x2="21" y2="9"/><rect x="3" y="13" width="18" height="6" rx="1"/>',
 };
-const META = {
-  header_banner:{label:"Header"}, title:{label:"Title"}, customer:{label:"Customer"},
-  items:{label:"Items"}, totals:{label:"Totals"}, payment_schedule:{label:"Payment"},
-  terms:{label:"Terms"}, signature:{label:"Signature"}, spacer:{label:"Spacer"},
-  custom_html:{label:"Custom"}, footer_banner:{label:"Footer"},
-};
-const DEFAULTS = {
-  header_banner:()=>({}),
-  title:()=>({text:"QUOTATION", showArabic:true, arabic:"عرض سعر", meta:{name:true,date:true,valid_till:true}, align:"split"}),
-  customer:()=>({heading:"Quotation To"}),
-  items:()=>({cols:{qty:true,rate:true,amount:true,desc:true}, zebra:true, headerColor:"primary"}),
-  totals:()=>({grandColor:"primary"}),
-  payment_schedule:()=>({}),
-  terms:()=>({heading:"Terms & Conditions"}),
-  signature:()=>({label:"Authorized Signature"}),
-  spacer:()=>({height:8}),
-  custom_html:()=>({html:"<p style='font-size:8pt'>Bank: BSTC W.L.L · IBAN BH00 XXXX · Thank you for your business.</p>"}),
-  footer_banner:()=>({}),
-};
-
-/* ============================ state ============================ */
-let selId=null, tab="block", scale=.9, idc=1;
-function blk(type){ return {id:"b"+(idc++), type, settings:DEFAULTS[type]()}; }
-let state = {
-  branding:{ primary:"#1C75BC", navy:"#1A1E2A", font:"Montserrat", header_image:"", footer_image:"" },
-  blocks:[
-    blk("header_banner"), blk("title"), blk("customer"),
-    blk("items"), blk("totals"), blk("payment_schedule"), blk("terms"), blk("footer_banner"),
-  ],
-};
-function esc(s){return (s==null?"":String(s)).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
-
-/* ============================ document renderers (mirror blocks.py) ====== */
-const R = {
-  header_banner:(s,b)=> b.header_image
-      ? `<img class="bs-banner" src="${esc(b.header_image)}">`
-      : `<div class="ph-banner" style="background:${b.primary}">Header banner</div>`,
-  footer_banner:(s,b)=> b.footer_image
-      ? `<img class="bs-banner" src="${esc(b.footer_image)}">`
-      : `<div class="ph-banner" style="background:${b.navy}">Footer banner</div>`,
-  title:(s,b)=>{
-    const m=[]; if(s.meta.name)m.push(["Quotation No",SAMPLE.name]);
-    if(s.meta.date)m.push(["Date",SAMPLE.transaction_date]);
-    if(s.meta.valid_till)m.push(["Valid Till",SAMPLE.valid_till]);
-    const rows=m.map(([k,v])=>`<tr><td class="k">${esc(k)}</td><td>${esc(v)}</td></tr>`).join("");
-    const left=`<div class="bs-title" style="color:${b.navy}">${esc(s.text)}</div>`+
-      (s.showArabic?`<div class="bs-title-ar" style="color:${b.primary}">${esc(s.arabic)}</div>`:"");
-    const meta=`<table class="bs-meta">${rows}</table>`;
-    if(s.align==="center") return `<div style="text-align:center">${left}</div>`;
-    return `<table class="bs-head"><tr><td style="text-align:left">${left}</td><td style="text-align:right">${meta}</td></tr></table>`;
-  },
-  customer:(s,b)=>`<div class="bs-billto"><div class="lbl" style="color:${b.primary}">${esc(s.heading)}</div>`+
-      `<div class="name">${esc(SAMPLE.customer_name)}</div><div class="addr">${SAMPLE.address_display}</div></div>`,
-  items:(s,b)=>{
-    const cols=[["#","num"],["Item &amp; Description",""]];
-    if(s.cols.qty)cols.push(["Qty","num"]); if(s.cols.rate)cols.push(["Rate","num"]); if(s.cols.amount)cols.push(["Amount","num"]);
-    const hc = s.headerColor==="navy"?b.navy:b.primary;
-    const th=cols.map(c=>`<th class="${c[1]}" style="background:${hc}">${c[0]}</th>`).join("");
-    const rows=SAMPLE.items.map((it,i)=>{
-      let tds=`<td class="num">${i+1}</td><td><div class="it-name">${esc(it.n)}</div>`+
-        (s.cols.desc&&it.d?`<div class="it-desc">${esc(it.d)}</div>`:"")+`</td>`;
-      if(s.cols.qty)tds+=`<td class="num">${esc(it.q)}</td>`;
-      if(s.cols.rate)tds+=`<td class="num">${esc(it.r)}</td>`;
-      if(s.cols.amount)tds+=`<td class="num">${esc(it.a)}</td>`;
-      const z = s.zebra&&i%2 ? ' style="background:#eef6fc"' : '';
-      return `<tr${z}>${tds}</tr>`;
-    }).join("");
-    return `<table class="bs-items"><thead><tr>${th}</tr></thead><tbody>${rows}</tbody></table>`;
-  },
-  totals:(s,b)=>{
-    const gc = s.grandColor==="navy"?b.navy:b.primary;
-    let ln=`<tr><td class="lbl">Subtotal</td><td class="val">${esc(SAMPLE.total)}</td></tr>`;
-    SAMPLE.taxes.forEach(t=>ln+=`<tr><td class="lbl">${esc(t.desc)}</td><td class="val">${esc(t.amt)}</td></tr>`);
-    ln+=`<tr><td style="background:${gc};color:#fff;font-weight:700;font-size:10pt;text-align:right;padding:6px 8px">Grand Total</td>`+
-        `<td style="background:${gc};color:#fff;font-weight:700;font-size:10pt;text-align:right;padding:6px 8px">${esc(SAMPLE.grand_total)}</td></tr>`;
-    return `<table style="width:100%;border-collapse:collapse"><tr><td></td><td style="width:82mm"><table class="bs-tot">${ln}</table></td></tr></table>`;
-  },
-  payment_schedule:(s,b)=>{
-    const rows=SAMPLE.payment_schedule.map((p,i)=>`<tr${i%2?' style="background:#eef6fc"':''}><td class="num">${i+1}</td><td><div class="it-name">${esc(p.t)}</div></td><td class="num">${esc(p.due)}</td><td class="num">${esc(p.pct)}</td><td class="num">${esc(p.amt)}</td></tr>`).join("");
-    return `<div style="margin-top:6mm"><div class="bs-sec-lbl" style="color:${b.primary}">Payment Schedule</div>`+
-      `<table class="bs-items"><thead><tr><th class="num" style="background:${b.primary}">#</th><th style="background:${b.primary}">Payment Term</th><th class="num" style="background:${b.primary}">Due Date</th><th class="num" style="background:${b.primary}">Portion %</th><th class="num" style="background:${b.primary}">Amount</th></tr></thead><tbody>${rows}</tbody></table></div>`;
-  },
-  terms:(s,b)=>`<div style="margin-top:7mm;font-size:7.5pt;color:#6b6b6e;line-height:1.5"><div class="bs-sec-lbl" style="color:${b.primary}">${esc(s.heading)}</div>${esc(SAMPLE.terms)}</div>`,
-  signature:(s,b)=>`<table style="width:100%;border-collapse:collapse"><tr><td></td><td style="width:60mm;text-align:center"><div class="bs-sign-box">${esc(s.label)}</div></td></tr></table>`,
-  spacer:(s)=>`<div style="height:${(+s.height||8)}mm"></div>`,
-  custom_html:(s)=> s.html||"",
-};
+const META={heading:{l:"Heading"},text:{l:"Text"},field:{l:"Field"},image:{l:"Image"},divider:{l:"Line"},box:{l:"Box"},table:{l:"Table"},spacer:{l:"Spacer"},
+  header_banner:{l:"Header"},customer:{l:"Customer"},items:{l:"Items"},totals:{l:"Totals"},payment_schedule:{l:"Payment"},terms:{l:"Terms"},signature:{l:"Signature"},footer_banner:{l:"Footer"},title:{l:"Title"}};
+const ELEM=["heading","text","field","image","divider","box","table","spacer"];
+const BLOCKS=["header_banner","title","customer","items","totals","payment_schedule","terms","signature","footer_banner"];
 const BANNER=new Set(["header_banner","footer_banner"]);
 
-/* ============================ canvas render ============================ */
+function base(){return{align:"",size:"",weight:"",italic:false,color:"",bg:"",mt:"",mb:"",pad:"",width:"",border:{on:false,w:1,color:"#cfe5f6",style:"solid",radius:0}};}
+const DSET={
+  header_banner:()=>({}),footer_banner:()=>({}),
+  title:()=>({text:"QUOTATION",showArabic:true,arabic:"عرض سعر",meta:{name:true,date:true,valid_till:true},align:"split"}),
+  customer:()=>({heading:"Quotation To"}),
+  items:()=>({cols:{qty:true,rate:true,amount:true,desc:true},zebra:true,headerColor:"primary"}),
+  totals:()=>({grandColor:"primary"}),payment_schedule:()=>({}),terms:()=>({heading:"Terms & Conditions"}),
+  signature:()=>({label:"Authorized Signature"}),
+  heading:()=>({text:"Section heading",level:"h2"}),
+  text:()=>({text:"Add your text here.\nYou can write multiple lines."}),
+  field:()=>({field:"customer_name",prefix:""}),
+  image:()=>({src:"",width:40}),
+  divider:()=>({thickness:1,color:"#cfe5f6",lstyle:"solid"}),
+  box:()=>({html:"<b>Note</b><br>Bank: BSTC W.L.L &middot; IBAN BH00 XXXX"}),
+  table:()=>({cols:["Specification","Value"],rows:[["Warranty","1 Year"],["Lead time","2 weeks"]],headerBg:"primary"}),
+  spacer:()=>({height:8}),
+};
+function dstyle(t){const s=base();
+  if(t==="heading"){s.size=15;s.weight="700";}
+  if(t==="text"||t==="field")s.size=9;
+  if(t==="image")s.align="left";
+  if(t==="divider"){s.mt=3;s.mb=3;}
+  if(t==="box"){s.pad=3;s.bg="#f4f8fc";s.size=8;s.border={on:true,w:1,color:"#cfe5f6",style:"solid",radius:6};}
+  return s;}
+let idc=1; function blk(t){return{id:"b"+(idc++),type:t,settings:DSET[t](),style:dstyle(t)};}
+function esc(s){return(s==null?"":String(s)).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+
+/* ===== state ===== */
+let selId=null,tab="block",scale=.9;
+let state={branding:{primary:"#1C75BC",navy:"#1A1E2A",font:"Montserrat",header_image:"",footer_image:""},
+  blocks:[blk("header_banner"),blk("title"),blk("customer"),blk("items"),blk("totals"),blk("payment_schedule"),blk("terms"),blk("footer_banner")]};
+function cur(){return state.blocks[selIndex()];}
+function selIndex(){return state.blocks.findIndex(x=>x.id===selId);}
+function blockById(id){return state.blocks.find(b=>b.id===id);}
+
+/* ===== document renderers ===== */
+const R={
+  header_banner:(s,b)=>b.header_image?`<img class="bs-banner" src="${esc(b.header_image)}">`:`<div class="ph-banner" style="background:${b.primary}">Header banner</div>`,
+  footer_banner:(s,b)=>b.footer_image?`<img class="bs-banner" src="${esc(b.footer_image)}">`:`<div class="ph-banner" style="background:${b.navy}">Footer banner</div>`,
+  title:(s,b)=>{const m=[];if(s.meta.name)m.push(["Quotation No",SAMPLE.name]);if(s.meta.date)m.push(["Date",SAMPLE.transaction_date]);if(s.meta.valid_till)m.push(["Valid Till",SAMPLE.valid_till]);
+    const rows=m.map(([k,v])=>`<tr><td class="k">${esc(k)}</td><td>${esc(v)}</td></tr>`).join("");
+    const left=`<div class="bs-title" style="color:${b.navy}">${esc(s.text)}</div>`+(s.showArabic?`<div class="bs-title-ar" style="color:${b.primary}">${esc(s.arabic)}</div>`:"");
+    if(s.align==="center")return `<div style="text-align:center">${left}</div>`;
+    return `<table class="bs-head"><tr><td style="text-align:left">${left}</td><td style="text-align:right"><table class="bs-meta">${rows}</table></td></tr></table>`;},
+  customer:(s,b)=>`<div class="bs-billto"><div class="lbl" style="color:${b.primary}">${esc(s.heading)}</div><div class="name">${esc(SAMPLE.customer_name)}</div><div class="addr">${SAMPLE.address_display}</div></div>`,
+  items:(s,b)=>{const cols=[["#","num"],["Item &amp; Description",""]];if(s.cols.qty)cols.push(["Qty","num"]);if(s.cols.rate)cols.push(["Rate","num"]);if(s.cols.amount)cols.push(["Amount","num"]);
+    const hc=s.headerColor==="navy"?b.navy:b.primary;const th=cols.map(c=>`<th class="${c[1]}" style="background:${hc}">${c[0]}</th>`).join("");
+    const rows=SAMPLE.items.map((it,i)=>{let t=`<td class="num">${i+1}</td><td><div class="it-name">${esc(it.n)}</div>`+(s.cols.desc&&it.d?`<div class="it-desc">${esc(it.d)}</div>`:"")+`</td>`;
+      if(s.cols.qty)t+=`<td class="num">${esc(it.q)}</td>`;if(s.cols.rate)t+=`<td class="num">${esc(it.r)}</td>`;if(s.cols.amount)t+=`<td class="num">${esc(it.a)}</td>`;
+      return `<tr${s.zebra&&i%2?' style="background:#eef6fc"':''}>${t}</tr>`;}).join("");
+    return `<table class="bs-items" style="margin-bottom:6mm"><thead><tr>${th}</tr></thead><tbody>${rows}</tbody></table>`;},
+  totals:(s,b)=>{const gc=s.grandColor==="navy"?b.navy:b.primary;let ln=`<tr><td class="lbl">Subtotal</td><td class="val">${esc(SAMPLE.total)}</td></tr>`;
+    SAMPLE.taxes.forEach(t=>ln+=`<tr><td class="lbl">${esc(t.desc)}</td><td class="val">${esc(t.amt)}</td></tr>`);
+    ln+=`<tr><td style="background:${gc};color:#fff;font-weight:700;font-size:10pt;text-align:right;padding:6px 8px">Grand Total</td><td style="background:${gc};color:#fff;font-weight:700;font-size:10pt;text-align:right;padding:6px 8px">${esc(SAMPLE.grand_total)}</td></tr>`;
+    return `<table style="width:100%;border-collapse:collapse"><tr><td></td><td style="width:82mm"><table class="bs-tot">${ln}</table></td></tr></table>`;},
+  payment_schedule:(s,b)=>{const rows=SAMPLE.payment_schedule.map((p,i)=>`<tr${i%2?' style="background:#eef6fc"':''}><td class="num">${i+1}</td><td><div class="it-name">${esc(p.t)}</div></td><td class="num">${esc(p.due)}</td><td class="num">${esc(p.pct)}</td><td class="num">${esc(p.amt)}</td></tr>`).join("");
+    return `<div style="margin-top:6mm"><div class="bs-sec-lbl" style="color:${b.primary}">Payment Schedule</div><table class="bs-items"><thead><tr><th class="num" style="background:${b.primary}">#</th><th style="background:${b.primary}">Payment Term</th><th class="num" style="background:${b.primary}">Due Date</th><th class="num" style="background:${b.primary}">Portion %</th><th class="num" style="background:${b.primary}">Amount</th></tr></thead><tbody>${rows}</tbody></table></div>`;},
+  terms:(s,b)=>`<div style="font-size:7.5pt;color:#6b6b6e;line-height:1.5"><div class="bs-sec-lbl" style="color:${b.primary}">${esc(s.heading)}</div>${esc(SAMPLE.terms)}</div>`,
+  signature:(s,b)=>`<table style="width:100%;border-collapse:collapse"><tr><td></td><td style="width:60mm;text-align:center"><div class="bs-sign-box">${esc(s.label)}</div></td></tr></table>`,
+  heading:(s)=>esc(s.text),
+  text:(s)=>esc(s.text),
+  field:(s)=>esc((s.prefix||"")+fieldVal(s.field)),
+  image:(s)=>s.src?`<img src="${esc(s.src)}" style="width:${(+s.width||40)}%">`:`<div style="border:1px dashed #b9c6e0;color:#9aa6c2;padding:14px;text-align:center;font-size:8pt">Image — set a URL in properties</div>`,
+  divider:(s)=>`<div style="border-top:${(+s.thickness||1)}px ${s.lstyle||'solid'} ${s.color||'#cfe5f6'}"></div>`,
+  box:(s)=>s.html||"",
+  table:(s,b)=>{const cols=s.cols||[],rows=s.rows||[];const hb=s.headerBg==="navy"?b.navy:b.primary;
+    let h=`<table style="width:100%;border-collapse:collapse;font-size:8pt"><thead><tr>`+cols.map((c,ci)=>`<th data-th="1" data-c="${ci}" contenteditable style="background:${hb};color:#fff;padding:5px 8px;text-align:left;border:1px solid ${hb};font-weight:600">${esc(c)}</th>`).join("")+`</tr></thead><tbody>`;
+    h+=rows.map((r,ri)=>`<tr>`+cols.map((c,ci)=>`<td data-td="1" data-r="${ri}" data-c="${ci}" contenteditable style="padding:5px 8px;border:1px solid #cfe5f6">${esc(r[ci]||"")}</td>`).join("")+`</tr>`).join("");
+    return h+`</tbody></table>`;},
+  spacer:(s)=>`<div style="height:${(+s.height||8)}mm"></div>`,
+};
+
+function styleCss(st,type){if(!st)return "";const p=[];
+  if(st.align)p.push("text-align:"+st.align);
+  if(st.size!=="")p.push("font-size:"+st.size+"pt");
+  if(st.weight)p.push("font-weight:"+st.weight);
+  if(st.italic)p.push("font-style:italic");
+  if(st.color)p.push("color:"+st.color);
+  if(st.bg)p.push("background:"+st.bg);
+  if(st.mt!=="")p.push("margin-top:"+st.mt+"mm");
+  if(st.mb!=="")p.push("margin-bottom:"+st.mb+"mm");
+  if(st.pad!=="")p.push("padding:"+st.pad+"mm");
+  if(st.width)p.push("width:"+st.width);
+  if(st.border&&st.border.on){p.push(`border:${st.border.w}px ${st.border.style} ${st.border.color}`);if(st.border.radius)p.push("border-radius:"+st.border.radius+"px");}
+  if(type==="text"||type==="field"||type==="heading")p.push("white-space:pre-wrap");
+  return p.join(";");}
+
+/* ===== render canvas ===== */
 function render(){
-  const b=state.branding, paper=document.getElementById("paper");
+  const b=state.branding,paper=document.getElementById("paper");
   paper.style.fontFamily=`'${b.font}','Segoe UI',Arial,sans-serif`;
-  let html="", contentOpen=false;
-  const open=()=>{ if(!contentOpen){html+=`<div class="bs-content">`;contentOpen=true;} };
-  const close=()=>{ if(contentOpen){html+=`</div>`;contentOpen=false;} };
-  if(!state.blocks.length){ paper.innerHTML=`<div class="empty">Empty page — add blocks from the left.</div>`; return; }
+  let html="",open=false;
+  const oc=()=>{if(!open){html+='<div class="bs-content">';open=true;}};
+  const cc=()=>{if(open){html+='</div>';open=false;}};
+  if(!state.blocks.length){paper.innerHTML='<div class="empty">Empty page — add elements or blocks from the left.</div>';return;}
   state.blocks.forEach(bl=>{
-    const inner=(R[bl.type]||(()=>"")) (bl.settings,b);
-    const shell=`<div class="blk ${bl.id===selId?'sel':''}" data-id="${bl.id}" draggable="false">
-        <span class="tag">${META[bl.type].label}</span>
-        <div class="tools">
-          <button title="Move up" onmousedown="event.stopPropagation()" onclick="move('${bl.id}',-1)">↑</button>
-          <button title="Move down" onmousedown="event.stopPropagation()" onclick="move('${bl.id}',1)">↓</button>
-          <button class="grab" title="Drag to reorder" data-grab="${bl.id}">⋮⋮</button>
-          <button title="Delete" onclick="del('${bl.id}')">🗑</button>
-        </div>${inner}</div>`;
-    if(BANNER.has(bl.type)){ close(); html+=shell; } else { open(); html+=shell; }
+    const inner=(R[bl.type]||(()=>""))(bl.settings,b,bl);
+    const isB=BANNER.has(bl.type);
+    const wrap=isB?"":styleCss(bl.style,bl.type);
+    const shell=`<div class="blk ${bl.id===selId?'sel':''}" data-id="${bl.id}" style="${wrap}"><span class="tag">${META[bl.type].l}</span><div class="tools"><button onclick="move('${bl.id}',-1)">↑</button><button onclick="move('${bl.id}',1)">↓</button><button class="grab" data-grab="${bl.id}">⋮⋮</button><button onclick="del('${bl.id}')">🗑</button></div>${inner}</div>`;
+    if(isB){cc();html+=shell;}else{oc();html+=shell;}
   });
-  close();
-  paper.innerHTML=html;
-  // select on click
-  paper.querySelectorAll(".blk").forEach(el=>{
-    el.addEventListener("click",e=>{ if(e.target.closest(".tools"))return; select(el.dataset.id); });
-  });
-  wireDrag();
+  cc();paper.innerHTML=html;
+  paper.querySelectorAll(".blk").forEach(el=>el.addEventListener("click",e=>{if(e.target.closest(".tools"))return;if(el.dataset.id!==selId)select(el.dataset.id);}));
+  wireDrag();wireTable();
+}
+function wireTable(){
+  document.querySelectorAll('#paper [data-th]').forEach(el=>{el.addEventListener('mousedown',e=>e.stopPropagation());
+    el.addEventListener('input',()=>{const bl=blockById(el.closest('.blk').dataset.id);bl.settings.cols[+el.dataset.c]=el.textContent;});});
+  document.querySelectorAll('#paper [data-td]').forEach(el=>{el.addEventListener('mousedown',e=>e.stopPropagation());
+    el.addEventListener('input',()=>{const bl=blockById(el.closest('.blk').dataset.id);bl.settings.rows[+el.dataset.r][+el.dataset.c]=el.textContent;});});
 }
 
-/* ============================ interactions ============================ */
-function addBlock(type){ const nb=blk(type); const i=selIndex(); if(i>=0)state.blocks.splice(i+1,0,nb); else state.blocks.push(nb); selId=nb.id; render(); renderProps(); }
-function selIndex(){ return state.blocks.findIndex(x=>x.id===selId); }
-function select(id){ selId=id; tab="block"; setTab("block",true); render(); renderProps(); }
-function del(id){ state.blocks=state.blocks.filter(x=>x.id!==id); if(selId===id)selId=null; render(); renderProps(); }
-function move(id,dir){ const i=state.blocks.findIndex(x=>x.id===id); const j=i+dir; if(j<0||j>=state.blocks.length)return; [state.blocks[i],state.blocks[j]]=[state.blocks[j],state.blocks[i]]; render(); }
-
+/* ===== interactions ===== */
+function addBlock(t){const nb=blk(t);const i=selIndex();if(i>=0)state.blocks.splice(i+1,0,nb);else state.blocks.push(nb);selId=nb.id;render();renderProps();}
+function select(id){selId=id;tab="block";setTab("block",true);render();renderProps();}
+function del(id){state.blocks=state.blocks.filter(x=>x.id!==id);if(selId===id)selId=null;render();renderProps();}
+function move(id,d){const i=state.blocks.findIndex(x=>x.id===id),j=i+d;if(j<0||j>=state.blocks.length)return;[state.blocks[i],state.blocks[j]]=[state.blocks[j],state.blocks[i]];render();}
 let dragId=null;
-function wireDrag(){
-  document.querySelectorAll("[data-grab]").forEach(h=>{
-    h.onmousedown=(e)=>{ e.preventDefault(); dragId=h.dataset.grab; const blkEl=h.closest(".blk"); blkEl.style.opacity=".5"; document.body.style.cursor="grabbing"; };
-  });
+function wireDrag(){document.querySelectorAll("[data-grab]").forEach(h=>{h.onmousedown=e=>{e.preventDefault();dragId=h.dataset.grab;h.closest(".blk").style.opacity=".5";document.body.style.cursor="grabbing";};});
   const paper=document.getElementById("paper");
-  paper.onmousemove=(e)=>{ if(!dragId)return; const over=e.target.closest(".blk"); paper.querySelectorAll(".blk").forEach(x=>x.classList.remove("drag-over")); if(over&&over.dataset.id!==dragId)over.classList.add("drag-over"); };
-  document.onmouseup=(e)=>{
-    if(!dragId)return;
-    const over=e.target.closest&&e.target.closest(".blk");
-    if(over&&over.dataset.id!==dragId){
-      const from=state.blocks.findIndex(x=>x.id===dragId), to=state.blocks.findIndex(x=>x.id===over.dataset.id);
-      const [m]=state.blocks.splice(from,1); state.blocks.splice(to,0,m);
-    }
-    dragId=null; document.body.style.cursor=""; render();
-  };
+  paper.onmousemove=e=>{if(!dragId)return;const o=e.target.closest(".blk");paper.querySelectorAll(".blk").forEach(x=>x.classList.remove("drag-over"));if(o&&o.dataset.id!==dragId)o.classList.add("drag-over");};
+  document.onmouseup=e=>{if(!dragId)return;const o=e.target.closest&&e.target.closest(".blk");if(o&&o.dataset.id!==dragId){const f=state.blocks.findIndex(x=>x.id===dragId),t=state.blocks.findIndex(x=>x.id===o.dataset.id);const[m]=state.blocks.splice(f,1);state.blocks.splice(t,0,m);}dragId=null;document.body.style.cursor="";render();};}
+
+/* table ops */
+function addCol(){const b=cur();b.settings.cols.push("Column");b.settings.rows.forEach(r=>r.push(""));render();}
+function addRow(){const b=cur();b.settings.rows.push(b.settings.cols.map(()=>""));render();}
+function delCol(){const b=cur();if(b.settings.cols.length<=1)return;b.settings.cols.pop();b.settings.rows.forEach(r=>r.pop());render();}
+function delRow(){const b=cur();if(!b.settings.rows.length)return;b.settings.rows.pop();render();}
+
+/* palette */
+function buildPalette(){const groups=[["Elements",ELEM],["Document blocks",BLOCKS.filter(t=>t!=="title")]];
+  document.getElementById("palette").innerHTML=groups.map(g=>`<div class="pgrp">${g[0]}</div><div class="prow">`+g[1].map(t=>`<div class="pblock" onclick="addBlock('${t}')" title="Add ${META[t].l}"><svg viewBox="0 0 24 24">${ICONS[t]||ICONS.text}</svg><span>${META[t].l}</span></div>`).join("")+`</div>`).join("");}
+
+/* ===== properties ===== */
+function setTab(t,silent){tab=t;document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("on",x.dataset.tab===t));
+  document.getElementById("propsBlock").style.display=t==="block"?"":"none";document.getElementById("propsBrand").style.display=t==="brand"?"":"none";
+  if(!silent){if(t==="brand")renderBrand();else renderProps();}}
+function setS(k,v){const b=cur();if(!b)return;const p=k.split(".");let o=b.settings;for(let i=0;i<p.length-1;i++)o=o[p[i]];o[p[p.length-1]]=v;render();}
+function setStyle(k,v){const b=cur();if(!b)return;const p=k.split(".");let o=b.style;for(let i=0;i<p.length-1;i++)o=o[p[i]];o[p[p.length-1]]=v;render();}
+function setHeadingLevel(lv){const b=cur();b.settings.level=lv;const m={h1:[24,"800"],h2:[15,"700"],h3:[12,"700"],h4:[10,"600"]};b.style.size=m[lv][0];b.style.weight=m[lv][1];render();renderProps();}
+
+function tx(lbl,k,v){return `<div class="fld"><label>${lbl}</label><input type="text" value="${esc(v)}" oninput="setS('${k}',this.value)"></div>`;}
+function ta(lbl,k,v){return `<div class="fld"><label>${lbl}</label><textarea oninput="setS('${k}',this.value)">${esc(v)}</textarea></div>`;}
+function ck(lbl,k,on){return `<label class="chk"><input type="checkbox" ${on?"checked":""} onchange="setS('${k}',this.checked)"> ${lbl}</label>`;}
+function sg(lbl,k,v,opts){return `<div class="fld"><label>${lbl}</label><div class="seg">`+opts.map(o=>`<button class="${v===o[0]?'on':''}" onclick="setS('${k}','${o[0]}');renderProps()">${o[1]}</button>`).join("")+`</div></div>`;}
+
+function styleControls(st,type){
+  const seg=(lbl,k,v,opts)=>`<div class="fld"><label>${lbl}</label><div class="seg">`+opts.map(o=>`<button class="${v===o[0]?'on':''}" onclick="setStyle('${k}','${o[0]}');renderProps()">${o[1]}</button>`).join("")+`</div></div>`;
+  const num=(lbl,k,v)=>`<div class="fld"><label>${lbl}</label><input type="text" value="${v===undefined||v===null?'':v}" oninput="setStyle('${k}',this.value)"></div>`;
+  const col=(lbl,k,v)=>`<div class="fld"><label>${lbl}</label><div class="color"><input type="color" value="${v||'#000000'}" oninput="setStyle('${k}',this.value)"><input type="text" value="${esc(v||'')}" placeholder="none" oninput="setStyle('${k}',this.value)"></div></div>`;
+  const ckk=(lbl,k,on)=>`<label class="chk"><input type="checkbox" ${on?'checked':''} onchange="setStyle('${k}',this.checked);renderProps()"> ${lbl}</label>`;
+  let h=`<div class="styhead">Style &amp; layout</div>`;
+  h+=seg("Alignment","align",st.align,[["left","Left"],["center","Center"],["right","Right"]]);
+  const showFont=["heading","text","field","box","customer","terms"].includes(type)||type===undefined;
+  if(showFont){h+=`<div class="row2">${num("Font size (pt)","size",st.size)}${seg2("Weight","weight",st.weight)}</div>`;h+=ckk("Italic","italic",st.italic);h+=col("Text color","color",st.color);}
+  h+=col("Background","bg",st.bg);
+  h+=`<div class="row2">${num("Margin top (mm)","mt",st.mt)}${num("Margin bottom","mb",st.mb)}</div>`;
+  h+=`<div class="row2">${num("Padding (mm)","pad",st.pad)}${num("Width (e.g. 60mm)","width",st.width)}</div>`;
+  h+=ckk("Border","border.on",st.border.on);
+  if(st.border.on){h+=`<div class="row2">${num("Border width (px)","border.w",st.border.w)}${num("Corner radius (px)","border.radius",st.border.radius)}</div>`;
+    h+=col("Border color","border.color",st.border.color);
+    h+=seg("Border style","border.style",st.border.style,[["solid","Solid"],["dashed","Dashed"],["dotted","Dotted"]]);}
+  return `<div class="stygrp">`+h+`</div>`;
 }
-
-/* palette drag-to-add */
-function buildPalette(){
-  const p=document.getElementById("palette");
-  p.innerHTML=Object.keys(META).map(t=>
-    `<div class="pblock" onclick="addBlock('${t}')" title="Add ${META[t].label}">
-       <svg viewBox="0 0 24 24">${ICONS[t]}</svg><span>${META[t].label}</span></div>`).join("");
-}
-
-/* ============================ properties panel ============================ */
-function setTab(t,silent){ tab=t; document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("on",x.dataset.tab===t));
-  document.getElementById("propsBlock").style.display=t==="block"?"":"none";
-  document.getElementById("propsBrand").style.display=t==="brand"?"":"none";
-  if(!silent){ if(t==="brand")renderBrand(); else renderProps(); } }
-
-function setS(k,v){ const b=state.blocks[selIndex()]; if(!b)return; const path=k.split("."); let o=b.settings; for(let i=0;i<path.length-1;i++)o=o[path[i]]; o[path[path.length-1]]=v; render(); }
-function fldText(lbl,k,val){return `<div class="fld"><label>${lbl}</label><input type="text" value="${esc(val)}" oninput="setS('${k}',this.value)"></div>`;}
-function fldArea(lbl,k,val){return `<div class="fld"><label>${lbl}</label><textarea oninput="setS('${k}',this.value)">${esc(val)}</textarea></div>`;}
-function fldChk(lbl,k,on){return `<label class="chk"><input type="checkbox" ${on?"checked":""} onchange="setS('${k}',this.checked)"> ${lbl}</label>`;}
-function fldSeg(lbl,k,val,opts){return `<div class="fld"><label>${lbl}</label><div class="seg">`+opts.map(o=>`<button class="${val===o[0]?'on':''}" onclick="setS('${k}','${o[0]}');renderProps()">${o[1]}</button>`).join("")+`</div></div>`;}
+function seg2(lbl,k,v){return `<div class="fld"><label>${lbl}</label><div class="seg">`+[["","Reg"],["600","Semi"],["700","Bold"],["800","Black"]].map(o=>`<button class="${v===o[0]?'on':''}" onclick="setStyle('${k}','${o[0]}');renderProps()">${o[1]}</button>`).join("")+`</div></div>`;}
 
 function renderProps(){
-  const host=document.getElementById("propsBlock");
-  const b=state.blocks[selIndex()];
-  if(!b){ host.innerHTML=`<div class="noselect">Select a block on the page to edit it,<br>or add one from the left.</div>`; return; }
-  const s=b.settings; let h=`<div style="font-weight:700;margin:14px 2px 2px;font-size:13px">${META[b.type].label} block</div>`;
-  if(b.type==="title"){
-    h+=fldText("Title text","text",s.text);
-    h+=fldChk("Show Arabic subtitle","showArabic",s.showArabic);
-    if(s.showArabic)h+=fldText("Arabic subtitle","arabic",s.arabic);
-    h+=fldSeg("Layout","align",s.align,[["split","Title + Info box"],["center","Centered"]]);
-    h+=`<div class="fld"><label>Info box fields</label>`+
-       fldChk("Quotation No","meta.name",s.meta.name)+fldChk("Date","meta.date",s.meta.date)+fldChk("Valid Till","meta.valid_till",s.meta.valid_till)+`</div>`;
-  } else if(b.type==="customer"){ h+=fldText("Heading","heading",s.heading);
-  } else if(b.type==="items"){
-    h+=`<div class="fld"><label>Columns</label>`+fldChk("Description line","cols.desc",s.cols.desc)+fldChk("Qty","cols.qty",s.cols.qty)+fldChk("Rate","cols.rate",s.cols.rate)+fldChk("Amount","cols.amount",s.cols.amount)+`</div>`;
-    h+=fldChk("Zebra striped rows","zebra",s.zebra);
-    h+=fldSeg("Header color","headerColor",s.headerColor,[["primary","Primary"],["navy","Navy"]]);
-  } else if(b.type==="totals"){ h+=fldSeg("Grand-total color","grandColor",s.grandColor,[["primary","Primary"],["navy","Navy"]]);
-  } else if(b.type==="terms"){ h+=fldText("Heading","heading",s.heading);
-  } else if(b.type==="signature"){ h+=fldText("Signature label","label",s.label);
-  } else if(b.type==="spacer"){ h+=fldText("Height (mm)","height",s.height);
-  } else if(b.type==="custom_html"){ h+=fldArea("Custom HTML","html",s.html);
-  } else if(b.type==="header_banner"||b.type==="footer_banner"){ h+=`<div class="noselect">This uses your banner image from the <b>Branding</b> tab. If empty, a colored placeholder is shown.</div>`;
-  }
+  const host=document.getElementById("propsBlock"),b=cur();
+  if(!b){host.innerHTML=`<div class="noselect">Select a block on the page to edit it,<br>or insert one from the left.</div>`;return;}
+  const s=b.settings,t=b.type;let h=`<div class="ptitle">${META[t].l}</div>`;
+  if(t==="heading"){h+=tx("Text","text",s.text);h+=`<div class="fld"><label>Level</label><div class="seg">`+["h1","h2","h3","h4"].map(l=>`<button class="${s.level===l?'on':''}" onclick="setHeadingLevel('${l}')">${l.toUpperCase()}</button>`).join("")+`</div></div>`;}
+  else if(t==="text"){h+=ta("Text","text",s.text);}
+  else if(t==="field"){h+=`<div class="fld"><label>Document field</label><select onchange="setS('field',this.value)">`+FIELDS.map(f=>`<option value="${f.f}" ${s.field===f.f?'selected':''}>${f.l}</option>`).join("")+`</select></div>`+tx("Prefix (e.g. 'Ref: ')","prefix",s.prefix);}
+  else if(t==="image"){h+=tx("Image URL (/files/...)","src",s.src);h+=tx("Width (%)","width",s.width);}
+  else if(t==="divider"){h+=`<div class="row2">${tx("Thickness (px)","thickness",s.thickness)}</div>`;h+=`<div class="fld"><label>Color</label><div class="color"><input type="color" value="${s.color}" oninput="setS('color',this.value)"><input type="text" value="${esc(s.color)}" oninput="setS('color',this.value)"></div></div>`;h+=sg("Style","lstyle",s.lstyle,[["solid","Solid"],["dashed","Dashed"],["dotted","Dotted"]]);}
+  else if(t==="box"){h+=ta("Content (HTML allowed)","html",s.html);}
+  else if(t==="table"){h+=sg("Header color","headerBg",s.headerBg,[["primary","Primary"],["navy","Navy"]]);
+    h+=`<div class="fld"><label>Rows &amp; columns</label><div class="tablebtns"><button onclick="addRow()">+ Row</button><button onclick="addCol()">+ Column</button><button onclick="delRow()">− Row</button><button onclick="delCol()">− Column</button></div></div><div class="hint" style="padding:6px 0 0">Click any cell on the page to edit its text.</div>`;}
+  else if(t==="title"){h+=tx("Title text","text",s.text);h+=ck("Show Arabic subtitle","showArabic",s.showArabic);if(s.showArabic)h+=tx("Arabic","arabic",s.arabic);h+=sg("Layout","align",s.align,[["split","Title + Info"],["center","Centered"]]);h+=`<div class="fld"><label>Info box fields</label>`+ck("Quotation No","meta.name",s.meta.name)+ck("Date","meta.date",s.meta.date)+ck("Valid Till","meta.valid_till",s.meta.valid_till)+`</div>`;}
+  else if(t==="customer"){h+=tx("Heading","heading",s.heading);}
+  else if(t==="items"){h+=`<div class="fld"><label>Columns</label>`+ck("Description line","cols.desc",s.cols.desc)+ck("Qty","cols.qty",s.cols.qty)+ck("Rate","cols.rate",s.cols.rate)+ck("Amount","cols.amount",s.cols.amount)+`</div>`+ck("Zebra striped rows","zebra",s.zebra)+sg("Header color","headerColor",s.headerColor,[["primary","Primary"],["navy","Navy"]]);}
+  else if(t==="totals"){h+=sg("Grand-total color","grandColor",s.grandColor,[["primary","Primary"],["navy","Navy"]]);}
+  else if(t==="terms"){h+=tx("Heading","heading",s.heading);}
+  else if(t==="signature"){h+=tx("Signature label","label",s.label);}
+  else if(BANNER.has(t)){h+=`<div class="noselect">Uses the banner image from the <b>Branding</b> tab. If empty, a colored placeholder shows.</div>`;}
+  if(!BANNER.has(t))h+=styleControls(b.style,t);
   h+=`<button class="delblk" onclick="del('${b.id}')">Delete this block</button>`;
   host.innerHTML=h;
 }
-function setB(k,v){ state.branding[k]=v; render(); }
-function renderBrand(){
-  const b=state.branding;
-  document.getElementById("propsBrand").innerHTML=
-    `<div style="font-weight:700;margin:14px 2px 2px;font-size:13px">Branding</div>`+
+function setB(k,v){state.branding[k]=v;render();}
+function renderBrand(){const b=state.branding;
+  document.getElementById("propsBrand").innerHTML=`<div class="ptitle">Branding</div>`+
     `<div class="fld"><label>Primary color</label><div class="color"><input type="color" value="${b.primary}" oninput="setB('primary',this.value)"><input type="text" value="${esc(b.primary)}" oninput="setB('primary',this.value)"></div></div>`+
     `<div class="fld"><label>Secondary / navy</label><div class="color"><input type="color" value="${b.navy}" oninput="setB('navy',this.value)"><input type="text" value="${esc(b.navy)}" oninput="setB('navy',this.value)"></div></div>`+
     `<div class="fld"><label>Font</label><select onchange="setB('font',this.value)">`+["Montserrat","Cairo","Arial","Tahoma"].map(f=>`<option ${b.font===f?'selected':''}>${f}</option>`).join("")+`</select></div>`+
-    fldTextB("Header image URL","header_image",b.header_image)+
-    fldTextB("Footer image URL","footer_image",b.footer_image)+
-    `<div class="hint" style="padding:6px 0 0">In ERPNext these come from BrandPDF Settings (logo upload). Paste a /files/... path to preview here.</div>`;
-}
-function fldTextB(lbl,k,val){return `<div class="fld"><label>${lbl}</label><input type="text" value="${esc(val)}" oninput="setB('${k}',this.value)"></div>`;}
+    `<div class="fld"><label>Header image URL</label><input type="text" value="${esc(b.header_image)}" oninput="setB('header_image',this.value)"></div>`+
+    `<div class="fld"><label>Footer image URL</label><input type="text" value="${esc(b.footer_image)}" oninput="setB('footer_image',this.value)"></div>`+
+    `<div class="hint" style="padding:6px 0 0">In ERPNext these come from BrandPDF Settings (logo upload).</div>`;}
 
-/* ============================ misc ============================ */
-function zoom(d){ scale=Math.min(1.6,Math.max(.4,scale+d)); document.getElementById("paperwrap").style.transform=`scale(${scale})`; document.getElementById("zoomv").textContent=Math.round(scale*100)+"%"; }
-function definition(){ return { name:document.getElementById("fmtName").value, branding:state.branding, blocks:state.blocks.map(b=>({type:b.type,settings:b.settings})) }; }
-function exportJSON(){ const blob=new Blob([JSON.stringify(definition(),null,2)],{type:"application/json"}); const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=(document.getElementById("fmtName").value||"format")+".json"; a.click(); }
-function save(){
-  const def=definition();
-  if(window.frappe&&frappe.call){ frappe.call({method:"brandpdf.api.save_format",args:{definition:def},callback:()=>frappe.show_alert({message:"Format saved",indicator:"green"})}); }
-  else { console.log("DEFINITION",def); alert("Saved (demo). Definition logged to console."); }
-}
+/* ===== misc ===== */
+function zoom(d){scale=Math.min(1.6,Math.max(.4,scale+d));document.getElementById("paperwrap").style.transform=`scale(${scale})`;document.getElementById("zoomv").textContent=Math.round(scale*100)+"%";}
+function definition(){return{name:document.getElementById("fmtName").value,branding:state.branding,blocks:state.blocks.map(b=>({type:b.type,settings:b.settings,style:b.style}))};}
+function exportJSON(){const blob=new Blob([JSON.stringify(definition(),null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=(document.getElementById("fmtName").value||"format")+".json";a.click();}
+function save(){const def=definition();if(window.frappe&&frappe.call){frappe.call({method:"brandpdf.api.save_format",args:{definition:def},callback:()=>frappe.show_alert({message:"Format saved",indicator:"green"})});}else{console.log("DEFINITION",def);alert("Saved (demo) — definition logged to console.");}}
 
-/* boot */
-buildPalette(); render(); renderProps(); renderBrand(); zoom(0);
+buildPalette();render();renderProps();renderBrand();zoom(0);
 </script>
 </body>
 </html>
