@@ -71,6 +71,23 @@ frappe.pages['brandpdf-builder'].on_page_load = function (wrapper) {
 					iframe.contentWindow.postMessage({ type: 'brandpdf-saved', error: true }, origin);
 				},
 			});
+		} else if (d.type === 'brandpdf-upload') {
+			try {
+				new frappe.ui.FileUploader({
+					dialog_title: __('Upload image'),
+					allow_multiple: false,
+					make_attachments_public: true,
+					restrictions: { allowed_file_types: ['image/*'] },
+					on_success: function (file_doc) {
+						iframe.contentWindow.postMessage(
+							{ type: 'brandpdf-upload-res', reqId: d.reqId, file_url: file_doc.file_url },
+							origin
+						);
+					},
+				});
+			} catch (e) {
+				frappe.msgprint(__('Upload is not available on this page.'));
+			}
 		}
 	});
 };
