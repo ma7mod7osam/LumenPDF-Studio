@@ -36,6 +36,8 @@ def generate(job_token, doctype, docname, user, template=None, _retry=0):
         doc = frappe.get_doc(doctype, docname)
         try:
             doc.check_permission("read")
+            if not frappe.has_permission(doctype, "print", doc=doc):
+                raise frappe.PermissionError  # enforce 'print' at the actual render site too
             doc.apply_fieldlevel_read_permissions()
         except frappe.PermissionError:
             set_state(job_id, {"status": "error", "message": "You are not permitted to print this document."}, user)

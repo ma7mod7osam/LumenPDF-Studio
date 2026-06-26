@@ -288,7 +288,11 @@ def _authorize(doctype: str, name: str):
         frappe.throw("Login required.", frappe.PermissionError)
     if doctype not in resolver.enabled_doctypes():
         frappe.throw(f"BrandPDF is not enabled for {doctype}.", frappe.PermissionError)
-    frappe.get_doc(doctype, name).check_permission("read")
+    doc = frappe.get_doc(doctype, name)
+    doc.check_permission("read")
+    # Honor the standard 'print' permission too — don't be weaker than the stock Print button.
+    if not frappe.has_permission(doctype, "print", doc=doc):
+        frappe.throw("You are not permitted to print this document.", frappe.PermissionError)
 
 
 def _key(job_id: str) -> str:
