@@ -114,6 +114,7 @@
     <button class="btn ghost" onclick="newFormat()" title="Start a new blank format">+ New</button>
     <button class="btn ghost" id="undoBtn" onclick="undo()" title="Undo (Ctrl+Z)">↶</button>
     <button class="btn ghost" id="redoBtn" onclick="redo()" title="Redo (Ctrl+Y)">↷</button>
+    <button class="btn ghost" id="restoreBtn" onclick="restoreDraft()" style="display:none" title="Restore your last unsaved draft">↺ Restore</button>
     <div class="spacer"></div>
     <div class="zoom"><button onclick="zoom(-.1)">−</button><span id="zoomv">80%</span><button onclick="zoom(.1)">+</button></div>
     <select class="sel" id="dataSel" title="Preview with a real document" onchange="loadData(this.value)"><option value="">Sample data</option></select>
@@ -195,6 +196,15 @@ function undo(){if(hpos<=0)return;hpos--;applyHistory();}
 function redo(){if(hpos>=history.length-1)return;hpos++;applyHistory();}
 function duplicate(id){id=id||selId;const b=blockById(id);if(!b)return;const nb=JSON.parse(JSON.stringify(b));nb.id="b"+(idc++);if(nb.pos){nb.pos=Object.assign({},nb.pos);if(nb.float||regionOf(nb)!=="body"){nb.pos.x=(nb.pos.x||0)+4;nb.pos.y=(nb.pos.y||0)+4;}else{nb.pos.y=(nb.pos.y||0)+0.1;}}const i=state.blocks.findIndex(x=>x.id===id);state.blocks.splice(i+1,0,nb);selId=nb.id;render();renderProps();}
 
+/* ---- autosave: keep a local draft so unsaved work survives a closed tab ---- */
+let userTouched=false, _asT=null;
+document.addEventListener("pointerdown",function(){userTouched=true;},true);
+document.addEventListener("keydown",function(){userTouched=true;},true);
+function autosaveNow(){if(!userTouched||restoring)return;try{localStorage.setItem("brandpdf_draft",JSON.stringify(definition()));}catch(e){}}
+function scheduleAutosave(){clearTimeout(_asT);_asT=setTimeout(autosaveNow,700);}
+function restoreDraft(){try{const d=localStorage.getItem("brandpdf_draft");if(d){loadDefinition(JSON.parse(d));userTouched=true;}}catch(e){}}
+function clearDraft(){try{localStorage.removeItem("brandpdf_draft");}catch(e){}const r=document.getElementById("restoreBtn");if(r)r.style.display="none";}
+
 function styleCss(st){if(!st)return "";const p=[];if(st.align)p.push("text-align:"+st.align);if(st.size!=="")p.push("font-size:"+st.size+"pt");if(st.weight)p.push("font-weight:"+st.weight);if(st.italic)p.push("font-style:italic");if(st.color)p.push("color:"+st.color);if(st.bg)p.push("background:"+st.bg);if(st.pad!=="")p.push("padding:"+st.pad+"mm");if(st.border&&st.border.on){p.push(`border:${st.border.w}px ${st.border.style} ${st.border.color}`);if(st.border.radius)p.push("border-radius:"+st.border.radius+"px");}return p.join(";");}
 
 function regionOf(bl){return bl.region||"body";}  // region is OWNED, never guessed from position
@@ -226,6 +236,7 @@ function render(){
   paper.innerHTML=html;
   wireTable();
   recordHistory();
+  scheduleAutosave();
 }
 function moveBody(e,id,dir){if(e)e.stopPropagation();const body=state.blocks.filter(bl=>regionOf(bl)==="body"&&!bl.float).sort((a,c)=>((a.pos&&a.pos.y)||0)-((c.pos&&c.pos.y)||0));const i=body.findIndex(x=>x.id===id);const j=i+dir;if(j<0||j>=body.length)return;const A=body[i],C=body[j];if(!A.pos)A.pos={x:14,y:0,w:180,h:null};if(!C.pos)C.pos={x:14,y:0,w:180,h:null};const ay=A.pos.y||0,cy=C.pos.y||0;A.pos.y=cy;C.pos.y=ay;render();renderProps();}
 function wireTable(){
@@ -418,7 +429,7 @@ function definition(){return{name:document.getElementById("fmtName").value,layou
 function exportJSON(){const blob=new Blob([JSON.stringify(definition(),null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=(document.getElementById("fmtName").value||"format")+".json";a.click();}
 function previewPDF(){if(!EMBED){alert("Preview PDF works inside ERPNext (renders the real PDF with your engine).");return;}const ds=document.getElementById("dataSel");const name=ds?ds.value:"";window.parent.postMessage({type:"brandpdf-preview",definition:definition(),doctype:state.target,name:name||""},window.location.origin);}
 const EMBED=(window.parent&&window.parent!==window);
-function save(){const def=definition();if(EMBED){window.parent.postMessage({type:"brandpdf-save",definition:def},window.location.origin);flashSaved();return;}if(window.frappe&&frappe.call){frappe.call({method:"brandpdf.api.save_format",args:{definition:JSON.stringify(def)},callback:()=>frappe.show_alert({message:"Format saved",indicator:"green"})});return;}console.log("DEFINITION",def);alert("Saved (demo) - logged to console.");}
+function save(){const def=definition();if(EMBED){window.parent.postMessage({type:"brandpdf-save",definition:def},window.location.origin);flashSaved();clearDraft();return;}if(window.frappe&&frappe.call){frappe.call({method:"brandpdf.api.save_format",args:{definition:JSON.stringify(def)},callback:()=>frappe.show_alert({message:"Format saved",indicator:"green"})});return;}console.log("DEFINITION",def);alert("Saved (demo) - logged to console.");}
 function flashSaved(){const b=document.querySelector(".btn.primary");if(!b)return;const t=b.textContent;b.textContent="✓ Saved";setTimeout(function(){b.textContent=t;},1400);}
 function loadDefinition(def){try{if(def.branding)state.branding=Object.assign({primary:"#1C75BC",navy:"#1A1E2A",font:"Montserrat",header_image:"",footer_image:""},def.branding);
   if(def.header)state.header=Object.assign({enabled:true,height:30,repeat:true},def.header);if(def.footer)state.footer=Object.assign({enabled:true,height:32,repeat:true},def.footer);
@@ -437,8 +448,8 @@ function loadDoctypeMeta(dt){
   rpc("brandpdf.api.list_formats",{doctype:dt}).then(function(fs){setSelOptions("openSel",(fs||[]).map(function(f){return{value:f.name,label:f.label};}),"Open…","");});
   rpc("brandpdf.api.builder_docs",{doctype:dt,limit:25}).then(function(ds){FIELDVALS=null;SAMPLE=JSON.parse(JSON.stringify(BASE_SAMPLE));setSelOptions("dataSel",(ds||[]).map(function(n){return{value:n,label:n};}),"Sample data","");render();});
 }
-function openFormat(name){if(!name)return;rpc("brandpdf.api.get_format",{name:name}).then(function(r){if(r&&r.definition)loadDefinition(r.definition);const el=document.getElementById("openSel");if(el)el.value="";});}
-function newFormat(){state.blocks=[];selId=null;FIELDVALS=null;SAMPLE=JSON.parse(JSON.stringify(BASE_SAMPLE));state.branding.header_image="";state.branding.footer_image="";document.getElementById("fmtName").value="New Format";const ds=document.getElementById("dataSel");if(ds)ds.value="";render();renderProps();renderBrand();}
+function openFormat(name){if(!name)return;clearDraft();rpc("brandpdf.api.get_format",{name:name}).then(function(r){if(r&&r.definition)loadDefinition(r.definition);const el=document.getElementById("openSel");if(el)el.value="";});}
+function newFormat(){clearDraft();state.blocks=[];selId=null;FIELDVALS=null;SAMPLE=JSON.parse(JSON.stringify(BASE_SAMPLE));state.branding.header_image="";state.branding.footer_image="";document.getElementById("fmtName").value="New Format";const ds=document.getElementById("dataSel");if(ds)ds.value="";render();renderProps();renderBrand();}
 function loadData(name){if(!name){FIELDVALS=null;SAMPLE=JSON.parse(JSON.stringify(BASE_SAMPLE));render();return;}rpc("brandpdf.api.builder_sample",{doctype:state.target,name:name}).then(applyData);}
 function applyData(d){if(!d||!d.name){FIELDVALS=null;SAMPLE=JSON.parse(JSON.stringify(BASE_SAMPLE));render();return;}SAMPLE=Object.assign(JSON.parse(JSON.stringify(BASE_SAMPLE)),{name:d.name,transaction_date:d.transaction_date||"",valid_till:d.valid_till||"",customer_name:d.customer_name||"",address_display:d.address_display||"",total:d.total||"",grand_total:d.grand_total||"",items:(d.items&&d.items.length)?d.items:[],taxes:d.taxes||[],payment_schedule:d.payment_schedule||[]});FIELDVALS=d.fields||null;render();}
 
@@ -450,6 +461,7 @@ window.addEventListener("message",function(e){if(e.origin!==window.location.orig
   if(d.type==="brandpdf-saved")flashSaved();});
 
 buildPalette();render();renderProps();renderBrand();zoom(0);
+try{if(localStorage.getItem("brandpdf_draft")){const r=document.getElementById("restoreBtn");if(r)r.style.display="";}}catch(e){}
 if(EMBED){
   rpc("brandpdf.api.builder_doctypes").then(function(dts){dts=(dts&&dts.length)?dts:["Quotation"];if(dts.indexOf(state.target)<0)state.target=dts[0];setSelOptions("doctypeSel",dts.map(function(x){return{value:x,label:x};}),null,state.target);loadDoctypeMeta(state.target);});
 } else {
