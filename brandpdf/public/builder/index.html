@@ -28,8 +28,10 @@
   .railhead{display:flex;align-items:center;justify-content:space-between}
   .collapse{margin:8px 12px 0 0;width:24px;height:24px;border-radius:6px;border:1px solid var(--line2);background:var(--panel2);color:var(--mut);cursor:pointer;font-size:13px;line-height:1}
   .collapse:hover{color:var(--ink);border-color:#42527a}
-  #leftExpand{display:none;position:fixed;left:8px;top:62px;z-index:90;align-items:center;justify-content:center;width:28px;height:34px;border-radius:8px;border:1px solid var(--line2);background:var(--panel2);color:var(--ink);cursor:pointer;font-size:15px;box-shadow:0 4px 14px rgba(0,0,0,.35)}
-  #leftExpand:hover{border-color:var(--accent)}
+  #leftExpand,#rightExpand{display:none;position:fixed;top:62px;z-index:90;align-items:center;justify-content:center;width:28px;height:34px;border-radius:8px;border:1px solid var(--line2);background:var(--panel2);color:var(--ink);cursor:pointer;font-size:15px;box-shadow:0 4px 14px rgba(0,0,0,.35)}
+  #leftExpand{left:8px}#rightExpand{right:8px}
+  #leftExpand:hover,#rightExpand:hover{border-color:var(--accent)}
+  .rcolhead{justify-content:flex-end;padding:8px 10px 0}
   .rail h4{margin:0;padding:14px 16px 4px;font-size:10.5px;letter-spacing:1.4px;text-transform:uppercase;color:var(--mut2);font-weight:700}
   #palette{padding:4px 12px 16px}
   .pgrp{font-size:9.5px;letter-spacing:1.2px;text-transform:uppercase;color:var(--mut2);font-weight:700;margin:12px 4px 6px}
@@ -146,7 +148,9 @@
       <div id="palette"></div>
       <div class="hint" id="scopeHint">Adding to the <b>body</b> — sections flow in order. Click a block to add it.</div></div>
     <div class="stage" id="stage"><div class="paperwrap" id="paperwrap"><div class="paper" id="paper"></div></div></div>
-    <div class="rail right">
+    <button id="rightExpand" onclick="toggleRight()" title="Show properties panel">«</button>
+    <div class="rail right" id="rightRail">
+      <div class="railhead rcolhead"><button class="collapse" onclick="toggleRight()" title="Collapse panel">»</button></div>
       <div class="tabs"><div class="tab on" data-tab="block" onclick="setTab('block')">Block</div><div class="tab" data-tab="page" onclick="setTab('page')">Page</div><div class="tab" data-tab="brand" onclick="setTab('brand')">Branding</div></div>
       <div class="props" id="propsBlock"></div>
       <div class="props" id="propsPage" style="display:none"></div>
@@ -508,9 +512,12 @@ function imgAttach(lbl,key,val,setter){const after=(setter==="setB")?"renderBran
 function renderBrand(){const b=state.branding;document.getElementById("propsBrand").innerHTML=`<div class="ptitle">Branding</div><div class="fld"><label>Primary color</label><div class="color"><input type="color" value="${b.primary}" oninput="setB('primary',this.value)"><input type="text" value="${esc(b.primary)}" oninput="setB('primary',this.value)"></div></div><div class="fld"><label>Secondary / navy</label><div class="color"><input type="color" value="${b.navy}" oninput="setB('navy',this.value)"><input type="text" value="${esc(b.navy)}" oninput="setB('navy',this.value)"></div></div><div class="fld"><label>Font</label><select onchange="setB('font',this.value)">`+["Montserrat","Cairo","Arial","Tahoma"].map(f=>`<option ${b.font===f?'selected':''}>${f}</option>`).join("")+`</select></div><div class="styhead" style="margin-top:14px">Banner images (optional)</div>`+imgAttach("Header banner","header_image",b.header_image,"setB")+imgAttach("Footer banner","footer_image",b.footer_image,"setB")+`<div class="hint" style="padding:6px 0 0">Optional full-width banners. You can also leave these empty and build the header/footer from blocks (logo image + text).</div>`;}
 
 function zoom(d){scale=Math.min(1.6,Math.max(.35,scale+d));document.getElementById("paperwrap").style.transform=`scale(${scale})`;document.getElementById("zoomv").textContent=Math.round(scale*100)+"%";}
-let leftCollapsed=false;
-function setLeft(c){leftCollapsed=c;const body=document.querySelector(".body");if(body)body.style.gridTemplateColumns=c?"0 minmax(0,1fr) 300px":"222px minmax(0,1fr) 300px";const ex=document.getElementById("leftExpand");if(ex)ex.style.display=c?"flex":"none";try{localStorage.setItem("brandpdf_leftcol",c?"1":"0");}catch(e){}}
+let leftCollapsed=false, rightCollapsed=false;
+function applyCols(){const body=document.querySelector(".body");if(body)body.style.gridTemplateColumns=(leftCollapsed?"0":"222px")+" minmax(0,1fr) "+(rightCollapsed?"0":"300px");}
+function setLeft(c){leftCollapsed=c;applyCols();const ex=document.getElementById("leftExpand");if(ex)ex.style.display=c?"flex":"none";try{localStorage.setItem("brandpdf_leftcol",c?"1":"0");}catch(e){}}
+function setRight(c){rightCollapsed=c;applyCols();const ex=document.getElementById("rightExpand");if(ex)ex.style.display=c?"flex":"none";try{localStorage.setItem("brandpdf_rightcol",c?"1":"0");}catch(e){}}
 function toggleLeft(){setLeft(!leftCollapsed);}
+function toggleRight(){setRight(!rightCollapsed);}
 function definition(){return{name:document.getElementById("fmtName").value,layout:"absolute",target_doctype:state.target,header:state.header,footer:state.footer,watermark:state.watermark,branding:state.branding,blocks:state.blocks.map(b=>({type:b.type,settings:b.settings,style:b.style,pos:b.pos,float:b.float||false,region:b.region||"body",cond:b.cond||null}))};}
 function exportJSON(){const blob=new Blob([JSON.stringify(definition(),null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=(document.getElementById("fmtName").value||"format")+".json";a.click();}
 function previewPDF(){if(!EMBED){alert("Preview PDF works inside ERPNext (renders the real PDF with your engine).");return;}const ds=document.getElementById("dataSel");const name=ds?ds.value:"";window.parent.postMessage({type:"brandpdf-preview",definition:definition(),doctype:state.target,name:name||""},window.location.origin);}
@@ -547,7 +554,7 @@ window.addEventListener("message",function(e){if(e.origin!==window.location.orig
   if(d.type==="brandpdf-saved")flashSaved();});
 
 buildPalette();render();renderProps();renderBrand();zoom(0);
-try{setLeft(localStorage.getItem("brandpdf_leftcol")==="1");}catch(e){}
+try{setLeft(localStorage.getItem("brandpdf_leftcol")==="1");setRight(localStorage.getItem("brandpdf_rightcol")==="1");}catch(e){}
 try{if(localStorage.getItem("brandpdf_draft")){const r=document.getElementById("restoreBtn");if(r)r.style.display="";}}catch(e){}
 if(EMBED){
   rpc("brandpdf.api.builder_doctypes").then(function(dts){dts=(dts&&dts.length)?dts:["Quotation"];if(dts.indexOf(state.target)<0)state.target=dts[0];setSelOptions("doctypeSel",dts.map(function(x){return{value:x,label:x};}),null,state.target);loadDoctypeMeta(state.target);});
