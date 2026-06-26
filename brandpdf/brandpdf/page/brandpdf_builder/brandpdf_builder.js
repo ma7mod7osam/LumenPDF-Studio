@@ -38,18 +38,37 @@ frappe.pages['brandpdf-builder'].on_page_load = function (wrapper) {
 		});
 	});
 
-	// Save bridge — only accept messages from OUR iframe at OUR origin.
+	// Generic RPC + save bridge — only accept messages from OUR iframe at OUR origin, and only
+	// allow-listed read/save methods.
+	var ALLOWED = {
+		'brandpdf.api.builder_doctypes': 1, 'brandpdf.api.builder_docs': 1, 'brandpdf.api.builder_sample': 1,
+		'brandpdf.api.doctype_fields': 1, 'brandpdf.api.list_formats': 1, 'brandpdf.api.get_format': 1,
+		'brandpdf.api.save_format': 1,
+	};
 	window.addEventListener('message', function (e) {
 		if (e.origin !== origin) return;
 		if (e.source !== iframe.contentWindow) return;
 		var d = e.data || {};
-		if (d.type === 'brandpdf-save') {
+		if (d.type === 'brandpdf-rpc' && ALLOWED[d.method]) {
+			frappe.call({
+				method: d.method, args: d.args || {},
+				callback: function (r) {
+					iframe.contentWindow.postMessage({ type: 'brandpdf-rpc-res', reqId: d.reqId, ok: true, message: r.message }, origin);
+				},
+				error: function () {
+					iframe.contentWindow.postMessage({ type: 'brandpdf-rpc-res', reqId: d.reqId, ok: false }, origin);
+				},
+			});
+		} else if (d.type === 'brandpdf-save') {
 			frappe.call({
 				method: 'brandpdf.api.save_format',
 				args: { definition: JSON.stringify(d.definition) },
 				callback: function () {
-					frappe.show_alert({ message: __('Format saved & activated'), indicator: 'green' });
+					frappe.show_alert({ message: __('Format saved'), indicator: 'green' });
 					iframe.contentWindow.postMessage({ type: 'brandpdf-saved' }, origin);
+				},
+				error: function () {
+					iframe.contentWindow.postMessage({ type: 'brandpdf-saved', error: true }, origin);
 				},
 			});
 		}

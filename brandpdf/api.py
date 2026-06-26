@@ -155,6 +155,90 @@ def doctype_fields(doctype="Quotation"):
     return out
 
 
+@frappe.whitelist()
+def builder_doctypes():
+    """Candidate doctypes to build formats for (common transaction types that exist + any that
+    already have a BrandPDF format)."""
+    _require_manager()
+    candidates = [
+        "Quotation", "Sales Order", "Sales Invoice", "Delivery Note", "POS Invoice",
+        "Purchase Order", "Purchase Invoice", "Purchase Receipt", "Supplier Quotation",
+        "Payment Entry", "Journal Entry", "Material Request", "Stock Entry", "Lead", "Opportunity",
+    ]
+    out = [d for d in candidates if frappe.db.exists("DocType", d)]
+    if frappe.db.exists("DocType", "BrandPDF Template"):
+        for d in frappe.get_all("BrandPDF Template", distinct=True, pluck="target_doctype"):
+            if d and d not in out:
+                out.append(d)
+    return out
+
+
+@frappe.whitelist()
+def builder_docs(doctype, limit=20):
+    """Recent documents of a doctype — for the builder's 'preview with real data' picker."""
+    _require_manager()
+    if not doctype or not frappe.db.exists("DocType", doctype):
+        return []
+    try:
+        return frappe.get_all(doctype, fields=["name"], order_by="modified desc", limit=int(limit), pluck="name")
+    except Exception:
+        return []
+
+
+@frappe.whitelist()
+def builder_sample(doctype, name):
+    """Real document data shaped for the builder's live preview (field values + items/taxes/
+    payment schedule)."""
+    _require_manager()
+    if not (doctype and name and frappe.db.exists(doctype, name)):
+        return {}
+    from frappe.utils import strip_html_tags
+    doc = frappe.get_doc(doctype, name)
+
+    def fmt(f):
+        try:
+            v = doc.get_formatted(f)
+        except Exception:
+            v = doc.get(f)
+        return "" if v is None else str(v)
+
+    skip = {"Section Break", "Column Break", "Tab Break", "HTML", "Table", "Table MultiSelect",
+            "Button", "Image", "Geolocation", "Signature", "Barcode"}
+    fields = {"name": doc.name}
+    for df in frappe.get_meta(doctype).fields:
+        if df.fieldtype in skip or not df.fieldname:
+            continue
+        fields[df.fieldname] = fmt(df.fieldname)
+
+    out = {
+        "name": doc.name,
+        "transaction_date": fmt("transaction_date") or fmt("posting_date") or fmt("date"),
+        "valid_till": fmt("valid_till"),
+        "customer_name": fields.get("customer_name") or fields.get("supplier_name") or fields.get("party_name") or fields.get("title") or doc.name,
+        "address_display": (doc.get("address_display") or doc.get("supplier_address_display") or doc.get("company_address_display") or ""),
+        "total": fmt("total") or fmt("net_total"),
+        "grand_total": fmt("grand_total") or fmt("rounded_total") or fmt("total"),
+        "fields": fields, "items": [], "taxes": [], "payment_schedule": [],
+    }
+    for it in (doc.get("items") or []):
+        out["items"].append({
+            "n": it.get("item_name") or it.get("item_code") or "",
+            "q": (f'{it.get_formatted("qty")} {it.get("uom") or it.get("stock_uom") or ""}').strip(),
+            "r": it.get_formatted("rate") if it.get("rate") is not None else "",
+            "a": it.get_formatted("amount") if it.get("amount") is not None else "",
+            "d": strip_html_tags(it.get("description") or "").strip(),
+        })
+    for tx in (doc.get("taxes") or []):
+        if tx.get("tax_amount"):
+            out["taxes"].append({"desc": strip_html_tags(tx.get("description") or ""), "amt": tx.get_formatted("tax_amount")})
+    for ps in (doc.get("payment_schedule") or []):
+        out["payment_schedule"].append({
+            "t": ps.get("payment_term") or ps.get("description") or "",
+            "due": ps.get_formatted("due_date"), "pct": ps.get_formatted("invoice_portion"), "amt": ps.get_formatted("payment_amount"),
+        })
+    return out
+
+
 def _require_manager():
     if "System Manager" not in frappe.get_roles():
         frappe.throw("Only System Manager can edit print formats.", frappe.PermissionError)
