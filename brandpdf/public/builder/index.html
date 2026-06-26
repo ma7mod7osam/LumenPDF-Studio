@@ -23,8 +23,13 @@
   .zoom{display:flex;align-items:center;gap:6px;color:var(--mut)}
   .zoom button{width:26px;height:26px;border-radius:7px;border:1px solid var(--line2);background:var(--panel2);color:var(--ink);cursor:pointer;font-size:14px}
   .body{display:grid;grid-template-columns:222px minmax(0,1fr) 300px;min-height:0;min-width:0}
-  .rail{background:var(--panel);border-right:1px solid var(--line);overflow:auto}
+  .rail{background:var(--panel);border-right:1px solid var(--line);overflow:auto;min-width:0}
   .rail.right{border-right:0;border-left:1px solid var(--line)}
+  .railhead{display:flex;align-items:center;justify-content:space-between}
+  .collapse{margin:8px 12px 0 0;width:24px;height:24px;border-radius:6px;border:1px solid var(--line2);background:var(--panel2);color:var(--mut);cursor:pointer;font-size:13px;line-height:1}
+  .collapse:hover{color:var(--ink);border-color:#42527a}
+  #leftExpand{display:none;position:fixed;left:8px;top:62px;z-index:90;align-items:center;justify-content:center;width:28px;height:34px;border-radius:8px;border:1px solid var(--line2);background:var(--panel2);color:var(--ink);cursor:pointer;font-size:15px;box-shadow:0 4px 14px rgba(0,0,0,.35)}
+  #leftExpand:hover{border-color:var(--accent)}
   .rail h4{margin:0;padding:14px 16px 4px;font-size:10.5px;letter-spacing:1.4px;text-transform:uppercase;color:var(--mut2);font-weight:700}
   #palette{padding:4px 12px 16px}
   .pgrp{font-size:9.5px;letter-spacing:1.2px;text-transform:uppercase;color:var(--mut2);font-weight:700;margin:12px 4px 6px}
@@ -135,7 +140,8 @@
     <button class="btn primary" onclick="save()">✓ Save</button>
   </div>
   <div class="body">
-    <div class="rail"><h4>Insert</h4>
+    <button id="leftExpand" onclick="toggleLeft()" title="Show insert panel">»</button>
+    <div class="rail" id="leftRail"><div class="railhead"><h4>Insert</h4><button class="collapse" onclick="toggleLeft()" title="Collapse panel">«</button></div>
       <div style="padding:2px 12px 6px"><div class="seg" id="scopeSeg" title="Where new blocks go"><button class="on" onclick="setScope('body')">Body</button><button onclick="setScope('header')">Header</button><button onclick="setScope('footer')">Footer</button></div></div>
       <div id="palette"></div>
       <div class="hint" id="scopeHint">Adding to the <b>body</b> — sections flow in order. Click a block to add it.</div></div>
@@ -502,6 +508,9 @@ function imgAttach(lbl,key,val,setter){const after=(setter==="setB")?"renderBran
 function renderBrand(){const b=state.branding;document.getElementById("propsBrand").innerHTML=`<div class="ptitle">Branding</div><div class="fld"><label>Primary color</label><div class="color"><input type="color" value="${b.primary}" oninput="setB('primary',this.value)"><input type="text" value="${esc(b.primary)}" oninput="setB('primary',this.value)"></div></div><div class="fld"><label>Secondary / navy</label><div class="color"><input type="color" value="${b.navy}" oninput="setB('navy',this.value)"><input type="text" value="${esc(b.navy)}" oninput="setB('navy',this.value)"></div></div><div class="fld"><label>Font</label><select onchange="setB('font',this.value)">`+["Montserrat","Cairo","Arial","Tahoma"].map(f=>`<option ${b.font===f?'selected':''}>${f}</option>`).join("")+`</select></div><div class="styhead" style="margin-top:14px">Banner images (optional)</div>`+imgAttach("Header banner","header_image",b.header_image,"setB")+imgAttach("Footer banner","footer_image",b.footer_image,"setB")+`<div class="hint" style="padding:6px 0 0">Optional full-width banners. You can also leave these empty and build the header/footer from blocks (logo image + text).</div>`;}
 
 function zoom(d){scale=Math.min(1.6,Math.max(.35,scale+d));document.getElementById("paperwrap").style.transform=`scale(${scale})`;document.getElementById("zoomv").textContent=Math.round(scale*100)+"%";}
+let leftCollapsed=false;
+function setLeft(c){leftCollapsed=c;const body=document.querySelector(".body");if(body)body.style.gridTemplateColumns=c?"0 minmax(0,1fr) 300px":"222px minmax(0,1fr) 300px";const ex=document.getElementById("leftExpand");if(ex)ex.style.display=c?"flex":"none";try{localStorage.setItem("brandpdf_leftcol",c?"1":"0");}catch(e){}}
+function toggleLeft(){setLeft(!leftCollapsed);}
 function definition(){return{name:document.getElementById("fmtName").value,layout:"absolute",target_doctype:state.target,header:state.header,footer:state.footer,watermark:state.watermark,branding:state.branding,blocks:state.blocks.map(b=>({type:b.type,settings:b.settings,style:b.style,pos:b.pos,float:b.float||false,region:b.region||"body",cond:b.cond||null}))};}
 function exportJSON(){const blob=new Blob([JSON.stringify(definition(),null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=(document.getElementById("fmtName").value||"format")+".json";a.click();}
 function previewPDF(){if(!EMBED){alert("Preview PDF works inside ERPNext (renders the real PDF with your engine).");return;}const ds=document.getElementById("dataSel");const name=ds?ds.value:"";window.parent.postMessage({type:"brandpdf-preview",definition:definition(),doctype:state.target,name:name||""},window.location.origin);}
@@ -538,6 +547,7 @@ window.addEventListener("message",function(e){if(e.origin!==window.location.orig
   if(d.type==="brandpdf-saved")flashSaved();});
 
 buildPalette();render();renderProps();renderBrand();zoom(0);
+try{setLeft(localStorage.getItem("brandpdf_leftcol")==="1");}catch(e){}
 try{if(localStorage.getItem("brandpdf_draft")){const r=document.getElementById("restoreBtn");if(r)r.style.display="";}}catch(e){}
 if(EMBED){
   rpc("brandpdf.api.builder_doctypes").then(function(dts){dts=(dts&&dts.length)?dts:["Quotation"];if(dts.indexOf(state.target)<0)state.target=dts[0];setSelOptions("doctypeSel",dts.map(function(x){return{value:x,label:x};}),null,state.target);loadDoctypeMeta(state.target);});
