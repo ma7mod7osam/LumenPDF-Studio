@@ -722,6 +722,33 @@ def _absolute_page_html(doc, branding, blocks_list, ctx, grow=False, top_mm=0.0,
     return "".join(parts)
 
 
+def _flow_body_html(doc, branding, body_blocks, ctx, top_mm=0.0, bottom_mm=0.0):
+    """Body in document flow: blocks stack top-to-bottom (so a variable-length items table never
+    overlaps the totals/terms below it), reserving @page top/bottom margins so the body stays
+    clear of the running header/footer bands on EVERY page. Each block keeps its own style
+    (alignment, width, spacing) but vertical position is determined by flow order."""
+    font = branding.get("font") or "Montserrat"
+    navy = branding.get("navy", "#1A1E2A")
+    parts = [base_css(branding)]
+    parts.append(f"<style>@page{{size:A4;margin:{_fmt_num(top_mm)}mm 0mm {_fmt_num(bottom_mm)}mm 0mm;}}</style>")
+    parts.append(
+        f'<div style="width:210mm;padding:0 14mm;font-family:\'{font}\',\'Segoe UI\',Arial,sans-serif;'
+        f'color:{navy};font-size:8.5pt;-webkit-print-color-adjust:exact;print-color-adjust:exact;">'
+    )
+    for bl in (body_blocks or []):
+        if not isinstance(bl, dict):
+            continue
+        t = bl.get("type")
+        fn = DEF_RENDERERS.get(t)
+        if not fn:
+            continue
+        inner = fn(doc, branding, bl.get("settings") or {}, ctx)
+        css = _style_css(bl.get("style") or {}, t)
+        parts.append(f'<div style="margin-bottom:4mm;{css}">{inner}</div>')
+    parts.append("</div>")
+    return "".join(parts)
+
+
 def _render_absolute(doc, definition, branding, ctx):
     """Free-canvas layout: every block is absolutely positioned by its pos {x,y,w,h} in mm."""
     blocks_list = definition.get("blocks")
