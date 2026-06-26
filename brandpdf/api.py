@@ -54,6 +54,38 @@ def list_formats(doctype):
 
 
 @frappe.whitelist()
+def request_preview(definition, doctype="Quotation", name=None):
+    """Render the builder's CURRENT (unsaved) design to a real PDF against a real document, so
+    the user gets true WYSIWYG (engine, fonts, pagination). Enqueued like a normal render."""
+    _require_manager()
+    if isinstance(definition, str):
+        definition = json.loads(definition)
+    if not isinstance(definition, dict):
+        frappe.throw("Invalid format definition.")
+    _validate_image_srcs(definition)
+    if not (doctype and frappe.db.exists("DocType", doctype)):
+        frappe.throw("Unknown doctype.")
+    if not name:
+        recent = frappe.get_all(doctype, order_by="modified desc", limit=1, pluck="name")
+        name = recent[0] if recent else None
+    if not name:
+        frappe.throw(f"No {doctype} document to preview with — create one first.")
+    job_id = frappe.generate_hash(length=20)
+    set_state(job_id, {"status": "queued"}, frappe.session.user)
+    frappe.enqueue(
+        "brandpdf.pdf_job.generate_preview",
+        queue="long",
+        timeout=(config.conf("render_timeout") or 120) + 30,
+        job_token=job_id,
+        definition=json.dumps(definition),
+        doctype=doctype,
+        docname=name,
+        user=frappe.session.user,
+    )
+    return {"job_id": job_id}
+
+
+@frappe.whitelist()
 def get_job_result(job_id: str):
     state = _get_state(job_id)
     if not state:

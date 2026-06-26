@@ -112,9 +112,12 @@
     <select class="sel" id="doctypeSel" title="Target DocType" onchange="onDoctype(this.value)"></select>
     <select class="sel" id="openSel" title="Open an existing format" onchange="openFormat(this.value)"><option value="">Open…</option></select>
     <button class="btn ghost" onclick="newFormat()" title="Start a new blank format">+ New</button>
+    <button class="btn ghost" id="undoBtn" onclick="undo()" title="Undo (Ctrl+Z)">↶</button>
+    <button class="btn ghost" id="redoBtn" onclick="redo()" title="Redo (Ctrl+Y)">↷</button>
     <div class="spacer"></div>
     <div class="zoom"><button onclick="zoom(-.1)">−</button><span id="zoomv">80%</span><button onclick="zoom(.1)">+</button></div>
     <select class="sel" id="dataSel" title="Preview with a real document" onchange="loadData(this.value)"><option value="">Sample data</option></select>
+    <button class="btn ghost" onclick="previewPDF()" title="Render the real PDF with this document">👁 Preview PDF</button>
     <button class="btn ghost" onclick="exportJSON()">⇩ Export</button>
     <button class="btn primary" onclick="save()">✓ Save</button>
   </div>
@@ -182,6 +185,16 @@ let state={layout:"absolute",target:"Quotation",header:{enabled:true,height:30,r
 function cur(){return state.blocks.find(x=>x.id===selId);}
 function blockById(id){return state.blocks.find(b=>b.id===id);}
 
+/* ---- undo / redo (snapshots taken whenever render() sees the state change) ---- */
+let history=[], hpos=-1, restoring=false;
+function snapState(){return JSON.stringify({blocks:state.blocks.map(function(b){return{type:b.type,settings:b.settings,style:b.style,pos:b.pos,float:b.float,region:b.region};}),branding:state.branding,header:state.header,footer:state.footer,target:state.target});}
+function recordHistory(){if(restoring)return;const s=snapState();if(hpos>=0&&history[hpos]===s)return;history=history.slice(0,hpos+1);history.push(s);hpos=history.length-1;if(history.length>80){history.shift();hpos--;}updateUndoUI();}
+function updateUndoUI(){const u=document.getElementById("undoBtn"),r=document.getElementById("redoBtn");if(u)u.disabled=hpos<=0;if(r)r.disabled=hpos>=history.length-1;}
+function applyHistory(){restoring=true;const s=JSON.parse(history[hpos]);state.blocks=s.blocks.map(function(b){return Object.assign({id:"b"+(idc++)},b);});state.branding=s.branding;state.header=s.header;state.footer=s.footer;state.target=s.target;selId=null;render();renderProps();renderBrand();restoring=false;updateUndoUI();}
+function undo(){if(hpos<=0)return;hpos--;applyHistory();}
+function redo(){if(hpos>=history.length-1)return;hpos++;applyHistory();}
+function duplicate(id){id=id||selId;const b=blockById(id);if(!b)return;const nb=JSON.parse(JSON.stringify(b));nb.id="b"+(idc++);if(nb.pos){nb.pos=Object.assign({},nb.pos);if(nb.float||regionOf(nb)!=="body"){nb.pos.x=(nb.pos.x||0)+4;nb.pos.y=(nb.pos.y||0)+4;}else{nb.pos.y=(nb.pos.y||0)+0.1;}}const i=state.blocks.findIndex(x=>x.id===id);state.blocks.splice(i+1,0,nb);selId=nb.id;render();renderProps();}
+
 function styleCss(st){if(!st)return "";const p=[];if(st.align)p.push("text-align:"+st.align);if(st.size!=="")p.push("font-size:"+st.size+"pt");if(st.weight)p.push("font-weight:"+st.weight);if(st.italic)p.push("font-style:italic");if(st.color)p.push("color:"+st.color);if(st.bg)p.push("background:"+st.bg);if(st.pad!=="")p.push("padding:"+st.pad+"mm");if(st.border&&st.border.on){p.push(`border:${st.border.w}px ${st.border.style} ${st.border.color}`);if(st.border.radius)p.push("border-radius:"+st.border.radius+"px");}return p.join(";");}
 
 function regionOf(bl){return bl.region||"body";}  // region is OWNED, never guessed from position
@@ -191,11 +204,11 @@ function absBlk(bl,b,locked){
   if(locked) return `<div class="blk" data-id="${bl.id}" style="${box}${styleCss(bl.style)}">${inner}</div>`;  // inert: not selectable/movable
   const sel=bl.id===selId;
   const handles=sel?'<div class="rh e" data-rh="e"></div><div class="rh s" data-rh="s"></div><div class="rh se" data-rh="se"></div>':'';
-  return `<div class="blk ${sel?'sel':''}" data-id="${bl.id}" style="${box}${styleCss(bl.style)}"><span class="tag">${META[bl.type].l}</span><div class="tools"><button title="Delete" onclick="del(event,'${bl.id}')">🗑</button></div>${inner}${handles}</div>`;
+  return `<div class="blk ${sel?'sel':''}" data-id="${bl.id}" style="${box}${styleCss(bl.style)}"><span class="tag">${META[bl.type].l}</span><div class="tools"><button title="Duplicate" onclick="duplicate('${bl.id}')">⧉</button><button title="Delete" onclick="del(event,'${bl.id}')">🗑</button></div>${inner}${handles}</div>`;
 }
 function flowBlk(bl,b){
   const inner=(R[bl.type]||(()=>""))(bl.settings,b,bl);const sel=bl.id===selId;
-  return `<div class="blk flow ${sel?'sel':''}" data-id="${bl.id}" style="position:relative;margin-bottom:4mm;${styleCss(bl.style)}"><span class="tag">${META[bl.type].l}</span><div class="tools"><button title="Move up" onclick="moveBody(event,'${bl.id}',-1)">↑</button><button title="Move down" onclick="moveBody(event,'${bl.id}',1)">↓</button><button title="Delete" onclick="del(event,'${bl.id}')">🗑</button></div>${inner}</div>`;
+  return `<div class="blk flow ${sel?'sel':''}" data-id="${bl.id}" style="position:relative;margin-bottom:4mm;${styleCss(bl.style)}"><span class="tag">${META[bl.type].l}</span><div class="tools"><button title="Move up" onclick="moveBody(event,'${bl.id}',-1)">↑</button><button title="Move down" onclick="moveBody(event,'${bl.id}',1)">↓</button><button title="Duplicate" onclick="duplicate('${bl.id}')">⧉</button><button title="Delete" onclick="del(event,'${bl.id}')">🗑</button></div>${inner}</div>`;
 }
 function render(){
   const b=state.branding,paper=document.getElementById("paper");
@@ -212,6 +225,7 @@ function render(){
   html+=`<div style="position:absolute;left:0;top:${Hh}mm;width:210mm;padding:4mm 14mm 0;z-index:1;${ba?'':'opacity:0.4;pointer-events:none;'}">`+body.map(bl=>flowBlk(bl,b)).join("")+`</div>`;
   paper.innerHTML=html;
   wireTable();
+  recordHistory();
 }
 function moveBody(e,id,dir){if(e)e.stopPropagation();const body=state.blocks.filter(bl=>regionOf(bl)==="body"&&!bl.float).sort((a,c)=>((a.pos&&a.pos.y)||0)-((c.pos&&c.pos.y)||0));const i=body.findIndex(x=>x.id===id);const j=i+dir;if(j<0||j>=body.length)return;const A=body[i],C=body[j];if(!A.pos)A.pos={x:14,y:0,w:180,h:null};if(!C.pos)C.pos={x:14,y:0,w:180,h:null};const ay=A.pos.y||0,cy=C.pos.y||0;A.pos.y=cy;C.pos.y=ay;render();renderProps();}
 function wireTable(){
@@ -262,9 +276,13 @@ document.addEventListener("mousemove",function(e){
   }
   drawGuides(gx,gy);
 });
-document.addEventListener("mouseup",function(){if(!drag)return;const d=drag;drag=null;clearGuides();if(d.pend){const b=blockById(d.id);if(b)b.pos=d.pend;renderProps();}});
+document.addEventListener("mouseup",function(){if(!drag)return;const d=drag;drag=null;clearGuides();if(d.pend){const b=blockById(d.id);if(b)b.pos=d.pend;render();renderProps();}});
 document.addEventListener("keydown",function(e){
-  if(!selId)return;const tg=(e.target.tagName||"").toLowerCase();if(tg==="input"||tg==="textarea"||e.target.isContentEditable)return;
+  const tg=(e.target.tagName||"").toLowerCase();if(tg==="input"||tg==="textarea"||e.target.isContentEditable)return;
+  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="z"&&!e.shiftKey){e.preventDefault();undo();return;}
+  if((e.ctrlKey||e.metaKey)&&(e.key.toLowerCase()==="y"||(e.shiftKey&&e.key.toLowerCase()==="z"))){e.preventDefault();redo();return;}
+  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="d"){e.preventDefault();if(selId)duplicate(selId);return;}
+  if(!selId)return;
   const b=cur();if(!b)return;const st=e.shiftKey?10:1;let m=false;
   if(e.key==="ArrowLeft"){b.pos.x=Math.max(0,b.pos.x-st);m=true;}else if(e.key==="ArrowRight"){b.pos.x+=st;m=true;}else if(e.key==="ArrowUp"){b.pos.y=Math.max(0,b.pos.y-st);m=true;}else if(e.key==="ArrowDown"){b.pos.y+=st;m=true;}else if(e.key==="Delete"){del(null,b.id);e.preventDefault();return;}
   if(m){e.preventDefault();render();renderProps();}
@@ -373,6 +391,7 @@ function renderBrand(){const b=state.branding;document.getElementById("propsBran
 function zoom(d){scale=Math.min(1.6,Math.max(.35,scale+d));document.getElementById("paperwrap").style.transform=`scale(${scale})`;document.getElementById("zoomv").textContent=Math.round(scale*100)+"%";}
 function definition(){return{name:document.getElementById("fmtName").value,layout:"absolute",target_doctype:state.target,header:state.header,footer:state.footer,branding:state.branding,blocks:state.blocks.map(b=>({type:b.type,settings:b.settings,style:b.style,pos:b.pos,float:b.float||false,region:b.region||"body"}))};}
 function exportJSON(){const blob=new Blob([JSON.stringify(definition(),null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=(document.getElementById("fmtName").value||"format")+".json";a.click();}
+function previewPDF(){if(!EMBED){alert("Preview PDF works inside ERPNext (renders the real PDF with your engine).");return;}const ds=document.getElementById("dataSel");const name=ds?ds.value:"";window.parent.postMessage({type:"brandpdf-preview",definition:definition(),doctype:state.target,name:name||""},window.location.origin);}
 const EMBED=(window.parent&&window.parent!==window);
 function save(){const def=definition();if(EMBED){window.parent.postMessage({type:"brandpdf-save",definition:def},window.location.origin);flashSaved();return;}if(window.frappe&&frappe.call){frappe.call({method:"brandpdf.api.save_format",args:{definition:JSON.stringify(def)},callback:()=>frappe.show_alert({message:"Format saved",indicator:"green"})});return;}console.log("DEFINITION",def);alert("Saved (demo) - logged to console.");}
 function flashSaved(){const b=document.querySelector(".btn.primary");if(!b)return;const t=b.textContent;b.textContent="✓ Saved";setTimeout(function(){b.textContent=t;},1400);}

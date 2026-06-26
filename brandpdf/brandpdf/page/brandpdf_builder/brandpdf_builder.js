@@ -1,5 +1,19 @@
 // Desk host for the visual format builder. Loads the builder (static asset) in an iframe and
 // bridges Save/Load to brandpdf.api over postMessage. Origin + source checked (review hardening).
+function _bpdfPreviewPoll(job, tries) {
+	if (tries > 80) { frappe.dom.unfreeze(); frappe.msgprint(__('Preview timed out.')); return; }
+	frappe.call({
+		method: 'brandpdf.api.get_job_result',
+		args: { job_id: job },
+		callback: function (r) {
+			var s = r.message || {};
+			if (s.status === 'done' && s.file_url) { frappe.dom.unfreeze(); window.open(s.file_url, '_blank'); }
+			else if (s.status === 'error') { frappe.dom.unfreeze(); frappe.msgprint(__(s.message || 'Preview failed.')); }
+			else { setTimeout(function () { _bpdfPreviewPoll(job, tries + 1); }, 1500); }
+		},
+		error: function () { frappe.dom.unfreeze(); },
+	});
+}
 frappe.pages['brandpdf-builder'].on_page_load = function (wrapper) {
 	var page = frappe.ui.make_app_page({
 		parent: wrapper,
@@ -70,6 +84,18 @@ frappe.pages['brandpdf-builder'].on_page_load = function (wrapper) {
 				error: function () {
 					iframe.contentWindow.postMessage({ type: 'brandpdf-saved', error: true }, origin);
 				},
+			});
+		} else if (d.type === 'brandpdf-preview') {
+			frappe.dom.freeze(__('Rendering preview…'));
+			frappe.call({
+				method: 'brandpdf.api.request_preview',
+				args: { definition: JSON.stringify(d.definition), doctype: d.doctype, name: d.name || '' },
+				callback: function (r) {
+					var job = r.message && r.message.job_id;
+					if (!job) { frappe.dom.unfreeze(); frappe.msgprint(__('Could not start preview.')); return; }
+					_bpdfPreviewPoll(job, 0);
+				},
+				error: function () { frappe.dom.unfreeze(); },
 			});
 		} else if (d.type === 'brandpdf-upload') {
 			try {

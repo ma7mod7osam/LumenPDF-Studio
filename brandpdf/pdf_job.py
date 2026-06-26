@@ -55,6 +55,62 @@ def generate(job_token, doctype, docname, user, template=None, _retry=0):
         _release(lock)
 
 
+def generate_preview(job_token, definition, doctype, docname, user, _retry=0):
+    """Render an UNSAVED builder definition to a PDF (the 'Preview PDF' button). Same lock/perm/
+    private-file path as generate(), but composes the passed definition instead of a saved one."""
+    job_id = job_token
+    lock = "brandpdf_render_lock_" + (frappe.local.site or "site")
+    if not _acquire(lock, job_id):
+        if _retry < 60:
+            frappe.enqueue(
+                "brandpdf.pdf_job.generate_preview", queue="long",
+                timeout=(conf("render_timeout") or 120) + 30,
+                job_token=job_id, definition=definition, doctype=doctype, docname=docname, user=user, _retry=_retry + 1,
+            )
+        else:
+            set_state(job_id, {"status": "error", "message": "Renderer busy; please retry."}, user)
+        return
+
+    prev_user = frappe.session.user
+    try:
+        frappe.set_user(user)
+        if "System Manager" not in frappe.get_roles():
+            set_state(job_id, {"status": "error", "message": "Not permitted."}, user)
+            return
+        doc = frappe.get_doc(doctype, docname)
+        try:
+            doc.check_permission("read")
+            if not frappe.has_permission(doctype, "print", doc=doc):
+                raise frappe.PermissionError
+            doc.apply_fieldlevel_read_permissions()
+        except frappe.PermissionError:
+            set_state(job_id, {"status": "error", "message": "You are not permitted to print this document."}, user)
+            return
+
+        import json as _json
+        d = _json.loads(definition) if isinstance(definition, str) else definition
+        from brandpdf import compose, blocks as B, assets
+        from brandpdf.render.base import get_renderer, default_options
+        renderer = get_renderer()
+        pdf = None
+        if isinstance(d, dict) and d.get("layout") == "absolute":
+            pdf = compose._compose(doc, d, renderer)
+        if not pdf:
+            html = B.render_definition(doc, d, "")
+            br = (d.get("branding") or {}) if isinstance(d, dict) else {}
+            allowed = set(filter(None, [br.get("header_image"), br.get("footer_image")])) | B.collect_image_srcs(d)
+            html = assets.neutralize_remote(assets.inline_images(html, allowed=allowed))
+            pdf = renderer.render(html, default_options())
+        file_url = _save_private_file(doc, pdf, docname + "-preview")
+        set_state(job_id, {"status": "done", "file_url": file_url}, user)
+    except Exception:
+        frappe.log_error(message=frappe.get_traceback(), title="BrandPDF preview failed")
+        set_state(job_id, {"status": "error", "message": "Preview failed — see Error Log."}, user)
+    finally:
+        frappe.set_user(prev_user)
+        _release(lock)
+
+
 # --- concurrency lock (H1) -------------------------------------------------
 
 def _acquire(lock, job_id):
