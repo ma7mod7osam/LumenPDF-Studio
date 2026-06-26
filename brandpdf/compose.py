@@ -123,22 +123,38 @@ def _compose(doc, definition, renderer):
     )
     reader = PdfReader(io.BytesIO(body_pdf))
     n = len(reader.pages) or 1
-    if not head and not foot:
-        return body_pdf  # body has no bands -> done
 
-    # 2) Overlay the bands onto each page. Repeat bands appear on all pages; non-repeat header on
-    #    page 1, non-repeat footer on the last page. Identical overlays are cached.
+    # Watermark page (rendered once) is merged BEHIND every page.
+    wm = definition.get("watermark")
+    wm_bytes = None
+    if isinstance(wm, dict) and wm.get("text"):
+        wm_html = B.watermark_page_html(branding, wm)
+        if wm_html:
+            wm_bytes = _finish(wm_html, allowed, renderer)
+
+    if not head and not foot and not wm_bytes:
+        return body_pdf  # nothing to overlay -> plain body
+
+    # 2) Per page: watermark (behind) <- body <- header/footer bands (on top). Repeat bands appear
+    #    on all pages; non-repeat header on page 1, non-repeat footer on the last page. Overlays cached.
     h_rep, f_rep = bool(h.get("repeat")), bool(f.get("repeat"))
     has_pagenum = any(isinstance(b, dict) and b.get("type") == "pagenum" for b in head + foot)
     writer = PdfWriter()
     cache = {}
     for i in range(n):
+        if wm_bytes:
+            page = PdfReader(io.BytesIO(wm_bytes)).pages[0]  # fresh watermark base per page
+            try:
+                page.merge_page(reader.pages[i])
+            except AttributeError:
+                page.mergePage(reader.pages[i])
+        else:
+            page = reader.pages[i]
         bands = []
         if head and (h_rep or i == 0):
             bands += head
         if foot and (f_rep or i == n - 1):
             bands += foot
-        page = reader.pages[i]
         if bands:
             key = (i == 0, i == n - 1, (i + 1) if has_pagenum else 0)
             if key not in cache:

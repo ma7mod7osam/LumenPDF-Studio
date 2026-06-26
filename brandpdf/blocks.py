@@ -797,3 +797,23 @@ def _render_absolute(doc, definition, branding, ctx):
     if not isinstance(blocks_list, list):
         blocks_list = []
     return _absolute_page_html(doc, branding, blocks_list, ctx, grow=False)
+
+
+def watermark_page_html(branding, wm):
+    """A full A4 page containing just a big rotated, semi-transparent watermark — merged BEHIND
+    every page by compose. Empty string if no watermark text."""
+    if not isinstance(wm, dict) or not wm.get("text"):
+        return ""
+    color = wm["color"].strip() if _hexok(wm.get("color")) else "#1A1E2A"
+    op = _num(wm.get("opacity"), 8) or 8
+    size = _num(wm.get("size"), 60) or 60
+    angle = _num(wm.get("angle"), -35)
+    font = branding.get("font") or "Montserrat"
+    return (
+        base_css(branding)
+        + f"<div style=\"position:relative;width:210mm;height:297mm;overflow:hidden;font-family:'{font}',Arial,sans-serif;\">"
+        + '<div style="position:absolute;top:0;left:0;width:210mm;height:297mm;display:flex;align-items:center;justify-content:center;">'
+        + f'<div style="transform:rotate({_fmt_num(angle)}deg);font-size:{_fmt_num(size)}pt;font-weight:800;'
+        + f'color:{color};opacity:{_fmt_num((op or 8) / 100.0)};white-space:nowrap;letter-spacing:2px;'
+        + f'-webkit-print-color-adjust:exact;print-color-adjust:exact;">{_esc(wm.get("text"))}</div></div></div>'
+    )
