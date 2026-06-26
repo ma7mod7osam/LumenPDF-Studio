@@ -722,17 +722,17 @@ def _absolute_page_html(doc, branding, blocks_list, ctx, grow=False, top_mm=0.0,
     return "".join(parts)
 
 
-def _flow_body_html(doc, branding, body_blocks, ctx, top_mm=0.0, bottom_mm=0.0):
+def _flow_body_html(doc, branding, body_blocks, ctx, top_mm=0.0, bottom_mm=0.0, floats=None):
     """Body in document flow: blocks stack top-to-bottom (so a variable-length items table never
     overlaps the totals/terms below it), reserving @page top/bottom margins so the body stays
-    clear of the running header/footer bands on EVERY page. Each block keeps its own style
-    (alignment, width, spacing) but vertical position is determined by flow order."""
+    clear of the running header/footer bands on EVERY page. `floats` are free-positioned elements
+    placed absolutely (page coords) within the body — for logos/stamps/signatures/notes."""
     font = branding.get("font") or "Montserrat"
     navy = branding.get("navy", "#1A1E2A")
     parts = [base_css(branding)]
     parts.append(f"<style>@page{{size:A4;margin:{_fmt_num(top_mm)}mm 0mm {_fmt_num(bottom_mm)}mm 0mm;}}</style>")
     parts.append(
-        f'<div style="width:210mm;padding:0 14mm;font-family:\'{font}\',\'Segoe UI\',Arial,sans-serif;'
+        f'<div style="position:relative;width:210mm;padding:0 14mm;font-family:\'{font}\',\'Segoe UI\',Arial,sans-serif;'
         f'color:{navy};font-size:8.5pt;-webkit-print-color-adjust:exact;print-color-adjust:exact;">'
     )
     for bl in (body_blocks or []):
@@ -745,6 +745,26 @@ def _flow_body_html(doc, branding, body_blocks, ctx, top_mm=0.0, bottom_mm=0.0):
         inner = fn(doc, branding, bl.get("settings") or {}, ctx)
         css = _style_css(bl.get("style") or {}, t)
         parts.append(f'<div style="margin-bottom:4mm;{css}">{inner}</div>')
+    for bl in (floats or []):
+        if not isinstance(bl, dict):
+            continue
+        t = bl.get("type")
+        fn = DEF_RENDERERS.get(t)
+        if not fn:
+            continue
+        inner = fn(doc, branding, bl.get("settings") or {}, ctx)
+        pos = bl.get("pos") or {}
+        x = _num(pos.get("x"), 0)
+        y = _num(pos.get("y"), 0) - top_mm  # page coord -> container coord (container starts at the top margin)
+        if y < 0:
+            y = 0
+        w = _num(pos.get("w"), 120)
+        h = _num(pos.get("h"))
+        box = f"position:absolute;left:{_fmt_num(x)}mm;top:{_fmt_num(y)}mm;width:{_fmt_num(w)}mm;"
+        if h:
+            box += f"height:{_fmt_num(h)}mm;overflow:hidden;"
+        wrap = _style_css(bl.get("style") or {}, t, absolute=True)
+        parts.append(f'<div style="{box}{wrap}">{inner}</div>')
     parts.append("</div>")
     return "".join(parts)
 

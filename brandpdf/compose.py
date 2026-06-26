@@ -112,11 +112,13 @@ def _compose(doc, definition, renderer):
             foot.append(bl)
         else:
             body.append(bl)
-    body.sort(key=lambda b: B._num((b.get("pos") or {}).get("y"), 0))  # flow in vertical order
+    flow_body = [b for b in body if not b.get("float")]
+    float_body = [b for b in body if b.get("float")]  # free-positioned elements
+    flow_body.sort(key=lambda b: B._num((b.get("pos") or {}).get("y"), 0))  # flow in vertical order
 
-    # 1) Body in flow (may span multiple pages), kept clear of the bands via @page margins.
+    # 1) Body in flow (+ floating elements), may span multiple pages, kept clear of the bands.
     body_pdf = _finish(
-        B._flow_body_html(doc, branding, body, {"terms_html": terms_html}, top_mm=hh, bottom_mm=fh),
+        B._flow_body_html(doc, branding, flow_body, {"terms_html": terms_html}, top_mm=hh, bottom_mm=fh, floats=float_body),
         allowed, renderer,
     )
     reader = PdfReader(io.BytesIO(body_pdf))
