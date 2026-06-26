@@ -392,6 +392,7 @@ function renderProps(){const host=document.getElementById("propsBlock"),b=cur();
   h+=regionControl(b,reg);
   if(reg!=="body"||b.float)h+=posControls(b.pos);  // bands + floating elements are positioned; flowing body is not
   if(t!=="header_banner"&&t!=="footer_banner")h+=styleControls(b.style,t);
+  h+=condControl(b);
   h+=`<button class="delblk" onclick="del(null,'${b.id}')">Delete this block</button>`;
   host.innerHTML=h;}
 function regionControl(b,reg){
@@ -406,6 +407,13 @@ function regionControl(b,reg){
   return `<div class="stygrp"><div class="styhead">Placement</div><div class="hint" style="padding:4px 0 0">In the <b>${reg}</b> band — repeats on every page. Drag to position; height is on the <b>Page</b> tab.</div></div>`;
 }
 function setFloat(id,on){const b=blockById(id);if(!b)return;b.float=on;if(on&&!b.pos)b.pos={x:14,y:60,w:120,h:null};render();renderProps();}
+function condControl(b){const c=b.cond||{};const on=!!c.field;let h=`<div class="stygrp"><div class="styhead">Visibility</div><label class="chk"><input type="checkbox" ${on?'checked':''} onchange="toggleCond('${b.id}',this.checked)"> Show only if a condition is met</label>`;
+  if(on){h+=`<div class="fld"><label>Field</label><select onchange="setCond('field',this.value)">`+DOCFIELDS.map(f=>`<option value="${esc(f.f)}" ${c.field===f.f?'selected':''}>${esc(f.l)}</option>`).join("")+`</select></div>`;
+    h+=`<div class="fld"><label>Condition</label><select onchange="setCond('op',this.value)">`+[["=","equals"],["!=","not equals"],[">","greater than"],["<","less than"],["like","contains"],["in","in list (a,b,c)"]].map(o=>`<option value="${o[0]}" ${(c.op||"=")===o[0]?'selected':''}>${o[1]}</option>`).join("")+`</select></div>`;
+    h+=`<div class="fld"><label>Value</label><input type="text" value="${esc(c.value||'')}" oninput="setCond('value',this.value)"></div><div class="hint" style="padding:2px 0 0">e.g. show a “PAID” stamp only when status = Paid.</div>`;}
+  return h+`</div>`;}
+function toggleCond(id,on){const b=blockById(id);if(!b)return;b.cond=on?{field:(DOCFIELDS[0]&&DOCFIELDS[0].f)||"status",op:"=",value:""}:null;render();renderProps();}
+function setCond(k,v){const b=cur();if(!b)return;if(!b.cond)b.cond={field:"",op:"=",value:""};b.cond[k]=v;render();}
 function moveRegion(id,reg){
   const b=blockById(id);if(!b)return;if(!b.pos)b.pos={x:14,y:60,w:180,h:null};
   if(reg==="header"){if(!state.header.enabled)state.header.enabled=true;b.pos.y=2;}
@@ -425,7 +433,7 @@ function imgAttach(lbl,key,val,setter){const after=(setter==="setB")?"renderBran
 function renderBrand(){const b=state.branding;document.getElementById("propsBrand").innerHTML=`<div class="ptitle">Branding</div><div class="fld"><label>Primary color</label><div class="color"><input type="color" value="${b.primary}" oninput="setB('primary',this.value)"><input type="text" value="${esc(b.primary)}" oninput="setB('primary',this.value)"></div></div><div class="fld"><label>Secondary / navy</label><div class="color"><input type="color" value="${b.navy}" oninput="setB('navy',this.value)"><input type="text" value="${esc(b.navy)}" oninput="setB('navy',this.value)"></div></div><div class="fld"><label>Font</label><select onchange="setB('font',this.value)">`+["Montserrat","Cairo","Arial","Tahoma"].map(f=>`<option ${b.font===f?'selected':''}>${f}</option>`).join("")+`</select></div><div class="styhead" style="margin-top:14px">Banner images (optional)</div>`+imgAttach("Header banner","header_image",b.header_image,"setB")+imgAttach("Footer banner","footer_image",b.footer_image,"setB")+`<div class="hint" style="padding:6px 0 0">Optional full-width banners. You can also leave these empty and build the header/footer from blocks (logo image + text).</div>`;}
 
 function zoom(d){scale=Math.min(1.6,Math.max(.35,scale+d));document.getElementById("paperwrap").style.transform=`scale(${scale})`;document.getElementById("zoomv").textContent=Math.round(scale*100)+"%";}
-function definition(){return{name:document.getElementById("fmtName").value,layout:"absolute",target_doctype:state.target,header:state.header,footer:state.footer,branding:state.branding,blocks:state.blocks.map(b=>({type:b.type,settings:b.settings,style:b.style,pos:b.pos,float:b.float||false,region:b.region||"body"}))};}
+function definition(){return{name:document.getElementById("fmtName").value,layout:"absolute",target_doctype:state.target,header:state.header,footer:state.footer,branding:state.branding,blocks:state.blocks.map(b=>({type:b.type,settings:b.settings,style:b.style,pos:b.pos,float:b.float||false,region:b.region||"body",cond:b.cond||null}))};}
 function exportJSON(){const blob=new Blob([JSON.stringify(definition(),null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=(document.getElementById("fmtName").value||"format")+".json";a.click();}
 function previewPDF(){if(!EMBED){alert("Preview PDF works inside ERPNext (renders the real PDF with your engine).");return;}const ds=document.getElementById("dataSel");const name=ds?ds.value:"";window.parent.postMessage({type:"brandpdf-preview",definition:definition(),doctype:state.target,name:name||""},window.location.origin);}
 const EMBED=(window.parent&&window.parent!==window);
@@ -433,7 +441,7 @@ function save(){const def=definition();if(EMBED){window.parent.postMessage({type
 function flashSaved(){const b=document.querySelector(".btn.primary");if(!b)return;const t=b.textContent;b.textContent="✓ Saved";setTimeout(function(){b.textContent=t;},1400);}
 function loadDefinition(def){try{if(def.branding)state.branding=Object.assign({primary:"#1C75BC",navy:"#1A1E2A",font:"Montserrat",header_image:"",footer_image:""},def.branding);
   if(def.header)state.header=Object.assign({enabled:true,height:30,repeat:true},def.header);if(def.footer)state.footer=Object.assign({enabled:true,height:32,repeat:true},def.footer);
-  if(Array.isArray(def.blocks))state.blocks=def.blocks.map(function(b,i){const pos=b.pos||{x:14,y:8+i*16,w:180,h:null};return{id:"b"+(idc++),type:b.type,settings:b.settings||(DSET[b.type]?DSET[b.type]():{}),style:b.style||dstyle(b.type),pos:pos,float:b.float||false,region:b.region||_regionByY(pos)};});
+  if(Array.isArray(def.blocks))state.blocks=def.blocks.map(function(b,i){const pos=b.pos||{x:14,y:8+i*16,w:180,h:null};return{id:"b"+(idc++),type:b.type,settings:b.settings||(DSET[b.type]?DSET[b.type]():{}),style:b.style||dstyle(b.type),pos:pos,float:b.float||false,region:b.region||_regionByY(pos),cond:b.cond||null};});
   if(def.target_doctype){state.target=def.target_doctype;const ds=document.getElementById("doctypeSel");if(ds)ds.value=def.target_doctype;loadDoctypeMeta(state.target);}
   if(def.name)document.getElementById("fmtName").value=def.name;selId=null;render();renderProps();renderBrand();}catch(e){console.error("BrandPDF load failed",e);}}
 /* ---- embedded RPC bridge to the desk page ---- */

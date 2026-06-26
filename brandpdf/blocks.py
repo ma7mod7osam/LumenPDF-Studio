@@ -307,6 +307,20 @@ def _field_value(doc, field):
     return "" if v is None else str(v)
 
 
+def _visible(doc, bl):
+    """Conditional visibility: a block with a `cond` {field, op, value} renders only when the
+    document's field satisfies it. No cond -> always visible."""
+    c = bl.get("cond") or {}
+    f = c.get("field")
+    if not f:
+        return True
+    try:
+        from brandpdf.resolver import _match
+        return _match(doc.get(f), c.get("op") or "=", c.get("value"))
+    except Exception:
+        return True
+
+
 def _style_css(style, type_=None, absolute=False):
     """Validate the builder's style object into a safe inline CSS string (mirror of the
     builder's styleCss). Colors are hex-only; sizes/spacings numeric; enums allow-listed —
@@ -664,6 +678,8 @@ def render_definition(doc, definition, terms_html=""):
     for bl in blocks_list:
         if not isinstance(bl, dict):
             continue
+        if not _visible(doc, bl):
+            continue
         t = bl.get("type")
         fn = DEF_RENDERERS.get(t)
         if not fn:
@@ -703,6 +719,8 @@ def _absolute_page_html(doc, branding, blocks_list, ctx, grow=False, top_mm=0.0,
     for bl in (blocks_list or []):
         if not isinstance(bl, dict):
             continue
+        if not _visible(doc, bl):
+            continue
         t = bl.get("type")
         fn = DEF_RENDERERS.get(t)
         if not fn:
@@ -738,6 +756,8 @@ def _flow_body_html(doc, branding, body_blocks, ctx, top_mm=0.0, bottom_mm=0.0, 
     for bl in (body_blocks or []):
         if not isinstance(bl, dict):
             continue
+        if not _visible(doc, bl):
+            continue
         t = bl.get("type")
         fn = DEF_RENDERERS.get(t)
         if not fn:
@@ -747,6 +767,8 @@ def _flow_body_html(doc, branding, body_blocks, ctx, top_mm=0.0, bottom_mm=0.0, 
         parts.append(f'<div style="margin-bottom:4mm;{css}">{inner}</div>')
     for bl in (floats or []):
         if not isinstance(bl, dict):
+            continue
+        if not _visible(doc, bl):
             continue
         t = bl.get("type")
         fn = DEF_RENDERERS.get(t)
