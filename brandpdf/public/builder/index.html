@@ -102,6 +102,17 @@
   .paper .bs-sec-lbl{font-size:7pt;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:3px}
   .paper .bs-sign-box{display:block;text-align:center;border-top:1.5px solid #1A1E2A;padding-top:4px;font-size:8.5pt;font-weight:600}
   .ph-banner{width:100%;height:30mm;display:flex;align-items:center;justify-content:center;color:#ffffffcc;font-size:9pt;letter-spacing:2px;text-transform:uppercase}
+  #gallery{position:fixed;inset:0;background:#000a;display:none;align-items:center;justify-content:center;z-index:200}
+  #gallery .gcard-wrap{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px 22px;width:700px;max-width:92vw}
+  #gallery h3{margin:0;font-size:16px}
+  #gallery .ghint{font-size:12px;color:var(--mut);margin-top:4px}
+  #gallery .gclose{float:right;cursor:pointer;color:var(--ink)}
+  .gcards{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:16px}
+  .gcard{background:var(--panel2);border:1px solid var(--line2);border-radius:10px;padding:12px;cursor:pointer;transition:.12s}
+  .gcard:hover{border-color:var(--accent);transform:translateY(-2px)}
+  .gswatch{height:48px;border-radius:6px;margin-bottom:10px;background:#fff;border:1px solid var(--line2);overflow:hidden;display:flex;flex-direction:column}
+  .gcard .gt{font-weight:700;margin-bottom:4px;font-size:13px}
+  .gcard .gd{font-size:11px;color:var(--mut);line-height:1.5}
 </style>
 </head>
 <body>
@@ -112,6 +123,7 @@
     <select class="sel" id="doctypeSel" title="Target DocType" onchange="onDoctype(this.value)"></select>
     <select class="sel" id="openSel" title="Open an existing format" onchange="openFormat(this.value)"><option value="">Open…</option></select>
     <button class="btn ghost" onclick="newFormat()" title="Start a new blank format">+ New</button>
+    <button class="btn ghost" onclick="openGallery()" title="Start from a ready-made design">▦ Templates</button>
     <button class="btn ghost" id="undoBtn" onclick="undo()" title="Undo (Ctrl+Z)">↶</button>
     <button class="btn ghost" id="redoBtn" onclick="redo()" title="Redo (Ctrl+Y)">↷</button>
     <button class="btn ghost" id="restoreBtn" onclick="restoreDraft()" style="display:none" title="Restore your last unsaved draft">↺ Restore</button>
@@ -136,6 +148,7 @@
     </div>
   </div>
 </div>
+<div id="gallery"><div class="gcard-wrap"><h3>Start from a template</h3><div class="ghint">Pick a ready-made design, then customize it.<span class="gclose" onclick="closeGallery()">✕ Close</span></div><div class="gcards" id="gcards"></div></div></div>
 <script>
 const PXMM=96/25.4;
 const BASE_SAMPLE={name:"SAL-QTN-2026-00006",transaction_date:"25-06-2026",valid_till:"25-07-2026",customer_name:"Hasan Najem",company:"BSTC W.L.L",
@@ -204,6 +217,34 @@ function autosaveNow(){if(!userTouched||restoring)return;try{localStorage.setIte
 function scheduleAutosave(){clearTimeout(_asT);_asT=setTimeout(autosaveNow,700);}
 function restoreDraft(){try{const d=localStorage.getItem("brandpdf_draft");if(d){loadDefinition(JSON.parse(d));userTouched=true;}}catch(e){}}
 function clearDraft(){try{localStorage.removeItem("brandpdf_draft");}catch(e){}const r=document.getElementById("restoreBtn");if(r)r.style.display="none";}
+
+/* ---- starter template gallery ---- */
+function starterDef(o){
+  const blocks=[];
+  if(o.banner){blocks.push({type:"header_banner",region:"header",pos:{x:0,y:1,w:210,h:null}});}
+  else{blocks.push({type:"heading",region:"header",settings:{text:o.headerText||"YOUR COMPANY",level:"h2"},style:{size:14,weight:"800",color:o.primary},pos:{x:14,y:7,w:120,h:null}});
+       blocks.push({type:"field",region:"header",settings:{field:"company",prefix:""},style:{size:8,align:"right",color:o.navy},pos:{x:140,y:9,w:56,h:null}});}
+  blocks.push({type:"title",region:"body",settings:{text:"QUOTATION",showArabic:false,arabic:"عرض سعر",meta:{name:true,date:true,valid_till:true},align:"split"},pos:{x:14,y:38,w:182,h:null}});
+  blocks.push({type:"customer",region:"body",settings:{heading:"Quotation To"},pos:{x:14,y:62,w:120,h:null}});
+  blocks.push({type:"items",region:"body",settings:{cols:{desc:true,qty:true,rate:true,amount:true},zebra:o.zebra,headerColor:o.headerColor},pos:{x:14,y:90,w:182,h:null}});
+  blocks.push({type:"totals",region:"body",settings:{grandColor:o.headerColor},pos:{x:14,y:175,w:182,h:null}});
+  blocks.push({type:"terms",region:"body",settings:{heading:"Terms & Conditions"},pos:{x:14,y:212,w:182,h:null}});
+  if(o.banner){blocks.push({type:"footer_banner",region:"footer",pos:{x:0,y:267,w:210,h:null}});}
+  else{blocks.push({type:"divider",region:"footer",settings:{thickness:1,color:o.primary,lstyle:"solid"},pos:{x:14,y:281,w:182,h:null}});
+       blocks.push({type:"field",region:"footer",settings:{field:"company",prefix:""},style:{size:7,align:"center",color:o.navy},pos:{x:70,y:286,w:70,h:null}});}
+  return {name:o.name,layout:"absolute",target_doctype:state.target||"Quotation",
+    header:{enabled:true,height:o.banner?30:22,repeat:true},footer:{enabled:true,height:o.banner?32:18,repeat:true},
+    watermark:{text:"",color:"#1A1E2A",opacity:8,size:60},
+    branding:{primary:o.primary,navy:o.navy,font:o.font,header_image:"",footer_image:""},blocks:blocks};
+}
+const STARTERS=[
+  {name:"Modern Blue",primary:"#1C75BC",navy:"#1A1E2A",font:"Montserrat",banner:true,zebra:true,headerColor:"primary",desc:"Bold banner, zebra items, blue grand-total bar."},
+  {name:"Minimal",primary:"#1A1E2A",navy:"#6b6b6e",font:"Arial",banner:false,zebra:false,headerColor:"navy",desc:"No banner — company name, thin divider, lots of whitespace."},
+  {name:"Classic Navy",primary:"#1A1E2A",navy:"#1A1E2A",font:"Tahoma",banner:false,zebra:true,headerColor:"navy",desc:"Navy headers, zebra rows, a formal letterhead feel."},
+];
+function openGallery(){document.getElementById("gcards").innerHTML=STARTERS.map(function(s,i){return `<div class="gcard" onclick="pickStarter(${i})"><div class="gswatch"><div style="width:100%;height:16px;background:${s.primary}"></div></div><div class="gt">${esc(s.name)}</div><div class="gd">${esc(s.desc)}</div></div>`;}).join("");document.getElementById("gallery").style.display="flex";}
+function closeGallery(){document.getElementById("gallery").style.display="none";}
+function pickStarter(i){const s=STARTERS[i];clearDraft();loadDefinition(starterDef(s));closeGallery();}
 
 function styleCss(st){if(!st)return "";const p=[];if(st.align)p.push("text-align:"+st.align);if(st.size!=="")p.push("font-size:"+st.size+"pt");if(st.weight)p.push("font-weight:"+st.weight);if(st.italic)p.push("font-style:italic");if(st.color)p.push("color:"+st.color);if(st.bg)p.push("background:"+st.bg);if(st.pad!=="")p.push("padding:"+st.pad+"mm");if(st.border&&st.border.on){p.push(`border:${st.border.w}px ${st.border.style} ${st.border.color}`);if(st.border.radius)p.push("border-radius:"+st.border.radius+"px");}return p.join(";");}
 
