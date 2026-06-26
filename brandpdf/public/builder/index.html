@@ -151,7 +151,9 @@ const BLOCKS=["header_banner","title","customer","items","totals","payment_sched
 function base(){return{align:"",size:"",weight:"",italic:false,color:"",bg:"",pad:"",border:{on:false,w:1,color:"#cfe5f6",style:"solid",radius:0}};}
 const DSET={header_banner:()=>({}),footer_banner:()=>({}),title:()=>({text:"QUOTATION",showArabic:true,arabic:"عرض سعر",meta:{name:true,date:true,valid_till:true},align:"split"}),customer:()=>({heading:"Quotation To"}),items:()=>({cols:{desc:true,qty:true,rate:true,amount:true},zebra:true,headerColor:"primary"}),totals:()=>({grandColor:"primary"}),payment_schedule:()=>({}),terms:()=>({heading:"Terms & Conditions"}),signature:()=>({label:"Authorized Signature"}),heading:()=>({text:"Section heading",level:"h2"}),text:()=>({text:"Add your text here."}),field:()=>({field:"customer_name",prefix:""}),image:()=>({src:"",width:100}),divider:()=>({thickness:1,color:"#cfe5f6",lstyle:"solid"}),box:()=>({html:"<b>Note</b><br>Bank: BSTC W.L.L &middot; IBAN BH00 XXXX"}),table:()=>({cols:["Specification","Value"],rows:[["Warranty","1 Year"],["Lead time","2 weeks"]],headerBg:"primary"}),pagenum:()=>({format:"Page {p} of {n}"})};
 function dstyle(t){const s=base();if(t==="heading"){s.size=15;s.weight="700";}if(t==="text"||t==="field")s.size=9;if(t==="pagenum"){s.size=8;s.align="center";}if(t==="box"){s.pad=3;s.bg="#f4f8fc";s.size=8;s.border={on:true,w:1,color:"#cfe5f6",style:"solid",radius:6};}return s;}
-let idc=1;function mk(t,pos){return{id:"b"+(idc++),type:t,settings:DSET[t](),style:dstyle(t),pos:pos};}
+let idc=1;
+function _regionByY(pos){var Hh=30,Fh=32;try{if(state&&state.header)Hh=state.header.enabled?state.header.height:0;if(state&&state.footer)Fh=state.footer.enabled?state.footer.height:0;}catch(e){}var y=(pos&&pos.y)||0;return (Hh&&y<Hh)?"header":(Fh&&y>=297-Fh)?"footer":"body";}
+function mk(t,pos){return{id:"b"+(idc++),type:t,settings:DSET[t](),style:dstyle(t),pos:pos,region:_regionByY(pos),float:false};}
 function esc(s){return(s==null?"":String(s)).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
 
 const R={
@@ -182,10 +184,11 @@ function blockById(id){return state.blocks.find(b=>b.id===id);}
 
 function styleCss(st){if(!st)return "";const p=[];if(st.align)p.push("text-align:"+st.align);if(st.size!=="")p.push("font-size:"+st.size+"pt");if(st.weight)p.push("font-weight:"+st.weight);if(st.italic)p.push("font-style:italic");if(st.color)p.push("color:"+st.color);if(st.bg)p.push("background:"+st.bg);if(st.pad!=="")p.push("padding:"+st.pad+"mm");if(st.border&&st.border.on){p.push(`border:${st.border.w}px ${st.border.style} ${st.border.color}`);if(st.border.radius)p.push("border-radius:"+st.border.radius+"px");}return p.join(";");}
 
-function regionOf(bl){const y=(bl.pos&&bl.pos.y)||0;const Hh=state.header.enabled?state.header.height:0;const Fh=state.footer.enabled?state.footer.height:0;if(Hh&&y<Hh)return "header";if(Fh&&y>=297-Fh)return "footer";return "body";}
-function absBlk(bl,b,dim){
+function regionOf(bl){return bl.region||"body";}  // region is OWNED, never guessed from position
+function absBlk(bl,b,locked){
   const inner=(R[bl.type]||(()=>""))(bl.settings,b,bl);const p=bl.pos||{x:0,y:0,w:180,h:null};
-  const box=`left:${p.x}mm;top:${p.y}mm;width:${p.w}mm;`+(p.h?`height:${p.h}mm;overflow:hidden;`:'')+(dim?'opacity:0.4;pointer-events:none;':'');
+  const box=`left:${p.x}mm;top:${p.y}mm;width:${p.w}mm;`+(p.h?`height:${p.h}mm;overflow:hidden;`:'')+(locked?'opacity:0.4;pointer-events:none;':'');
+  if(locked) return `<div class="blk" data-id="${bl.id}" style="${box}${styleCss(bl.style)}">${inner}</div>`;  // inert: not selectable/movable
   const sel=bl.id===selId;
   const handles=sel?'<div class="rh e" data-rh="e"></div><div class="rh s" data-rh="s"></div><div class="rh se" data-rh="se"></div>':'';
   return `<div class="blk ${sel?'sel':''}" data-id="${bl.id}" style="${box}${styleCss(bl.style)}"><span class="tag">${META[bl.type].l}</span><div class="tools"><button title="Delete" onclick="del(event,'${bl.id}')">🗑</button></div>${inner}${handles}</div>`;
@@ -202,7 +205,9 @@ function render(){
   let html="";
   if(Hh)html+=`<div style="position:absolute;left:0;top:0;width:210mm;height:${Hh}mm;background:${ha?'#2f7bf61f':'#2f7bf60d'};border-bottom:${ha?'2px solid #2f7bf6':'1px dashed #2f7bf555'};pointer-events:none;z-index:0;opacity:${ba||ha?1:0.45}"><div style="position:absolute;top:1px;left:3px;font-size:7px;letter-spacing:1px;color:#2f7bf6;text-transform:uppercase">Header${state.header.repeat?' · repeats':''}${ha?' — editing':''}</div></div>`;
   if(Fh)html+=`<div style="position:absolute;left:0;bottom:0;width:210mm;height:${Fh}mm;background:${fa?'#2f7bf61f':'#2f7bf60d'};border-top:${fa?'2px solid #2f7bf6':'1px dashed #2f7bf555'};pointer-events:none;z-index:0;opacity:${ba||fa?1:0.45}"><div style="position:absolute;top:1px;left:3px;font-size:7px;letter-spacing:1px;color:#2f7bf6;text-transform:uppercase">Footer${state.footer.repeat?' · repeats':''}${fa?' — editing':''}</div></div>`;
-  state.blocks.forEach(bl=>{ const r=regionOf(bl); if(r!=="body"||bl.float){ const dim=(!ba&&!bl.float&&r!==editScope); html+=absBlk(bl,b,dim); } });  // bands + floating elements are positioned
+  state.blocks.forEach(bl=>{ const r=regionOf(bl);
+    if(r==="header"||r==="footer"){ html+=absBlk(bl,b, editScope!==r); }   // band blocks: editable only in that mode
+    else if(bl.float){ html+=absBlk(bl,b, editScope!=="body"); } });        // free-positioned body elements
   const body=state.blocks.filter(bl=>regionOf(bl)==="body"&&!bl.float).sort((a,c)=>((a.pos&&a.pos.y)||0)-((c.pos&&c.pos.y)||0));
   html+=`<div style="position:absolute;left:0;top:${Hh}mm;width:210mm;padding:4mm 14mm 0;z-index:1;${ba?'':'opacity:0.4;pointer-events:none;'}">`+body.map(bl=>flowBlk(bl,b)).join("")+`</div>`;
   paper.innerHTML=html;
@@ -279,7 +284,7 @@ function addBlock(t){
   else if(editScope==="header"){const n=state.blocks.filter(function(b){return regionOf(b)==="header";}).length;pos={x:14,y:Math.min(2+n*3,Math.max(2,Hh-6)),w:120,h:null};}
   else if(editScope==="footer"){const n=state.blocks.filter(function(b){return regionOf(b)==="footer";}).length;pos={x:14,y:Math.min(297-Fh+3+n*3,294),w:120,h:null};}
   else { let maxY=Hh+2; state.blocks.forEach(b=>{ if(regionOf(b)==="body"&&!b.float){const y=(b.pos&&b.pos.y)||0; if(y>maxY)maxY=y;} }); pos={x:14,y:Math.min(maxY+6,297-Fh-3),w:180,h:null}; }
-  const nb=mk(t,pos); state.blocks.push(nb); selId=nb.id; render(); renderProps();
+  const nb=mk(t,pos); nb.region=(t==="header_banner")?"header":(t==="footer_banner")?"footer":editScope; state.blocks.push(nb); selId=nb.id; render(); renderProps();
 }
 function select(id){if(id===selId){renderProps();return;}selId=id;tab="block";setTab("block",true);render();renderProps();}
 function del(e,id){if(e)e.stopPropagation();state.blocks=state.blocks.filter(x=>x.id!==id);if(selId===id)selId=null;render();renderProps();}
@@ -336,17 +341,15 @@ function renderProps(){const host=document.getElementById("propsBlock"),b=cur();
   h+=`<button class="delblk" onclick="del(null,'${b.id}')">Delete this block</button>`;
   host.innerHTML=h;}
 function regionControl(b,reg){
-  const opt=(v,l)=>`<button class="${reg===v?'on':''}" onclick="moveRegion('${b.id}','${v}')">${l}</button>`;
-  let h=`<div class="stygrp"><div class="styhead">Placement</div><div class="fld"><div class="seg">${opt('body','Body')}${opt('header','Header')}${opt('footer','Footer')}</div></div>`;
   if(reg==="body"){
-    h+=`<label class="chk"><input type="checkbox" ${b.float?'checked':''} onchange="setFloat('${b.id}',this.checked)"> Free position (place anywhere)</label>`;
+    let h=`<div class="stygrp"><div class="styhead">Placement</div>`;
+    h+=`<label class="chk"><input type="checkbox" ${b.float?'checked':''} onchange="setFloat('${b.id}',this.checked)"> Free position (place anywhere in body)</label>`;
     h+= b.float
       ? `<div class="hint" style="padding:4px 0 0">Floating — drag it freely; set exact X/Y/W/H below.</div>`
       : `<div class="hint" style="padding:4px 0 0">Flows in order — use ↑ ↓ on the block to reorder.</div>`;
-  } else {
-    h+=`<div class="hint" style="padding:4px 0 0">Positioned in the ${reg} band — repeats on every page.</div>`;
+    return h+`</div>`;
   }
-  return h+`</div>`;
+  return `<div class="stygrp"><div class="styhead">Placement</div><div class="hint" style="padding:4px 0 0">In the <b>${reg}</b> band — repeats on every page. Drag to position; height is on the <b>Page</b> tab.</div></div>`;
 }
 function setFloat(id,on){const b=blockById(id);if(!b)return;b.float=on;if(on&&!b.pos)b.pos={x:14,y:60,w:120,h:null};render();renderProps();}
 function moveRegion(id,reg){
@@ -366,14 +369,14 @@ function setB(k,v){state.branding[k]=v;render();}
 function renderBrand(){const b=state.branding;document.getElementById("propsBrand").innerHTML=`<div class="ptitle">Branding</div><div class="fld"><label>Primary color</label><div class="color"><input type="color" value="${b.primary}" oninput="setB('primary',this.value)"><input type="text" value="${esc(b.primary)}" oninput="setB('primary',this.value)"></div></div><div class="fld"><label>Secondary / navy</label><div class="color"><input type="color" value="${b.navy}" oninput="setB('navy',this.value)"><input type="text" value="${esc(b.navy)}" oninput="setB('navy',this.value)"></div></div><div class="fld"><label>Font</label><select onchange="setB('font',this.value)">`+["Montserrat","Cairo","Arial","Tahoma"].map(f=>`<option ${b.font===f?'selected':''}>${f}</option>`).join("")+`</select></div><div class="fld"><label>Header image URL</label><input type="text" value="${esc(b.header_image)}" oninput="setB('header_image',this.value)"></div><div class="fld"><label>Footer image URL</label><input type="text" value="${esc(b.footer_image)}" oninput="setB('footer_image',this.value)"></div>`;}
 
 function zoom(d){scale=Math.min(1.6,Math.max(.35,scale+d));document.getElementById("paperwrap").style.transform=`scale(${scale})`;document.getElementById("zoomv").textContent=Math.round(scale*100)+"%";}
-function definition(){return{name:document.getElementById("fmtName").value,layout:"absolute",target_doctype:state.target,header:state.header,footer:state.footer,branding:state.branding,blocks:state.blocks.map(b=>({type:b.type,settings:b.settings,style:b.style,pos:b.pos,float:b.float||false}))};}
+function definition(){return{name:document.getElementById("fmtName").value,layout:"absolute",target_doctype:state.target,header:state.header,footer:state.footer,branding:state.branding,blocks:state.blocks.map(b=>({type:b.type,settings:b.settings,style:b.style,pos:b.pos,float:b.float||false,region:b.region||"body"}))};}
 function exportJSON(){const blob=new Blob([JSON.stringify(definition(),null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=(document.getElementById("fmtName").value||"format")+".json";a.click();}
 const EMBED=(window.parent&&window.parent!==window);
 function save(){const def=definition();if(EMBED){window.parent.postMessage({type:"brandpdf-save",definition:def},window.location.origin);flashSaved();return;}if(window.frappe&&frappe.call){frappe.call({method:"brandpdf.api.save_format",args:{definition:JSON.stringify(def)},callback:()=>frappe.show_alert({message:"Format saved",indicator:"green"})});return;}console.log("DEFINITION",def);alert("Saved (demo) - logged to console.");}
 function flashSaved(){const b=document.querySelector(".btn.primary");if(!b)return;const t=b.textContent;b.textContent="✓ Saved";setTimeout(function(){b.textContent=t;},1400);}
 function loadDefinition(def){try{if(def.branding)state.branding=Object.assign({primary:"#1C75BC",navy:"#1A1E2A",font:"Montserrat",header_image:"",footer_image:""},def.branding);
   if(def.header)state.header=Object.assign({enabled:true,height:30,repeat:true},def.header);if(def.footer)state.footer=Object.assign({enabled:true,height:32,repeat:true},def.footer);
-  if(Array.isArray(def.blocks))state.blocks=def.blocks.map(function(b,i){return{id:"b"+(idc++),type:b.type,settings:b.settings||(DSET[b.type]?DSET[b.type]():{}),style:b.style||dstyle(b.type),pos:b.pos||{x:14,y:8+i*16,w:180,h:null},float:b.float||false};});
+  if(Array.isArray(def.blocks))state.blocks=def.blocks.map(function(b,i){const pos=b.pos||{x:14,y:8+i*16,w:180,h:null};return{id:"b"+(idc++),type:b.type,settings:b.settings||(DSET[b.type]?DSET[b.type]():{}),style:b.style||dstyle(b.type),pos:pos,float:b.float||false,region:b.region||_regionByY(pos)};});
   if(def.target_doctype){state.target=def.target_doctype;const ds=document.getElementById("doctypeSel");if(ds)ds.value=def.target_doctype;loadDoctypeMeta(state.target);}
   if(def.name)document.getElementById("fmtName").value=def.name;selId=null;render();renderProps();renderBrand();}catch(e){console.error("BrandPDF load failed",e);}}
 /* ---- embedded RPC bridge to the desk page ---- */
