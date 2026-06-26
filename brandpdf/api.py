@@ -13,8 +13,14 @@ from brandpdf import config
 
 
 @frappe.whitelist()
-def request_pdf(doctype: str, name: str):
+def request_pdf(doctype: str, name: str, template: str = None):
     _authorize(doctype, name)
+    # Only honor a template that is a BrandPDF Template for THIS doctype (else ignore -> default).
+    if template and not (
+        frappe.db.exists("DocType", "BrandPDF Template")
+        and frappe.db.exists("BrandPDF Template", {"name": template, "target_doctype": doctype})
+    ):
+        template = None
     job_id = frappe.generate_hash(length=20)
     set_state(job_id, {"status": "queued"}, frappe.session.user)
     frappe.enqueue(
@@ -25,8 +31,26 @@ def request_pdf(doctype: str, name: str):
         doctype=doctype,
         docname=name,
         user=frappe.session.user,
+        template=template,
     )
     return {"job_id": job_id}
+
+
+@frappe.whitelist()
+def list_formats(doctype):
+    """Formats available for a doctype (for the download picker). Empty if the caller can't read
+    the doctype or the config DocType doesn't exist yet."""
+    if not doctype or not frappe.db.exists("DocType", "BrandPDF Template"):
+        return []
+    if not frappe.has_permission(doctype, "read"):
+        return []
+    rows = frappe.get_all(
+        "BrandPDF Template",
+        filters={"target_doctype": doctype},
+        fields=["name", "template_name", "is_standard"],
+        order_by="is_standard asc, modified desc",
+    )
+    return [{"name": r["name"], "label": r.get("template_name") or r["name"]} for r in rows]
 
 
 @frappe.whitelist()

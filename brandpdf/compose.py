@@ -19,23 +19,47 @@ from brandpdf.render_html import render_html
 PAGE_H = 297.0
 
 
-def compose_pdf(doc) -> bytes:
-    """Entry point used by the render job. Returns final PDF bytes."""
+def compose_pdf(doc, template=None) -> bytes:
+    """Entry point used by the render job. `template` (optional) selects a specific BrandPDF
+    Template for this doctype; otherwise the mapped/default one is used. Returns PDF bytes."""
     renderer = get_renderer()
     try:
-        kind, value = resolver.resolve_template(doc)
-        if kind == "blocks":
-            tmpl = frappe.get_doc("BrandPDF Template", value)
-            definition = tmpl.get("definition")
-            if isinstance(definition, str):
-                definition = json.loads(definition)
-            if isinstance(definition, dict) and definition.get("layout") == "absolute":
-                out = _compose(doc, definition, renderer)
-                if out:
-                    return out
+        kind, value, definition = _resolve(doc, template)
+        if kind == "blocks" and isinstance(definition, dict) and definition.get("layout") == "absolute":
+            out = _compose(doc, definition, renderer)
+            if out:
+                return out
+        if kind:
+            return renderer.render(render_html(doc, kind, value), default_options())
     except Exception:
         frappe.log_error(title="BrandPDF compose failed; single-pass fallback", message=frappe.get_traceback())
     return renderer.render(render_html(doc), default_options())
+
+
+def _resolve(doc, template):
+    """Return (kind, value, definition). A valid chosen template (matching this doctype) wins;
+    otherwise fall back to the resolver's mapped/default template."""
+    if template and frappe.db.exists("BrandPDF Template", template):
+        t = frappe.get_doc("BrandPDF Template", template)
+        if (t.get("target_doctype") or "") == doc.doctype:
+            st = t.get("source_type")
+            if st == "blocks":
+                d = t.get("definition")
+                if isinstance(d, str):
+                    d = json.loads(d)
+                return ("blocks", t.name, d if isinstance(d, dict) else None)
+            if st == "jinja_file" and t.get("jinja_path"):
+                return ("file", t.jinja_path, None)
+            return ("body", t.get("body") or "", None)
+    kind, value = resolver.resolve_template(doc)
+    definition = None
+    if kind == "blocks":
+        t = frappe.get_doc("BrandPDF Template", value)
+        d = t.get("definition")
+        if isinstance(d, str):
+            d = json.loads(d)
+        definition = d if isinstance(d, dict) else None
+    return (kind, value, definition)
 
 
 def _finish(html, allowed, renderer):

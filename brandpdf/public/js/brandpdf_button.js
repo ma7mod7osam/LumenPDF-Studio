@@ -32,10 +32,42 @@ function brandpdf_add_button(frm) {
 }
 
 function brandpdf_generate(frm) {
+    // If the doctype has more than one format, let the user choose; otherwise render directly.
+    frappe.call({
+        method: "brandpdf.api.list_formats",
+        args: { doctype: frm.doc.doctype },
+        callback(r) {
+            const formats = r.message || [];
+            if (formats.length > 1) {
+                const d = new frappe.ui.Dialog({
+                    title: __("Choose a format"),
+                    fields: [{
+                        fieldname: "fmt", fieldtype: "Select", label: __("Format"), reqd: 1,
+                        options: formats.map((f) => f.label).join("\n"), default: formats[0].label,
+                    }],
+                    primary_action_label: __("Download"),
+                    primary_action(v) {
+                        d.hide();
+                        const chosen = formats.find((f) => f.label === v.fmt) || formats[0];
+                        brandpdf_run(frm, chosen.name);
+                    },
+                });
+                d.show();
+            } else {
+                brandpdf_run(frm, formats[0] ? formats[0].name : null);
+            }
+        },
+        error() {
+            brandpdf_run(frm, null);  // fall back to the default format
+        },
+    });
+}
+
+function brandpdf_run(frm, template) {
     frappe.dom.freeze(__("Generating branded PDF…"));
     frappe.call({
         method: "brandpdf.api.request_pdf",
-        args: { doctype: frm.doc.doctype, name: frm.doc.name },
+        args: { doctype: frm.doc.doctype, name: frm.doc.name, template: template || "" },
         callback(r) {
             const job_id = r.message && r.message.job_id;
             if (!job_id) {

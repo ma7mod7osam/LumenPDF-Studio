@@ -14,14 +14,15 @@ from brandpdf import assets
 from brandpdf.defaults import DEFAULT_BRANDING, TEMPLATE_MAP  # noqa: F401 (re-export)
 
 
-def render_html(doc) -> str:
+def render_html(doc, kind=None, value=None) -> str:
     from brandpdf import resolver  # lazy import: resolver imports defaults, not this module
 
     branding = resolver.resolve_branding(doc)
     terms_raw = doc.get("terms")
     terms_html = sanitize_html(terms_raw) if terms_raw else ""
 
-    kind, value = resolver.resolve_template(doc)
+    if kind is None:  # caller may pass an explicit chosen template (kind, value); else resolve
+        kind, value = resolver.resolve_template(doc)
     allowed = {branding.get("header_image"), branding.get("footer_image")}
     if kind == "blocks":
         from brandpdf import blocks as blocks_mod
