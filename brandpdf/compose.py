@@ -105,6 +105,8 @@ def _compose(doc, definition, renderer):
     for bl in definition.get("blocks") or []:
         if not isinstance(bl, dict):
             continue
+        if not B._visible(doc, bl):
+            continue  # conditionally-hidden block: don't let it drive overlay/page-number/short-circuit
         region = bl.get("region") or _derive_region(bl, hh, fh)
         if region == "header" and h_on:
             head.append(bl)
