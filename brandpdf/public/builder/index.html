@@ -119,8 +119,10 @@
     <button class="btn primary" onclick="save()">✓ Save</button>
   </div>
   <div class="body">
-    <div class="rail"><h4>Insert</h4><div id="palette"></div>
-      <div class="hint">Click to add a block. <b>Drag</b> it anywhere on the page. Select it, then drag the blue handles to <b>resize</b>, or set exact X/Y/W/H on the right.</div></div>
+    <div class="rail"><h4>Insert</h4>
+      <div style="padding:2px 12px 6px"><div class="seg" id="scopeSeg" title="Where new blocks go"><button class="on" onclick="setScope('body')">Body</button><button onclick="setScope('header')">Header</button><button onclick="setScope('footer')">Footer</button></div></div>
+      <div id="palette"></div>
+      <div class="hint" id="scopeHint">Adding to the <b>body</b> — sections flow in order. Click a block to add it.</div></div>
     <div class="stage" id="stage"><div class="paperwrap" id="paperwrap"><div class="paper" id="paper"></div></div></div>
     <div class="rail right">
       <div class="tabs"><div class="tab on" data-tab="block" onclick="setTab('block')">Block</div><div class="tab" data-tab="page" onclick="setTab('page')">Page</div><div class="tab" data-tab="brand" onclick="setTab('brand')">Branding</div></div>
@@ -181,9 +183,9 @@ function blockById(id){return state.blocks.find(b=>b.id===id);}
 function styleCss(st){if(!st)return "";const p=[];if(st.align)p.push("text-align:"+st.align);if(st.size!=="")p.push("font-size:"+st.size+"pt");if(st.weight)p.push("font-weight:"+st.weight);if(st.italic)p.push("font-style:italic");if(st.color)p.push("color:"+st.color);if(st.bg)p.push("background:"+st.bg);if(st.pad!=="")p.push("padding:"+st.pad+"mm");if(st.border&&st.border.on){p.push(`border:${st.border.w}px ${st.border.style} ${st.border.color}`);if(st.border.radius)p.push("border-radius:"+st.border.radius+"px");}return p.join(";");}
 
 function regionOf(bl){const y=(bl.pos&&bl.pos.y)||0;const Hh=state.header.enabled?state.header.height:0;const Fh=state.footer.enabled?state.footer.height:0;if(Hh&&y<Hh)return "header";if(Fh&&y>=297-Fh)return "footer";return "body";}
-function absBlk(bl,b){
+function absBlk(bl,b,dim){
   const inner=(R[bl.type]||(()=>""))(bl.settings,b,bl);const p=bl.pos||{x:0,y:0,w:180,h:null};
-  const box=`left:${p.x}mm;top:${p.y}mm;width:${p.w}mm;`+(p.h?`height:${p.h}mm;overflow:hidden;`:'');
+  const box=`left:${p.x}mm;top:${p.y}mm;width:${p.w}mm;`+(p.h?`height:${p.h}mm;overflow:hidden;`:'')+(dim?'opacity:0.4;pointer-events:none;':'');
   const sel=bl.id===selId;
   const handles=sel?'<div class="rh e" data-rh="e"></div><div class="rh s" data-rh="s"></div><div class="rh se" data-rh="se"></div>':'';
   return `<div class="blk ${sel?'sel':''}" data-id="${bl.id}" style="${box}${styleCss(bl.style)}"><span class="tag">${META[bl.type].l}</span><div class="tools"><button title="Delete" onclick="del(event,'${bl.id}')">🗑</button></div>${inner}${handles}</div>`;
@@ -196,12 +198,13 @@ function render(){
   const b=state.branding,paper=document.getElementById("paper");
   paper.style.fontFamily=`'${b.font}','Segoe UI',Arial,sans-serif`;
   const Hh=state.header.enabled?state.header.height:0, Fh=state.footer.enabled?state.footer.height:0;
+  const ha=editScope==="header", fa=editScope==="footer", ba=editScope==="body";
   let html="";
-  if(Hh)html+=`<div style="position:absolute;left:0;top:0;width:210mm;height:${Hh}mm;background:#2f7bf60d;border-bottom:1px dashed #2f7bf555;pointer-events:none;z-index:0"><div style="position:absolute;top:1px;left:3px;font-size:7px;letter-spacing:1px;color:#2f7bf6dd;text-transform:uppercase">Header${state.header.repeat?' · repeats':''}</div></div>`;
-  if(Fh)html+=`<div style="position:absolute;left:0;bottom:0;width:210mm;height:${Fh}mm;background:#2f7bf60d;border-top:1px dashed #2f7bf555;pointer-events:none;z-index:0"><div style="position:absolute;top:1px;left:3px;font-size:7px;letter-spacing:1px;color:#2f7bf6dd;text-transform:uppercase">Footer${state.footer.repeat?' · repeats':''}</div></div>`;
-  state.blocks.forEach(bl=>{ if(regionOf(bl)!=="body"||bl.float) html+=absBlk(bl,b); });  // bands + floating elements are positioned
+  if(Hh)html+=`<div style="position:absolute;left:0;top:0;width:210mm;height:${Hh}mm;background:${ha?'#2f7bf61f':'#2f7bf60d'};border-bottom:${ha?'2px solid #2f7bf6':'1px dashed #2f7bf555'};pointer-events:none;z-index:0;opacity:${ba||ha?1:0.45}"><div style="position:absolute;top:1px;left:3px;font-size:7px;letter-spacing:1px;color:#2f7bf6;text-transform:uppercase">Header${state.header.repeat?' · repeats':''}${ha?' — editing':''}</div></div>`;
+  if(Fh)html+=`<div style="position:absolute;left:0;bottom:0;width:210mm;height:${Fh}mm;background:${fa?'#2f7bf61f':'#2f7bf60d'};border-top:${fa?'2px solid #2f7bf6':'1px dashed #2f7bf555'};pointer-events:none;z-index:0;opacity:${ba||fa?1:0.45}"><div style="position:absolute;top:1px;left:3px;font-size:7px;letter-spacing:1px;color:#2f7bf6;text-transform:uppercase">Footer${state.footer.repeat?' · repeats':''}${fa?' — editing':''}</div></div>`;
+  state.blocks.forEach(bl=>{ const r=regionOf(bl); if(r!=="body"||bl.float){ const dim=(!ba&&!bl.float&&r!==editScope); html+=absBlk(bl,b,dim); } });  // bands + floating elements are positioned
   const body=state.blocks.filter(bl=>regionOf(bl)==="body"&&!bl.float).sort((a,c)=>((a.pos&&a.pos.y)||0)-((c.pos&&c.pos.y)||0));
-  html+=`<div style="position:absolute;left:0;top:${Hh}mm;width:210mm;padding:4mm 14mm 0;z-index:1">`+body.map(bl=>flowBlk(bl,b)).join("")+`</div>`;
+  html+=`<div style="position:absolute;left:0;top:${Hh}mm;width:210mm;padding:4mm 14mm 0;z-index:1;${ba?'':'opacity:0.4;pointer-events:none;'}">`+body.map(bl=>flowBlk(bl,b)).join("")+`</div>`;
   paper.innerHTML=html;
   wireTable();
 }
@@ -262,12 +265,20 @@ document.addEventListener("keydown",function(e){
   if(m){e.preventDefault();render();renderProps();}
 });
 
+let editScope="body";
+function setScope(s){editScope=s;if(s==="header")state.header.enabled=true;if(s==="footer")state.footer.enabled=true;
+  document.querySelectorAll("#scopeSeg button").forEach(function(btn){btn.classList.toggle("on",btn.textContent.toLowerCase()===s);});
+  const hint=document.getElementById("scopeHint");
+  if(hint)hint.innerHTML=(s==="body")?'Adding to the <b>body</b> — sections flow in order. Click a block to add it.':('Editing the <b>'+s+'</b> band — add text, fields, a logo/image, lines… drag to position. Height is on the <b>Page</b> tab.');
+  render();}
 function addBlock(t){
   const Hh=state.header.enabled?state.header.height:0, Fh=state.footer.enabled?state.footer.height:0;
   let pos;
-  if(t==="header_banner") pos={x:0,y:1,w:210,h:null};
-  else if(t==="footer_banner") pos={x:0,y:Math.max(297-Fh+1,266),w:210,h:null};
-  else { let maxY=Hh+2; state.blocks.forEach(b=>{ if(regionOf(b)==="body"){const y=(b.pos&&b.pos.y)||0; if(y>maxY)maxY=y;} }); pos={x:14,y:Math.min(maxY+6,297-Fh-3),w:180,h:null}; }
+  if(t==="header_banner"){pos={x:0,y:1,w:210,h:null};}
+  else if(t==="footer_banner"){pos={x:0,y:Math.max(297-Fh+1,266),w:210,h:null};}
+  else if(editScope==="header"){const n=state.blocks.filter(function(b){return regionOf(b)==="header";}).length;pos={x:14,y:Math.min(2+n*3,Math.max(2,Hh-6)),w:120,h:null};}
+  else if(editScope==="footer"){const n=state.blocks.filter(function(b){return regionOf(b)==="footer";}).length;pos={x:14,y:Math.min(297-Fh+3+n*3,294),w:120,h:null};}
+  else { let maxY=Hh+2; state.blocks.forEach(b=>{ if(regionOf(b)==="body"&&!b.float){const y=(b.pos&&b.pos.y)||0; if(y>maxY)maxY=y;} }); pos={x:14,y:Math.min(maxY+6,297-Fh-3),w:180,h:null}; }
   const nb=mk(t,pos); state.blocks.push(nb); selId=nb.id; render(); renderProps();
 }
 function select(id){if(id===selId){renderProps();return;}selId=id;tab="block";setTab("block",true);render();renderProps();}
