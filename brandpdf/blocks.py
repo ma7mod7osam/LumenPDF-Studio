@@ -692,7 +692,7 @@ def _absolute_page_html(doc, branding, blocks_list, ctx, grow=False, top_mm=0.0,
     if top_mm or bottom_mm:
         parts.append(f"<style>@page{{margin:{_fmt_num(top_mm)}mm 0mm {_fmt_num(bottom_mm)}mm 0mm;}}</style>")
     if grow:
-        container = "position:relative;width:210mm;min-height:%smm;" % _fmt_num(297 - top_mm - bottom_mm)
+        container = "position:relative;width:210mm;min-height:%smm;" % _fmt_num(max(20, 297 - top_mm - bottom_mm))
     else:
         container = "position:relative;width:210mm;height:297mm;overflow:hidden;"
     parts.append(

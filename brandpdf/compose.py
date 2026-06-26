@@ -46,9 +46,8 @@ def _has_repeat(d):
     return bool((h.get("enabled") and h.get("repeat")) or (f.get("enabled") and f.get("repeat")))
 
 
-def _finish(html, branding, renderer):
-    allowed = {branding.get("header_image"), branding.get("footer_image")}
-    html = assets.inline_images(html, allowed={a for a in allowed if a})
+def _finish(html, allowed, renderer):
+    html = assets.inline_images(html, allowed=allowed)
     html = assets.neutralize_remote(html)
     return renderer.render(html, default_options())
 
@@ -67,6 +66,14 @@ def _compose_running(doc, definition, renderer):
     f = definition.get("footer") or {}
     hh = float(B._num(h.get("height"), 0) or 0) if (h.get("enabled") and h.get("repeat")) else 0.0
     fh = float(B._num(f.get("height"), 0) or 0) if (f.get("enabled") and f.get("repeat")) else 0.0
+    hh = max(0.0, min(hh, PAGE_H))
+    fh = max(0.0, min(fh, PAGE_H))
+    if hh + fh > PAGE_H - 50:  # bands too tall -> not enough body; let caller single-pass
+        return None
+
+    allowed = {branding.get("header_image"), branding.get("footer_image")}
+    allowed |= B.collect_image_srcs(definition)  # so builder image elements aren't stripped
+    allowed = {a for a in allowed if a}
 
     body, band = [], []
     for bl in definition.get("blocks") or []:
@@ -87,7 +94,7 @@ def _compose_running(doc, definition, renderer):
     body_html = B._absolute_page_html(
         doc, branding, body, {"terms_html": terms_html}, grow=True, top_mm=hh, bottom_mm=fh, y_shift=hh
     )
-    reader = PdfReader(io.BytesIO(_finish(body_html, branding, renderer)))
+    reader = PdfReader(io.BytesIO(_finish(body_html, allowed, renderer)))
     n = len(reader.pages)
 
     # 2) Overlay the band onto every page. Re-render per page only if it has a page number.
@@ -99,7 +106,7 @@ def _compose_running(doc, definition, renderer):
             ov_html = B._absolute_page_html(
                 doc, branding, band, {"terms_html": terms_html, "page": i + 1, "total": n}, grow=False
             )
-            overlay = PdfReader(io.BytesIO(_finish(ov_html, branding, renderer)))
+            overlay = PdfReader(io.BytesIO(_finish(ov_html, allowed, renderer)))
         page = reader.pages[i]
         try:
             page.merge_page(overlay.pages[0])
