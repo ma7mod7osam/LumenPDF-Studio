@@ -45,7 +45,8 @@
   .hint{padding:8px 16px 16px;color:var(--mut2);font-size:11px;line-height:1.5}
   .stage{background:radial-gradient(circle at 1px 1px,#1a2236 1px,transparent 0) 0 0/22px 22px,var(--bg);overflow:auto;position:relative;padding:34px 30px 120px;min-width:0}
   .paperwrap{margin:0 auto;width:max-content;transform-origin:top center}
-  .paper{width:210mm;height:297mm;background:var(--paper);color:#1A1E2A;box-shadow:var(--shadow);position:relative;overflow:hidden;font-family:'Montserrat','Segoe UI',Arial,sans-serif;font-size:8.5pt;
+  #paper{display:flex;flex-direction:column;align-items:center;gap:26px;position:relative}
+  .sheet{width:210mm;height:297mm;background:var(--paper);color:#1A1E2A;box-shadow:var(--shadow);position:relative;overflow:hidden;font-size:8.5pt;
     background-image:linear-gradient(#0000000a 1px,transparent 1px),linear-gradient(90deg,#0000000a 1px,transparent 1px);background-size:5mm 5mm}
   .blk{position:absolute;outline:1px dashed transparent;cursor:move}
   .blk:hover{outline-color:#bcd2ff}
@@ -149,7 +150,7 @@
       <div style="padding:2px 12px 6px"><div class="seg" id="scopeSeg" title="Where new blocks go"><button class="on" onclick="setScope('body')">Body</button><button onclick="setScope('header')">Header</button><button onclick="setScope('footer')">Footer</button></div></div>
       <div id="palette"></div>
       <div class="hint" id="scopeHint">Adding to the <b>body</b> — sections flow in order. Click a block to add it.</div></div>
-    <div class="stage" id="stage"><div class="paperwrap" id="paperwrap"><div class="paper" id="paper"></div></div></div>
+    <div class="stage" id="stage"><div class="paperwrap" id="paperwrap"><div id="paper"></div></div></div>
     <button id="rightExpand" onclick="toggleRight()" title="Show properties panel">«</button>
     <div class="rail right" id="rightRail">
       <div class="railhead rcolhead"><button class="collapse" onclick="toggleRight()" title="Collapse panel">»</button></div>
@@ -200,7 +201,7 @@ const R={
   divider:(s)=>`<div style="border-top:${(+s.thickness||1)}px ${s.lstyle||'solid'} ${s.color||'#cfe5f6'}"></div>`,
   box:(s)=>`<div class="inl">${s.html||""}</div>`,
   table:(s,b)=>{const cols=s.cols||[],rows=s.rows||[];const hb=s.headerBg==="navy"?b.navy:b.primary;let h=`<table style="width:100%;border-collapse:collapse;font-size:8pt;table-layout:fixed"><thead><tr>`+cols.map((c,ci)=>`<th data-th="1" data-c="${ci}" contenteditable style="background:${hb};color:#fff;padding:5px 8px;text-align:left;border:1px solid ${hb};font-weight:600">${esc(c)}</th>`).join("")+`</tr></thead><tbody>`;h+=rows.map((r,ri)=>`<tr>`+cols.map((c,ci)=>`<td data-td="1" data-r="${ri}" data-c="${ci}" contenteditable style="padding:5px 8px;border:1px solid #cfe5f6">${esc(r[ci]||"")}</td>`).join("")+`</tr>`).join("");return h+`</tbody></table>`;},
-  pagenum:(s)=>esc((s.format||"Page {p} of {n}").replace("{p}","1").replace("{n}","1"))
+  pagenum:(s)=>{const pg=window._pg||{p:1,n:1};return esc((s.format||"Page {p} of {n}").replace("{p}",pg.p).replace("{n}",pg.n));}
 };
 
 let selId=null,tab="block",scale=.8;
@@ -273,6 +274,9 @@ function flowBlk(bl,b){
   const inner=(R[bl.type]||(()=>""))(bl.settings,b,bl);const sel=bl.id===selId;
   return `<div class="blk flow ${sel?'sel':''}" data-id="${bl.id}" style="position:relative;margin-bottom:4mm;${styleCss(bl.style)}"><span class="tag">${META[bl.type].l}</span><div class="tools"><button title="Move up" onclick="moveBody(event,'${bl.id}',-1)">↑</button><button title="Move down" onclick="moveBody(event,'${bl.id}',1)">↓</button><button title="Duplicate" onclick="duplicate('${bl.id}')">⧉</button><button title="Delete" onclick="del(event,'${bl.id}')">🗑</button></div>${inner}</div>`;
 }
+function flowBlkStatic(bl,b){const inner=(R[bl.type]||(()=>""))(bl.settings,b,bl);return `<div style="position:relative;margin-bottom:4mm;${styleCss(bl.style)}">${inner}</div>`;}
+function absBlkStatic(bl,b){const inner=(R[bl.type]||(()=>""))(bl.settings,b,bl);const p=bl.pos||{x:0,y:0,w:180,h:null};const box=`position:absolute;left:${p.x}mm;top:${p.y}mm;width:${p.w}mm;`+(p.h?`height:${p.h}mm;overflow:hidden;`:'')+`pointer-events:none;`;return `<div style="${box}${styleCss(bl.style)}">${inner}</div>`;}
+function measureReel(body,b){if(!body||!body.length)return 0;try{const m=document.createElement("div");m.style.cssText="position:absolute;left:-99999px;top:0;width:210mm;visibility:hidden;font-family:'"+(b.font||'Montserrat')+"',Arial,sans-serif;font-size:8.5pt";m.innerHTML='<div style="padding:4mm 14mm 0">'+body.map(bl=>flowBlkStatic(bl,b)).join("")+'</div>';document.body.appendChild(m);const mm=m.firstChild.offsetHeight/PXMM;document.body.removeChild(m);return mm;}catch(e){return 0;}}
 function render(){
   const b=state.branding,paper=document.getElementById("paper");
   paper.style.fontFamily=`'${b.font}','Segoe UI',Arial,sans-serif`;
@@ -283,28 +287,42 @@ function render(){
   const floats=state.blocks.filter(bl=>regionOf(bl)==="body"&&bl.float);
   const body=state.blocks.filter(bl=>regionOf(bl)==="body"&&!bl.float).sort((a,c)=>((a.pos&&a.pos.y)||0)-((c.pos&&c.pos.y)||0));
   const cut=(n)=>(297-n).toFixed(2);
-  let html="";
-  if(state.watermark&&state.watermark.text)html+=`<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:0"><div style="transform:rotate(-35deg);font-size:${(+state.watermark.size||60)}pt;font-weight:800;color:${state.watermark.color||'#1A1E2A'};opacity:${(+state.watermark.opacity||8)/100};white-space:nowrap;letter-spacing:2px">${esc(state.watermark.text)}</div></div>`;
-  // BODY (z2): flowing content starts UNDER the header; free-positioned floats sit on the page. Bands
-  // (drawn after, clipped) guarantee body content can never appear in the header/footer space.
-  if(floats.length)html+=`<div style="position:absolute;left:0;top:0;width:210mm;height:297mm;z-index:2;clip-path:inset(${Hh}mm 0 ${Fh}mm 0);opacity:${ba?1:0.4};pointer-events:none">`+floats.map(bl=>absBlk(bl,b,!ba)).join("")+`</div>`;
-  html+=`<div style="position:absolute;left:0;top:${Hh}mm;width:210mm;padding:4mm 14mm 0;z-index:2;opacity:${ba?1:0.4};pointer-events:${ba?'auto':'none'}">`+body.map(bl=>flowBlk(bl,b)).join("")+`</div>`;
-  // HEADER band (z1, clipped to the top Hh): nothing inside it — banner image included — can spill into the body.
-  if(Hh)html+=`<div style="position:absolute;left:0;top:0;width:210mm;height:297mm;z-index:1;clip-path:inset(0 0 ${cut(Hh)}mm 0);opacity:${fa?0.4:1};pointer-events:${ha?'auto':'none'}">`
+  const bodyAreaMm=Math.max(20,297-Hh-Fh);
+  const wmHtml=()=>(state.watermark&&state.watermark.text)?`<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:0"><div style="transform:rotate(-35deg);font-size:${(+state.watermark.size||60)}pt;font-weight:800;color:${state.watermark.color||'#1A1E2A'};opacity:${(+state.watermark.opacity||8)/100};white-space:nowrap;letter-spacing:2px">${esc(state.watermark.text)}</div></div>`:"";
+  const headerBand=(live)=>!Hh?"":`<div style="position:absolute;left:0;top:0;width:210mm;height:297mm;z-index:1;clip-path:inset(0 0 ${cut(Hh)}mm 0);opacity:${fa?0.4:1};pointer-events:${(live&&ha)?'auto':'none'}">`
     +`<div style="position:absolute;left:0;top:0;width:210mm;height:${Hh}mm;background:#fff"></div>`
     +(b.header_image?`<img src="${esc(b.header_image)}" style="position:absolute;left:0;top:0;width:210mm;height:${Hh}mm;object-fit:cover;pointer-events:none">`:"")
     +`<div style="position:absolute;left:0;top:0;width:210mm;height:${Hh}mm;background:${ha?'#2f7bf61f':'#2f7bf60d'};border-bottom:${ha?'2px solid #2f7bf6':'1px dashed #2f7bf555'};pointer-events:none"></div>`
-    +`<div style="position:absolute;top:1px;left:3px;font-size:7px;letter-spacing:1px;color:#2f7bf6;text-transform:uppercase;pointer-events:none">Header${state.header.repeat?' · repeats':''}${ha?' — editing':''}</div>`
-    +head.map(bl=>absBlk(bl,b,!ha)).join("")+`</div>`;
-  // FOOTER band (z3, clipped to the bottom Fh): its white base also masks any body that overflows one page.
-  if(Fh)html+=`<div style="position:absolute;left:0;top:0;width:210mm;height:297mm;z-index:3;clip-path:inset(${cut(Fh)}mm 0 0 0);opacity:${ha?0.4:1};pointer-events:${fa?'auto':'none'}">`
+    +`<div style="position:absolute;top:1px;left:3px;font-size:7px;letter-spacing:1px;color:#2f7bf6;text-transform:uppercase;pointer-events:none">Header${state.header.repeat?' · repeats':''}${(live&&ha)?' — editing':''}</div>`
+    +head.map(bl=>live?absBlk(bl,b,!ha):absBlkStatic(bl,b)).join("")+`</div>`;
+  const footerBand=(live)=>!Fh?"":`<div style="position:absolute;left:0;top:0;width:210mm;height:297mm;z-index:3;clip-path:inset(${cut(Fh)}mm 0 0 0);opacity:${ha?0.4:1};pointer-events:${(live&&fa)?'auto':'none'}">`
     +`<div style="position:absolute;left:0;bottom:0;width:210mm;height:${Fh}mm;background:#fff"></div>`
     +(b.footer_image?`<img src="${esc(b.footer_image)}" style="position:absolute;left:0;bottom:0;width:210mm;height:${Fh}mm;object-fit:cover;pointer-events:none">`:"")
     +`<div style="position:absolute;left:0;bottom:0;width:210mm;height:${Fh}mm;background:${fa?'#2f7bf61f':'#2f7bf60d'};border-top:${fa?'2px solid #2f7bf6':'1px dashed #2f7bf555'};pointer-events:none"></div>`
-    +`<div style="position:absolute;bottom:1px;left:3px;font-size:7px;letter-spacing:1px;color:#2f7bf6;text-transform:uppercase;pointer-events:none">Footer${state.footer.repeat?' · repeats':''}${fa?' — editing':''}</div>`
-    +foot.map(bl=>absBlk(bl,b,!fa)).join("")+`</div>`;
-  if(Hh)html+=`<div class="bandgrip" data-band="header" title="Drag to resize the header height" style="top:${Hh}mm">⇕ Header ${Math.round(Hh)}mm</div>`;
-  if(Fh)html+=`<div class="bandgrip" data-band="footer" title="Drag to resize the footer height" style="top:${cut(Fh)}mm">⇕ Footer ${Math.round(Fh)}mm</div>`;
+    +`<div style="position:absolute;bottom:1px;left:3px;font-size:7px;letter-spacing:1px;color:#2f7bf6;text-transform:uppercase;pointer-events:none">Footer${state.footer.repeat?' · repeats':''}${(live&&fa)?' — editing':''}</div>`
+    +foot.map(bl=>live?absBlk(bl,b,!fa):absBlkStatic(bl,b)).join("")+`</div>`;
+  const reelMm=measureReel(body,b);
+  const N=(reelMm<=bodyAreaMm+1)?1:Math.ceil(reelMm/bodyAreaMm);
+  const wrap=(i,inner)=>`<div style="display:flex;flex-direction:column;align-items:center;gap:6px">`+(N>1?`<div style="font-size:11px;color:var(--mut);font-weight:600;letter-spacing:.3px">Page ${i+1} of ${N}</div>`:"")+`<div class="sheet">`+inner+`</div></div>`;
+  let html="";
+  // Page 1 — the live, interactive editor (footer band masks any overflow into the body).
+  window._pg={p:1,n:N};
+  let p1=wmHtml();
+  if(floats.length)p1+=`<div style="position:absolute;left:0;top:0;width:210mm;height:297mm;z-index:2;clip-path:inset(${Hh}mm 0 ${Fh}mm 0);opacity:${ba?1:0.4};pointer-events:none">`+floats.map(bl=>absBlk(bl,b,!ba)).join("")+`</div>`;
+  p1+=`<div style="position:absolute;left:0;top:${Hh}mm;width:210mm;padding:4mm 14mm 0;z-index:2;opacity:${ba?1:0.4};pointer-events:${ba?'auto':'none'}">`+body.map(bl=>flowBlk(bl,b)).join("")+`</div>`;
+  p1+=headerBand(true)+footerBand(true);
+  if(Hh)p1+=`<div class="bandgrip" data-band="header" title="Drag to resize the header height" style="top:${Hh}mm">⇕ Header ${Math.round(Hh)}mm</div>`;
+  if(Fh)p1+=`<div class="bandgrip" data-band="footer" title="Drag to resize the footer height" style="top:${cut(Fh)}mm">⇕ Footer ${Math.round(Fh)}mm</div>`;
+  html+=wrap(0,p1);
+  // Pages 2..N — read-only continuation previews: slice the overflowing body, repeat header/footer.
+  for(let i=1;i<N;i++){
+    window._pg={p:i+1,n:N};
+    let s=wmHtml();
+    s+=`<div style="position:absolute;left:0;top:${Hh}mm;width:210mm;height:${bodyAreaMm}mm;overflow:hidden;z-index:2;pointer-events:none;user-select:none"><div style="padding:4mm 14mm 0;margin-top:-${(i*bodyAreaMm).toFixed(2)}mm">`+body.map(bl=>flowBlkStatic(bl,b)).join("")+`</div></div>`;
+    s+=headerBand(false)+footerBand(false);
+    html+=wrap(i,s);
+  }
+  window._pg=null;
   paper.innerHTML=html;
   wireTable();
   recordHistory();
@@ -312,8 +330,8 @@ function render(){
 }
 function moveBody(e,id,dir){if(e)e.stopPropagation();const body=state.blocks.filter(bl=>regionOf(bl)==="body"&&!bl.float).sort((a,c)=>((a.pos&&a.pos.y)||0)-((c.pos&&c.pos.y)||0));const i=body.findIndex(x=>x.id===id);const j=i+dir;if(j<0||j>=body.length)return;const A=body[i],C=body[j];if(!A.pos)A.pos={x:14,y:0,w:180,h:null};if(!C.pos)C.pos={x:14,y:0,w:180,h:null};const ay=A.pos.y||0,cy=C.pos.y||0;A.pos.y=cy;C.pos.y=ay;render();renderProps();}
 function wireTable(){
-  document.querySelectorAll('#paper [data-th]').forEach(el=>{el.addEventListener('input',()=>{blockById(el.closest('.blk').dataset.id).settings.cols[+el.dataset.c]=el.textContent;});});
-  document.querySelectorAll('#paper [data-td]').forEach(el=>{el.addEventListener('input',()=>{blockById(el.closest('.blk').dataset.id).settings.rows[+el.dataset.r][+el.dataset.c]=el.textContent;});});
+  document.querySelectorAll('#paper .blk [data-th]').forEach(el=>{el.addEventListener('input',()=>{blockById(el.closest('.blk').dataset.id).settings.cols[+el.dataset.c]=el.textContent;});});
+  document.querySelectorAll('#paper .blk [data-td]').forEach(el=>{el.addEventListener('input',()=>{blockById(el.closest('.blk').dataset.id).settings.rows[+el.dataset.r][+el.dataset.c]=el.textContent;});});
 }
 
 /* drag + resize on the canvas, with smart alignment guides + snapping */
