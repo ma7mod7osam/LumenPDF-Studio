@@ -32,7 +32,7 @@
   #leftExpand{left:8px}#rightExpand{right:8px}
   #leftExpand:hover,#rightExpand:hover{border-color:var(--accent)}
   .rcolhead{justify-content:flex-end;padding:8px 10px 0}
-  .bandgrip{position:absolute;left:50%;transform:translate(-50%,-50%);width:54px;height:12px;border-radius:7px;background:#2f7bf6;border:2px solid #fff;box-shadow:0 1px 6px rgba(0,0,0,.45);cursor:ns-resize;z-index:45}
+  .bandgrip{position:absolute;left:50%;transform:translate(-50%,-50%);height:18px;padding:0 10px;border-radius:9px;background:#2f7bf6;color:#fff;border:2px solid #fff;box-shadow:0 1px 6px rgba(0,0,0,.45);cursor:ns-resize;z-index:45;font-size:9px;font-weight:700;line-height:1;letter-spacing:.3px;white-space:nowrap;display:flex;align-items:center;gap:3px}
   .bandgrip:hover{background:#1C75BC}
   .rail h4{margin:0;padding:14px 16px 4px;font-size:10.5px;letter-spacing:1.4px;text-transform:uppercase;color:var(--mut2);font-weight:700}
   #palette{padding:4px 12px 16px}
@@ -303,8 +303,8 @@ function render(){
     +`<div style="position:absolute;left:0;bottom:0;width:210mm;height:${Fh}mm;background:${fa?'#2f7bf61f':'#2f7bf60d'};border-top:${fa?'2px solid #2f7bf6':'1px dashed #2f7bf555'};pointer-events:none"></div>`
     +`<div style="position:absolute;bottom:1px;left:3px;font-size:7px;letter-spacing:1px;color:#2f7bf6;text-transform:uppercase;pointer-events:none">Footer${state.footer.repeat?' · repeats':''}${fa?' — editing':''}</div>`
     +foot.map(bl=>absBlk(bl,b,!fa)).join("")+`</div>`;
-  if(Hh)html+=`<div class="bandgrip" data-band="header" title="Drag to resize the header" style="top:${Hh}mm"></div>`;
-  if(Fh)html+=`<div class="bandgrip" data-band="footer" title="Drag to resize the footer" style="top:${cut(Fh)}mm"></div>`;
+  if(Hh)html+=`<div class="bandgrip" data-band="header" title="Drag to resize the header height" style="top:${Hh}mm">⇕ Header ${Math.round(Hh)}mm</div>`;
+  if(Fh)html+=`<div class="bandgrip" data-band="footer" title="Drag to resize the footer height" style="top:${cut(Fh)}mm">⇕ Footer ${Math.round(Fh)}mm</div>`;
   paper.innerHTML=html;
   wireTable();
   recordHistory();
