@@ -118,6 +118,16 @@ def _compose(doc, definition, renderer):
     float_body = [b for b in body if b.get("float")]  # free-positioned elements
     flow_body.sort(key=lambda b: B._num((b.get("pos") or {}).get("y"), 0))  # flow in vertical order
 
+    # Banner is a band background driven by the branding image, sized to the band (not a saved block).
+    head = [b for b in head if b.get("type") != "header_banner"]
+    foot = [b for b in foot if b.get("type") != "footer_banner"]
+    if h_on and branding.get("header_image"):
+        head.insert(0, {"type": "header_banner", "settings": {}, "style": {}, "region": "header",
+                        "pos": {"x": 0, "y": 0, "w": 210, "h": hh}})
+    if f_on and branding.get("footer_image"):
+        foot.insert(0, {"type": "footer_banner", "settings": {}, "style": {}, "region": "footer",
+                        "pos": {"x": 0, "y": PAGE_H - fh, "w": 210, "h": fh}})
+
     # 1) Body in flow (+ floating elements), may span multiple pages, kept clear of the bands.
     body_pdf = _finish(
         B._flow_body_html(doc, branding, flow_body, {"terms_html": terms_html}, top_mm=hh, bottom_mm=fh, floats=float_body),

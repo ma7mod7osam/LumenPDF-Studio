@@ -433,14 +433,14 @@ def _e_spacer(doc, b, s, ctx):
 
 def _d_header_banner(doc, b, s, ctx):
     if b.get("header_image"):
-        return f'<img class="bs-banner" src="{_esc(b.get("header_image"))}">'
-    return f'<div style="width:100%;height:30mm;background:{b.get("primary", "#1C75BC")};-webkit-print-color-adjust:exact;print-color-adjust:exact;"></div>'
+        return f'<img src="{_esc(b.get("header_image"))}" style="width:100%;height:100%;object-fit:cover;display:block">'
+    return f'<div style="width:100%;height:100%;background:{b.get("primary", "#1C75BC")};-webkit-print-color-adjust:exact;print-color-adjust:exact;"></div>'
 
 
 def _d_footer_banner(doc, b, s, ctx):
     if b.get("footer_image"):
-        return f'<img class="bs-banner" src="{_esc(b.get("footer_image"))}">'
-    return f'<div style="width:100%;height:30mm;background:{b.get("navy", "#1A1E2A")};-webkit-print-color-adjust:exact;print-color-adjust:exact;"></div>'
+        return f'<img src="{_esc(b.get("footer_image"))}" style="width:100%;height:100%;object-fit:cover;display:block">'
+    return f'<div style="width:100%;height:100%;background:{b.get("navy", "#1A1E2A")};-webkit-print-color-adjust:exact;print-color-adjust:exact;"></div>'
 
 
 def _d_title(doc, b, s, ctx):
