@@ -486,14 +486,16 @@ function regionControl(b,reg){
   if(reg==="body"){
     let h=`<div class="stygrp"><div class="styhead">Placement</div>`;
     h+=`<label class="chk"><input type="checkbox" ${b.float?'checked':''} onchange="setFloat('${b.id}',this.checked)"> Free position (place anywhere in body)</label>`;
+    if(b.float)h+=`<div class="fld" style="margin-top:6px"><label>Quick columns (side by side)</label><div class="seg"><button onclick="colPreset('${b.id}','left')">Left ½</button><button onclick="colPreset('${b.id}','right')">Right ½</button><button onclick="colPreset('${b.id}','full')">Full</button></div></div>`;
     h+= b.float
-      ? `<div class="hint" style="padding:4px 0 0">Floating — drag it freely; set exact X/Y/W/H below.</div>`
-      : `<div class="hint" style="padding:4px 0 0">Flows in order — use ↑ ↓ on the block to reorder.</div>`;
+      ? `<div class="hint" style="padding:4px 0 0">Floating — drag it freely, snap to guides, or use the presets above (e.g. Customer = Left ½, your company = Right ½).</div>`
+      : `<div class="hint" style="padding:4px 0 0">Flows top-to-bottom — use ↑ ↓ to reorder. Turn on <b>Free position</b> to place two blocks side by side.</div>`;
     return h+`</div>`;
   }
   return `<div class="stygrp"><div class="styhead">Placement</div><div class="hint" style="padding:4px 0 0">In the <b>${reg}</b> band — repeats on every page. Drag to position; height is on the <b>Page</b> tab.</div></div>`;
 }
 function setFloat(id,on){const b=blockById(id);if(!b)return;b.float=on;if(on&&!b.pos)b.pos={x:14,y:60,w:120,h:null};render();renderProps();}
+function colPreset(id,which){const b=blockById(id);if(!b)return;if(!b.pos)b.pos={x:14,y:60,w:182,h:null};const Hh=state.header.enabled?state.header.height:0;if((b.pos.y||0)<Hh+4)b.pos.y=Hh+6;if(which==="left"){b.pos.x=14;b.pos.w=88;}else if(which==="right"){b.pos.x=108;b.pos.w=88;}else{b.pos.x=14;b.pos.w=182;}render();renderProps();}
 function condControl(b){const c=b.cond||{};const on=!!c.field;let h=`<div class="stygrp"><div class="styhead">Visibility</div><label class="chk"><input type="checkbox" ${on?'checked':''} onchange="toggleCond('${b.id}',this.checked)"> Show only if a condition is met</label>`;
   if(on){h+=`<div class="fld"><label>Field</label><select onchange="setCond('field',this.value)">`+DOCFIELDS.map(f=>`<option value="${esc(f.f)}" ${c.field===f.f?'selected':''}>${esc(f.l)}</option>`).join("")+`</select></div>`;
     h+=`<div class="fld"><label>Condition</label><select onchange="setCond('op',this.value)">`+[["=","equals"],["!=","not equals"],[">","greater than"],["<","less than"],["like","contains"],["in","in list (a,b,c)"]].map(o=>`<option value="${o[0]}" ${(c.op||"=")===o[0]?'selected':''}>${o[1]}</option>`).join("")+`</select></div>`;
