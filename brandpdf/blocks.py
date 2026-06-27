@@ -651,9 +651,12 @@ def _e_pagenum(doc, b, s, ctx):
 
 
 def _render_child(doc, b, c, ctx):
-    """Render one block nested inside a Row column."""
+    """Render one block nested inside a Row column. (Nested datatable/items children still enforce
+    their own permlevel filtering via the DEF_RENDERERS dispatch below.)"""
     if not isinstance(c, dict):
         return ""
+    if c.get("type") == "row":
+        return ""  # rows cannot nest inside rows — prevents unbounded recursion / stack overflow
     fn = DEF_RENDERERS.get(c.get("type"))
     if not fn:
         return ""
@@ -665,13 +668,13 @@ def _render_child(doc, b, c, ctx):
 def _d_row(doc, b, s, ctx):
     """A row split into 2-3 columns; each column flows its own nested blocks (side-by-side layout)."""
     cols = max(1, min(3, int(_num(s.get("cols"), 2) or 2)))
-    gap = _num(s.get("gap"), 6) or 0
+    gap = max(0.0, _num(s.get("gap"), 6) or 0)
     widths = s.get("widths") or []
     cells = s.get("cells") or []
     half = _fmt_num(gap / 2.0)
     tds = []
     for i in range(cols):
-        w = widths[i] if i < len(widths) else None
+        w = _num(widths[i]) if i < len(widths) else None
         wcss = f"width:{_fmt_num(w)}mm;" if w else ""
         children = cells[i] if i < len(cells) and isinstance(cells[i], list) else []
         inner = "".join(_render_child(doc, b, c, ctx) for c in children)

@@ -94,7 +94,9 @@ def _compose(doc, definition, renderer):
     f_on = bool(f.get("enabled"))
     hh = max(0.0, min(float(B._num(h.get("height"), 0) or 0), PAGE_H)) if h_on else 0.0
     fh = max(0.0, min(float(B._num(f.get("height"), 0) or 0), PAGE_H)) if f_on else 0.0
-    if hh + fh > PAGE_H - 50:  # bands too tall -> let caller single-pass
+    hm = max(0.0, float(B._num(h.get("margin"), 0) or 0)) if h_on else 0.0  # clear gap below header
+    fm = max(0.0, float(B._num(f.get("margin"), 0) or 0)) if f_on else 0.0  # clear gap above footer
+    if hh + fh + hm + fm > PAGE_H - 50:  # bands too tall -> let caller single-pass
         return None
 
     allowed = {branding.get("header_image"), branding.get("footer_image")}
@@ -130,7 +132,7 @@ def _compose(doc, definition, renderer):
 
     # 1) Body in flow (+ floating elements), may span multiple pages, kept clear of the bands.
     body_pdf = _finish(
-        B._flow_body_html(doc, branding, flow_body, {"terms_html": terms_html}, top_mm=hh, bottom_mm=fh, floats=float_body),
+        B._flow_body_html(doc, branding, flow_body, {"terms_html": terms_html}, top_mm=hh + hm, bottom_mm=fh + fm, floats=float_body),
         allowed, renderer,
     )
     reader = PdfReader(io.BytesIO(body_pdf))
