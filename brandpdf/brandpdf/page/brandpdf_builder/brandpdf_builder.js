@@ -56,7 +56,7 @@ frappe.pages['brandpdf-builder'].on_page_load = function (wrapper) {
 	// allow-listed read/save methods.
 	var ALLOWED = {
 		'brandpdf.api.builder_doctypes': 1, 'brandpdf.api.builder_docs': 1, 'brandpdf.api.builder_sample': 1,
-		'brandpdf.api.doctype_fields': 1, 'brandpdf.api.list_formats': 1, 'brandpdf.api.get_format': 1,
+		'brandpdf.api.doctype_fields': 1, 'brandpdf.api.child_tables': 1, 'brandpdf.api.list_formats': 1, 'brandpdf.api.get_format': 1,
 		'brandpdf.api.save_format': 1,
 	};
 	window.addEventListener('message', function (e) {

@@ -486,17 +486,24 @@ def _d_items(doc, b, s, ctx):
     hc = navy if s.get("headerColor") == "navy" else primary
     zebra = s.get("zebra", True)
 
-    def th(txt, cls="", w=""):
-        wcss = f"width:{w};" if w else ""
-        return f'<th class="{cls}" style="background-color:{hc} !important;{wcss}-webkit-print-color-adjust:exact;">{txt}</th>'
+    w = s.get("widths") or {}
 
-    heads = th("#", "", "6%") + th("Item &amp; Description", "", "40%")
+    def th(txt, cls=""):
+        return f'<th class="{cls}" style="background-color:{hc} !important;-webkit-print-color-adjust:exact;">{txt}</th>'
+
+    # column widths: explicit mm (from the builder) overrides the sensible % default
+    coldefs = [("num", "6%"), ("item", "40%")]
+    heads = th("#") + th("Item &amp; Description", "")
     if cols_cfg.get("qty"):
-        heads += th("Qty", "num", "12%")
+        coldefs.append(("qty", "12%")); heads += th("Qty", "num")
     if cols_cfg.get("rate"):
-        heads += th("Rate", "num", "20%")
+        coldefs.append(("rate", "20%")); heads += th("Rate", "num")
     if cols_cfg.get("amount"):
-        heads += th("Amount", "num", "22%")
+        coldefs.append(("amount", "22%")); heads += th("Amount", "num")
+    colgroup = "<colgroup>" + "".join(
+        (f'<col style="width:{_fmt_num(w[k])}mm">' if w.get(k) else f'<col style="width:{pct}">')
+        for k, pct in coldefs
+    ) + "</colgroup>"
     body = []
     for i, it in enumerate(doc.get("items") or [], start=1):
         name_txt = frappe.utils.strip_html_tags(it.item_name or "").strip()
@@ -515,7 +522,48 @@ def _d_items(doc, b, s, ctx):
             tds += f'<td class="num"><bdi>{_esc(it.get_formatted("amount"))}</bdi></td>'
         body.append(f"<tr>{tds}</tr>")
     cls = "bs-items" if zebra else "bs-items nozebra"
-    return f'<table class="{cls}"><thead><tr>{heads}</tr></thead><tbody>{"".join(body)}</tbody></table>'
+    return f'<table class="{cls}">{colgroup}<thead><tr>{heads}</tr></thead><tbody>{"".join(body)}</tbody></table>'
+
+
+def _d_datatable(doc, b, s, ctx):
+    """Generic table from ANY child table on the doc: chosen columns, per-column width + align."""
+    table = s.get("table") or "items"
+    columns = [c for c in (s.get("columns") or []) if isinstance(c, dict) and c.get("field")]
+    if not columns:
+        return ""
+    primary = b.get("primary", "#1C75BC")
+    navy = b.get("navy", "#1A1E2A")
+    hc = navy if s.get("headerColor") == "navy" else primary
+    zebra = s.get("zebra", True)
+    rows = doc.get(table) or []
+    colgroup = "<colgroup>" + "".join(
+        (f'<col style="width:{_fmt_num(c.get("width"))}mm">' if c.get("width") else "<col>") for c in columns
+    ) + "</colgroup>"
+    heads = "".join(
+        f'<th style="background-color:{hc} !important;color:#fff !important;text-align:{(c.get("align") or "left")};'
+        f'font-weight:600;font-size:7.5pt;padding:6px 8px;word-wrap:break-word;-webkit-print-color-adjust:exact;">'
+        f'{_esc(c.get("label") or c.get("field"))}</th>'
+        for c in columns
+    )
+    body = []
+    for i, row in enumerate(rows, start=1):
+        tds = ""
+        for c in columns:
+            f = c.get("field")
+            if f == "idx":
+                val = str(getattr(row, "idx", i) or i)
+            else:
+                try:
+                    val = row.get_formatted(f)
+                except Exception:
+                    val = row.get(f)
+                val = "" if val is None else frappe.utils.strip_html_tags(str(val)).strip()
+            align = c.get("align") or "left"
+            tds += (f'<td style="text-align:{align};padding:6px 8px;border-bottom:1px solid #cfe5f6;'
+                    f'word-wrap:break-word;"><bdi>{_esc(val)}</bdi></td>')
+        body.append(f"<tr>{tds}</tr>")
+    cls = "bs-items" if zebra else "bs-items nozebra"
+    return f'<table class="{cls}">{colgroup}<thead><tr>{heads}</tr></thead><tbody>{"".join(body)}</tbody></table>'
 
 
 def _d_totals(doc, b, s, ctx):
@@ -592,6 +640,7 @@ DEF_RENDERERS = {
     "title": _d_title,
     "customer": _d_customer,
     "items": _d_items,
+    "datatable": _d_datatable,
     "totals": _d_totals,
     "payment_schedule": _d_payment_schedule,
     "terms": _d_terms,

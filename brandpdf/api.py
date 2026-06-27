@@ -188,6 +188,31 @@ def doctype_fields(doctype="Quotation"):
 
 
 @frappe.whitelist()
+def child_tables(doctype="Quotation"):
+    """List a doctype's child tables and each table's value-bearing fields, so the Data Table
+    block can pull rows from ANY child table (items, taxes, payment schedule, custom child tables)."""
+    _require_manager()
+    if not doctype or not frappe.db.exists("DocType", doctype):
+        return []
+    colskip = {
+        "Section Break", "Column Break", "Tab Break", "HTML", "Table", "Table MultiSelect",
+        "Button", "Heading", "Fold", "Image", "Geolocation", "Signature",
+    }
+    out = []
+    for df in frappe.get_meta(doctype).fields:
+        if df.fieldtype != "Table" or not df.options or not frappe.db.exists("DocType", df.options):
+            continue
+        cols = [{"fieldname": "idx", "label": "#"}]
+        for cf in frappe.get_meta(df.options).fields:
+            if cf.fieldtype in colskip or not cf.fieldname:
+                continue
+            cols.append({"fieldname": cf.fieldname, "label": cf.label or cf.fieldname})
+        out.append({"fieldname": df.fieldname, "label": df.label or df.fieldname,
+                    "child_doctype": df.options, "fields": cols})
+    return out
+
+
+@frappe.whitelist()
 def builder_doctypes():
     """Candidate doctypes to build formats for (common transaction types that exist + any that
     already have a BrandPDF format)."""
@@ -268,6 +293,28 @@ def builder_sample(doctype, name):
             "t": ps.get("payment_term") or ps.get("description") or "",
             "due": ps.get_formatted("due_date"), "pct": ps.get_formatted("invoice_portion"), "amt": ps.get_formatted("payment_amount"),
         })
+
+    # Generic child-table rows (all child tables, all displayable fields, formatted) for the Data Table block.
+    tables = {}
+    colskip = {"Section Break", "Column Break", "Tab Break", "HTML", "Table", "Table MultiSelect",
+               "Button", "Image", "Geolocation", "Signature"}
+    for df in frappe.get_meta(doctype).fields:
+        if df.fieldtype != "Table" or not df.options or not frappe.db.exists("DocType", df.options):
+            continue
+        cfields = [cf.fieldname for cf in frappe.get_meta(df.options).fields
+                   if cf.fieldtype not in colskip and cf.fieldname]
+        rows = []
+        for row in (doc.get(df.fieldname) or []):
+            rd = {"idx": row.idx}
+            for cf in cfields:
+                try:
+                    v = row.get_formatted(cf)
+                except Exception:
+                    v = row.get(cf)
+                rd[cf] = "" if v is None else strip_html_tags(str(v)).strip()
+            rows.append(rd)
+        tables[df.fieldname] = rows
+    out["tables"] = tables
     return out
 
 
