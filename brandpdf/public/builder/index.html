@@ -281,7 +281,7 @@ function styleCss(st){if(!st)return "";const p=[];if(st.align)p.push("text-align
 function regionOf(bl){return bl.region||"body";}  // region is OWNED, never guessed from position
 function absBlk(bl,b,locked){
   const inner=(R[bl.type]||(()=>""))(bl.settings,b,bl);const p=bl.pos||{x:0,y:0,w:180,h:null};
-  const box=`left:${p.x}mm;top:${p.y}mm;width:${p.w}mm;`+(p.h?`height:${p.h}mm;overflow:hidden;`:'')+(locked?'opacity:0.4;pointer-events:none;':'');
+  const box=`left:${p.x}mm;top:${p.y}mm;width:${p.w}mm;`+(p.h?`height:${p.h}mm;overflow:hidden;`:'')+(locked?'opacity:0.4;pointer-events:none;':'pointer-events:auto;');  // auto so a float stays clickable inside its pointer-events:none layer
   if(locked) return `<div class="blk" data-id="${bl.id}" style="${box}${styleCss(bl.style)}">${inner}</div>`;  // inert: not selectable/movable
   const sel=bl.id===selId;
   const handles=sel?'<div class="rh e" data-rh="e"></div><div class="rh s" data-rh="s"></div><div class="rh se" data-rh="se"></div>':'';
@@ -328,8 +328,10 @@ function render(){
   // Page 1 — the live, interactive editor (footer band masks any overflow into the body).
   window._pg={p:1,n:N};
   let p1=wmHtml();
-  if(floats.length)p1+=`<div style="position:absolute;left:0;top:0;width:210mm;height:297mm;z-index:2;clip-path:inset(${bodyTop}mm 0 ${(Fh+fm)}mm 0);opacity:${ba?1:0.4};pointer-events:none">`+floats.map(bl=>absBlk(bl,b,!ba)).join("")+`</div>`;
+  // flowing body first, then free-positioned floats ON TOP (z-index 3) so they stay clickable even
+  // when they overlap flowing content — otherwise the flow layer swallows the click and you can't reselect a float.
   p1+=`<div style="position:absolute;left:0;top:${bodyTop}mm;width:210mm;padding:4mm 14mm 0;z-index:2;opacity:${ba?1:0.4};pointer-events:${ba?'auto':'none'}">`+body.map(bl=>flowBlk(bl,b)).join("")+`</div>`;
+  if(floats.length)p1+=`<div style="position:absolute;left:0;top:0;width:210mm;height:297mm;z-index:3;clip-path:inset(${bodyTop}mm 0 ${(Fh+fm)}mm 0);opacity:${ba?1:0.4};pointer-events:none">`+floats.map(bl=>absBlk(bl,b,!ba)).join("")+`</div>`;
   p1+=headerBand(true)+footerBand(true);
   if(Hh)p1+=`<div class="bandgrip" data-band="header" title="Drag to resize the header height" style="top:${Hh}mm">⇕ Header ${Math.round(Hh)}mm</div>`;
   if(Fh)p1+=`<div class="bandgrip" data-band="footer" title="Drag to resize the footer height" style="top:${cut(Fh)}mm">⇕ Footer ${Math.round(Fh)}mm</div>`;
