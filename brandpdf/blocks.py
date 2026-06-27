@@ -287,10 +287,14 @@ def _num(v, default=None):
 
 
 def _fmt_num(v):
-    """Render a number without a trailing .0 (so 1.0 -> '1')."""
-    if v == int(v):
-        return str(int(v))
-    return str(v)
+    """Render a number without a trailing .0 (so 1.0 -> '1'). Tolerates numeric strings."""
+    try:
+        f = float(v)
+    except (TypeError, ValueError):
+        return ""
+    if f == int(f):
+        return str(int(f))
+    return str(f)
 
 
 def _hexok(v):
@@ -529,6 +533,18 @@ def _d_datatable(doc, b, s, ctx):
     """Generic table from ANY child table on the doc: chosen columns, per-column width + align."""
     table = s.get("table") or "items"
     columns = [c for c in (s.get("columns") or []) if isinstance(c, dict) and c.get("field")]
+    if not columns:
+        return ""
+    # Safety: only render standard (permlevel 0) child fields so a saved format can never leak a
+    # permission-gated column (e.g. cost/valuation) to whoever prints the document.
+    try:
+        tf = doc.meta.get_field(table)
+        if tf and tf.options:
+            allowed = {"idx"} | {cf.fieldname for cf in frappe.get_meta(tf.options).fields
+                                 if cf.fieldname and (cf.permlevel or 0) == 0}
+            columns = [c for c in columns if c.get("field") in allowed]
+    except Exception:
+        pass
     if not columns:
         return ""
     primary = b.get("primary", "#1C75BC")

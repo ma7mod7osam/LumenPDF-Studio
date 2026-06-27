@@ -202,10 +202,14 @@ def child_tables(doctype="Quotation"):
     for df in frappe.get_meta(doctype).fields:
         if df.fieldtype != "Table" or not df.options or not frappe.db.exists("DocType", df.options):
             continue
+        try:
+            cmeta = frappe.get_meta(df.options)
+        except Exception:
+            continue
         cols = [{"fieldname": "idx", "label": "#"}]
-        for cf in frappe.get_meta(df.options).fields:
-            if cf.fieldtype in colskip or not cf.fieldname:
-                continue
+        for cf in cmeta.fields:
+            if cf.fieldtype in colskip or not cf.fieldname or (cf.permlevel or 0) != 0:
+                continue  # permlevel>0 fields are permission-gated; don't offer them in a print column
             cols.append({"fieldname": cf.fieldname, "label": cf.label or cf.fieldname})
         out.append({"fieldname": df.fieldname, "label": df.label or df.fieldname,
                     "child_doctype": df.options, "fields": cols})
@@ -301,8 +305,12 @@ def builder_sample(doctype, name):
     for df in frappe.get_meta(doctype).fields:
         if df.fieldtype != "Table" or not df.options or not frappe.db.exists("DocType", df.options):
             continue
-        cfields = [cf.fieldname for cf in frappe.get_meta(df.options).fields
-                   if cf.fieldtype not in colskip and cf.fieldname]
+        try:
+            cmeta = frappe.get_meta(df.options)
+        except Exception:
+            continue
+        cfields = [cf.fieldname for cf in cmeta.fields
+                   if cf.fieldtype not in colskip and cf.fieldname and (cf.permlevel or 0) == 0]
         rows = []
         for row in (doc.get(df.fieldname) or []):
             rd = {"idx": row.idx}
