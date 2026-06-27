@@ -237,7 +237,7 @@ function updateUndoUI(){const u=document.getElementById("undoBtn"),r=document.ge
 function applyHistory(){restoring=true;const s=JSON.parse(history[hpos]);state.blocks=s.blocks.map(function(b){return Object.assign({id:"b"+(idc++)},b);});state.branding=s.branding;state.header=s.header;state.footer=s.footer;state.watermark=s.watermark||state.watermark;state.target=s.target;selId=null;render();renderProps();renderBrand();restoring=false;updateUndoUI();}
 function undo(){if(hpos<=0)return;hpos--;applyHistory();}
 function redo(){if(hpos>=history.length-1)return;hpos++;applyHistory();}
-function duplicate(id){id=id||selId;const b=blockById(id);if(!b)return;const nb=JSON.parse(JSON.stringify(b));nb.id="b"+(idc++);if(nb.pos){nb.pos=Object.assign({},nb.pos);if(nb.float||regionOf(nb)!=="body"){nb.pos.x=(nb.pos.x||0)+4;nb.pos.y=(nb.pos.y||0)+4;}else{nb.pos.y=(nb.pos.y||0)+0.1;}}const i=state.blocks.findIndex(x=>x.id===id);state.blocks.splice(i+1,0,nb);selId=nb.id;render();renderProps();}
+function duplicate(id){id=id||selId;const b=blockById(id);if(!b)return;const nb=JSON.parse(JSON.stringify(b));nb.id="b"+(idc++);if(nb.type==="row"&&nb.settings&&nb.settings.cells){nb.settings.cells.forEach(function(cell){(cell||[]).forEach(function(c){c.id="b"+(idc++);});});}if(nb.pos){nb.pos=Object.assign({},nb.pos);if(nb.float||regionOf(nb)!=="body"){nb.pos.x=(nb.pos.x||0)+4;nb.pos.y=(nb.pos.y||0)+4;}else{nb.pos.y=(nb.pos.y||0)+0.1;}}const i=state.blocks.findIndex(x=>x.id===id);state.blocks.splice(i+1,0,nb);selId=nb.id;render();renderProps();}
 
 /* ---- autosave: keep a local draft so unsaved work survives a closed tab ---- */
 let userTouched=false, _asT=null;
