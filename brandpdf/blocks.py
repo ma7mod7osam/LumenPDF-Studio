@@ -650,6 +650,37 @@ def _e_pagenum(doc, b, s, ctx):
     return _esc(fmt).replace("{p}", str(ctx.get("page", 1))).replace("{n}", str(ctx.get("total", 1)))
 
 
+def _render_child(doc, b, c, ctx):
+    """Render one block nested inside a Row column."""
+    if not isinstance(c, dict):
+        return ""
+    fn = DEF_RENDERERS.get(c.get("type"))
+    if not fn:
+        return ""
+    inner = fn(doc, b, c.get("settings") or {}, ctx)
+    wrap = _style_css(c.get("style") or {}, c.get("type"))
+    return f'<div style="margin-bottom:2mm;{wrap}">{inner}</div>'
+
+
+def _d_row(doc, b, s, ctx):
+    """A row split into 2-3 columns; each column flows its own nested blocks (side-by-side layout)."""
+    cols = max(1, min(3, int(_num(s.get("cols"), 2) or 2)))
+    gap = _num(s.get("gap"), 6) or 0
+    widths = s.get("widths") or []
+    cells = s.get("cells") or []
+    half = _fmt_num(gap / 2.0)
+    tds = []
+    for i in range(cols):
+        w = widths[i] if i < len(widths) else None
+        wcss = f"width:{_fmt_num(w)}mm;" if w else ""
+        children = cells[i] if i < len(cells) and isinstance(cells[i], list) else []
+        inner = "".join(_render_child(doc, b, c, ctx) for c in children)
+        lp = "0" if i == 0 else half
+        rp = "0" if i == cols - 1 else half
+        tds.append(f'<td style="vertical-align:top;{wcss}padding:0 {rp}mm 0 {lp}mm;">{inner}</td>')
+    return f'<table style="width:100%;border-collapse:collapse;table-layout:fixed;"><tr>{"".join(tds)}</tr></table>'
+
+
 DEF_RENDERERS = {
     "header_banner": _d_header_banner,
     "footer_banner": _d_footer_banner,
@@ -657,6 +688,7 @@ DEF_RENDERERS = {
     "customer": _d_customer,
     "items": _d_items,
     "datatable": _d_datatable,
+    "row": _d_row,
     "totals": _d_totals,
     "payment_schedule": _d_payment_schedule,
     "terms": _d_terms,
