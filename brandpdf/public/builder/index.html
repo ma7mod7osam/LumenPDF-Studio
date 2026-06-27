@@ -506,7 +506,24 @@ function renderPage(){const mk=(name,key,z)=>`<div class="styhead">${name}</div>
   const wm=`<div class="styhead" style="margin-top:16px">Watermark</div><div class="fld"><label>Text (blank = none)</label><input type="text" value="${esc(w.text||'')}" placeholder="e.g. DRAFT / PAID" oninput="setWM('text',this.value)"></div><div class="row2"><div class="fld"><label>Opacity %</label><input type="text" value="${w.opacity}" oninput="setWM('opacity',this.value)"></div><div class="fld"><label>Size (pt)</label><input type="text" value="${w.size}" oninput="setWM('size',this.value)"></div></div><div class="fld"><label>Color</label><div class="color"><input type="color" value="${w.color||'#1A1E2A'}" oninput="setWM('color',this.value)"><input type="text" value="${esc(w.color||'#1A1E2A')}" oninput="setWM('color',this.value)"></div></div>`;
   document.getElementById("propsPage").innerHTML=`<div class="ptitle">Page header &amp; footer</div>`+mk("Header","header",state.header)+`<div style="height:12px"></div>`+mk("Footer","footer",state.footer)+`<div class="hint" style="padding:12px 0 0">Drop a logo, text, or a <b>Page No</b> element into the shaded band on the page. With “Repeat on every page” on, they print on every page (with real page numbers) after you deploy.</div>`+wm+`<div class="hint" style="padding:8px 0 0">A watermark prints behind the content on every page.</div>`;}
 function setWM(k,v){if(!state.watermark)state.watermark={text:"",color:"#1A1E2A",opacity:8,size:60};if(k==="opacity"||k==="size"){const n=parseFloat(v);if(!isNaN(n))state.watermark[k]=n;}else state.watermark[k]=v;render();}
-function setB(k,v){state.branding[k]=v;render();}
+function setB(k,v){state.branding[k]=v;if(k==="header_image"||k==="footer_image")syncBanner(k,v);render();}
+// Attaching a banner image in Branding should immediately show it: ensure a banner block exists
+// (so it renders on the page AND in the PDF) and size the band to the image's full-width aspect.
+function syncBanner(k,v){
+  const isH=(k==="header_image"),type=isH?"header_banner":"footer_banner",region=isH?"header":"footer";
+  state.blocks=state.blocks.filter(bl=>bl.type!==type);
+  if(v){
+    if(isH)state.header.enabled=true;else state.footer.enabled=true;
+    const Fh=state.footer.height||32;
+    const nb=mk(type,isH?{x:0,y:0,w:210,h:null}:{x:0,y:Math.max(0,297-Fh),w:210,h:null});nb.region=region;
+    state.blocks.push(nb);
+    autoSizeBand(isH,v);
+  }
+}
+function autoSizeBand(isH,url){
+  try{const img=new Image();img.onload=function(){if(!img.naturalWidth)return;let mm=210*(img.naturalHeight/img.naturalWidth);mm=Math.max(8,Math.min(140,Math.round(mm*10)/10));if(isH){state.header.height=mm;}else{state.footer.height=mm;const fb=state.blocks.find(bl=>bl.type==="footer_banner");if(fb)fb.pos={x:0,y:Math.max(0,297-mm),w:210,h:null};}render();renderBrand();if(typeof renderPage==="function")renderPage();};img.src=url;}catch(e){}
+}
+function ensureBanners(){["header_image","footer_image"].forEach(function(k){const isH=(k==="header_image"),type=isH?"header_banner":"footer_banner",region=isH?"header":"footer";if(state.branding[k]&&!state.blocks.some(function(bl){return bl.type===type;})){if(isH)state.header.enabled=true;else state.footer.enabled=true;const Fh=state.footer.height||32;const nb=mk(type,isH?{x:0,y:0,w:210,h:null}:{x:0,y:Math.max(0,297-Fh),w:210,h:null});nb.region=region;state.blocks.push(nb);}});}
 function imgAttach(lbl,key,val,setter){const after=(setter==="setB")?"renderBrand":"renderProps";
   return `<div class="fld"><label>${lbl}</label><div style="display:flex;gap:6px"><button class="btn ghost" style="flex:1" onclick="uploadImage(function(u){${setter}('${key}',u);${after}();})">⬆ Attach image</button>${val?`<button class="btn ghost" title="Remove" onclick="${setter}('${key}','');${after}()">✕</button>`:''}</div><div class="hint" style="padding:4px 0 0;word-break:break-all">${val?esc(val):'No image — or build the band from blocks.'}</div></div>`;}
 function renderBrand(){const b=state.branding;document.getElementById("propsBrand").innerHTML=`<div class="ptitle">Branding</div><div class="fld"><label>Primary color</label><div class="color"><input type="color" value="${b.primary}" oninput="setB('primary',this.value)"><input type="text" value="${esc(b.primary)}" oninput="setB('primary',this.value)"></div></div><div class="fld"><label>Secondary / navy</label><div class="color"><input type="color" value="${b.navy}" oninput="setB('navy',this.value)"><input type="text" value="${esc(b.navy)}" oninput="setB('navy',this.value)"></div></div><div class="fld"><label>Font</label><select onchange="setB('font',this.value)">`+["Montserrat","Cairo","Arial","Tahoma"].map(f=>`<option ${b.font===f?'selected':''}>${f}</option>`).join("")+`</select></div><div class="styhead" style="margin-top:14px">Banner images (optional)</div>`+imgAttach("Header banner","header_image",b.header_image,"setB")+imgAttach("Footer banner","footer_image",b.footer_image,"setB")+`<div class="hint" style="padding:6px 0 0">Optional full-width banners. You can also leave these empty and build the header/footer from blocks (logo image + text).</div>`;}
@@ -528,7 +545,7 @@ function loadDefinition(def){try{userTouched=false;if(def.branding)state.brandin
   if(def.header)state.header=Object.assign({enabled:true,height:30,repeat:true},def.header);if(def.footer)state.footer=Object.assign({enabled:true,height:32,repeat:true},def.footer);if(def.watermark)state.watermark=Object.assign({text:"",color:"#1A1E2A",opacity:8,size:60},def.watermark);
   if(Array.isArray(def.blocks))state.blocks=def.blocks.map(function(b,i){const pos=b.pos||{x:14,y:8+i*16,w:180,h:null};return{id:"b"+(idc++),type:b.type,settings:b.settings||(DSET[b.type]?DSET[b.type]():{}),style:Object.assign(base(),dstyle(b.type),b.style||{}),pos:pos,float:b.float||false,region:b.region||_regionByY(pos),cond:b.cond||null};});
   if(def.target_doctype){state.target=def.target_doctype;const ds=document.getElementById("doctypeSel");if(ds)ds.value=def.target_doctype;loadDoctypeMeta(state.target);}
-  if(def.name)document.getElementById("fmtName").value=def.name;selId=null;render();renderProps();renderBrand();}catch(e){console.error("BrandPDF load failed",e);}}
+  if(def.name)document.getElementById("fmtName").value=def.name;ensureBanners();selId=null;render();renderProps();renderBrand();}catch(e){console.error("BrandPDF load failed",e);}}
 /* ---- embedded RPC bridge to the desk page ---- */
 let _rpcId=0; const _rpcCbs={};
 function rpc(method,args){return new Promise(function(res){if(!EMBED){res(null);return;}const id="r"+(_rpcId++);_rpcCbs[id]=res;window.parent.postMessage({type:"brandpdf-rpc",reqId:id,method:method,args:args||{}},window.location.origin);setTimeout(function(){if(_rpcCbs[id]){delete _rpcCbs[id];res(null);}},15000);});}
