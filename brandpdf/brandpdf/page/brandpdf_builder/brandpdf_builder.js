@@ -17,7 +17,7 @@ function _bpdfPreviewPoll(job, tries) {
 frappe.pages['brandpdf-builder'].on_page_load = function (wrapper) {
 	var page = frappe.ui.make_app_page({
 		parent: wrapper,
-		title: 'BrandPDF Builder',
+		title: 'Lumen PDF Studio',
 		single_column: true,
 	});
 	var origin = window.location.origin;
@@ -25,7 +25,7 @@ frappe.pages['brandpdf-builder'].on_page_load = function (wrapper) {
 	var iframe = document.createElement('iframe');
 	iframe.src = '/assets/brandpdf/builder/index.html';
 	iframe.style.cssText =
-		'width:100%;height:calc(100vh - 110px);border:0;background:#0f1420;border-radius:8px';
+		'width:100%;height:calc(100vh - 110px);border:0;background:#F4F6FA;border-radius:8px';
 	page.main.append(iframe);
 
 	// Push the active design + the doctype's full field list into the builder once it loads.

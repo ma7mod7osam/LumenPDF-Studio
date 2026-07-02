@@ -33,7 +33,7 @@ def base_css(b):
     navy = b.get("navy", "#1A1E2A")
     font = b.get("font") or "Montserrat"
     return f"""<style>
-  @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Montserrat:wght@300;400;500;600;700;800&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Montserrat:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
   @page {{ size: A4; margin: 0; }}
   html, body {{ margin:0 !important; padding:0 !important; }}
   img {{ max-width:100%; }}
@@ -270,7 +270,7 @@ _ALIGN = {"left", "center", "right", "justify"}
 _BORDER_STYLE = {"solid", "dashed", "dotted", "double", "none"}
 _WEIGHT = {"400", "500", "600", "700", "800", "normal", "bold"}
 _WIDTH = re.compile(r"^\d+(\.\d+)?(mm|%|px|cm)$")
-_FONTS = {"Montserrat", "Cairo", "Arial", "Tahoma"}  # allow-list (font is injected into <style>)
+_FONTS = {"Montserrat", "Cairo", "Arial", "Tahoma", "Plus Jakarta Sans"}  # allow-list (font is injected into <style>)
 
 
 def _esc(s):
