@@ -140,7 +140,7 @@
 <body>
 <div class="app">
   <div class="top">
-    <div class="brand"><svg width="22" height="22" viewBox="0 0 48 48" fill="none" aria-label="Lumen"><rect x="6" y="6" width="7.5" height="38" rx="3.75" fill="#1463FF"/><rect x="18" y="25" width="4.5" height="19" rx="2.25" fill="#7FA8FF"/><rect x="27" y="25" width="7.5" height="19" rx="3.75" fill="#1463FF"/><rect x="39" y="25" width="4.5" height="19" rx="2.25" fill="#1463FF"/></svg> Lumen <small>PDF Studio · b13</small></div>
+    <div class="brand"><svg width="22" height="22" viewBox="0 0 48 48" fill="none" aria-label="Lumen"><rect x="6" y="6" width="7.5" height="38" rx="3.75" fill="#1463FF"/><rect x="18" y="25" width="4.5" height="19" rx="2.25" fill="#7FA8FF"/><rect x="27" y="25" width="7.5" height="19" rx="3.75" fill="#1463FF"/><rect x="39" y="25" width="4.5" height="19" rx="2.25" fill="#1463FF"/></svg> Lumen <small>PDF Studio · b14</small></div>
     <input class="fmt-name" id="fmtName" value="Quotation - Custom" title="Format name">
     <select class="sel" id="doctypeSel" title="Target DocType" onchange="onDoctype(this.value)"></select>
     <select class="sel" id="openSel" title="Open an existing format" onchange="openFormat(this.value)"><option value="">Open…</option></select>
@@ -604,6 +604,11 @@ function setRowCols(n){const b=cur();if(!b)return;n=Math.max(1,Math.min(4,+n));c
 function setRowGap(v){const b=cur();if(!b)return;const n=parseFloat(v);b.settings.gap=isNaN(n)?6:n;render();}
 function setRowWidth(i,v){const b=cur();if(!b)return;if(!b.settings.widths)b.settings.widths=[];const n=parseFloat(v);b.settings.widths[i]=(v===""||isNaN(n))?null:n;render();}
 function addRowChild(rowId,i,t){if(!t)return;const b=blockById(rowId);if(!b)return;if(!b.settings.cells)b.settings.cells=[];while(b.settings.cells.length<=i)b.settings.cells.push([]);b.settings.cells[i].push(childMk(t));render();renderProps();}
+function wrapInRow(id){const b=blockById(id);if(!b||isNested(b)||b.float||b.type==="row"||ROWCHILDTYPES.indexOf(b.type)<0)return;
+  const row=mk("row",{x:14,y:(b.pos&&b.pos.y)||60,w:182,h:null});row.region="body";
+  row.settings.cells[0].push({id:b.id,type:b.type,settings:b.settings,style:b.style});
+  const i=state.blocks.findIndex(x=>x.id===id);state.blocks.splice(i,1,row);
+  selId=row.id;render();renderProps();}
 function setStyle(k,v){const b=cur();if(!b)return;const p=k.split(".");let o=b.style;for(let i=0;i<p.length-1;i++)o=o[p[i]];o[p[p.length-1]]=v;render();}
 function setPos(k,v){const b=cur();if(!b)return;if(v===""){if(k==="h")b.pos.h=null;else return;}else{const n=parseFloat(v);if(isNaN(n))return;b.pos[k]=n;}render();}
 function setAutoH(on){const b=cur();if(!b)return;if(on)b.pos.h=null;else{renderNowSync();const el=document.querySelector('.blk[data-id="'+b.id+'"]');b.pos.h=el?Math.round(el.offsetHeight/PXMM):20;}render();renderProps();}
@@ -674,9 +679,11 @@ function regionControl(b,reg){
     let h=`<div class="stygrp"><div class="styhead">Placement</div>`;
     h+=`<label class="chk"><input type="checkbox" ${b.float?'checked':''} onchange="setFloat('${b.id}',this.checked)"> Free position (place anywhere in body)</label>`;
     if(b.float)h+=`<div class="fld" style="margin-top:6px"><label>Quick columns (side by side)</label><div class="seg"><button onclick="colPreset('${b.id}','left')">Left ½</button><button onclick="colPreset('${b.id}','right')">Right ½</button><button onclick="colPreset('${b.id}','full')">Full</button></div></div>`;
+    if(!b.float&&b.type!=="row"&&ROWCHILDTYPES.indexOf(b.type)>=0)
+      h+=`<button class="btn ghost" style="width:100%;margin-top:8px" onclick="wrapInRow('${b.id}')" title="Wrap this block in a 2-column row — then add blocks beside it">⫴ Put this block in columns</button>`;
     h+= b.float
       ? `<div class="hint" style="padding:4px 0 0">Floating — drag it freely, snap to guides, or use the presets above (e.g. Customer = Left ½, your company = Right ½).</div>`
-      : `<div class="hint" style="padding:4px 0 0">Flows top-to-bottom — use ↑ ↓ to reorder. Turn on <b>Free position</b> to place two blocks side by side.</div>`;
+      : `<div class="hint" style="padding:4px 0 0">Flows top-to-bottom — use ↑ ↓ to reorder. Drag onto the page to reorder, or use <b>columns</b> to put blocks side by side.</div>`;
     return h+`</div>`;
   }
   return `<div class="stygrp"><div class="styhead">Placement</div><div class="hint" style="padding:4px 0 0">In the <b>${reg}</b> band — repeats on every page. Drag to position; height is on the <b>Page</b> tab.</div></div>`;
