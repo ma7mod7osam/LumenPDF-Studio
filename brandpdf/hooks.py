@@ -13,10 +13,20 @@ app_license = "MIT"
 app_include_js = "/assets/brandpdf/js/brandpdf_button.js"
 
 # Standard BrandPDF templates are read-only (duplicate to edit).
+# '*'.on_submit: auto-attach the branded PDF when the mapping's toggle is on (cheap no-op otherwise).
 doc_events = {
     "BrandPDF Template": {
         "validate": "brandpdf.resolver.protect_standard_template",
     },
+    "*": {
+        "on_submit": "brandpdf.overrides.auto_attach_on_submit",
+    },
+}
+
+# Replace ERPNext's native Print > PDF with the branded PDF for doctypes whose BrandPDF Mapping
+# has 'Replace Print > PDF' enabled; everything else falls through to the native renderer.
+override_whitelisted_methods = {
+    "frappe.utils.print_format.download_pdf": "brandpdf.overrides.download_pdf",
 }
 
 # Scheduler: clean up expired private render files.
