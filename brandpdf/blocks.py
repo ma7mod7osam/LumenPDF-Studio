@@ -55,6 +55,7 @@ def base_css(b):
   table.bs-items thead th {{ background-color:{primary} !important; color:#fff !important; font-weight:600; font-size:7.5pt; padding:6px 8px; text-align:left; -webkit-print-color-adjust:exact; print-color-adjust:exact; }}
   table.bs-items thead th.num {{ text-align:right; }}
   table.bs-items tbody td {{ padding:6px 8px; border-bottom:1px solid #cfe5f6; vertical-align:top; font-weight:normal; }}
+  table.bs-items tbody tr {{ page-break-inside:avoid; }}
   table.bs-items td.num {{ text-align:right; white-space:nowrap; }}
   table.bs-items tbody tr {{ break-inside:avoid; }}
   table.bs-items tbody tr:nth-child(even) td {{ background-color:#eef6fc !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }}

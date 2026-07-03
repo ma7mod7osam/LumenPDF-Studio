@@ -25,16 +25,25 @@ class FrappeChromeRenderer(BaseRenderer):
         if "pdf_generator" in params:
             call["pdf_generator"] = "chrome"
 
-        # frappe/wkhtmltopdf-style options. Harmless for chrome; aims for A4 + zero margins so
-        # our @page{margin:0} + full-bleed banners are honored.
+        # Page margins MUST travel as explicit options: wkhtmltopdf ignores @page CSS margins,
+        # and Chrome's CDP applies param margins when the CSS gives none. compose passes the
+        # band clearance in options['margin']; everything else renders full-bleed (0).
+        # (Engines never stack the two: Chromium lets @page CSS win, wkhtmltopdf only sees these.)
+        m = (options or {}).get("margin") or {}
+
+        def _mm(v):
+            v = str(v or "0mm")
+            return v if v.endswith(("mm", "cm", "in", "px")) else f"{v}mm"
+
         if "options" in params:
             call["options"] = {
-                "page-size": "A4",
-                "margin-top": "0mm",
-                "margin-bottom": "0mm",
-                "margin-left": "0mm",
-                "margin-right": "0mm",
+                "page-size": (options or {}).get("format") or "A4",
+                "margin-top": _mm(m.get("top")),
+                "margin-bottom": _mm(m.get("bottom")),
+                "margin-left": _mm(m.get("left")),
+                "margin-right": _mm(m.get("right")),
                 "print-media-type": True,
+                "disable-smart-shrinking": "",  # wkhtmltopdf: keep 1mm = 1mm (no auto-rescaling)
             }
 
         pdf = get_pdf(html, **call)

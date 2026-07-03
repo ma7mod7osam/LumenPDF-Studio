@@ -62,10 +62,21 @@ def _resolve(doc, template):
     return (kind, value, definition)
 
 
-def _finish(html, allowed, renderer):
+def _finish(html, allowed, renderer, margins=None):
+    """margins={'top': mm, 'bottom': mm} passes the band clearance as EXPLICIT page margins.
+    The @page CSS alone is not enough: wkhtmltopdf ignores @page margins entirely, and Chrome's
+    CDP printToPDF applies param margins when CSS gives none — so the body must carry its
+    clearance in the renderer options too (engines never stack the two)."""
     html = assets.inline_images(html, allowed=allowed)
     html = assets.neutralize_remote(html)
-    return renderer.render(html, default_options())
+    options = default_options()
+    if margins:
+        options["margin"] = {
+            "top": f"{B._fmt_num(margins.get('top', 0))}mm",
+            "bottom": f"{B._fmt_num(margins.get('bottom', 0))}mm",
+            "left": "0mm", "right": "0mm",
+        }
+    return renderer.render(html, options)
 
 
 def _derive_region(bl, hh, fh):
@@ -133,7 +144,7 @@ def _compose(doc, definition, renderer):
     # 1) Body in flow (+ floating elements), may span multiple pages, kept clear of the bands.
     body_pdf = _finish(
         B._flow_body_html(doc, branding, flow_body, {"terms_html": terms_html}, top_mm=hh + hm, bottom_mm=fh + fm, floats=float_body),
-        allowed, renderer,
+        allowed, renderer, margins={"top": hh + hm, "bottom": fh + fm},
     )
     reader = PdfReader(io.BytesIO(body_pdf))
     n = len(reader.pages) or 1
