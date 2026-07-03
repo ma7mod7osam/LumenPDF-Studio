@@ -140,7 +140,7 @@
 <body>
 <div class="app">
   <div class="top">
-    <div class="brand"><svg width="22" height="22" viewBox="0 0 48 48" fill="none" aria-label="Lumen"><rect x="6" y="6" width="7.5" height="38" rx="3.75" fill="#1463FF"/><rect x="18" y="25" width="4.5" height="19" rx="2.25" fill="#7FA8FF"/><rect x="27" y="25" width="7.5" height="19" rx="3.75" fill="#1463FF"/><rect x="39" y="25" width="4.5" height="19" rx="2.25" fill="#1463FF"/></svg> Lumen <small>PDF Studio · b14</small></div>
+    <div class="brand"><svg width="22" height="22" viewBox="0 0 48 48" fill="none" aria-label="Lumen"><rect x="6" y="6" width="7.5" height="38" rx="3.75" fill="#1463FF"/><rect x="18" y="25" width="4.5" height="19" rx="2.25" fill="#7FA8FF"/><rect x="27" y="25" width="7.5" height="19" rx="3.75" fill="#1463FF"/><rect x="39" y="25" width="4.5" height="19" rx="2.25" fill="#1463FF"/></svg> Lumen <small>PDF Studio · b15</small></div>
     <input class="fmt-name" id="fmtName" value="Quotation - Custom" title="Format name">
     <select class="sel" id="doctypeSel" title="Target DocType" onchange="onDoctype(this.value)"></select>
     <select class="sel" id="openSel" title="Open an existing format" onchange="openFormat(this.value)"><option value="">Open…</option></select>
@@ -368,6 +368,10 @@ function _renderNow(){
   // when they overlap flowing content — otherwise the flow layer swallows the click and you can't reselect a float.
   p1+=`<div style="position:absolute;left:0;top:${bodyTop}mm;width:210mm;padding:4mm 14mm 0;z-index:2;opacity:${ba?1:0.4};pointer-events:${ba?'auto':'none'}">`+body.map(bl=>flowBlk(bl,b)).join("")+`</div>`;
   if(floats.length)p1+=`<div style="position:absolute;left:0;top:0;width:210mm;height:297mm;z-index:3;clip-path:inset(${bodyTop}mm 0 ${(Fh+fm)}mm 0);opacity:${ba?1:0.4};pointer-events:none">`+floats.map(bl=>absBlk(bl,b,!ba)).join("")+`</div>`;
+  // margin masks: body text must stop hm below the header and fm above the footer, exactly like
+  // the PDF's @page margins — never bleed up to (or under) a band edge.
+  if(hm)p1+=`<div style="position:absolute;left:0;top:${Hh}mm;width:210mm;height:${hm}mm;background:#fff;z-index:3;pointer-events:none"></div>`;
+  if(fm)p1+=`<div style="position:absolute;left:0;top:${(297-Fh-fm).toFixed(2)}mm;width:210mm;height:${fm}mm;background:#fff;z-index:3;pointer-events:none"></div>`;
   p1+=headerBand(true)+footerBand(true);
   if(Hh)p1+=`<div class="bandgrip" data-band="header" title="Drag to resize the header height" style="top:${Hh}mm">⇕ Header ${Math.round(Hh)}mm</div>`;
   if(Fh)p1+=`<div class="bandgrip" data-band="footer" title="Drag to resize the footer height" style="top:${cut(Fh)}mm">⇕ Footer ${Math.round(Fh)}mm</div>`;

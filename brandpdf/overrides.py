@@ -31,7 +31,13 @@ def _mapping(doctype, flag):
         )
         return rows[0]["template"] if rows else None
     except Exception:
-        return None  # mapping table missing a column (old install) etc. -> behave as unmapped
+        # Fail safe to 'unmapped' (native PDF keeps working) but leave a trace — a silent
+        # swallow here would make branded PDFs vanish with nothing to diagnose.
+        try:
+            frappe.log_error(message=frappe.get_traceback(), title="BrandPDF mapping lookup failed")
+        except Exception:
+            pass
+        return None
 
 
 @frappe.whitelist()
@@ -39,24 +45,34 @@ def download_pdf(doctype, name, format=None, doc=None, *args, **kwargs):
     """Drop-in override of frappe.utils.print_format.download_pdf (same signature, tolerant tail)."""
     template = _mapping(doctype, "replace_print_pdf")
     if template:
-        try:
-            d = frappe.get_doc(doctype, name)
-            d.check_permission("read")
-            if not frappe.has_permission(doctype, "print", doc=d):
-                raise frappe.PermissionError
-            d.apply_fieldlevel_read_permissions()
-            from brandpdf.compose import compose_pdf
-            pdf = compose_pdf(d, template=template)
-            if pdf:
-                safe = re.sub(r"[^\w\-.]", "-", str(name))
-                frappe.local.response.filename = f"{safe}.pdf"
-                frappe.local.response.filecontent = pdf
-                frappe.local.response.type = "pdf"
-                return
-        except frappe.PermissionError:
-            raise  # never fall back around a permission denial
-        except Exception:
-            frappe.log_error(message=frappe.get_traceback(), title="BrandPDF replace_print_pdf fell back")
+        # Same Redis NX lock as the background jobs: at most ONE Chromium render at a time.
+        # If the renderer is busy, we don't queue the web request — we fall back to the native
+        # PDF instead, so the endpoint can't be used to stack up concurrent Chromiums (DoS).
+        from brandpdf.pdf_job import _acquire, _release
+        lock = "brandpdf_render_lock_" + (getattr(frappe.local, "site", None) or "site")
+        if _acquire(lock, "sync-print"):
+            try:
+                d = frappe.get_doc(doctype, name)
+                d.check_permission("read")
+                if not frappe.has_permission(doctype, "print", doc=d):
+                    raise frappe.PermissionError
+                d.apply_fieldlevel_read_permissions()
+                from brandpdf.compose import compose_pdf
+                pdf = compose_pdf(d, template=template)
+                if pdf:
+                    safe = re.sub(r"[^\w\-.]", "-", str(name))
+                    # Frappe v15 file-response pattern: the framework reads these three
+                    # frappe.local.response fields after the handler returns.
+                    frappe.local.response.filename = f"{safe}.pdf"
+                    frappe.local.response.filecontent = pdf
+                    frappe.local.response.type = "pdf"
+                    return
+            except frappe.PermissionError:
+                raise  # never fall back around a permission denial
+            except Exception:
+                frappe.log_error(message=frappe.get_traceback(), title="BrandPDF replace_print_pdf fell back")
+            finally:
+                _release(lock)
     from frappe.utils.print_format import download_pdf as native
     return native(doctype, name, format, doc, *args, **kwargs)
 
@@ -82,7 +98,7 @@ def _attach_pdf(doctype, docname, template=None):
         from brandpdf.compose import compose_pdf
         pdf = compose_pdf(doc, template=template)
         if not pdf:
-            return
+            return  # compose already logged; a background attach has no fallback — just skip
         # NOTE: name must NOT end in '-brandpdf.pdf' — cleanup_expired_files purges that pattern.
         f = frappe.get_doc({
             "doctype": "File", "file_name": f"{docname}-branded.pdf", "is_private": 1,
