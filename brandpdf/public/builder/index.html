@@ -403,10 +403,11 @@ function clearGuides(){const g=document.getElementById('guides');if(g)g.innerHTM
 let colDrag=null;
 document.getElementById("paper").addEventListener("mousedown",function(e){
   const cd=e.target.closest(".coldiv");
-  if(cd){e.preventDefault();e.stopPropagation();const row=blockById(cd.dataset.rowid);if(!row)return;
+  if(cd){e.preventDefault();e.stopPropagation();if(drag||reorderDrag||reorderArm||bandDrag)return;const row=blockById(cd.dataset.rowid);if(!row)return;
     const idx=+cd.dataset.div;const cellEl=document.querySelector('.rowcell[data-rowid="'+cd.dataset.rowid+'"][data-cell="'+idx+'"]');
     const w0=cellEl?cellEl.getBoundingClientRect().width/(scale*PXMM):40;
     cd.classList.add('on');colDrag={rowid:cd.dataset.rowid,idx:idx,sx:e.clientX,w0:w0};return;}
+  if(colDrag)return;  // never arm a block drag while a divider drag is live (mutual exclusion)
   const blk=e.target.closest(".blk");if(!blk)return;
   if(e.target.closest(".tools"))return;
   if(e.target.isContentEditable){if(blk.dataset.id!==selId)select(blk.dataset.id);return;}
@@ -465,7 +466,7 @@ document.addEventListener("mousemove",function(e){
   row.settings.widths[colDrag.idx]=Math.round(w*10)/10;
   render();
 });
-document.addEventListener("mouseup",function(){if(colDrag){const r=blockById(colDrag.rowid);colDrag=null;if(r&&r.id===selId)renderProps();}});
+document.addEventListener("mouseup",function(){if(colDrag){const r=blockById(colDrag.rowid);colDrag=null;render();if(r&&r.id===selId)renderProps();}});  // render() clears the divider's 'on' highlight even when the row isn't selected
 /* drag-to-reorder flow blocks + drop into Row columns (page-builder style) */
 function _flowEls(ex){return [...document.querySelectorAll('.blk.flow')].filter(el=>el.dataset.id!==ex&&!el.closest('[data-cell]'));}
 function _insLine(){let l=document.getElementById('insline');if(!l){l=document.createElement('div');l.id='insline';document.body.appendChild(l);}return l;}

@@ -599,7 +599,7 @@ def _d_totals(doc, b, s, ctx):
     )
     return (
         '<table style="width:100%;border-collapse:collapse;"><tr><td style="border:0;"></td>'
-        '<td style="border:0;width:82mm;"><table class="bs-tot">' + "".join(lines) + grand + "</table></td></tr></table>"
+        '<td style="border:0;width:min(82mm,100%);"><table class="bs-tot" style="width:100%;">' + "".join(lines) + grand + "</table></td></tr></table>"
     )
 
 
