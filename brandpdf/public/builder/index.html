@@ -53,6 +53,10 @@
   .pblock:hover{border-color:var(--accent);transform:translateY(-1px);background:var(--panel)}
   .pblock svg{width:19px;height:19px;stroke:#9db4e6;fill:none;stroke-width:1.7;margin-bottom:4px}
   .pblock span{display:block;font-size:10.5px;color:var(--mut);font-weight:600}
+  .psec{background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:8px 10px;margin-bottom:7px;cursor:pointer;transition:.12s;user-select:none}
+  .psec:hover{border-color:var(--accent);background:var(--panel);transform:translateY(-1px)}
+  .psec b{display:block;font-size:11px;color:var(--ink)}
+  .psec span{display:block;font-size:9.5px;color:var(--mut);line-height:1.35;margin-top:2px}
   .hint{padding:8px 16px 16px;color:var(--mut2);font-size:11px;line-height:1.5}
   .stage{background:radial-gradient(circle at 1px 1px,#DCE2EC 1px,transparent 0) 0 0/22px 22px,var(--bg);overflow:auto;position:relative;padding:34px 30px 120px;min-width:0}
   .paperwrap{margin:0 auto;width:max-content;transform-origin:top center}
@@ -132,7 +136,7 @@
   .gcards{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:16px}
   .gcard{background:var(--panel2);border:1px solid var(--line2);border-radius:10px;padding:12px;cursor:pointer;transition:.12s}
   .gcard:hover{border-color:var(--accent);transform:translateY(-2px)}
-  .gswatch{height:48px;border-radius:6px;margin-bottom:10px;background:#fff;border:1px solid var(--line2);overflow:hidden;display:flex;flex-direction:column}
+  .gswatch{height:64px;border-radius:6px;margin-bottom:10px;background:#fff;border:1px solid var(--line2);overflow:hidden;display:flex;flex-direction:column}
   .gcard .gt{font-weight:700;margin-bottom:4px;font-size:13px}
   .gcard .gd{font-size:11px;color:var(--mut);line-height:1.5}
 </style>
@@ -140,7 +144,7 @@
 <body>
 <div class="app">
   <div class="top">
-    <div class="brand"><svg width="22" height="22" viewBox="0 0 48 48" fill="none" aria-label="Lumen"><rect x="6" y="6" width="7.5" height="38" rx="3.75" fill="#1463FF"/><rect x="18" y="25" width="4.5" height="19" rx="2.25" fill="#7FA8FF"/><rect x="27" y="25" width="7.5" height="19" rx="3.75" fill="#1463FF"/><rect x="39" y="25" width="4.5" height="19" rx="2.25" fill="#1463FF"/></svg> Lumen <small>PDF Studio · b15</small></div>
+    <div class="brand"><svg width="22" height="22" viewBox="0 0 48 48" fill="none" aria-label="Lumen"><rect x="6" y="6" width="7.5" height="38" rx="3.75" fill="#1463FF"/><rect x="18" y="25" width="4.5" height="19" rx="2.25" fill="#7FA8FF"/><rect x="27" y="25" width="7.5" height="19" rx="3.75" fill="#1463FF"/><rect x="39" y="25" width="4.5" height="19" rx="2.25" fill="#1463FF"/></svg> Lumen <small>PDF Studio · b16</small></div>
     <input class="fmt-name" id="fmtName" value="Quotation - Custom" title="Format name">
     <select class="sel" id="doctypeSel" title="Target DocType" onchange="onDoctype(this.value)"></select>
     <select class="sel" id="openSel" title="Open an existing format" onchange="openFormat(this.value)"><option value="">Open…</option></select>
@@ -269,32 +273,121 @@ function restoreDraft(){try{const d=localStorage.getItem("brandpdf_draft");if(d)
 function clearDraft(){try{localStorage.removeItem("brandpdf_draft");}catch(e){}const r=document.getElementById("restoreBtn");if(r)r.style.display="none";}
 
 /* ---- starter template gallery ---- */
-function starterDef(o){
-  const blocks=[];
-  if(o.banner){blocks.push({type:"header_banner",region:"header",pos:{x:0,y:1,w:210,h:null}});}
-  else{blocks.push({type:"heading",region:"header",settings:{text:o.headerText||"YOUR COMPANY",level:"h2"},style:{size:14,weight:"800",color:o.primary},pos:{x:14,y:7,w:120,h:null}});
-       blocks.push({type:"field",region:"header",settings:{field:"company",prefix:""},style:{size:8,align:"right",color:o.navy},pos:{x:140,y:9,w:56,h:null}});}
-  blocks.push({type:"title",region:"body",settings:{text:"QUOTATION",showArabic:false,arabic:"عرض سعر",meta:{name:true,date:true,valid_till:true},align:"split"},pos:{x:14,y:38,w:182,h:null}});
-  blocks.push({type:"customer",region:"body",settings:{heading:"Quotation To"},pos:{x:14,y:62,w:120,h:null}});
-  blocks.push({type:"items",region:"body",settings:{cols:{desc:true,qty:true,rate:true,amount:true},zebra:o.zebra,headerColor:o.headerColor},pos:{x:14,y:90,w:182,h:null}});
-  blocks.push({type:"totals",region:"body",settings:{grandColor:o.headerColor},pos:{x:14,y:175,w:182,h:null}});
-  blocks.push({type:"terms",region:"body",settings:{heading:"Terms & Conditions"},pos:{x:14,y:212,w:182,h:null}});
-  if(o.banner){blocks.push({type:"footer_banner",region:"footer",pos:{x:0,y:267,w:210,h:null}});}
-  else{blocks.push({type:"divider",region:"footer",settings:{thickness:1,color:o.primary,lstyle:"solid"},pos:{x:14,y:281,w:182,h:null}});
-       blocks.push({type:"field",region:"footer",settings:{field:"company",prefix:""},style:{size:7,align:"center",color:o.navy},pos:{x:70,y:286,w:70,h:null}});}
-  return {name:o.name,layout:"absolute",target_doctype:state.target||"Quotation",
-    header:{enabled:true,height:o.banner?30:22,repeat:true},footer:{enabled:true,height:o.banner?32:18,repeat:true},
-    watermark:{text:"",color:"#0C1322",opacity:8,size:60},
-    branding:{primary:o.primary,navy:o.navy,font:o.font,header_image:"",footer_image:""},blocks:blocks};
-}
-const STARTERS=[
-  {name:"Modern Blue",primary:"#1463FF",navy:"#0C1322",font:"Montserrat",banner:true,zebra:true,headerColor:"primary",desc:"Bold banner, zebra items, blue grand-total bar."},
-  {name:"Minimal",primary:"#0C1322",navy:"#6b6b6e",font:"Arial",banner:false,zebra:false,headerColor:"navy",desc:"No banner — company name, thin divider, lots of whitespace."},
-  {name:"Classic Navy",primary:"#0C1322",navy:"#0C1322",font:"Tahoma",banner:false,zebra:true,headerColor:"navy",desc:"Navy headers, zebra rows, a formal letterhead feel."},
+/* ---- FORMAT LIBRARY: complete ready-made designs; pick one, then customize anything ---- */
+function _fmtDef(name,branding,header,footer,blocks){return{name:name,layout:"absolute",target_doctype:state.target||"Quotation",header:header,footer:footer,watermark:{text:"",color:"#0C1322",opacity:8,size:60},branding:Object.assign({header_image:"",footer_image:""},branding),blocks:blocks};}
+function T_lumen(){return _fmtDef("Lumen Clean",{primary:"#1463FF",navy:"#0C1322",font:"Plus Jakarta Sans"},
+ {enabled:true,height:22,repeat:true,margin:5},{enabled:true,height:16,repeat:true,margin:5},[
+ {type:"heading",region:"header",settings:{text:"YOUR COMPANY",level:"h2"},style:{size:14,weight:"800",color:"#1463FF"},pos:{x:14,y:7,w:120,h:null}},
+ {type:"field",region:"header",settings:{field:"company",prefix:""},style:{size:8,align:"right"},pos:{x:140,y:9,w:56,h:null}},
+ {type:"title",region:"body",settings:{text:"QUOTATION",showArabic:false,arabic:"عرض سعر",meta:{name:true,date:true,valid_till:true},align:"split"},pos:{x:14,y:38,w:182,h:null}},
+ {type:"row",region:"body",settings:{cols:2,gap:8,width:100,widths:[null,70],cells:[[{type:"customer",settings:{heading:"Quotation To"},style:{}}],[{type:"heading",settings:{text:"From",level:"h4"},style:{size:8,weight:"700",color:"#687386"}},{type:"field",settings:{field:"company",prefix:""},style:{size:9,weight:"600"}}]]},pos:{x:14,y:60,w:182,h:null}},
+ {type:"items",region:"body",settings:{cols:{desc:true,qty:true,rate:true,amount:true},widths:{num:8},zebra:true,headerColor:"primary"},pos:{x:14,y:90,w:182,h:null}},
+ {type:"row",region:"body",settings:{cols:2,gap:8,width:100,widths:[null,80],cells:[[{type:"box",settings:{html:"<b>Bank</b><br>Your bank details here"},style:{pad:3,bg:"#F4F6FA",size:8,border:{on:true,w:1,color:"#E4E8F0",style:"solid",radius:6}}}],[{type:"totals",settings:{grandColor:"primary"},style:{}}]]},pos:{x:14,y:170,w:182,h:null}},
+ {type:"terms",region:"body",settings:{heading:"Terms & Conditions"},pos:{x:14,y:214,w:182,h:null}},
+ {type:"divider",region:"footer",settings:{thickness:1,color:"#1463FF",lstyle:"solid"},pos:{x:14,y:282,w:182,h:null}},
+ {type:"pagenum",region:"footer",settings:{format:"Page {p} of {n}"},style:{size:7,align:"center"},pos:{x:74,y:287,w:62,h:null}},
+ {type:"field",region:"footer",settings:{field:"company",prefix:""},style:{size:7,color:"#687386"},pos:{x:14,y:287,w:60,h:null}}]);}
+function T_banner(){return _fmtDef("Bold Banner",{primary:"#1463FF",navy:"#0C1322",font:"Plus Jakarta Sans"},
+ {enabled:true,height:24,repeat:true,margin:6},{enabled:true,height:18,repeat:true,margin:5},[
+ {type:"box",region:"header",settings:{html:"<span style=\"font-size:15pt;font-weight:800\">YOUR COMPANY</span><br><span style=\"font-size:8pt;opacity:.85\">Your tagline goes here</span>"},style:{pad:5,bg:"#1463FF",color:"#ffffff",size:9,border:{on:false,w:1,color:"#1463FF",style:"solid",radius:0}},pos:{x:0,y:0,w:210,h:24}},
+ {type:"title",region:"body",settings:{text:"QUOTATION",showArabic:false,arabic:"عرض سعر",meta:{name:true,date:true,valid_till:true},align:"split"},pos:{x:14,y:40,w:182,h:null}},
+ {type:"customer",region:"body",settings:{heading:"Quotation To"},pos:{x:14,y:66,w:120,h:null}},
+ {type:"items",region:"body",settings:{cols:{desc:true,qty:true,rate:true,amount:true},widths:{num:8},zebra:false,headerColor:"primary"},pos:{x:14,y:92,w:182,h:null}},
+ {type:"totals",region:"body",settings:{grandColor:"primary"},pos:{x:14,y:170,w:182,h:null}},
+ {type:"payment_schedule",region:"body",settings:{},pos:{x:14,y:200,w:182,h:null}},
+ {type:"terms",region:"body",settings:{heading:"Terms & Conditions"},pos:{x:14,y:236,w:182,h:null}},
+ {type:"box",region:"footer",settings:{html:"support@yourcompany.com &middot; +973 0000 0000 &middot; www.yourcompany.com"},style:{pad:4,bg:"#0C1322",color:"#ffffff",size:8,align:"center",border:{on:false,w:1,color:"#0C1322",style:"solid",radius:0}},pos:{x:0,y:279,w:210,h:18}},
+ {type:"pagenum",region:"footer",settings:{format:"{p} / {n}"},style:{size:7,align:"right",color:"#ffffff"},pos:{x:170,y:288,w:26,h:null}}]);}
+function T_minimal(){return _fmtDef("Minimal",{primary:"#0C1322",navy:"#3A4456",font:"Arial"},
+ {enabled:true,height:18,repeat:true,margin:6},{enabled:true,height:12,repeat:true,margin:5},[
+ {type:"heading",region:"header",settings:{text:"YOUR COMPANY",level:"h3"},style:{size:10,weight:"700",color:"#0C1322"},pos:{x:14,y:8,w:120,h:null}},
+ {type:"divider",region:"header",settings:{thickness:1,color:"#D4DAE5",lstyle:"solid"},pos:{x:14,y:16,w:182,h:null}},
+ {type:"title",region:"body",settings:{text:"QUOTATION",showArabic:false,arabic:"عرض سعر",meta:{name:true,date:true,valid_till:false},align:"split"},pos:{x:14,y:36,w:182,h:null}},
+ {type:"customer",region:"body",settings:{heading:"To"},pos:{x:14,y:60,w:120,h:null}},
+ {type:"items",region:"body",settings:{cols:{desc:false,qty:true,rate:true,amount:true},widths:{num:8},zebra:false,headerColor:"navy"},pos:{x:14,y:86,w:182,h:null}},
+ {type:"totals",region:"body",settings:{grandColor:"navy"},pos:{x:14,y:160,w:182,h:null}},
+ {type:"terms",region:"body",settings:{heading:"Terms"},pos:{x:14,y:200,w:182,h:null}},
+ {type:"pagenum",region:"footer",settings:{format:"Page {p} of {n}"},style:{size:7,align:"center",color:"#687386"},pos:{x:74,y:289,w:62,h:null}}]);}
+function T_navy(){return _fmtDef("Classic Navy",{primary:"#0C1322",navy:"#0C1322",font:"Montserrat"},
+ {enabled:true,height:20,repeat:true,margin:5},{enabled:true,height:14,repeat:true,margin:5},[
+ {type:"heading",region:"header",settings:{text:"YOUR COMPANY",level:"h2"},style:{size:13,weight:"800",align:"center",color:"#0C1322"},pos:{x:14,y:6,w:182,h:null}},
+ {type:"divider",region:"header",settings:{thickness:2,color:"#0C1322",lstyle:"solid"},pos:{x:14,y:16,w:182,h:null}},
+ {type:"title",region:"body",settings:{text:"QUOTATION",showArabic:true,arabic:"عرض سعر",meta:{name:true,date:true,valid_till:true},align:"split"},pos:{x:14,y:36,w:182,h:null}},
+ {type:"customer",region:"body",settings:{heading:"Quotation To"},pos:{x:14,y:62,w:120,h:null}},
+ {type:"items",region:"body",settings:{cols:{desc:true,qty:true,rate:true,amount:true},widths:{num:8},zebra:true,headerColor:"navy"},pos:{x:14,y:90,w:182,h:null}},
+ {type:"totals",region:"body",settings:{grandColor:"navy"},pos:{x:14,y:168,w:182,h:null}},
+ {type:"row",region:"body",settings:{cols:2,gap:10,width:100,widths:[null,70],cells:[[{type:"box",settings:{html:"Thank you for your business."},style:{size:8,color:"#3A4456",pad:"",bg:"",border:{on:false,w:1,color:"#E4E8F0",style:"solid",radius:0}}}],[{type:"signature",settings:{label:"Authorized Signature"},style:{}}]]},pos:{x:14,y:206,w:182,h:null}},
+ {type:"terms",region:"body",settings:{heading:"Terms & Conditions"},pos:{x:14,y:236,w:182,h:null}},
+ {type:"field",region:"footer",settings:{field:"company",prefix:""},style:{size:7,align:"center",color:"#3A4456"},pos:{x:70,y:288,w:70,h:null}}]);}
+function T_ledger(){return _fmtDef("Compact Ledger",{primary:"#0F9D7A",navy:"#0C1322",font:"Montserrat"},
+ {enabled:true,height:14,repeat:true,margin:3},{enabled:true,height:10,repeat:true,margin:3},[
+ {type:"heading",region:"header",settings:{text:"YOUR COMPANY",level:"h3"},style:{size:10,weight:"800",color:"#0F9D7A"},pos:{x:14,y:4,w:110,h:null}},
+ {type:"field",region:"header",settings:{field:"name",prefix:"Ref: "},style:{size:7,align:"right",color:"#3A4456"},pos:{x:130,y:6,w:66,h:null}},
+ {type:"customer",region:"body",settings:{heading:"To"},pos:{x:14,y:24,w:120,h:null}},
+ {type:"items",region:"body",settings:{cols:{desc:false,qty:true,rate:true,amount:true},widths:{num:8,qty:20,rate:26,amount:28},zebra:true,headerColor:"primary"},pos:{x:14,y:48,w:182,h:null}},
+ {type:"totals",region:"body",settings:{grandColor:"primary"},pos:{x:14,y:120,w:182,h:null}},
+ {type:"datatable",region:"body",settings:{table:"taxes",child_doctype:"",columns:[{field:"description",label:"Tax",width:null,align:"left"},{field:"tax_amount",label:"Amount",width:32,align:"right"}],headerColor:"primary",zebra:false},pos:{x:14,y:156,w:182,h:null}},
+ {type:"terms",region:"body",settings:{heading:"Terms"},pos:{x:14,y:190,w:182,h:null}},
+ {type:"pagenum",region:"footer",settings:{format:"{p}/{n}"},style:{size:6,align:"right",color:"#687386"},pos:{x:170,y:290,w:26,h:null}}]);}
+function T_split(){return _fmtDef("Elegant Split",{primary:"#6D4AFF",navy:"#0C1322",font:"Plus Jakarta Sans"},
+ {enabled:true,height:20,repeat:true,margin:5},{enabled:true,height:14,repeat:true,margin:5},[
+ {type:"heading",region:"header",settings:{text:"YOUR COMPANY",level:"h2"},style:{size:13,weight:"800",color:"#6D4AFF"},pos:{x:14,y:6,w:120,h:null}},
+ {type:"field",region:"header",settings:{field:"company",prefix:""},style:{size:8,align:"right"},pos:{x:140,y:8,w:56,h:null}},
+ {type:"title",region:"body",settings:{text:"QUOTATION",showArabic:false,arabic:"عرض سعر",meta:{name:true,date:true,valid_till:true},align:"split"},pos:{x:14,y:36,w:182,h:null}},
+ {type:"row",region:"body",settings:{cols:2,gap:8,width:100,widths:[null,70],cells:[[{type:"customer",settings:{heading:"Quotation To"},style:{}}],[{type:"box",settings:{html:"<b>Payment</b><br>Net 30 days"},style:{pad:3,bg:"#EDE8FF",size:8,border:{on:false,w:1,color:"#EDE8FF",style:"solid",radius:6}}}]]},pos:{x:14,y:60,w:182,h:null}},
+ {type:"items",region:"body",settings:{cols:{desc:true,qty:true,rate:true,amount:true},widths:{num:8},zebra:true,headerColor:"primary"},pos:{x:14,y:90,w:182,h:null}},
+ {type:"row",region:"body",settings:{cols:2,gap:8,width:100,widths:[null,90],cells:[[{type:"heading",settings:{text:"Tax summary",level:"h4"},style:{size:9,weight:"700",color:"#6D4AFF"}}],[{type:"datatable",settings:{table:"taxes",child_doctype:"",columns:[{field:"description",label:"Tax",width:null,align:"left"},{field:"tax_amount",label:"Amount",width:30,align:"right"}],headerColor:"primary",zebra:false},style:{}}]]},pos:{x:14,y:166,w:182,h:null}},
+ {type:"totals",region:"body",settings:{grandColor:"primary"},pos:{x:14,y:200,w:182,h:null}},
+ {type:"row",region:"body",settings:{cols:2,gap:10,width:100,widths:[null,70],cells:[[],[{type:"signature",settings:{label:"Authorized Signature"},style:{}}]]},pos:{x:14,y:234,w:182,h:null}},
+ {type:"divider",region:"footer",settings:{thickness:1,color:"#6D4AFF",lstyle:"solid"},pos:{x:14,y:285,w:182,h:null}},
+ {type:"pagenum",region:"footer",settings:{format:"Page {p} of {n}"},style:{size:7,align:"center",color:"#687386"},pos:{x:74,y:289,w:62,h:null}}]);}
+const FORMATS=[
+ {make:T_lumen,name:"Lumen Clean",desc:"Light and modern: Lumen Blue, two-column parties, bank + totals row.",sw:{hdr:"#1463FF",hdrH:6,foot:"#E4E8F0"}},
+ {make:T_banner,name:"Bold Banner",desc:"Full-width colored header and footer strips, strong presence.",sw:{hdr:"#1463FF",hdrH:14,foot:"#0C1322"}},
+ {make:T_minimal,name:"Minimal",desc:"Hairlines and whitespace: no color blocks, quiet and clean.",sw:{hdr:"#D4DAE5",hdrH:3,foot:"#F0F3F8"}},
+ {make:T_navy,name:"Classic Navy",desc:"Centered letterhead, formal navy tables, signature row.",sw:{hdr:"#0C1322",hdrH:7,foot:"#F0F3F8"}},
+ {make:T_ledger,name:"Compact Ledger",desc:"Dense and efficient: fits the most items per page, tax table.",sw:{hdr:"#0F9D7A",hdrH:5,foot:"#F0F3F8"}},
+ {make:T_split,name:"Elegant Split",desc:"Violet accents, split rows for parties, taxes and signature.",sw:{hdr:"#6D4AFF",hdrH:6,foot:"#EDE8FF"}},
 ];
-function openGallery(){document.getElementById("gcards").innerHTML=STARTERS.map(function(s,i){return `<div class="gcard" onclick="pickStarter(${i})"><div class="gswatch"><div style="width:100%;height:16px;background:${s.primary}"></div></div><div class="gt">${esc(s.name)}</div><div class="gd">${esc(s.desc)}</div></div>`;}).join("");document.getElementById("gallery").style.display="flex";}
+function _swatch(s){return `<div class="gswatch"><div style="height:${s.sw.hdrH}px;background:${s.sw.hdr}"></div><div style="flex:1;padding:6px 9px;display:flex;flex-direction:column;gap:3px;justify-content:center">`+[75,92,58,84].map(function(w){return `<div style="height:3px;width:${w}%;background:#E4E8F0;border-radius:2px"></div>`;}).join("")+`</div><div style="height:5px;background:${s.sw.foot}"></div></div>`;}
+function openGallery(){document.getElementById("gcards").innerHTML=FORMATS.map(function(s,i){return `<div class="gcard" onclick="pickStarter(${i})">`+_swatch(s)+`<div class="gt">${esc(s.name)}</div><div class="gd">${esc(s.desc)}</div></div>`;}).join("");document.getElementById("gallery").style.display="flex";}
 function closeGallery(){document.getElementById("gallery").style.display="none";}
-function pickStarter(i){const s=STARTERS[i];clearDraft();loadDefinition(starterDef(s));closeGallery();}
+function pickStarter(i){const f=FORMATS[i];if(!f)return;clearDraft();loadDefinition(f.make());closeGallery();}
+/* ---- READY SECTIONS: pre-composed block groups you insert into the current design ---- */
+const SECTIONS=[
+ {key:"parties",label:"Customer | Company",desc:"Two columns: customer left, your company right",make:function(){return[
+   {type:"row",region:"body",settings:{cols:2,gap:8,width:100,widths:[null,70],cells:[[{type:"customer",settings:{heading:"Quotation To"},style:{}}],[{type:"heading",settings:{text:"From",level:"h4"},style:{size:8,weight:"700",color:"#687386"}},{type:"field",settings:{field:"company",prefix:""},style:{size:9,weight:"600"}}]]},pos:{x:14,y:0,w:182,h:null}}];}},
+ {key:"bank_sign",label:"Bank details | Signature",desc:"Bank info box left, signature line right",make:function(){return[
+   {type:"row",region:"body",settings:{cols:2,gap:10,width:100,widths:[null,70],cells:[[{type:"box",settings:{html:"<b>Bank</b><br>Bank name &middot; IBAN &middot; SWIFT"},style:{pad:3,bg:"#F4F6FA",size:8,border:{on:true,w:1,color:"#E4E8F0",style:"solid",radius:6}}}],[{type:"signature",settings:{label:"Authorized Signature"},style:{}}]]},pos:{x:14,y:0,w:182,h:null}}];}},
+ {key:"totals_right",label:"Totals (right half)",desc:"Totals table on the right side of the page",make:function(){return[
+   {type:"row",region:"body",settings:{cols:2,gap:8,width:100,widths:[null,85],cells:[[],[{type:"totals",settings:{grandColor:"primary"},style:{}}]]},pos:{x:14,y:0,w:182,h:null}}];}},
+ {key:"tax_table",label:"Tax breakdown",desc:"Taxes child-table with description + amount",make:function(){return[
+   {type:"datatable",region:"body",settings:{table:"taxes",child_doctype:"",columns:[{field:"description",label:"Tax",width:null,align:"left"},{field:"tax_amount",label:"Amount",width:32,align:"right"}],headerColor:"primary",zebra:false},pos:{x:14,y:0,w:182,h:null}}];}},
+ {key:"note_terms",label:"Note + Terms",desc:"Highlighted note box, then the terms",make:function(){return[
+   {type:"box",region:"body",settings:{html:"<b>Note</b><br>Add an important note for your customer here."},style:{pad:3,bg:"#EAF1FF",size:8,border:{on:false,w:1,color:"#EAF1FF",style:"solid",radius:6}},pos:{x:14,y:0,w:182,h:null}},
+   {type:"terms",region:"body",settings:{heading:"Terms & Conditions"},pos:{x:14,y:0,w:182,h:null}}];}},
+ {key:"footer_contacts",label:"Footer: contacts + page no.",desc:"Email/phone/website line + page numbers in the footer band",make:function(){return[
+   {type:"field",region:"footer",dy:3,settings:{field:"company",prefix:""},style:{size:7,color:"#687386"},pos:{x:14,y:0,w:60,h:null}},
+   {type:"box",region:"footer",dy:2,settings:{html:"email@company.com &middot; +973 0000 0000 &middot; www.company.com"},style:{size:7,align:"center",color:"#687386",pad:"",bg:"",border:{on:false,w:1,color:"#E4E8F0",style:"solid",radius:0}},pos:{x:55,y:0,w:100,h:null}},
+   {type:"pagenum",region:"footer",dy:3,settings:{format:"Page {p} of {n}"},style:{size:7,align:"right",color:"#687386"},pos:{x:160,y:0,w:36,h:null}}];}},
+ {key:"header_brand",label:"Header: name + company",desc:"Brand name left, company field right in the header band",make:function(){return[
+   {type:"heading",region:"header",dy:6,settings:{text:"YOUR COMPANY",level:"h2"},style:{size:13,weight:"800",color:"#1463FF"},pos:{x:14,y:0,w:120,h:null}},
+   {type:"field",region:"header",dy:8,settings:{field:"company",prefix:""},style:{size:8,align:"right"},pos:{x:140,y:0,w:56,h:null}}];}},
+];
+function addSection(key){const sdef=SECTIONS.find(function(x){return x.key===key;});if(!sdef)return;
+  const blocks=JSON.parse(JSON.stringify(sdef.make()));
+  const Hh=state.header.enabled?state.header.height:0;
+  let maxY=Hh+2;state.blocks.forEach(function(b){if(regionOf(b)==="body"&&!b.float){const y=(b.pos&&b.pos.y)||0;if(y>maxY)maxY=y;}});
+  let firstId=null;
+  blocks.forEach(function(bl){
+    const nb={id:"b"+(idc++),type:bl.type,settings:bl.settings||{},style:Object.assign(base(),dstyle(bl.type),bl.style||{}),pos:bl.pos||{x:14,y:0,w:182,h:null},float:false,region:bl.region||"body",cond:null};
+    if(nb.type==="row"&&nb.settings.cells)nb.settings.cells=nb.settings.cells.map(function(cell){return (cell||[]).map(function(c){return{id:"b"+(idc++),type:c.type,settings:c.settings||{},style:Object.assign(base(),dstyle(c.type),c.style||{})};});});
+    if(nb.region==="body"){maxY+=8;nb.pos.y=maxY;}
+    else if(nb.region==="footer"){state.footer.enabled=true;nb.pos.y=297-(state.footer.height||14)+(bl.dy||2);}
+    else if(nb.region==="header"){state.header.enabled=true;nb.pos.y=(bl.dy||2);}
+    if(!firstId)firstId=nb.id;state.blocks.push(nb);
+  });
+  selId=firstId;render();renderProps();}
 
 function styleCss(st){if(!st)return "";const p=[];if(st.align)p.push("text-align:"+st.align);if(st.size!=="")p.push("font-size:"+st.size+"pt");if(st.weight)p.push("font-weight:"+st.weight);if(st.italic)p.push("font-style:italic");if(st.color)p.push("color:"+st.color);if(st.bg)p.push("background:"+st.bg);if(st.pad!=="")p.push("padding:"+st.pad+"mm");if(st.border&&st.border.on){p.push(`border:${st.border.w}px ${st.border.style} ${st.border.color}`);if(st.border.radius)p.push("border-radius:"+st.border.radius+"px");}return p.join(";");}
 
@@ -565,7 +658,10 @@ function addBlock(t){
 function select(id){if(id===selId){renderProps();return;}selId=id;tab="block";setTab("block",true);render();renderProps();}
 function del(e,id){if(e)e.stopPropagation();if(state.blocks.some(x=>x.id===id)){state.blocks=state.blocks.filter(x=>x.id!==id);}else{for(var i=0;i<state.blocks.length;i++){var b=state.blocks[i];if(b.type==="row"&&b.settings&&b.settings.cells){var done=false;for(var j=0;j<b.settings.cells.length;j++){var k=b.settings.cells[j].findIndex(c=>c&&c.id===id);if(k>=0){b.settings.cells[j].splice(k,1);done=true;break;}}if(done)break;}}}if(selId===id)selId=null;render();renderProps();}
 function toFront(e,id){if(e)e.stopPropagation();const i=state.blocks.findIndex(x=>x.id===id);if(i>=0){const[m]=state.blocks.splice(i,1);state.blocks.push(m);render();}}
-function buildPalette(){const groups=[["Elements",ELEM],["Document blocks",BLOCKS.filter(t=>t!=="title")]];document.getElementById("palette").innerHTML=groups.map(g=>`<div class="pgrp">${g[0]}</div><div class="prow">`+g[1].map(t=>`<div class="pblock" draggable="true" ondragstart="event.dataTransfer.setData('text/bpdf','${t}')" onclick="addBlock('${t}')" title="Add or drag ${META[t].l}"><svg viewBox="0 0 24 24">${ICONS[t]||ICONS.text}</svg><span>${META[t].l}</span></div>`).join("")+`</div>`).join("");}
+function buildPalette(){const groups=[["Elements",ELEM],["Document blocks",BLOCKS.filter(t=>t!=="title")]];
+  let h=groups.map(g=>`<div class="pgrp">${g[0]}</div><div class="prow">`+g[1].map(t=>`<div class="pblock" draggable="true" ondragstart="event.dataTransfer.setData('text/bpdf','${t}')" onclick="addBlock('${t}')" title="Add or drag ${META[t].l}"><svg viewBox="0 0 24 24">${ICONS[t]||ICONS.text}</svg><span>${META[t].l}</span></div>`).join("")+`</div>`).join("");
+  h+=`<div class="pgrp">Ready sections</div>`+SECTIONS.map(s=>`<div class="psec" onclick="addSection('${s.key}')" title="${esc(s.desc)}"><b>${esc(s.label)}</b><span>${esc(s.desc)}</span></div>`).join("");
+  document.getElementById("palette").innerHTML=h;}
 /* drag a palette item onto the page */
 (function(){const paper=document.getElementById("paper");
   paper.addEventListener("dragover",function(e){if((e.dataTransfer.types||[]).indexOf("text/bpdf")>-1){e.preventDefault();e.dataTransfer.dropEffect="copy";
