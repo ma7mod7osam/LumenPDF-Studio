@@ -667,8 +667,9 @@ def _render_child(doc, b, c, ctx):
 
 def _d_row(doc, b, s, ctx):
     """A row split into 2-3 columns; each column flows its own nested blocks (side-by-side layout)."""
-    cols = max(1, min(3, int(_num(s.get("cols"), 2) or 2)))
+    cols = max(1, min(4, int(_num(s.get("cols"), 2) or 2)))
     gap = max(0.0, _num(s.get("gap"), 6) or 0)
+    pct = max(20.0, min(100.0, _num(s.get("width"), 100) or 100))
     widths = s.get("widths") or []
     cells = s.get("cells") or []
     half = _fmt_num(gap / 2.0)
@@ -681,7 +682,7 @@ def _d_row(doc, b, s, ctx):
         lp = "0" if i == 0 else half
         rp = "0" if i == cols - 1 else half
         tds.append(f'<td style="vertical-align:top;{wcss}padding:0 {rp}mm 0 {lp}mm;">{inner}</td>')
-    return f'<table style="width:100%;border-collapse:collapse;table-layout:fixed;"><tr>{"".join(tds)}</tr></table>'
+    return f'<table style="width:{_fmt_num(pct)}%;border-collapse:collapse;table-layout:fixed;"><tr>{"".join(tds)}</tr></table>'
 
 
 DEF_RENDERERS = {

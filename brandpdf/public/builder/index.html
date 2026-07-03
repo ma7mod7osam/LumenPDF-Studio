@@ -39,6 +39,10 @@
   .blk.dragging{opacity:.35}
   .rowcell{transition:background .12s}
   .rowcell.dropover{outline:2px dashed #1463FF;outline-offset:-2px;background:#1463FF12;border-radius:6px}
+  .coldiv{cursor:col-resize;display:flex;align-items:stretch;justify-content:center;min-height:8mm}
+  .coldiv i{width:2px;border-radius:2px;background:transparent;transition:background .12s}
+  .blk.flow:hover .coldiv i,.blk.flow.sel .coldiv i{background:#ADC8FF}
+  .coldiv:hover i,.coldiv.on i{background:#1463FF;width:3px}
   .blk.flow{cursor:grab}
   .blk.flow:active{cursor:grabbing}
   .rail h4{margin:0;padding:14px 16px 4px;font-size:10.5px;letter-spacing:1.4px;text-transform:uppercase;color:var(--mut2);font-weight:700}
@@ -196,10 +200,10 @@ function fieldVal(f){if(FIELDVALS&&FIELDVALS[f]!==undefined)return FIELDVALS[f];
 const ICONS={heading:'<path d="M6 4v16M18 4v16M6 12h12"/>',text:'<line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="14" y2="17"/>',field:'<rect x="3" y="8" width="18" height="8" rx="2"/><line x1="7" y1="12" x2="11" y2="12"/>',image:'<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M21 17l-5-5-4 4-2-2-4 4"/>',divider:'<line x1="4" y1="12" x2="20" y2="12"/>',box:'<rect x="4" y="5" width="16" height="14" rx="2"/>',row:'<rect x="3" y="5" width="8" height="14" rx="1"/><rect x="13" y="5" width="8" height="14" rx="1"/>',table:'<rect x="3" y="4" width="18" height="16" rx="1"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="9" x2="9" y2="20"/>',header_banner:'<rect x="3" y="5" width="18" height="6" rx="1"/><line x1="3" y1="15" x2="14" y2="15"/>',footer_banner:'<line x1="10" y1="5" x2="21" y2="5"/><rect x="3" y="13" width="18" height="6" rx="1"/>',customer:'<circle cx="12" cy="8" r="3"/><path d="M5 20c0-3.3 3.1-6 7-6s7 2.7 7 6"/>',items:'<rect x="3" y="4" width="18" height="16" rx="1"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="9" x2="9" y2="20"/>',datatable:'<rect x="3" y="4" width="18" height="16" rx="1"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="4" x2="9" y2="20"/><line x1="15" y1="4" x2="15" y2="20"/>',totals:'<line x1="13" y1="6" x2="20" y2="6"/><rect x="13" y="15" width="7" height="4" rx="1"/><path d="M4 6h6l-6 7h6"/>',payment_schedule:'<rect x="3" y="5" width="18" height="16" rx="1"/><line x1="3" y1="9" x2="21" y2="9"/>',terms:'<line x1="5" y1="6" x2="19" y2="6"/><line x1="5" y1="10" x2="19" y2="10"/><line x1="5" y1="14" x2="15" y2="14"/>',signature:'<path d="M4 17c4 0 5-9 8-9s2 6 4 6 2-3 4-3"/><line x1="3" y1="21" x2="21" y2="21"/>',pagenum:'<path d="M9 4v16M15 4v16M4 9h16M4 15h16"/>',title:'<line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="13" y2="12"/>'};
 const META={heading:{l:"Heading"},text:{l:"Text"},field:{l:"Field"},image:{l:"Image"},divider:{l:"Line"},box:{l:"Box"},row:{l:"Row / Columns"},table:{l:"Table"},pagenum:{l:"Page No"},header_banner:{l:"Header"},customer:{l:"Customer"},items:{l:"Items"},datatable:{l:"Data Table"},totals:{l:"Totals"},payment_schedule:{l:"Payment"},terms:{l:"Terms"},signature:{l:"Signature"},footer_banner:{l:"Footer"},title:{l:"Title"}};
 const ELEM=["heading","text","field","image","divider","box","row","table","pagenum"];
-const ROWCHILDTYPES=["heading","text","field","image","divider","box","customer","signature"];
+const ROWCHILDTYPES=["heading","text","field","image","divider","box","customer","signature","table","datatable","totals"];
 const BLOCKS=["title","customer","items","datatable","totals","payment_schedule","terms","signature"];
 function base(){return{align:"",size:"",weight:"",italic:false,color:"",bg:"",pad:"",border:{on:false,w:1,color:"#cfe5f6",style:"solid",radius:0}};}
-const DSET={header_banner:()=>({}),footer_banner:()=>({}),title:()=>({text:"QUOTATION",showArabic:true,arabic:"عرض سعر",meta:{name:true,date:true,valid_till:true},align:"split"}),customer:()=>({heading:"Quotation To"}),items:()=>({cols:{desc:true,qty:true,rate:true,amount:true},widths:{num:8,item:null,qty:null,rate:null,amount:null},zebra:true,headerColor:"primary"}),datatable:()=>({table:"items",child_doctype:"",columns:[{field:"idx",label:"#",width:8,align:"right"},{field:"item_code",label:"Item Code",width:null,align:"left"},{field:"item_name",label:"Item",width:null,align:"left"},{field:"qty",label:"Qty",width:22,align:"right"},{field:"rate",label:"Rate",width:28,align:"right"},{field:"amount",label:"Amount",width:30,align:"right"}],headerColor:"primary",zebra:true}),totals:()=>({grandColor:"primary"}),payment_schedule:()=>({}),terms:()=>({heading:"Terms & Conditions"}),signature:()=>({label:"Authorized Signature"}),heading:()=>({text:"Section heading",level:"h2"}),text:()=>({text:"Add your text here."}),field:()=>({field:"customer_name",prefix:""}),image:()=>({src:"",width:100}),divider:()=>({thickness:1,color:"#cfe5f6",lstyle:"solid"}),box:()=>({html:"<b>Note</b><br>Bank: BSTC W.L.L &middot; IBAN BH00 XXXX"}),row:()=>({cols:2,gap:6,widths:[null,null],cells:[[],[]]}),table:()=>({cols:["Specification","Value"],rows:[["Warranty","1 Year"],["Lead time","2 weeks"]],headerBg:"primary"}),pagenum:()=>({format:"Page {p} of {n}"})};
+const DSET={header_banner:()=>({}),footer_banner:()=>({}),title:()=>({text:"QUOTATION",showArabic:true,arabic:"عرض سعر",meta:{name:true,date:true,valid_till:true},align:"split"}),customer:()=>({heading:"Quotation To"}),items:()=>({cols:{desc:true,qty:true,rate:true,amount:true},widths:{num:8,item:null,qty:null,rate:null,amount:null},zebra:true,headerColor:"primary"}),datatable:()=>({table:"items",child_doctype:"",columns:[{field:"idx",label:"#",width:8,align:"right"},{field:"item_code",label:"Item Code",width:null,align:"left"},{field:"item_name",label:"Item",width:null,align:"left"},{field:"qty",label:"Qty",width:22,align:"right"},{field:"rate",label:"Rate",width:28,align:"right"},{field:"amount",label:"Amount",width:30,align:"right"}],headerColor:"primary",zebra:true}),totals:()=>({grandColor:"primary"}),payment_schedule:()=>({}),terms:()=>({heading:"Terms & Conditions"}),signature:()=>({label:"Authorized Signature"}),heading:()=>({text:"Section heading",level:"h2"}),text:()=>({text:"Add your text here."}),field:()=>({field:"customer_name",prefix:""}),image:()=>({src:"",width:100}),divider:()=>({thickness:1,color:"#cfe5f6",lstyle:"solid"}),box:()=>({html:"<b>Note</b><br>Bank: BSTC W.L.L &middot; IBAN BH00 XXXX"}),row:()=>({cols:2,gap:6,width:100,widths:[null,null],cells:[[],[]]}),table:()=>({cols:["Specification","Value"],rows:[["Warranty","1 Year"],["Lead time","2 weeks"]],headerBg:"primary"}),pagenum:()=>({format:"Page {p} of {n}"})};
 function dstyle(t){const s=base();if(t==="heading"){s.size=15;s.weight="700";}if(t==="text"||t==="field")s.size=9;if(t==="pagenum"){s.size=8;s.align="center";}if(t==="box"){s.pad=3;s.bg="#f4f8fc";s.size=8;s.border={on:true,w:1,color:"#cfe5f6",style:"solid",radius:6};}return s;}
 let idc=1;
 function _regionByY(pos){var Hh=30,Fh=32;try{if(state&&state.header)Hh=state.header.enabled?state.header.height:0;if(state&&state.footer)Fh=state.footer.enabled?state.footer.height:0;}catch(e){}var y=(pos&&pos.y)||0;return (Hh&&y<Hh)?"header":(Fh&&y>=297-Fh)?"footer":"body";}
@@ -221,7 +225,14 @@ const R={
   image:(s)=>s.src?`<img src="${esc(s.src)}" style="width:${(+s.width||100)}%">`:`<div style="border:1px dashed #b9c6e0;color:#9aa6c2;padding:14px;text-align:center;font-size:8pt">Image — set a URL</div>`,
   divider:(s)=>`<div style="border-top:${(+s.thickness||1)}px ${s.lstyle||'solid'} ${s.color||'#cfe5f6'}"></div>`,
   box:(s)=>`<div class="inl">${s.html||""}</div>`,
-  row:(s,b,bl)=>{const cols=Math.max(1,Math.min(3,+s.cols||2)),gap=Math.max(0,+s.gap||6),widths=s.widths||[],cells=s.cells||[];let h=`<div style="display:flex;gap:${gap}mm;align-items:flex-start;width:100%">`;for(let i=0;i<cols;i++){const w=widths[i];const fx=(w&&!isNaN(w))?`flex:0 0 ${(+w)}mm`:`flex:1 1 0`;const ch=cells[i]||[];h+=`<div class="rowcell" data-rowid="${bl?bl.id:''}" data-cell="${i}" style="${fx};min-width:0">`+(ch.length?ch.map(c=>rowChildBlk(c,b)).join(""):`<div class="cellempty">Column ${i+1} — drop a block here</div>`)+`</div>`;}return h+`</div>`;},
+  row:(s,b,bl)=>{const cols=Math.max(1,Math.min(4,+s.cols||2)),gap=Math.max(0,+s.gap||6),widths=s.widths||[],cells=s.cells||[];const pct=Math.max(20,Math.min(100,+s.width||100));
+    let h=`<div style="display:flex;align-items:flex-start;width:${pct}%">`;
+    for(let i=0;i<cols;i++){
+      if(i>0)h+=`<div class="coldiv" data-rowid="${bl?bl.id:''}" data-div="${i-1}" title="Drag to resize columns" style="flex:0 0 ${gap}mm;align-self:stretch"><i></i></div>`;
+      const w=widths[i];const fx=(w&&!isNaN(w))?`flex:0 0 ${(+w)}mm`:`flex:1 1 0`;const ch=cells[i]||[];
+      h+=`<div class="rowcell" data-rowid="${bl?bl.id:''}" data-cell="${i}" style="${fx};min-width:0">`+(ch.length?ch.map(c=>rowChildBlk(c,b)).join(""):`<div class="cellempty">Column ${i+1} — drop here</div>`)+`</div>`;
+    }
+    return h+`</div>`;},
   table:(s,b)=>{const cols=s.cols||[],rows=s.rows||[];const hb=s.headerBg==="navy"?b.navy:b.primary;let h=`<table style="width:100%;border-collapse:collapse;font-size:8pt;table-layout:fixed"><thead><tr>`+cols.map((c,ci)=>`<th data-th="1" data-c="${ci}" contenteditable style="background:${hb};color:#fff;padding:5px 8px;text-align:left;border:1px solid ${hb};font-weight:600">${esc(c)}</th>`).join("")+`</tr></thead><tbody>`;h+=rows.map((r,ri)=>`<tr>`+cols.map((c,ci)=>`<td data-td="1" data-r="${ri}" data-c="${ci}" contenteditable style="padding:5px 8px;border:1px solid #cfe5f6">${esc(r[ci]||"")}</td>`).join("")+`</tr>`).join("");return h+`</tbody></table>`;},
   pagenum:(s)=>{const pg=window._pg||{p:1,n:1};return esc((s.format||"Page {p} of {n}").replace("{p}",pg.p).replace("{n}",pg.n));}
 };
@@ -389,7 +400,13 @@ function snapAxis(edges,targets){let best=null;edges.forEach(e=>{targets.forEach
 function ensureGuides(){let g=document.getElementById('guides');if(!g){g=document.createElement('div');g.id='guides';g.style.cssText='position:absolute;inset:0;pointer-events:none;z-index:60';document.getElementById('paper').appendChild(g);}return g;}
 function drawGuides(gx,gy){const g=ensureGuides();let h='';gx.forEach(x=>h+=`<div style="position:absolute;left:${x}mm;top:0;width:0;height:100%;border-left:1px solid #6D4AFF"></div>`);gy.forEach(y=>h+=`<div style="position:absolute;top:${y}mm;left:0;height:0;width:100%;border-top:1px solid #6D4AFF"></div>`);g.innerHTML=h;}
 function clearGuides(){const g=document.getElementById('guides');if(g)g.innerHTML='';}
+let colDrag=null;
 document.getElementById("paper").addEventListener("mousedown",function(e){
+  const cd=e.target.closest(".coldiv");
+  if(cd){e.preventDefault();e.stopPropagation();const row=blockById(cd.dataset.rowid);if(!row)return;
+    const idx=+cd.dataset.div;const cellEl=document.querySelector('.rowcell[data-rowid="'+cd.dataset.rowid+'"][data-cell="'+idx+'"]');
+    const w0=cellEl?cellEl.getBoundingClientRect().width/(scale*PXMM):40;
+    cd.classList.add('on');colDrag={rowid:cd.dataset.rowid,idx:idx,sx:e.clientX,w0:w0};return;}
   const blk=e.target.closest(".blk");if(!blk)return;
   if(e.target.closest(".tools"))return;
   if(e.target.isContentEditable){if(blk.dataset.id!==selId)select(blk.dataset.id);return;}
@@ -438,6 +455,17 @@ document.addEventListener("mousemove",function(e){
 document.addEventListener("mouseup",function(){if(!drag)return;const d=drag;drag=null;clearGuides();if(d.pend){const b=blockById(d.id);if(b)b.pos=d.pend;render();renderProps();}});
 // drag the band edge to resize the header/footer height
 let bandDrag=null;
+/* drag the divider between Row columns to resize them (page-builder style) */
+document.addEventListener("mousemove",function(e){
+  if(!colDrag)return;e.preventDefault();
+  const row=blockById(colDrag.rowid);if(!row)return;
+  const dx=(e.clientX-colDrag.sx)/(scale*PXMM);
+  let w=Math.max(8,Math.min(170,colDrag.w0+dx));
+  if(!row.settings.widths)row.settings.widths=[];
+  row.settings.widths[colDrag.idx]=Math.round(w*10)/10;
+  render();
+});
+document.addEventListener("mouseup",function(){if(colDrag){const r=blockById(colDrag.rowid);colDrag=null;if(r&&r.id===selId)renderProps();}});
 /* drag-to-reorder flow blocks + drop into Row columns (page-builder style) */
 function _flowEls(ex){return [...document.querySelectorAll('.blk.flow')].filter(el=>el.dataset.id!==ex&&!el.closest('[data-cell]'));}
 function _insLine(){let l=document.getElementById('insline');if(!l){l=document.createElement('div');l.id='insline';document.body.appendChild(l);}return l;}
@@ -560,16 +588,18 @@ function setDTCol(ci,k,v){const b=cur();if(!b||!b.settings.columns||!b.settings.
 function delDTCol(ci){const b=cur();if(!b||!b.settings.columns)return;b.settings.columns.splice(ci,1);render();renderProps();}
 function addDTCol(field){if(!field)return;const b=cur();if(!b)return;const tb=CTABLES.find(x=>x.fieldname===b.settings.table)||{fields:[]};const f=(tb.fields||[]).find(x=>x.fieldname===field);if(!b.settings.columns)b.settings.columns=[];b.settings.columns.push({field:field,label:f?f.label:field,width:null,align:"left"});render();renderProps();}
 // Row / Columns block helpers (nested children live in settings.cells[i])
-function rowControls(b){const s=b.settings;const cols=Math.max(1,Math.min(3,+s.cols||2));
-  let h=`<div class="fld"><label>Columns</label><div class="seg">`+[2,3].map(n=>`<button class="${cols===n?'on':''}" onclick="setRowCols(${n})">${n}</button>`).join("")+`</div></div>`;
-  h+=`<div class="fld"><label>Gap between columns (mm)</label><input type="text" value="${s.gap==null?'':s.gap}" oninput="setRowGap(this.value)"></div>`;
+function rowControls(b){const s=b.settings;const cols=Math.max(1,Math.min(4,+s.cols||2));
+  let h=`<div class="fld"><label>Columns</label><div class="seg">`+[2,3,4].map(n=>`<button class="${cols===n?'on':''}" onclick="setRowCols(${n})">${n}</button>`).join("")+`</div></div>`;
+  h+=`<div class="row2"><div class="fld"><label>Row width (%)</label><input type="text" value="${s.width==null?100:s.width}" oninput="setRowPct(this.value)"></div><div class="fld"><label>Gap (mm)</label><input type="text" value="${s.gap==null?'':s.gap}" oninput="setRowGap(this.value)"></div></div>`;
+  h+=`<div class="hint" style="padding:0 0 6px">Tip: drag the divider between columns on the page to resize them.</div>`;
   for(let i=0;i<cols;i++){const w=(s.widths||[])[i];const ch=(s.cells||[])[i]||[];
     h+=`<div class="styhead">Column ${i+1}</div><div class="fld"><label>Width (mm · blank = auto)</label><input type="text" value="${w==null?'':w}" placeholder="auto" oninput="setRowWidth(${i},this.value)"></div>`;
     ch.forEach(c=>{h+=`<div class="hint" style="display:flex;justify-content:space-between;align-items:center;padding:3px 0"><span>${META[c.type]?META[c.type].l:c.type}</span><span><button class="btn ghost" style="padding:3px 8px" onclick="select('${c.id}')">edit</button> <button class="btn ghost" style="padding:3px 8px" onclick="del(null,'${c.id}')">✕</button></span></div>`;});
     h+=`<div class="fld"><select onchange="addRowChild('${b.id}',${i},this.value)"><option value="">+ Add block to column ${i+1}…</option>`+ROWCHILDTYPES.map(t=>`<option value="${t}">${META[t].l}</option>`).join("")+`</select></div>`;
   }
   return h;}
-function setRowCols(n){const b=cur();if(!b)return;n=Math.max(1,Math.min(3,+n));const c=b.settings.cells||[];if(n<c.length){const lost=c.slice(n).reduce(function(s,cell){return s+(cell?cell.length:0);},0);if(lost>0&&!confirm("Reducing to "+n+" column(s) will delete "+lost+" block(s) in the removed column(s). Continue?")){renderProps();return;}}b.settings.cols=n;while(c.length<n)c.push([]);b.settings.cells=c.slice(0,n);const w=b.settings.widths||[];while(w.length<n)w.push(null);b.settings.widths=w.slice(0,n);render();renderProps();}
+function setRowPct(v){const b=cur();if(!b)return;const n=parseFloat(v);if(isNaN(n))return;b.settings.width=Math.max(20,Math.min(100,n));render();}
+function setRowCols(n){const b=cur();if(!b)return;n=Math.max(1,Math.min(4,+n));const c=b.settings.cells||[];if(n<c.length){const lost=c.slice(n).reduce(function(s,cell){return s+(cell?cell.length:0);},0);if(lost>0&&!confirm("Reducing to "+n+" column(s) will delete "+lost+" block(s) in the removed column(s). Continue?")){renderProps();return;}}b.settings.cols=n;while(c.length<n)c.push([]);b.settings.cells=c.slice(0,n);const w=b.settings.widths||[];while(w.length<n)w.push(null);b.settings.widths=w.slice(0,n);render();renderProps();}
 function setRowGap(v){const b=cur();if(!b)return;const n=parseFloat(v);b.settings.gap=isNaN(n)?6:n;render();}
 function setRowWidth(i,v){const b=cur();if(!b)return;if(!b.settings.widths)b.settings.widths=[];const n=parseFloat(v);b.settings.widths[i]=(v===""||isNaN(n))?null:n;render();}
 function addRowChild(rowId,i,t){if(!t)return;const b=blockById(rowId);if(!b)return;if(!b.settings.cells)b.settings.cells=[];while(b.settings.cells.length<=i)b.settings.cells.push([]);b.settings.cells[i].push(childMk(t));render();renderProps();}
@@ -706,7 +736,7 @@ function save(){const def=definition();if(EMBED){window.parent.postMessage({type
 function flashSaved(){const b=document.querySelector(".btn.primary");if(!b)return;const t=b.textContent;b.textContent="✓ Saved";setTimeout(function(){b.textContent=t;},1400);}
 function loadDefinition(def){try{userTouched=false;if(def.branding)state.branding=Object.assign({primary:"#1463FF",navy:"#0C1322",font:"Montserrat",header_image:"",footer_image:""},def.branding);
   if(def.header)state.header=Object.assign({enabled:true,height:30,repeat:true,margin:4},def.header);if(def.footer)state.footer=Object.assign({enabled:true,height:32,repeat:true,margin:4},def.footer);if(def.watermark)state.watermark=Object.assign({text:"",color:"#0C1322",opacity:8,size:60},def.watermark);
-  if(Array.isArray(def.blocks))state.blocks=def.blocks.map(function(b,i){const pos=b.pos||{x:14,y:8+i*16,w:180,h:null};let settings=b.settings||(DSET[b.type]?DSET[b.type]():{});if(b.type==="row"){const st=b.settings||{};const cells=(st.cells||[]).map(function(cell){return (cell||[]).map(function(c){return{id:"b"+(idc++),type:c.type,settings:c.settings||(DSET[c.type]?DSET[c.type]():{}),style:Object.assign(base(),dstyle(c.type),c.style||{})};});});settings=Object.assign({cols:2,gap:6,widths:[null,null],cells:[[],[]]},st,{cells:cells});}return{id:"b"+(idc++),type:b.type,settings:settings,style:Object.assign(base(),dstyle(b.type),b.style||{}),pos:pos,float:b.float||false,region:b.region||_regionByY(pos),cond:b.cond||null};});
+  if(Array.isArray(def.blocks))state.blocks=def.blocks.map(function(b,i){const pos=b.pos||{x:14,y:8+i*16,w:180,h:null};let settings=b.settings||(DSET[b.type]?DSET[b.type]():{});if(b.type==="row"){const st=b.settings||{};const cells=(st.cells||[]).map(function(cell){return (cell||[]).map(function(c){return{id:"b"+(idc++),type:c.type,settings:c.settings||(DSET[c.type]?DSET[c.type]():{}),style:Object.assign(base(),dstyle(c.type),c.style||{})};});});settings=Object.assign({cols:2,gap:6,width:100,widths:[null,null],cells:[[],[]]},st,{cells:cells});}return{id:"b"+(idc++),type:b.type,settings:settings,style:Object.assign(base(),dstyle(b.type),b.style||{}),pos:pos,float:b.float||false,region:b.region||_regionByY(pos),cond:b.cond||null};});
   if(def.target_doctype){state.target=def.target_doctype;const ds=document.getElementById("doctypeSel");if(ds)ds.value=def.target_doctype;loadDoctypeMeta(state.target);}
   if(def.name)document.getElementById("fmtName").value=def.name;ensureBanners();selId=null;renderNowSync();renderProps();renderBrand();}catch(e){console.error("BrandPDF load failed",e);}}
 /* ---- embedded RPC bridge to the desk page ---- */
