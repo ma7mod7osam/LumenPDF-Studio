@@ -315,8 +315,18 @@ def _hexok(v):
 
 
 def _field_value(doc, field):
+    """Resolve a parent-doc field for Field blocks / {token} table cells. Permission-gated
+    fields (permlevel > 0) never render — same safety rule as _d_datatable's column filter, so a
+    saved format can't print e.g. cost/margin to whoever holds print permission (defense in
+    depth on top of apply_fieldlevel_read_permissions, which does not cover every render path)."""
     if not field:
         return ""
+    try:
+        df = frappe.get_meta(doc.doctype).get_field(field)
+        if df is not None and (df.permlevel or 0) != 0:
+            return ""
+    except Exception:
+        pass  # metadata unavailable (tests/odd contexts) -> fall through
     try:
         v = doc.get_formatted(field)
     except Exception:
@@ -430,12 +440,17 @@ def _cell_value(doc, v):
     return v or ""
 
 
+def _list(v):
+    """Malformed-settings guard: anything that isn't a real list/tuple renders as empty."""
+    return v if isinstance(v, (list, tuple)) else []
+
+
 def _e_table(doc, b, s, ctx):
-    cols = s.get("cols") or []
-    rows = s.get("rows") or []
+    cols = _list(s.get("cols"))
+    rows = _list(s.get("rows"))
     hb = b.get("navy") if s.get("headerBg") == "navy" else b.get("primary")
-    cstyles = s.get("colStyle") or []
-    rstyles = s.get("rowStyle") or []
+    cstyles = _list(s.get("colStyle"))
+    rstyles = _list(s.get("rowStyle"))
 
     def cst(ci):
         return cstyles[ci] if ci < len(cstyles) and isinstance(cstyles[ci], dict) else {}
@@ -532,7 +547,7 @@ def _d_items(doc, b, s, ctx):
     hc = navy if s.get("headerColor") == "navy" else primary
     zebra = s.get("zebra", True)
 
-    w = s.get("widths") or {}
+    w = s.get("widths") if isinstance(s.get("widths"), dict) else {}
 
     def th(txt, cls=""):
         return f'<th class="{cls}" style="background-color:{hc} !important;-webkit-print-color-adjust:exact;">{txt}</th>'
@@ -574,7 +589,7 @@ def _d_items(doc, b, s, ctx):
 def _d_datatable(doc, b, s, ctx):
     """Generic table from ANY child table on the doc: chosen columns, per-column width + align."""
     table = s.get("table") or "items"
-    columns = [c for c in (s.get("columns") or []) if isinstance(c, dict) and c.get("field")]
+    columns = [c for c in _list(s.get("columns")) if isinstance(c, dict) and c.get("field")]
     if not columns:
         return ""
     # Safety: only render standard (permlevel 0) child fields so a saved format can never leak a
@@ -712,8 +727,8 @@ def _d_row(doc, b, s, ctx):
     cols = max(1, min(4, int(_num(s.get("cols"), 2) or 2)))
     gap = max(0.0, _num(s.get("gap"), 6) or 0)
     pct = max(20.0, min(100.0, _num(s.get("width"), 100) or 100))
-    widths = s.get("widths") or []
-    cells = s.get("cells") or []
+    widths = _list(s.get("widths"))
+    cells = _list(s.get("cells"))
     half = _fmt_num(gap / 2.0)
     tds = []
     for i in range(cols):

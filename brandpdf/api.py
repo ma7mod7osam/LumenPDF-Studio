@@ -136,6 +136,17 @@ def set_default_format(doctype, template, company=None):
                             "template": template, "company": company or "", "enabled": 1, "priority": 0})
         m.flags.ignore_permissions = True
         m.insert()
+    # Self-heal: if a concurrent call (or an old bug) left extra rows in the SAME scope, keep the
+    # row we just wrote and drop the rest — the winner is deterministic, not creation-order luck.
+    try:
+        for r in frappe.get_all("BrandPDF Mapping", filters={"target_doctype": doctype},
+                                fields=["name", "company"]):
+            rc = r.get("company") or ""
+            same_scope = (company and rc == company) or (not company and not rc)
+            if same_scope and r["name"] != m.name:
+                frappe.delete_doc("BrandPDF Mapping", r["name"], ignore_permissions=True)
+    except Exception:
+        pass
     frappe.db.commit()
     return {"default": template, "company": company or ""}
 
@@ -155,9 +166,14 @@ def delete_format(name):
         "BrandPDF Mapping", filters={"target_doctype": target, "template": name}, pluck="name"
     ) if frappe.db.exists("DocType", "BrandPDF Mapping") else []
     frappe.delete_doc("BrandPDF Template", name, ignore_permissions=True)
+    # Replacement for orphaned mappings: prefer the doctype's surviving GLOBAL default (keeps a
+    # company scope consistent with the site-wide look), else any surviving format.
+    global_default = _default_template(target)
+    if global_default == name:
+        global_default = None
     for mn in maps:  # this format was a default -> keep printing working
         m = frappe.get_doc("BrandPDF Mapping", mn)
-        others = frappe.get_all(
+        others = [global_default] if global_default else frappe.get_all(
             "BrandPDF Template", filters={"target_doctype": target, "name": ("!=", name)},
             pluck="name", order_by="is_standard asc, modified desc", limit=1,
         )

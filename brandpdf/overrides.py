@@ -58,7 +58,8 @@ def download_pdf(doctype, name, format=None, doc=None, *args, **kwargs):
     """Drop-in override of frappe.utils.print_format.download_pdf (same signature, tolerant tail)."""
     company = None
     try:
-        if frappe.get_meta(doctype).has_field("company"):
+        df = frappe.get_meta(doctype).get_field("company")
+        if df and getattr(df, "fieldtype", "") == "Link" and getattr(df, "options", "") == "Company":
             company = frappe.db.get_value(doctype, name, "company")
     except Exception:
         company = None
