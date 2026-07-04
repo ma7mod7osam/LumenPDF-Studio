@@ -419,26 +419,55 @@ def _e_box(doc, b, s, ctx):
     return sanitize_html(raw) if raw else ""
 
 
+_CELL_TOKEN = re.compile(r"^\{([A-Za-z0-9_]+)\}$")
+
+
+def _cell_value(doc, v):
+    """A cell whose whole content is '{fieldname}' is bound to that document field."""
+    m = _CELL_TOKEN.match(str(v or "").strip())
+    if m:
+        return _field_value(doc, m.group(1))
+    return v or ""
+
+
 def _e_table(doc, b, s, ctx):
     cols = s.get("cols") or []
     rows = s.get("rows") or []
     hb = b.get("navy") if s.get("headerBg") == "navy" else b.get("primary")
+    cstyles = s.get("colStyle") or []
+    rstyles = s.get("rowStyle") or []
+
+    def cst(ci):
+        return cstyles[ci] if ci < len(cstyles) and isinstance(cstyles[ci], dict) else {}
+
+    colgroup = "<colgroup>" + "".join(
+        (f'<col style="width:{_fmt_num(_num(cst(ci).get("w")))}mm">' if _num(cst(ci).get("w")) else "<col>")
+        for ci in range(len(cols))
+    ) + "</colgroup>"
     th = "".join(
-        f'<th style="background-color:{hb} !important;color:#fff;padding:5px 8px;text-align:left;'
-        f'border:1px solid {hb};font-weight:600;-webkit-print-color-adjust:exact;">{_esc(c)}</th>'
-        for c in cols
+        f'<th style="background-color:{hb} !important;color:#fff;padding:5px 8px;'
+        f'text-align:{_esc(cst(ci).get("align") or "left")};'
+        f'border:1px solid {hb};font-weight:600;-webkit-print-color-adjust:exact;">'
+        f"{_esc(_cell_value(doc, cols[ci]))}</th>"
+        for ci in range(len(cols))
     )
     body = []
-    for r in rows:
+    for ri, r in enumerate(rows):
         r = r if isinstance(r, (list, tuple)) else []
-        tds = "".join(
-            f'<td style="padding:5px 8px;border:1px solid #cfe5f6;">{_esc(r[ci] if ci < len(r) else "")}</td>'
-            for ci in range(len(cols))
-        )
-        body.append(f"<tr>{tds}</tr>")
+        rst = rstyles[ri] if ri < len(rstyles) and isinstance(rstyles[ri], dict) else {}
+        trbg = f'background:{_esc(rst["bg"])};-webkit-print-color-adjust:exact;' if _hexok(rst.get("bg")) else ""
+        tds = ""
+        for ci in range(len(cols)):
+            st = cst(ci)
+            weight = rst.get("weight") or st.get("weight") or "normal"
+            color = f'color:{_esc(st["color"])};' if _hexok(st.get("color")) else ""
+            tds += (f'<td style="padding:5px 8px;border:1px solid #cfe5f6;'
+                    f'text-align:{_esc(st.get("align") or "left")};font-weight:{_esc(weight)};{color}'
+                    f'word-wrap:break-word;">{_esc(_cell_value(doc, r[ci] if ci < len(r) else ""))}</td>')
+        body.append(f'<tr style="{trbg}">{tds}</tr>')
     return (
         '<table style="width:100%;border-collapse:collapse;font-size:8pt;table-layout:fixed;word-wrap:break-word;">'
-        f"<thead><tr>{th}</tr></thead><tbody>{''.join(body)}</tbody></table>"
+        f"{colgroup}<thead><tr>{th}</tr></thead><tbody>{''.join(body)}</tbody></table>"
     )
 
 

@@ -151,7 +151,7 @@
 <body>
 <div class="app">
   <div class="top">
-    <div class="brand"><svg width="22" height="22" viewBox="0 0 48 48" fill="none" aria-label="Lumen"><rect x="6" y="6" width="7.5" height="38" rx="3.75" fill="#1463FF"/><rect x="18" y="25" width="4.5" height="19" rx="2.25" fill="#7FA8FF"/><rect x="27" y="25" width="7.5" height="19" rx="3.75" fill="#1463FF"/><rect x="39" y="25" width="4.5" height="19" rx="2.25" fill="#1463FF"/></svg> Lumen <small>PDF Studio · b21</small></div>
+    <div class="brand"><svg width="22" height="22" viewBox="0 0 48 48" fill="none" aria-label="Lumen"><rect x="6" y="6" width="7.5" height="38" rx="3.75" fill="#1463FF"/><rect x="18" y="25" width="4.5" height="19" rx="2.25" fill="#7FA8FF"/><rect x="27" y="25" width="7.5" height="19" rx="3.75" fill="#1463FF"/><rect x="39" y="25" width="4.5" height="19" rx="2.25" fill="#1463FF"/></svg> Lumen <small>PDF Studio · b22</small></div>
     <input class="fmt-name" id="fmtName" value="Quotation - Custom" title="Format name">
     <select class="sel" id="doctypeSel" title="Target DocType" onchange="onDoctype(this.value)"></select>
     <select class="sel" id="openSel" title="Open an existing format" onchange="openFormat(this.value)"><option value="">Open…</option></select>
@@ -230,7 +230,9 @@ const R={
   datatable:(s,b)=>{const cols=(s.columns||[]).filter(c=>c&&c.field);const rows=(SAMPLE.tables&&SAMPLE.tables[s.table])||[];const hc=s.headerColor==="navy"?b.navy:b.primary;const cg=`<colgroup>`+cols.map(c=>`<col style="width:${c.width&&!isNaN(c.width)?(+c.width)+'mm':'auto'}">`).join("")+`</colgroup>`;const th=cols.map(c=>`<th style="background:${hc};color:#fff;font-weight:600;font-size:7.5pt;padding:6px 8px;text-align:${c.align||'left'};word-wrap:break-word">${esc(c.label||c.field)}</th>`).join("");let body;if(!cols.length){body=`<tr><td style="padding:10px;color:#9aa6c2">Pick a table and add columns in the panel →</td></tr>`;}else if(!rows.length){body=[0,1].map(i=>`<tr${s.zebra&&i%2?' style="background:#eef6fc"':''}>`+cols.map(c=>`<td style="padding:6px 8px;border-bottom:1px solid #cfe5f6;text-align:${c.align||'left'};color:#9aa6c2;word-wrap:break-word">${c.field==='idx'?(i+1):'«'+esc(c.label||c.field)+'»'}</td>`).join("")+`</tr>`).join("");}else{body=rows.map((r,i)=>`<tr${s.zebra&&i%2?' style="background:#eef6fc"':''}>`+cols.map(c=>`<td style="padding:6px 8px;border-bottom:1px solid #cfe5f6;text-align:${c.align||'left'};word-wrap:break-word">${esc(r[c.field]!==undefined&&r[c.field]!==""?r[c.field]:(c.field==='idx'?(i+1):''))}</td>`).join("")+`</tr>`).join("");}return `<table style="width:100%;border-collapse:collapse;font-size:8pt;table-layout:fixed">${cg}<thead><tr>${th}</tr></thead><tbody>${body}</tbody></table>`;},
   totals:(s,b)=>{const gc=s.grandColor==="navy"?b.navy:b.primary;let ln=`<tr><td class="lbl">Subtotal</td><td class="val">${esc(SAMPLE.total)}</td></tr>`;SAMPLE.taxes.forEach(t=>ln+=`<tr><td class="lbl">${esc(t.desc)}</td><td class="val">${esc(t.amt)}</td></tr>`);ln+=`<tr><td style="background:${gc};color:#fff;font-weight:700;font-size:10pt;text-align:right;padding:6px 8px">Grand Total</td><td style="background:${gc};color:#fff;font-weight:700;font-size:10pt;text-align:right;padding:6px 8px">${esc(SAMPLE.grand_total)}</td></tr>`;return `<table class="bs-tot">${ln}</table>`;},
   payment_schedule:(s,b)=>{const rows=SAMPLE.payment_schedule.map((p,i)=>`<tr${i%2?' style="background:#eef6fc"':''}><td class="num">${i+1}</td><td><div class="it-name">${esc(p.t)}</div></td><td class="num">${esc(p.due)}</td><td class="num">${esc(p.pct)}</td><td class="num">${esc(p.amt)}</td></tr>`).join("");return `<div class="bs-sec-lbl" style="color:${b.primary}">Payment Schedule</div><table class="bs-items"><thead><tr><th class="num" style="background:${b.primary}">#</th><th style="background:${b.primary}">Payment Term</th><th class="num" style="background:${b.primary}">Due Date</th><th class="num" style="background:${b.primary}">Portion %</th><th class="num" style="background:${b.primary}">Amount</th></tr></thead><tbody>${rows}</tbody></table>`;},
-  terms:(s,b)=>`<div style="font-size:7.5pt;color:#6b6b6e;line-height:1.5"><div class="bs-sec-lbl" style="color:${b.primary}">${esc(s.heading)}</div>${esc(SAMPLE.terms)}</div>`,
+  terms:(s,b)=>SAMPLE.terms
+    ?`<div style="font-size:7.5pt;color:#6b6b6e;line-height:1.5"><div class="bs-sec-lbl" style="color:${b.primary}">${esc(s.heading)}</div>${esc(SAMPLE.terms)}</div>`
+    :`<div style="border:1px dashed #b9c6e0;border-radius:4px;padding:8px;font-size:7.5pt;color:#9aa6c2"><b>${esc(s.heading)}</b> — this document has no Terms, so this block prints EMPTY. Set the Terms (or pick a Terms &amp; Conditions template) on the document itself.</div>`,
   signature:(s,b)=>`<div class="bs-sign-box">${esc(s.label)}</div>`,
   heading:(s)=>`<div class="inl">${esc(s.text)}</div>`,text:(s)=>`<div class="inl">${esc(s.text)}</div>`,field:(s)=>esc((s.prefix||"")+fieldVal(s.field)),
   image:(s)=>s.src?`<img src="${esc(s.src)}" style="width:${(+s.width||100)}%">`:`<div style="border:1px dashed #b9c6e0;color:#9aa6c2;padding:14px;text-align:center;font-size:8pt">Image — set a URL</div>`,
@@ -244,7 +246,17 @@ const R={
       h+=`<div class="rowcell" data-rowid="${bl?bl.id:''}" data-cell="${i}" style="${fx};min-width:0">`+(ch.length?ch.map(c=>rowChildBlk(c,b)).join(""):`<div class="cellempty">Column ${i+1} — drop here</div>`)+`</div>`;
     }
     return h+`</div>`;},
-  table:(s,b)=>{const cols=s.cols||[],rows=s.rows||[];const hb=s.headerBg==="navy"?b.navy:b.primary;let h=`<table style="width:100%;border-collapse:collapse;font-size:8pt;table-layout:fixed"><thead><tr>`+cols.map((c,ci)=>`<th data-th="1" data-c="${ci}" contenteditable style="background:${hb};color:#fff;padding:5px 8px;text-align:left;border:1px solid ${hb};font-weight:600">${esc(c)}</th>`).join("")+`</tr></thead><tbody>`;h+=rows.map((r,ri)=>`<tr>`+cols.map((c,ci)=>`<td data-td="1" data-r="${ri}" data-c="${ci}" contenteditable style="padding:5px 8px;border:1px solid #cfe5f6">${esc(r[ci]||"")}</td>`).join("")+`</tr>`).join("");return h+`</tbody></table>`;},
+  table:(s,b)=>{const cols=s.cols||[],rows=s.rows||[];const hb=s.headerBg==="navy"?b.navy:b.primary;
+    const cs=s.colStyle||[],rs=s.rowStyle||[];
+    const cg=`<colgroup>`+cols.map((c,ci)=>{const w=cs[ci]&&cs[ci].w;return `<col style="width:${(w&&!isNaN(w))?(+w)+'mm':'auto'}">`;}).join("")+`</colgroup>`;
+    let h=`<table style="width:100%;border-collapse:collapse;font-size:8pt;table-layout:fixed">`+cg+`<thead><tr>`+cols.map((c,ci)=>{const st=cs[ci]||{};const hcss=`background:${hb};color:#fff;padding:5px 8px;text-align:${st.align||'left'};border:1px solid ${hb};font-weight:600`;const htok=/^\{([A-Za-z0-9_]+)\}$/.exec(String(c).trim());
+      if(htok)return `<th data-th="1" data-c="${ci}" style="${hcss}"><span style="border-bottom:1px dashed #ffffff88" title="${esc(String(c))} — bound to the document field">${esc(fieldVal(htok[1]))}</span></th>`;
+      return `<th data-th="1" data-c="${ci}" contenteditable style="${hcss}">${esc(c)}</th>`;}).join("")+`</tr></thead><tbody>`;
+    h+=rows.map((r,ri)=>{const rst=rs[ri]||{};return `<tr${rst.bg?` style="background:${rst.bg}"`:''}>`+cols.map((c,ci)=>{const st=cs[ci]||{};const v=String(r[ci]||"");const tok=/^\{([A-Za-z0-9_]+)\}$/.exec(v.trim());
+      const css=`padding:5px 8px;border:1px solid #cfe5f6;text-align:${st.align||'left'};font-weight:${rst.weight||st.weight||'normal'}${st.color?';color:'+st.color:''};word-wrap:break-word`;
+      if(tok)return `<td data-td="1" data-r="${ri}" data-c="${ci}" style="${css}"><span style="border-bottom:1px dashed #7FA8FF" title="${esc(v)} — bound to the document field">${esc(fieldVal(tok[1]))}</span></td>`;
+      return `<td data-td="1" data-r="${ri}" data-c="${ci}" contenteditable style="${css}">${esc(v)}</td>`;}).join("")+`</tr>`;}).join("");
+    return h+`</tbody></table>`;},
   pagenum:(s)=>{const pg=window._pg||{p:1,n:1};return esc((s.format||"Page {p} of {n}").replace("{p}",pg.p).replace("{n}",pg.n));}
 };
 
@@ -505,9 +517,15 @@ function _renderNow(){
   scheduleAutosave();
 }
 function moveBody(e,id,dir){if(e)e.stopPropagation();const body=state.blocks.filter(bl=>regionOf(bl)==="body"&&!bl.float).sort((a,c)=>((a.pos&&a.pos.y)||0)-((c.pos&&c.pos.y)||0));const i=body.findIndex(x=>x.id===id);const j=i+dir;if(j<0||j>=body.length)return;const A=body[i],C=body[j];if(!A.pos)A.pos={x:14,y:0,w:180,h:null};if(!C.pos)C.pos={x:14,y:0,w:180,h:null};const ay=A.pos.y||0,cy=C.pos.y||0;A.pos.y=cy;C.pos.y=ay;render();renderProps();}
+let _lastCell=null;  // {id,r,c} of the table cell last clicked (r=-1 => header) — target for "Insert field"
+function _cellHint(){const el=document.getElementById("tblTarget");if(el)el.textContent=_lastCell?(_lastCell.r<0?("header col "+(_lastCell.c+1)):("row "+(_lastCell.r+1)+", col "+(_lastCell.c+1))):"click a cell on the page first";}
 function wireTable(){
-  document.querySelectorAll('#paper .blk [data-th]').forEach(el=>{el.addEventListener('input',()=>{blockById(el.closest('.blk').dataset.id).settings.cols[+el.dataset.c]=el.textContent;});});
-  document.querySelectorAll('#paper .blk [data-td]').forEach(el=>{el.addEventListener('input',()=>{blockById(el.closest('.blk').dataset.id).settings.rows[+el.dataset.r][+el.dataset.c]=el.textContent;});});
+  document.querySelectorAll('#paper .blk [data-th]').forEach(el=>{
+    el.addEventListener('input',()=>{blockById(el.closest('.blk').dataset.id).settings.cols[+el.dataset.c]=el.textContent;});
+    el.addEventListener('mousedown',()=>{_lastCell={id:el.closest('.blk').dataset.id,r:-1,c:+el.dataset.c};_cellHint();});});
+  document.querySelectorAll('#paper .blk [data-td]').forEach(el=>{
+    el.addEventListener('input',()=>{blockById(el.closest('.blk').dataset.id).settings.rows[+el.dataset.r][+el.dataset.c]=el.textContent;});
+    el.addEventListener('mousedown',()=>{_lastCell={id:el.closest('.blk').dataset.id,r:+el.dataset.r,c:+el.dataset.c};_cellHint();});});
 }
 
 /* drag + resize on the canvas, with smart alignment guides + snapping */
@@ -764,7 +782,17 @@ function renderProps(){const host=document.getElementById("propsBlock"),b=cur();
   else if(t==="divider"){h+=tx("Thickness (px)","thickness",s.thickness);h+=`<div class="fld"><label>Color</label><div class="color"><input type="color" value="${s.color}" oninput="setS('color',this.value)"><input type="text" value="${esc(s.color)}" oninput="setS('color',this.value)"></div></div>`+sg("Style","lstyle",s.lstyle,[["solid","Solid"],["dashed","Dashed"],["dotted","Dotted"]]);}
   else if(t==="box"){h+=ta("Content (HTML allowed)","html",s.html);}
   else if(t==="pagenum"){h+=tx("Format ({p}=page, {n}=total)","format",s.format);}
-  else if(t==="table"){h+=sg("Header color","headerBg",s.headerBg,[["primary","Primary"],["navy","Navy"]]);h+=`<div class="fld"><label>Rows &amp; columns</label><div class="tablebtns"><button onclick="addRow()">+ Row</button><button onclick="addCol()">+ Column</button><button onclick="delRow()">− Row</button><button onclick="delCol()">− Column</button></div></div><div class="hint" style="padding:6px 0 0">Click a cell on the page to edit it.</div>`;}
+  else if(t==="table"){h+=sg("Header color","headerBg",s.headerBg,[["primary","Primary"],["navy","Navy"]]);h+=`<div class="fld"><label>Rows &amp; columns</label><div class="tablebtns"><button onclick="addRow()">+ Row</button><button onclick="addCol()">+ Column</button><button onclick="delRow()">− Row</button><button onclick="delCol()">− Column</button></div></div><div class="hint" style="padding:6px 0 0">Click a cell on the page to edit its text.</div>`;
+    const tgt=(_lastCell&&_lastCell.id===b.id)?_lastCell:null;
+    h+=`<div class="styhead">Field in a cell</div><div class="hint" style="padding:0 0 4px">Target: <b id="tblTarget">${tgt?(tgt.r<0?("header col "+(tgt.c+1)):("row "+(tgt.r+1)+", col "+(tgt.c+1))):"click a cell on the page first"}</b></div>`;
+    h+=`<div class="fld"><select onchange="tblInsertField(this.value)"><option value="">Insert document field into that cell…</option>`+DOCFIELDS.map(f=>`<option value="${esc(f.f)}">${esc(f.l)} (${esc(f.f)})</option>`).join("")+`</select></div>`;
+    if(tgt&&tgt.r>=0&&/^\{[A-Za-z0-9_]+\}$/.test(String((s.rows[tgt.r]||[])[tgt.c]||"").trim()))h+=`<button class="btn ghost" style="width:100%" onclick="tblClearField()">✕ Unbind field (back to text)</button>`;
+    const cs=s.colStyle||(s.colStyle=[]);
+    h+=`<div class="styhead">Column styles</div>`;
+    s.cols.forEach((c,ci)=>{const st=cs[ci]||{};h+=`<div class="row2" style="margin:4px 0"><input type="text" value="${st.w==null?'':st.w}" placeholder="Col ${ci+1} · W mm" oninput="tblCol(${ci},'w',this.value)"><select onchange="tblCol(${ci},'align',this.value)">`+[["left","Left"],["center","Center"],["right","Right"]].map(a=>`<option value="${a[0]}" ${(st.align||'left')===a[0]?'selected':''}>${a[1]}</option>`).join("")+`</select></div><div class="row2" style="margin:0 0 8px"><select onchange="tblCol(${ci},'weight',this.value)">`+[["","Regular"],["600","Semi"],["700","Bold"]].map(a=>`<option value="${a[0]}" ${(st.weight||'')===a[0]?'selected':''}>${a[1]}</option>`).join("")+`</select><input type="text" value="${esc(st.color||'')}" placeholder="text color (hex)" oninput="tblCol(${ci},'color',this.value)"></div>`;});
+    const rs=s.rowStyle||(s.rowStyle=[]);
+    h+=`<div class="styhead">Row styles</div>`;
+    s.rows.forEach((r,ri)=>{const st=rs[ri]||{};h+=`<div class="row2" style="margin:4px 0"><input type="text" value="${esc(st.bg||'')}" placeholder="Row ${ri+1} · bg (hex)" oninput="tblRow(${ri},'bg',this.value)"><select onchange="tblRow(${ri},'weight',this.value)">`+[["","Regular"],["600","Semi"],["700","Bold"]].map(a=>`<option value="${a[0]}" ${(st.weight||'')===a[0]?'selected':''}>${a[1]}</option>`).join("")+`</select></div>`;});}
   else if(t==="title"){h+=tx("Title text","text",s.text);h+=ck("Show Arabic subtitle","showArabic",s.showArabic);if(s.showArabic)h+=tx("Arabic","arabic",s.arabic);h+=sg("Layout","align",s.align,[["split","Title + Info"],["center","Centered"]]);h+=`<div class="fld"><label>Info box fields</label>`+ck("Quotation No","meta.name",s.meta.name)+ck("Date","meta.date",s.meta.date)+ck("Valid Till","meta.valid_till",s.meta.valid_till)+`</div>`;}
   else if(t==="customer"){h+=tx("Heading","heading",s.heading);}
   else if(t==="items"){const w=s.widths||(s.widths={});const wnum=(l,k,v)=>`<div class="fld"><label>${l}</label><input type="text" value="${v==null?'':v}" placeholder="auto" oninput="setS('${k}',this.value===''?null:(parseFloat(this.value)||null))"></div>`;
@@ -824,10 +852,21 @@ function moveRegion(id,reg){
   else if(reg==="footer"){if(!state.footer.enabled)state.footer.enabled=true;b.pos.y=297-(state.footer.height||32)+2;}
   else{let maxY=(state.header.enabled?state.header.height:0)+5;state.blocks.forEach(x=>{if(x.id!==id&&regionOf(x)==="body"){const y=(x.pos&&x.pos.y)||0;if(y>maxY)maxY=y;}});b.pos.y=maxY+6;}
   render();renderProps();}
-function addCol(){const b=cur();b.settings.cols.push("Column");b.settings.rows.forEach(r=>r.push(""));render();}
-function addRow(){const b=cur();b.settings.rows.push(b.settings.cols.map(()=>""));render();}
-function delCol(){const b=cur();if(b.settings.cols.length<=1)return;b.settings.cols.pop();b.settings.rows.forEach(r=>r.pop());render();}
-function delRow(){const b=cur();if(!b.settings.rows.length)return;b.settings.rows.pop();render();}
+function addCol(){const b=cur();b.settings.cols.push("Column");b.settings.rows.forEach(r=>r.push(""));(b.settings.colStyle||(b.settings.colStyle=[])).push({});render();renderProps();}
+function addRow(){const b=cur();b.settings.rows.push(b.settings.cols.map(()=>""));(b.settings.rowStyle||(b.settings.rowStyle=[])).push({});render();renderProps();}
+function delCol(){const b=cur();if(b.settings.cols.length<=1)return;b.settings.cols.pop();b.settings.rows.forEach(r=>r.pop());if(b.settings.colStyle)b.settings.colStyle.pop();_lastCell=null;render();renderProps();}
+function delRow(){const b=cur();if(!b.settings.rows.length)return;b.settings.rows.pop();if(b.settings.rowStyle)b.settings.rowStyle.pop();_lastCell=null;render();renderProps();}
+function tblCol(ci,k,v){const b=cur();if(!b)return;const cs=b.settings.colStyle||(b.settings.colStyle=[]);while(cs.length<=ci)cs.push({});if(k==="w"){const n=parseFloat(v);cs[ci].w=(v===""||isNaN(n))?null:n;}else cs[ci][k]=v;render();}
+function tblRow(ri,k,v){const b=cur();if(!b)return;const rs=b.settings.rowStyle||(b.settings.rowStyle=[]);while(rs.length<=ri)rs.push({});rs[ri][k]=v;render();}
+function tblInsertField(f){if(!f)return;const b=cur();if(!b||b.type!=="table")return;
+  if(!_lastCell||_lastCell.id!==b.id){alert("Click a table cell on the page first, then pick the field.");return;}
+  if(_lastCell.r<0)b.settings.cols[_lastCell.c]="{"+f+"}";
+  else b.settings.rows[_lastCell.r][_lastCell.c]="{"+f+"}";
+  render();renderProps();}
+function tblClearField(){const b=cur();if(!b||!_lastCell||_lastCell.id!==b.id)return;
+  if(_lastCell.r<0)b.settings.cols[_lastCell.c]="Column";
+  else b.settings.rows[_lastCell.r][_lastCell.c]="";
+  render();renderProps();}
 function setHF(z,k,v){if(k==="height"||k==="margin"){const n=parseFloat(v);if(isNaN(n))return;state[z][k]=n;}else state[z][k]=v;render();}
 function renderPage(){const mk=(name,key,z)=>{const bk=key+"_image",bv=state.branding[bk];return `<div class="styhead">${name}</div><label class="chk"><input type="checkbox" ${z.enabled?'checked':''} onchange="setHF('${key}','enabled',this.checked);renderPage()"> Show ${name.toLowerCase()}</label>`+(z.enabled?`<div class="row2"><div class="fld"><label>${name} height (mm)</label><input type="text" value="${z.height}" oninput="setHF('${key}','height',this.value)"></div><div class="fld"><label>${key==="header"?"Space below":"Space above"} (mm)</label><input type="text" value="${z.margin==null?'':z.margin}" placeholder="4" oninput="setHF('${key}','margin',this.value)"></div></div><label class="chk"><input type="checkbox" ${z.repeat?'checked':''} onchange="setHF('${key}','repeat',this.checked)"> Repeat on every page</label><div class="fld" style="margin-top:8px"><label>${name} banner image</label><div style="display:flex;gap:6px"><button class="btn ghost" style="flex:1" onclick="uploadImage(function(u){setB('${bk}',u);renderPage();})">⬆ Attach image</button>${bv?`<button class="btn ghost" title="Remove banner" onclick="setB('${bk}','');renderPage()">✕</button>`:''}</div><div class="hint" style="padding:4px 0 0;word-break:break-all">${bv?esc(bv):'No banner — or build the band from blocks (logo + text).'}</div></div>`:"");};
   const w=state.watermark||{};
@@ -884,7 +923,7 @@ function loadDoctypeMeta(dt){
 function openFormat(name){if(!name)return;clearDraft();rpc("brandpdf.api.get_format",{name:name}).then(function(r){if(r&&r.definition)loadDefinition(r.definition);const el=document.getElementById("openSel");if(el)el.value="";});}
 function newFormat(){clearDraft();state.blocks=[];selId=null;FIELDVALS=null;SAMPLE=JSON.parse(JSON.stringify(BASE_SAMPLE));state.branding.header_image="";state.branding.footer_image="";document.getElementById("fmtName").value="New Format";const ds=document.getElementById("dataSel");if(ds)ds.value="";renderNowSync();renderProps();renderBrand();}
 function loadData(name){if(!name){FIELDVALS=null;SAMPLE=JSON.parse(JSON.stringify(BASE_SAMPLE));render();return;}rpc("brandpdf.api.builder_sample",{doctype:state.target,name:name}).then(applyData);}
-function applyData(d){if(!d||!d.name){FIELDVALS=null;SAMPLE=JSON.parse(JSON.stringify(BASE_SAMPLE));render();return;}SAMPLE=Object.assign(JSON.parse(JSON.stringify(BASE_SAMPLE)),{name:d.name,transaction_date:d.transaction_date||"",valid_till:d.valid_till||"",customer_name:d.customer_name||"",address_display:d.address_display||"",total:d.total||"",grand_total:d.grand_total||"",items:(d.items&&d.items.length)?d.items:[],taxes:d.taxes||[],payment_schedule:d.payment_schedule||[],tables:(d.tables&&typeof d.tables==="object")?d.tables:{}});FIELDVALS=d.fields||null;render();}
+function applyData(d){if(!d||!d.name){FIELDVALS=null;SAMPLE=JSON.parse(JSON.stringify(BASE_SAMPLE));render();return;}SAMPLE=Object.assign(JSON.parse(JSON.stringify(BASE_SAMPLE)),{name:d.name,transaction_date:d.transaction_date||"",valid_till:d.valid_till||"",customer_name:d.customer_name||"",address_display:d.address_display||"",total:d.total||"",grand_total:d.grand_total||"",items:(d.items&&d.items.length)?d.items:[],taxes:d.taxes||[],payment_schedule:d.payment_schedule||[],tables:(d.tables&&typeof d.tables==="object")?d.tables:{},terms:String((d.fields&&d.fields.terms)||"").replace(/<[^>]*>/g," ").replace(/\s+/g," ").trim()});FIELDVALS=d.fields||null;render();}
 
 window.addEventListener("message",function(e){if(e.origin!==window.location.origin)return;const d=e.data||{};
   if(d.type==="brandpdf-rpc-res"&&_rpcCbs[d.reqId]){const cb=_rpcCbs[d.reqId];delete _rpcCbs[d.reqId];cb(d.ok?d.message:null);return;}
