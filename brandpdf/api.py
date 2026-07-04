@@ -37,9 +37,10 @@ def request_pdf(doctype: str, name: str, template: str = None):
 
 
 @frappe.whitelist()
-def list_formats(doctype):
-    """Formats available for a doctype (for the download picker). Empty if the caller can't read
-    the doctype or the config DocType doesn't exist yet."""
+def list_formats(doctype, company=None):
+    """Formats available for a doctype (for the download picker). `company` scopes which format
+    is marked default (falls back to the global default). Empty if the caller can't read the
+    doctype or the config DocType doesn't exist yet."""
     if not doctype or not frappe.db.exists("DocType", "BrandPDF Template"):
         return []
     if not frappe.has_permission(doctype, "read"):
@@ -50,7 +51,7 @@ def list_formats(doctype):
         fields=["name", "template_name", "is_standard"],
         order_by="is_standard asc, modified desc",
     )
-    default = _default_template(doctype)
+    default = _default_template(doctype, company)
     out = [{
         "name": r["name"], "label": r.get("template_name") or r["name"],
         "is_standard": bool(r.get("is_standard")), "is_default": (r["name"] == default),
@@ -59,41 +60,69 @@ def list_formats(doctype):
     return out
 
 
-def _default_template(doctype):
-    """The template the highest-priority enabled mapping points to (the doctype's default), or None."""
+def _default_template(doctype, company=None):
+    """The doctype's default template: the doc's COMPANY-scoped mapping wins, else the global
+    (blank-company) mapping; None if neither exists."""
     if not frappe.db.exists("DocType", "BrandPDF Mapping"):
         return None
-    mp = frappe.get_all(
-        "BrandPDF Mapping", filters={"target_doctype": doctype, "enabled": 1},
-        fields=["template"], order_by="priority asc", limit=1,
-    )
-    return mp[0]["template"] if mp else None
+
+    def _first(filters):
+        try:
+            mp = frappe.get_all("BrandPDF Mapping", filters=filters,
+                                fields=["template"], order_by="priority asc", limit=1)
+        except Exception:
+            return None  # old install: company column not migrated yet
+        return mp[0]["template"] if mp else None
+
+    if company:
+        hit = _first({"target_doctype": doctype, "enabled": 1, "company": company})
+        if hit:
+            return hit
+    return _first({"target_doctype": doctype, "enabled": 1, "company": ("in", ["", None])}) \
+        or _first({"target_doctype": doctype, "enabled": 1})
 
 
 @frappe.whitelist()
-def set_default_format(doctype, template):
-    """Make `template` the default format for `doctype` (used by Print > PDF + preselected in the
-    picker). System-Manager only — changing the default affects everyone's printing."""
+def list_companies():
+    """Companies for the Formats manager's scope picker (empty on non-ERPNext sites)."""
     _require_manager()
+    if not frappe.db.exists("DocType", "Company"):
+        return []
+    return frappe.get_all("Company", pluck="name", order_by="name asc")
+
+
+@frappe.whitelist()
+def set_default_format(doctype, template, company=None):
+    """Make `template` the default format for `doctype` — globally (company empty) or for ONE
+    company in a multi-company setup. System-Manager only."""
+    _require_manager()
+    company = (company or "").strip() or None
     if not (doctype and template and frappe.db.exists("BrandPDF Template", template)):
         frappe.throw("Unknown format.")
+    if company and not frappe.db.exists("Company", company):
+        frappe.throw("Unknown company.")
     t = frappe.get_doc("BrandPDF Template", template)
     if t.target_doctype and t.target_doctype != doctype:
         frappe.throw("That format belongs to a different doctype.")
     existing = frappe.get_all(
-        "BrandPDF Mapping", filters={"target_doctype": doctype}, pluck="name", order_by="priority asc", limit=1
+        "BrandPDF Mapping",
+        filters={"target_doctype": doctype, "company": company or ("in", ["", None])},
+        pluck="name", order_by="priority asc", limit=1,
     )
     if existing:
         m = frappe.get_doc("BrandPDF Mapping", existing[0])
         m.template = template
+        m.company = company or ""
         m.enabled = 1
+        m.flags.ignore_permissions = True
+        m.save()
     else:
         m = frappe.get_doc({"doctype": "BrandPDF Mapping", "target_doctype": doctype,
-                            "template": template, "enabled": 1, "priority": 0})
-    m.flags.ignore_permissions = True
-    m.save() if existing else m.insert()
+                            "template": template, "company": company or "", "enabled": 1, "priority": 0})
+        m.flags.ignore_permissions = True
+        m.insert()
     frappe.db.commit()
-    return {"default": template}
+    return {"default": template, "company": company or ""}
 
 
 @frappe.whitelist()

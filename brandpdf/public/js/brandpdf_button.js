@@ -35,7 +35,7 @@ function brandpdf_generate(frm) {
     // If the doctype has more than one format, let the user choose; otherwise render directly.
     frappe.call({
         method: "brandpdf.api.list_formats",
-        args: { doctype: frm.doc.doctype },
+        args: { doctype: frm.doc.doctype, company: frm.doc.company || "" },  // company default marked ★
         callback(r) {
             const formats = r.message || [];
             if (formats.length > 1) {

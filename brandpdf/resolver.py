@@ -52,9 +52,15 @@ def resolve_template(doc):
             mappings = frappe.get_all(
                 "BrandPDF Mapping",
                 filters={"enabled": 1, "target_doctype": doc.doctype},
-                fields=["name", "template"],
+                fields=["name", "template", "company"],
                 order_by="priority asc, creation asc",  # deterministic precedence (review #10)
             )
+            # Company scoping: a mapping bound to the doc's company beats the global (blank) one;
+            # mappings bound to a DIFFERENT company never apply. Stable sort keeps priority order
+            # within each scope. Old installs without the column: get_all returns company=None -> global.
+            doc_company = (doc.get("company") or "") if hasattr(doc, "get") else ""
+            mappings = [m for m in mappings if not m.get("company") or m.get("company") == doc_company]
+            mappings.sort(key=lambda m: 0 if m.get("company") else 1)
             for m in mappings:
                 if _conditions_match(doc, m["name"]):
                     t = frappe.get_doc("BrandPDF Template", m["template"])

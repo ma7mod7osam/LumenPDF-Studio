@@ -158,7 +158,7 @@
 <body>
 <div class="app">
   <div class="top">
-    <div class="brand"><svg width="22" height="22" viewBox="0 0 48 48" fill="none" aria-label="Lumen"><rect x="6" y="6" width="7.5" height="38" rx="3.75" fill="#1463FF"/><rect x="18" y="25" width="4.5" height="19" rx="2.25" fill="#7FA8FF"/><rect x="27" y="25" width="7.5" height="19" rx="3.75" fill="#1463FF"/><rect x="39" y="25" width="4.5" height="19" rx="2.25" fill="#1463FF"/></svg> Lumen <small>PDF Studio · b23</small></div>
+    <div class="brand"><svg width="22" height="22" viewBox="0 0 48 48" fill="none" aria-label="Lumen"><rect x="6" y="6" width="7.5" height="38" rx="3.75" fill="#1463FF"/><rect x="18" y="25" width="4.5" height="19" rx="2.25" fill="#7FA8FF"/><rect x="27" y="25" width="7.5" height="19" rx="3.75" fill="#1463FF"/><rect x="39" y="25" width="4.5" height="19" rx="2.25" fill="#1463FF"/></svg> Lumen <small>PDF Studio · b24</small></div>
     <input class="fmt-name" id="fmtName" value="Quotation - Custom" title="Format name">
     <select class="sel" id="doctypeSel" title="Target DocType" onchange="onDoctype(this.value)"></select>
     <select class="sel" id="openSel" title="Open an existing format" onchange="openFormat(this.value)"><option value="">Open…</option></select>
@@ -930,18 +930,28 @@ function loadDoctypeMeta(dt){
 }
 function openFormat(name){if(!name)return;const el=document.getElementById("openSel");if(name==="__manage__"){if(el)el.value="";openFormatsMgr();return;}clearDraft();rpc("brandpdf.api.get_format",{name:name}).then(function(r){if(r&&r.definition)loadDefinition(r.definition);if(el)el.value="";});}
 /* ---- Formats manager: set the default (Print > PDF uses it), open, delete ---- */
+let _fmtCompany="";  // ""=global default; else a Company name (multi-company scoping)
+let _companies=null;
 function openFormatsMgr(){document.getElementById("fmtmgrTitle").textContent="Formats for "+state.target;document.getElementById("fmtmgrBody").innerHTML='<div class="hint" style="padding:12px 0">Loading…</div>';document.getElementById("fmtmgr").style.display="flex";
-  rpc("brandpdf.api.list_formats",{doctype:state.target}).then(function(fs){fs=fs||[];
+  const go=function(){_renderFmtMgr();};
+  if(_companies===null&&EMBED)rpc("brandpdf.api.list_companies").then(function(cs){_companies=cs||[];go();});
+  else go();}
+function _renderFmtMgr(){
+  rpc("brandpdf.api.list_formats",{doctype:state.target,company:_fmtCompany}).then(function(fs){fs=fs||[];
+    let head="";
+    if(_companies&&_companies.length>1){
+      head=`<div class="fld" style="margin:0 0 10px"><label>Default for</label><select onchange="_fmtCompany=this.value;_renderFmtMgr()"><option value="">All companies (global default)</option>`+_companies.map(function(c){return `<option value="${esc(c)}" ${_fmtCompany===c?'selected':''}>${esc(c)}</option>`;}).join("")+`</select></div>`;
+    }
     const body=fs.length?fs.map(function(f){
-      const acts=(f.is_default?'<span class="deftag">Default</span>':`<button class="btn ghost" onclick="setDefaultFmt('${esc(f.name)}')">Set default</button>`)
+      const acts=(f.is_default?'<span class="deftag">Default'+(_fmtCompany?' · '+esc(_fmtCompany):'')+'</span>':`<button class="btn ghost" onclick="setDefaultFmt('${esc(f.name)}')">Set default</button>`)
         +`<button class="btn ghost" onclick="openFmtFromMgr('${esc(f.name)}')">Open</button>`
         +(f.is_standard?'':`<button class="btn ghost" onclick="deleteFmt('${esc(f.name)}','${esc(f.label)}')">Delete</button>`);
       return `<div class="fmtrow"><div class="fmtname">${f.is_default?'<span class="star">★</span>':''}${esc(f.label)}${f.is_standard?'<span class="tagstd">standard</span>':''}</div><div class="fmtacts">${acts}</div></div>`;
     }).join(""):'<div class="hint" style="padding:14px 0">'+(EMBED?('No saved formats for <b>'+esc(state.target)+'</b> yet — design one and Save.'):'Format management works inside ERPNext.')+'</div>';
-    document.getElementById("fmtmgrBody").innerHTML=body;});}
+    document.getElementById("fmtmgrBody").innerHTML=head+body;});}
 function closeFmtMgr(){document.getElementById("fmtmgr").style.display="none";}
 function openFmtFromMgr(n){closeFmtMgr();openFormat(n);}
-function setDefaultFmt(n){rpc("brandpdf.api.set_default_format",{doctype:state.target,template:n}).then(function(){openFormatsMgr();loadDoctypeMeta(state.target);});}
+function setDefaultFmt(n){rpc("brandpdf.api.set_default_format",{doctype:state.target,template:n,company:_fmtCompany}).then(function(){_renderFmtMgr();loadDoctypeMeta(state.target);});}
 function deleteFmt(n,lbl){if(!confirm("Delete the format \""+lbl+"\"? This can't be undone."))return;rpc("brandpdf.api.delete_format",{name:n}).then(function(r){if(r&&r.deleted===false){alert("Could not delete that format.");}openFormatsMgr();loadDoctypeMeta(state.target);});}
 function newFormat(){clearDraft();state.blocks=[];selId=null;FIELDVALS=null;SAMPLE=JSON.parse(JSON.stringify(BASE_SAMPLE));state.branding.header_image="";state.branding.footer_image="";document.getElementById("fmtName").value="New Format";const ds=document.getElementById("dataSel");if(ds)ds.value="";renderNowSync();renderProps();renderBrand();}
 function loadData(name){if(!name){FIELDVALS=null;SAMPLE=JSON.parse(JSON.stringify(BASE_SAMPLE));render();return;}rpc("brandpdf.api.builder_sample",{doctype:state.target,name:name}).then(applyData);}

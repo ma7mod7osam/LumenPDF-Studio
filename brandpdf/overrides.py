@@ -17,19 +17,30 @@ import re
 import frappe
 
 
-def _mapping(doctype, flag):
-    """Template name from the highest-priority enabled mapping with `flag` on, else None."""
+def _mapping(doctype, flag, company=None):
+    """Template name from the highest-priority enabled mapping with `flag` on. A mapping scoped
+    to the doc's company wins over the global (blank-company) one; other companies' rows never
+    apply. Returns None when unmapped."""
     if not doctype:
         return None
     try:
         if not frappe.db.exists("DocType", "BrandPDF Mapping"):
             return None
-        rows = frappe.get_all(
-            "BrandPDF Mapping",
-            filters={"target_doctype": doctype, "enabled": 1, flag: 1},
-            fields=["template"], order_by="priority asc", limit=1,
-        )
-        return rows[0]["template"] if rows else None
+
+        def _first(filters):
+            try:
+                rows = frappe.get_all("BrandPDF Mapping", filters=filters,
+                                      fields=["template"], order_by="priority asc", limit=1)
+            except Exception:
+                return None  # company column not migrated yet -> treat as unscoped install
+            return rows[0]["template"] if rows else None
+
+        if company:
+            hit = _first({"target_doctype": doctype, "enabled": 1, flag: 1, "company": company})
+            if hit:
+                return hit
+        return (_first({"target_doctype": doctype, "enabled": 1, flag: 1, "company": ("in", ["", None])})
+                or _first({"target_doctype": doctype, "enabled": 1, flag: 1}))
     except Exception:
         # Fail safe to 'unmapped' (native PDF keeps working) but leave a trace — a silent
         # swallow here would make branded PDFs vanish with nothing to diagnose.
@@ -43,7 +54,13 @@ def _mapping(doctype, flag):
 @frappe.whitelist()
 def download_pdf(doctype, name, format=None, doc=None, *args, **kwargs):
     """Drop-in override of frappe.utils.print_format.download_pdf (same signature, tolerant tail)."""
-    template = _mapping(doctype, "replace_print_pdf")
+    company = None
+    try:
+        if frappe.get_meta(doctype).has_field("company"):
+            company = frappe.db.get_value(doctype, name, "company")
+    except Exception:
+        company = None
+    template = _mapping(doctype, "replace_print_pdf", company)
     if template:
         # Same Redis NX lock as the background jobs: at most ONE Chromium render at a time.
         # If the renderer is busy, we don't queue the web request — we fall back to the native
@@ -80,7 +97,7 @@ def download_pdf(doctype, name, format=None, doc=None, *args, **kwargs):
 def auto_attach_on_submit(doc, method=None):
     """doc_events['*'].on_submit: attach the branded PDF after submit of a mapped doctype."""
     try:
-        template = _mapping(doc.doctype, "auto_attach")
+        template = _mapping(doc.doctype, "auto_attach", doc.get("company"))
         if not template:
             return
         frappe.enqueue(

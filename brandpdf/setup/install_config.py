@@ -61,6 +61,7 @@ CONDITION_FIELDS = [
 MAPPING_FIELDS = [
     {"fieldname": "target_doctype", "fieldtype": "Link", "label": "Target DocType", "options": "DocType", "reqd": 1, "in_list_view": 1},
     {"fieldname": "template", "fieldtype": "Link", "label": "Template", "options": "BrandPDF Template", "reqd": 1, "in_list_view": 1},
+    {"fieldname": "company", "fieldtype": "Link", "label": "Company (blank = all companies)", "options": "Company", "in_list_view": 1},
     {"fieldname": "enabled", "fieldtype": "Check", "label": "Enabled", "default": "1", "in_list_view": 1},
     {"fieldname": "priority", "fieldtype": "Int", "label": "Priority (lower wins)", "default": "0", "in_list_view": 1},
     {"fieldname": "behavior_sb", "fieldtype": "Section Break", "label": "Behavior"},
