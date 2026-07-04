@@ -50,7 +50,81 @@ def list_formats(doctype):
         fields=["name", "template_name", "is_standard"],
         order_by="is_standard asc, modified desc",
     )
-    return [{"name": r["name"], "label": r.get("template_name") or r["name"]} for r in rows]
+    default = _default_template(doctype)
+    out = [{
+        "name": r["name"], "label": r.get("template_name") or r["name"],
+        "is_standard": bool(r.get("is_standard")), "is_default": (r["name"] == default),
+    } for r in rows]
+    out.sort(key=lambda x: (not x["is_default"]))  # the default format first (for the picker preselect)
+    return out
+
+
+def _default_template(doctype):
+    """The template the highest-priority enabled mapping points to (the doctype's default), or None."""
+    if not frappe.db.exists("DocType", "BrandPDF Mapping"):
+        return None
+    mp = frappe.get_all(
+        "BrandPDF Mapping", filters={"target_doctype": doctype, "enabled": 1},
+        fields=["template"], order_by="priority asc", limit=1,
+    )
+    return mp[0]["template"] if mp else None
+
+
+@frappe.whitelist()
+def set_default_format(doctype, template):
+    """Make `template` the default format for `doctype` (used by Print > PDF + preselected in the
+    picker). System-Manager only — changing the default affects everyone's printing."""
+    _require_manager()
+    if not (doctype and template and frappe.db.exists("BrandPDF Template", template)):
+        frappe.throw("Unknown format.")
+    t = frappe.get_doc("BrandPDF Template", template)
+    if t.target_doctype and t.target_doctype != doctype:
+        frappe.throw("That format belongs to a different doctype.")
+    existing = frappe.get_all(
+        "BrandPDF Mapping", filters={"target_doctype": doctype}, pluck="name", order_by="priority asc", limit=1
+    )
+    if existing:
+        m = frappe.get_doc("BrandPDF Mapping", existing[0])
+        m.template = template
+        m.enabled = 1
+    else:
+        m = frappe.get_doc({"doctype": "BrandPDF Mapping", "target_doctype": doctype,
+                            "template": template, "enabled": 1, "priority": 0})
+    m.flags.ignore_permissions = True
+    m.save() if existing else m.insert()
+    frappe.db.commit()
+    return {"default": template}
+
+
+@frappe.whitelist()
+def delete_format(name):
+    """Delete a custom (non-standard) format. If it was the default, repoint the mapping to another
+    format for the same doctype, or disable it so printing falls back to native. System-Manager only."""
+    _require_manager()
+    if not frappe.db.exists("BrandPDF Template", name):
+        return {"deleted": False}
+    t = frappe.get_doc("BrandPDF Template", name)
+    if t.get("is_standard"):
+        frappe.throw("Standard formats can't be deleted (duplicate them to edit).")
+    target = t.target_doctype
+    maps = frappe.get_all(
+        "BrandPDF Mapping", filters={"target_doctype": target, "template": name}, pluck="name"
+    ) if frappe.db.exists("DocType", "BrandPDF Mapping") else []
+    frappe.delete_doc("BrandPDF Template", name, ignore_permissions=True)
+    for mn in maps:  # this format was a default -> keep printing working
+        m = frappe.get_doc("BrandPDF Mapping", mn)
+        others = frappe.get_all(
+            "BrandPDF Template", filters={"target_doctype": target, "name": ("!=", name)},
+            pluck="name", order_by="is_standard asc, modified desc", limit=1,
+        )
+        if others:
+            m.template = others[0]
+        else:
+            m.enabled = 0  # nothing left -> native PDF takes over
+        m.flags.ignore_permissions = True
+        m.save()
+    frappe.db.commit()
+    return {"deleted": True, "target_doctype": target}
 
 
 @frappe.whitelist()
@@ -408,19 +482,17 @@ def _validate_image_srcs(definition):
 
 
 def _activate_mapping(target, tmpl_name):
+    """Bootstrap only: if the doctype has NO mapping yet, make this the default. Saving a format
+    never overwrites an existing default anymore (that was surprising 'last-saved-wins'); the user
+    picks the default explicitly via set_default_format / the Formats manager."""
     existing = frappe.get_all(
-        "BrandPDF Mapping", filters={"target_doctype": target}, pluck="name", order_by="priority asc", limit=1
+        "BrandPDF Mapping", filters={"target_doctype": target}, pluck="name", limit=1
     )
     if existing:
-        m = frappe.get_doc("BrandPDF Mapping", existing[0])
-        m.template = tmpl_name
-        m.enabled = 1
-        m.flags.ignore_permissions = True
-        m.save()
-    else:
-        m = frappe.get_doc({"doctype": "BrandPDF Mapping", "target_doctype": target, "template": tmpl_name, "enabled": 1, "priority": 0})
-        m.flags.ignore_permissions = True
-        m.insert()
+        return
+    m = frappe.get_doc({"doctype": "BrandPDF Mapping", "target_doctype": target, "template": tmpl_name, "enabled": 1, "priority": 0})
+    m.flags.ignore_permissions = True
+    m.insert()
 
 
 # --- internals -------------------------------------------------------------

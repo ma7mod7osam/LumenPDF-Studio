@@ -39,17 +39,21 @@ function brandpdf_generate(frm) {
         callback(r) {
             const formats = r.message || [];
             if (formats.length > 1) {
+                // Option value = template name (labels can repeat / carry the ★ default marker).
+                const def = formats.find((f) => f.is_default) || formats[0];
                 const d = new frappe.ui.Dialog({
                     title: __("Choose a format"),
                     fields: [{
                         fieldname: "fmt", fieldtype: "Select", label: __("Format"), reqd: 1,
-                        options: formats.map((f) => f.label).join("\n"), default: formats[0].label,
+                        options: formats.map((f) => ({
+                            value: f.name, label: f.label + (f.is_default ? "  ★ " + __("default") : ""),
+                        })),
+                        default: def.name,
                     }],
                     primary_action_label: __("Download"),
                     primary_action(v) {
                         d.hide();
-                        const chosen = formats.find((f) => f.label === v.fmt) || formats[0];
-                        brandpdf_run(frm, chosen.name);
+                        brandpdf_run(frm, v.fmt || def.name);
                     },
                 });
                 d.show();
