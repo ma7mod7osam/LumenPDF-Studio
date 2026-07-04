@@ -76,8 +76,9 @@ def _margins_honored(renderer):
     honored = True
     try:
         probe = ('<!DOCTYPE html><html><head><style>@page{size:A4;margin:100mm 0mm;}'
-                 'html,body{margin:0;padding:0;}</style></head>'
-                 '<body><div style="height:250mm;width:100mm;">probe</div></body></html>')
+                 'html,body{margin:0;padding:0;}</style>'
+                 '<style>.print-format{margin-top:100mm;margin-bottom:100mm;margin-left:0mm;margin-right:0mm;}</style>'
+                 '</head><body><div style="height:250mm;width:100mm;">probe</div></body></html>')
         opts = default_options()
         opts["margin"] = {"top": "100mm", "bottom": "100mm", "left": "0mm", "right": "0mm"}
         pdf = renderer.render(probe, opts)

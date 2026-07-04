@@ -130,16 +130,24 @@ def engine_diag():
             opts["margin"] = margin
         return len(_R(_io.BytesIO(r.render(html, opts))).pages)
 
+    PF100 = '<style>.print-format{margin-top:100mm;margin-bottom:100mm;margin-left:0mm;margin-right:0mm;}</style>'
+    PF0 = '<style>.print-format{margin-top:0mm;margin-bottom:0mm;margin-left:0mm;margin-right:0mm;}</style>'
     probe = ('<!DOCTYPE html><html><head><style>@page{size:A4;margin:100mm 0mm;}'
-             'html,body{margin:0;padding:0;}</style></head>'
+             'html,body{margin:0;padding:0;}</style>' + PF100 + '</head>'
              '<body><div style="height:250mm;width:100mm;">probe</div></body></html>')
-    full = ('<!DOCTYPE html><html><head><style>@page{size:A4;margin:0;}html,body{margin:0;padding:0;}</style></head>'
-            '<body><div style="height:280mm;width:100mm;">tall</div></body></html>')
+    full = ('<!DOCTYPE html><html><head><style>@page{size:A4;margin:0;}html,body{margin:0;padding:0;}</style>'
+            + PF0 + '</head><body><div style="height:280mm;width:100mm;">tall</div></body></html>')
+    pf_only = ('<!DOCTYPE html><html><head>' + PF100 +
+               '</head><body><div style="height:250mm;width:100mm;">probe</div></body></html>')
     try:
         out["probe_100mm_margins_pages"] = pages(probe, {"top": "100mm", "bottom": "100mm", "left": "0mm", "right": "0mm"})
         out["margins_honored"] = out["probe_100mm_margins_pages"] >= 2
     except Exception as e:
         out["probe_error"] = str(e)[:300]
+    try:
+        out["pf_channel_only_pages"] = pages(pf_only, None)  # >=2 = the .print-format CSS channel works alone
+    except Exception as e:
+        out["pf_channel_error"] = str(e)[:300]
     try:
         out["fullbleed_280mm_pages"] = pages(full, None)  # 1 = full-bleed OK; 2 = forced page margins eat height
     except Exception as e:

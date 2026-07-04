@@ -28,6 +28,18 @@ CONTENT_BLOCKS_ORDER = [
 BANNER_BLOCKS = {"header_banner", "footer_banner"}
 
 
+def _pf_css(top=0, bottom=0, left=0, right=0):
+    """Page margins in the dialect the HOST's PDF pipeline actually parses. Frappe's
+    read_options_from_html regexes the RAW html for `.print-format{...margin-top:Xmm;...}`, and
+    print_designer's chrome generator parses the same class from the <style> soup — for both,
+    this in-HTML contract wins over (or substitutes for) caller options. Values must be plain
+    `margin-x:<n>mm;` — exactly this formatting."""
+    return ("<style>.print-format{"
+            f"margin-top:{_fmt_num(top)}mm;margin-bottom:{_fmt_num(bottom)}mm;"
+            f"margin-left:{_fmt_num(left)}mm;margin-right:{_fmt_num(right)}mm;"
+            "}</style>")
+
+
 def base_css(b):
     primary = b.get("primary", "#1C75BC")
     navy = b.get("navy", "#1A1E2A")
@@ -807,6 +819,7 @@ def _absolute_page_html(doc, branding, blocks_list, ctx, grow=False, top_mm=0.0,
     font = branding.get("font") or "Montserrat"
     navy = branding.get("navy", "#1A1E2A")
     parts = [base_css(branding)]
+    parts.append(_pf_css(top_mm or 0, bottom_mm or 0))  # host-parsed margin contract (0 = full-bleed overlays)
     if top_mm or bottom_mm:
         parts.append(f"<style>@page{{margin:{_fmt_num(top_mm)}mm 0mm {_fmt_num(bottom_mm)}mm 0mm;}}</style>")
     if grow:
@@ -857,8 +870,10 @@ def _flow_body_html(doc, branding, body_blocks, ctx, top_mm=0.0, bottom_mm=0.0, 
     parts = [base_css(branding)]
     if spacer_mode:
         parts.append("<style>@page{size:A4;margin:0mm;}</style>")
+        parts.append(_pf_css(0, 0))
     else:
         parts.append(f"<style>@page{{size:A4;margin:{_fmt_num(top_mm)}mm 0mm {_fmt_num(bottom_mm)}mm 0mm;}}</style>")
+        parts.append(_pf_css(top_mm, bottom_mm))
     parts.append(
         # box-sizing MATTERS: without it this box is 210mm + 28mm padding = 238mm — Chromium
         # silently shrink-to-fits (~0.88x, shrinking fonts with it) and wkhtmltopdf CLIPS the
@@ -935,6 +950,7 @@ def watermark_page_html(branding, wm):
     font = branding.get("font") or "Montserrat"
     return (
         base_css(branding)
+        + _pf_css(0, 0)
         + f"<div style=\"position:relative;width:210mm;height:297mm;overflow:hidden;font-family:'{font}',Arial,sans-serif;\">"
         + '<div style="position:absolute;top:0;left:0;width:210mm;height:297mm;display:flex;align-items:center;justify-content:center;">'
         + f'<div style="transform:rotate({_fmt_num(angle)}deg);font-size:{_fmt_num(size)}pt;font-weight:800;'
