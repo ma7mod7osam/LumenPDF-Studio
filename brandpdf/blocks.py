@@ -507,9 +507,13 @@ def _e_table(doc, b, s, ctx):
         (f'<col style="width:{_fmt_num(_num(cst(ci).get("w")))}mm">' if _num(cst(ci).get("w")) else "<col>")
         for ci in range(len(cols))
     ) + "</colgroup>"
+    def _sz(v):  # per-column/row font size in pt (clamped), else ""
+        n = _num(v)
+        return f"font-size:{_fmt_num(min(72, max(4, n)))}pt;" if n else ""
+
     th = "".join(
         f'<th style="background-color:{hb} !important;color:#fff;padding:5px 8px;'
-        f'text-align:{_esc(cst(ci).get("align") or "left")};'
+        f'text-align:{_esc(cst(ci).get("align") or "left")};{_sz(cst(ci).get("size"))}'
         f'border:1px solid {hb};font-weight:600;-webkit-print-color-adjust:exact;">'
         f"{_esc(_cell_value(doc, cols[ci]))}</th>"
         for ci in range(len(cols))
@@ -524,8 +528,9 @@ def _e_table(doc, b, s, ctx):
             st = cst(ci)
             weight = rst.get("weight") or st.get("weight") or "normal"
             color = f'color:{_esc(st["color"])};' if _hexok(st.get("color")) else ""
+            size = _sz(rst.get("size") or st.get("size"))  # row size wins over column size
             tds += (f'<td style="padding:5px 8px;border:1px solid #cfe5f6;'
-                    f'text-align:{_esc(st.get("align") or "left")};font-weight:{_esc(weight)};{color}'
+                    f'text-align:{_esc(st.get("align") or "left")};font-weight:{_esc(weight)};{color}{size}'
                     f'word-wrap:break-word;">{_esc(_cell_value(doc, r[ci] if ci < len(r) else ""))}</td>')
         body.append(f'<tr style="{trbg}">{tds}</tr>')
     return (
