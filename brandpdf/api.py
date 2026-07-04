@@ -62,24 +62,29 @@ def list_formats(doctype, company=None):
 
 def _default_template(doctype, company=None):
     """The doctype's default template: the doc's COMPANY-scoped mapping wins, else the global
-    (blank-company) mapping; None if neither exists."""
+    (blank-company) mapping; None if neither. Selection happens in PYTHON, not SQL filters —
+    legacy rows have company = NULL and `IN ('', NULL)` never matches NULL in SQL; and another
+    company's mapping must never leak in as a fallback."""
     if not frappe.db.exists("DocType", "BrandPDF Mapping"):
         return None
-
-    def _first(filters):
-        try:
-            mp = frappe.get_all("BrandPDF Mapping", filters=filters,
-                                fields=["template"], order_by="priority asc", limit=1)
+    try:
+        rows = frappe.get_all("BrandPDF Mapping", filters={"target_doctype": doctype, "enabled": 1},
+                              fields=["template", "company"], order_by="priority asc, creation asc")
+    except Exception:
+        try:  # old install: company column not migrated yet -> every row is global
+            rows = frappe.get_all("BrandPDF Mapping", filters={"target_doctype": doctype, "enabled": 1},
+                                  fields=["template"], order_by="priority asc, creation asc")
+            return rows[0]["template"] if rows else None
         except Exception:
-            return None  # old install: company column not migrated yet
-        return mp[0]["template"] if mp else None
-
+            return None
     if company:
-        hit = _first({"target_doctype": doctype, "enabled": 1, "company": company})
-        if hit:
-            return hit
-    return _first({"target_doctype": doctype, "enabled": 1, "company": ("in", ["", None])}) \
-        or _first({"target_doctype": doctype, "enabled": 1})
+        for r in rows:
+            if (r.get("company") or "") == company:
+                return r["template"]
+    for r in rows:
+        if not r.get("company"):  # NULL or "" -> global
+            return r["template"]
+    return None
 
 
 @frappe.whitelist()
@@ -104,13 +109,23 @@ def set_default_format(doctype, template, company=None):
     t = frappe.get_doc("BrandPDF Template", template)
     if t.target_doctype and t.target_doctype != doctype:
         frappe.throw("That format belongs to a different doctype.")
-    existing = frappe.get_all(
-        "BrandPDF Mapping",
-        filters={"target_doctype": doctype, "company": company or ("in", ["", None])},
-        pluck="name", order_by="priority asc", limit=1,
-    )
+    # Find THIS scope's existing row in Python (legacy global rows have company = NULL, which
+    # SQL 'IN' filters never match — a filter-based lookup would create a duplicate mapping).
+    try:
+        rows = frappe.get_all("BrandPDF Mapping", filters={"target_doctype": doctype},
+                              fields=["name", "company"], order_by="priority asc, creation asc")
+    except Exception:
+        rows = [{"name": n, "company": None} for n in frappe.get_all(
+            "BrandPDF Mapping", filters={"target_doctype": doctype}, pluck="name",
+            order_by="priority asc, creation asc")]
+    existing = None
+    for r in rows:
+        rc = r.get("company") or ""
+        if (company and rc == company) or (not company and not rc):
+            existing = r["name"]
+            break
     if existing:
-        m = frappe.get_doc("BrandPDF Mapping", existing[0])
+        m = frappe.get_doc("BrandPDF Mapping", existing)
         m.template = template
         m.company = company or ""
         m.enabled = 1

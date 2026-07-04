@@ -26,21 +26,23 @@ def _mapping(doctype, flag, company=None):
     try:
         if not frappe.db.exists("DocType", "BrandPDF Mapping"):
             return None
-
-        def _first(filters):
-            try:
-                rows = frappe.get_all("BrandPDF Mapping", filters=filters,
-                                      fields=["template"], order_by="priority asc", limit=1)
-            except Exception:
-                return None  # company column not migrated yet -> treat as unscoped install
-            return rows[0]["template"] if rows else None
-
+        # Select in PYTHON: legacy rows have company = NULL (SQL IN-filters never match NULL),
+        # and another company's mapping must never leak in as a fallback.
+        try:
+            rows = frappe.get_all("BrandPDF Mapping", filters={"target_doctype": doctype, "enabled": 1, flag: 1},
+                                  fields=["template", "company"], order_by="priority asc, creation asc")
+        except Exception:
+            rows = [{"template": t, "company": None} for t in frappe.get_all(
+                "BrandPDF Mapping", filters={"target_doctype": doctype, "enabled": 1, flag: 1},
+                pluck="template", order_by="priority asc, creation asc")]
         if company:
-            hit = _first({"target_doctype": doctype, "enabled": 1, flag: 1, "company": company})
-            if hit:
-                return hit
-        return (_first({"target_doctype": doctype, "enabled": 1, flag: 1, "company": ("in", ["", None])})
-                or _first({"target_doctype": doctype, "enabled": 1, flag: 1}))
+            for r in rows:
+                if (r.get("company") or "") == company:
+                    return r["template"]
+        for r in rows:
+            if not r.get("company"):
+                return r["template"]
+        return None
     except Exception:
         # Fail safe to 'unmapped' (native PDF keeps working) but leave a trace — a silent
         # swallow here would make branded PDFs vanish with nothing to diagnose.
