@@ -62,6 +62,34 @@ def _resolve(doc, template):
     return (kind, value, definition)
 
 
+def _margins_honored(renderer):
+    """Probe (once a day, cached) whether the active PDF engine honors page margins at all —
+    via @page CSS or the explicit options. A 250mm block with 100mm top+bottom margins MUST
+    paginate; if the probe comes back as one page, the engine ignores margins and compose
+    switches to spacer_mode (thead/tfoot spacer clearance baked into the body HTML)."""
+    try:
+        cached = frappe.cache().get_value("brandpdf_margins_honored")
+        if cached is not None:
+            return str(cached) == "1"
+    except Exception:
+        pass
+    honored = True
+    try:
+        probe = ('<style>@page{size:A4;margin:100mm 0mm;}</style>'
+                 '<div style="height:250mm;width:100mm;">probe</div>')
+        opts = default_options()
+        opts["margin"] = {"top": "100mm", "bottom": "100mm", "left": "0mm", "right": "0mm"}
+        pdf = renderer.render(probe, opts)
+        honored = len(PdfReader(io.BytesIO(pdf)).pages) >= 2
+    except Exception:
+        honored = True  # can't probe -> keep the standard path
+    try:
+        frappe.cache().set_value("brandpdf_margins_honored", "1" if honored else "0", expires_in_sec=86400)
+    except Exception:
+        pass
+    return honored
+
+
 def _finish(html, allowed, renderer, margins=None):
     """margins={'top': mm, 'bottom': mm} passes the band clearance as EXPLICIT page margins.
     The @page CSS alone is not enough: wkhtmltopdf ignores @page margins entirely, and Chrome's
@@ -142,9 +170,11 @@ def _compose(doc, definition, renderer):
                         "pos": {"x": 0, "y": PAGE_H - fh, "w": 210, "h": fh}})
 
     # 1) Body in flow (+ floating elements), may span multiple pages, kept clear of the bands.
+    honored = _margins_honored(renderer)
     body_pdf = _finish(
-        B._flow_body_html(doc, branding, flow_body, {"terms_html": terms_html}, top_mm=hh + hm, bottom_mm=fh + fm, floats=float_body),
-        allowed, renderer, margins={"top": hh + hm, "bottom": fh + fm},
+        B._flow_body_html(doc, branding, flow_body, {"terms_html": terms_html},
+                          top_mm=hh + hm, bottom_mm=fh + fm, floats=float_body, spacer_mode=not honored),
+        allowed, renderer, margins=({"top": hh + hm, "bottom": fh + fm} if honored else None),
     )
     reader = PdfReader(io.BytesIO(body_pdf))
     n = len(reader.pages) or 1

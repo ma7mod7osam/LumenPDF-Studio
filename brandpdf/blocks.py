@@ -842,19 +842,37 @@ def _absolute_page_html(doc, branding, blocks_list, ctx, grow=False, top_mm=0.0,
     return "".join(parts)
 
 
-def _flow_body_html(doc, branding, body_blocks, ctx, top_mm=0.0, bottom_mm=0.0, floats=None):
+def _flow_body_html(doc, branding, body_blocks, ctx, top_mm=0.0, bottom_mm=0.0, floats=None, spacer_mode=False):
     """Body in document flow: blocks stack top-to-bottom (so a variable-length items table never
     overlaps the totals/terms below it), reserving @page top/bottom margins so the body stays
     clear of the running header/footer bands on EVERY page. `floats` are free-positioned elements
-    placed absolutely (page coords) within the body — for logos/stamps/signatures/notes."""
+    placed absolutely (page coords) within the body — for logos/stamps/signatures/notes.
+
+    spacer_mode=True is the fallback for PDF engines that honor NEITHER @page CSS margins NOR
+    explicit margin options (compose probes this once): the page prints full-bleed and the band
+    clearance comes from a wrapper table whose repeating <thead>/<tfoot> hold invisible spacers —
+    table header/footer groups repeat on every printed page in Chromium and wkhtmltopdf alike."""
     font = branding.get("font") or "Montserrat"
     navy = branding.get("navy", "#1A1E2A")
     parts = [base_css(branding)]
-    parts.append(f"<style>@page{{size:A4;margin:{_fmt_num(top_mm)}mm 0mm {_fmt_num(bottom_mm)}mm 0mm;}}</style>")
+    if spacer_mode:
+        parts.append("<style>@page{size:A4;margin:0mm;}</style>")
+    else:
+        parts.append(f"<style>@page{{size:A4;margin:{_fmt_num(top_mm)}mm 0mm {_fmt_num(bottom_mm)}mm 0mm;}}</style>")
     parts.append(
-        f'<div style="position:relative;width:210mm;padding:0 14mm;font-family:\'{font}\',\'Segoe UI\',Arial,sans-serif;'
+        # box-sizing MATTERS: without it this box is 210mm + 28mm padding = 238mm — Chromium
+        # silently shrink-to-fits (~0.88x, shrinking fonts with it) and wkhtmltopdf CLIPS the
+        # right column off the page. border-box keeps 210mm meaning 210mm.
+        f'<div style="position:relative;width:210mm;box-sizing:border-box;padding:0 14mm;font-family:\'{font}\',\'Segoe UI\',Arial,sans-serif;'
         f'color:{navy};font-size:8.5pt;-webkit-print-color-adjust:exact;print-color-adjust:exact;">'
     )
+    if spacer_mode:
+        parts.append(
+            '<table style="width:100%;border-collapse:collapse;">'
+            f'<thead><tr><td style="border:0;padding:0;"><div style="height:{_fmt_num(top_mm)}mm;"></div></td></tr></thead>'
+            f'<tfoot><tr><td style="border:0;padding:0;"><div style="height:{_fmt_num(bottom_mm)}mm;"></div></td></tr></tfoot>'
+            '<tbody><tr><td style="border:0;padding:0;">'
+        )
     for bl in (body_blocks or []):
         if not isinstance(bl, dict):
             continue
@@ -867,6 +885,8 @@ def _flow_body_html(doc, branding, body_blocks, ctx, top_mm=0.0, bottom_mm=0.0, 
         inner = fn(doc, branding, bl.get("settings") or {}, ctx)
         css = _style_css(bl.get("style") or {}, t)
         parts.append(f'<div style="margin-bottom:4mm;{css}">{inner}</div>')
+    if spacer_mode:
+        parts.append("</td></tr></tbody></table>")
     for bl in (floats or []):
         if not isinstance(bl, dict):
             continue
@@ -879,7 +899,9 @@ def _flow_body_html(doc, branding, body_blocks, ctx, top_mm=0.0, bottom_mm=0.0, 
         inner = fn(doc, branding, bl.get("settings") or {}, ctx)
         pos = bl.get("pos") or {}
         x = _num(pos.get("x"), 0)
-        y = _num(pos.get("y"), 0) - top_mm  # page coord -> container coord (container starts at the top margin)
+        # page coord -> container coord: with @page margins the container starts at the top
+        # margin; in spacer_mode the container starts at the page top (margins are spacers).
+        y = _num(pos.get("y"), 0) - (0 if spacer_mode else top_mm)
         if y < 0:
             y = 0
         w = _num(pos.get("w"), 120)
