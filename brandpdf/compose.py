@@ -121,6 +121,20 @@ def _finish(html, allowed, renderer, margins=None):
     return renderer.render(html, options)
 
 
+def _watermark_text(doc, wm):
+    """Conditional watermark: first matching rule (field/op/value) picks the text — e.g.
+    status = Paid -> 'PAID', status = Draft -> 'DRAFT'; falls back to the fixed text."""
+    for r in (wm.get("rules") or []) if isinstance(wm.get("rules"), (list, tuple)) else []:
+        if not isinstance(r, dict) or not r.get("field") or not (r.get("text") or "").strip():
+            continue
+        try:
+            if resolver._match(doc.get(r.get("field")), r.get("op") or "=", r.get("value")):
+                return r["text"].strip()
+        except Exception:
+            continue
+    return (wm.get("text") or "").strip()
+
+
 def _derive_region(bl, hh, fh):
     """Back-compat for definitions without an explicit region: derive from the block's Y."""
     y = B._num((bl.get("pos") or {}).get("y"), 0)
@@ -196,6 +210,8 @@ def _compose(doc, definition, renderer):
     # Watermark page (rendered once) is merged BEHIND every page.
     wm = definition.get("watermark")
     wm_bytes = None
+    if isinstance(wm, dict):
+        wm = dict(wm, text=_watermark_text(doc, wm))  # conditional rules may pick the text per doc
     if isinstance(wm, dict) and wm.get("text"):
         wm_html = B.watermark_page_html(branding, wm)
         if wm_html:

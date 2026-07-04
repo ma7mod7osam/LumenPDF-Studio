@@ -370,11 +370,11 @@ def doctype_fields(doctype="Quotation"):
         "Section Break", "Column Break", "Tab Break", "HTML", "Table", "Table MultiSelect",
         "Button", "Heading", "Fold", "Image", "Geolocation", "Signature", "Barcode",
     }
-    out = [{"fieldname": "name", "label": "ID (name)"}]
+    out = [{"fieldname": "name", "label": "ID (name)", "fieldtype": "Data"}]
     for df in frappe.get_meta(doctype).fields:
         if df.fieldtype in skip or not df.fieldname:
             continue
-        out.append({"fieldname": df.fieldname, "label": df.label or df.fieldname})
+        out.append({"fieldname": df.fieldname, "label": df.label or df.fieldname, "fieldtype": df.fieldtype})
     return out
 
 

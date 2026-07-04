@@ -64,15 +64,15 @@ def base_css(b):
   .bs-billto .addr {{ color:#6b6b6e; font-size:8pt; line-height:1.5; }}
   table.bs-items {{ width:100%; border-collapse:collapse; margin-bottom:6mm; table-layout:fixed; }}
   table.bs-items th, table.bs-items td {{ word-wrap:break-word; }}
-  table.bs-items thead th {{ background-color:{primary} !important; color:#fff !important; font-weight:600; font-size:7.5pt; padding:6px 8px; text-align:left; -webkit-print-color-adjust:exact; print-color-adjust:exact; }}
+  table.bs-items thead th {{ background-color:{primary} !important; color:#fff !important; font-weight:600; font-size:0.9em; padding:6px 8px; text-align:left; -webkit-print-color-adjust:exact; print-color-adjust:exact; }}
   table.bs-items thead th.num {{ text-align:right; }}
   table.bs-items tbody td {{ padding:6px 8px; border-bottom:1px solid #cfe5f6; vertical-align:top; font-weight:normal; }}
   table.bs-items tbody tr {{ page-break-inside:avoid; }}
   table.bs-items td.num {{ text-align:right; white-space:nowrap; }}
   table.bs-items tbody tr {{ break-inside:avoid; }}
-  table.bs-items tbody tr:nth-child(even) td {{ background-color:#eef6fc !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }}
+  table.bs-items.zebra-default tbody tr:nth-child(even) td {{ background-color:#eef6fc; -webkit-print-color-adjust:exact; print-color-adjust:exact; }}
   table.bs-items.nozebra tbody tr:nth-child(even) td {{ background-color:transparent !important; }}
-  table.bs-items tbody td *:not(.it-name):not(.it-desc) {{ font-weight:normal !important; background:transparent !important; border:0 !important; color:{navy} !important; }}
+  table.bs-items tbody td *:not(.it-name):not(.it-desc) {{ font-weight:normal !important; background:transparent !important; border:0 !important; color:inherit; }}
   table.bs-items .it-name {{ font-weight:600 !important; }}
   table.bs-items .it-desc {{ color:#6b6b6e !important; font-size:7pt; line-height:1.4; }}
   table.bs-tot {{ width:100%; border-collapse:collapse; font-size:8pt; }}
@@ -371,6 +371,21 @@ def _style_css(style, type_=None, absolute=False):
         p.append("color:" + style["color"].strip())
     if _hexok(style.get("bg")):
         p.append("background:" + style["bg"].strip())
+    lh = _num(style.get("lineHeight"))
+    if lh is not None and 0.5 <= lh <= 4:
+        p.append(f"line-height:{_fmt_num(lh)}")
+    ls = _num(style.get("letterSpacing"))
+    if ls is not None and -5 <= ls <= 30:
+        p.append(f"letter-spacing:{_fmt_num(ls)}px")
+    if style.get("underline"):
+        p.append("text-decoration:underline")
+    if style.get("rtl"):
+        p.append("direction:rtl")
+        if a not in _ALIGN:
+            p.append("text-align:right")
+    fnt = style.get("font")
+    if fnt in _FONTS:
+        p.append(f"font-family:'{fnt}','Segoe UI',Arial,sans-serif")
     spacing = (("pad", "padding"),) if absolute else (("mt", "margin-top"), ("mb", "margin-bottom"), ("pad", "padding"))
     for key, css in spacing:
         v = _num(style.get(key))
@@ -404,8 +419,25 @@ def _e_text(doc, b, s, ctx):
     return _esc(s.get("text") or "")
 
 
+_RICH_FIELDTYPES = {"Text Editor", "HTML Editor", "HTML", "Markdown Editor"}
+
+
+def _field_is_rich(doc, field):
+    try:
+        df = frappe.get_meta(doc.doctype).get_field(field)
+        return bool(df) and getattr(df, "fieldtype", "") in _RICH_FIELDTYPES
+    except Exception:
+        return False
+
+
 def _e_field(doc, b, s, ctx):
-    return _esc((s.get("prefix") or "") + _field_value(doc, s.get("field")))
+    field = s.get("field")
+    prefix = _esc(s.get("prefix") or "")
+    val = _field_value(doc, field)
+    if val and _field_is_rich(doc, field):
+        from frappe.utils.html_utils import sanitize_html
+        return prefix + sanitize_html(val)  # rich fields (e.g. Terms) print STYLED, not as raw tags
+    return prefix + _esc(val)
 
 
 def _e_image(doc, b, s, ctx):
@@ -433,10 +465,14 @@ _CELL_TOKEN = re.compile(r"^\{([A-Za-z0-9_]+)\}$")
 
 
 def _cell_value(doc, v):
-    """A cell whose whole content is '{fieldname}' is bound to that document field."""
+    """A cell whose whole content is '{fieldname}' is bound to that document field. Rich-text
+    fields collapse to plain text here (a table cell is not a rich container)."""
     m = _CELL_TOKEN.match(str(v or "").strip())
     if m:
-        return _field_value(doc, m.group(1))
+        val = _field_value(doc, m.group(1))
+        if val and _field_is_rich(doc, m.group(1)):
+            val = frappe.utils.strip_html_tags(val).strip()
+        return val
     return v or ""
 
 
@@ -481,7 +517,7 @@ def _e_table(doc, b, s, ctx):
                     f'word-wrap:break-word;">{_esc(_cell_value(doc, r[ci] if ci < len(r) else ""))}</td>')
         body.append(f'<tr style="{trbg}">{tds}</tr>')
     return (
-        '<table style="width:100%;border-collapse:collapse;font-size:8pt;table-layout:fixed;word-wrap:break-word;">'
+        '<table style="width:100%;border-collapse:collapse;table-layout:fixed;word-wrap:break-word;">'
         f"{colgroup}<thead><tr>{th}</tr></thead><tbody>{''.join(body)}</tbody></table>"
     )
 
@@ -540,11 +576,22 @@ def _d_customer(doc, b, s, ctx):
     return "".join(out)
 
 
+def _zebra_parts(s):
+    """(table_class, even_row_inline_bg) honoring settings.zebra + settings.zebraColor."""
+    if not s.get("zebra", True):
+        return "bs-items nozebra", ""
+    zc = s.get("zebraColor")
+    if _hexok(zc):
+        return "bs-items", f"background-color:{zc.strip()};-webkit-print-color-adjust:exact;"
+    return "bs-items zebra-default", ""
+
+
 def _d_items(doc, b, s, ctx):
     cols_cfg = s.get("cols") or {"desc": True, "qty": True, "rate": True, "amount": True}
     primary = b.get("primary", "#1C75BC")
     navy = b.get("navy", "#1A1E2A")
     hc = navy if s.get("headerColor") == "navy" else primary
+    zcls, zbg = _zebra_parts(s)
     zebra = s.get("zebra", True)
 
     w = s.get("widths") if isinstance(s.get("widths"), dict) else {}
@@ -581,9 +628,9 @@ def _d_items(doc, b, s, ctx):
             tds += f'<td class="num"><bdi>{_esc(it.get_formatted("rate"))}</bdi></td>'
         if cols_cfg.get("amount"):
             tds += f'<td class="num"><bdi>{_esc(it.get_formatted("amount"))}</bdi></td>'
-        body.append(f"<tr>{tds}</tr>")
-    cls = "bs-items" if zebra else "bs-items nozebra"
-    return f'<table class="{cls}">{colgroup}<thead><tr>{heads}</tr></thead><tbody>{"".join(body)}</tbody></table>'
+        rowstyle = f' style="{zbg}"' if (zbg and i % 2 == 0) else ""
+        body.append(f"<tr{rowstyle}>{tds}</tr>")
+    return f'<table class="{zcls}">{colgroup}<thead><tr>{heads}</tr></thead><tbody>{"".join(body)}</tbody></table>'
 
 
 def _d_datatable(doc, b, s, ctx):
@@ -635,8 +682,10 @@ def _d_datatable(doc, b, s, ctx):
             tds += (f'<td style="text-align:{align};padding:6px 8px;border-bottom:1px solid #cfe5f6;'
                     f'word-wrap:break-word;"><bdi>{_esc(val)}</bdi></td>')
         body.append(f"<tr>{tds}</tr>")
-    cls = "bs-items" if zebra else "bs-items nozebra"
-    return f'<table class="{cls}">{colgroup}<thead><tr>{heads}</tr></thead><tbody>{"".join(body)}</tbody></table>'
+    zcls, zbg = _zebra_parts(s)
+    if zbg:
+        body = [(f'<tr style="{zbg}">' + r[4:]) if (i % 2 == 1) else r for i, r in enumerate(body)]
+    return f'<table class="{zcls}">{colgroup}<thead><tr>{heads}</tr></thead><tbody>{"".join(body)}</tbody></table>'
 
 
 def _d_totals(doc, b, s, ctx):
