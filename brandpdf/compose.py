@@ -75,19 +75,32 @@ def _margins_honored(renderer):
         pass
     honored = True
     try:
-        probe = ('<style>@page{size:A4;margin:100mm 0mm;}</style>'
-                 '<div style="height:250mm;width:100mm;">probe</div>')
+        probe = ('<!DOCTYPE html><html><head><style>@page{size:A4;margin:100mm 0mm;}'
+                 'html,body{margin:0;padding:0;}</style></head>'
+                 '<body><div style="height:250mm;width:100mm;">probe</div></body></html>')
         opts = default_options()
         opts["margin"] = {"top": "100mm", "bottom": "100mm", "left": "0mm", "right": "0mm"}
         pdf = renderer.render(probe, opts)
         honored = len(PdfReader(io.BytesIO(pdf)).pages) >= 2
     except Exception:
-        honored = True  # can't probe -> keep the standard path
+        honored = True  # can't probe -> keep the standard path, but leave a trace to diagnose
+        try:
+            frappe.log_error(message=frappe.get_traceback(), title="BrandPDF margin probe failed")
+        except Exception:
+            pass
     try:
         frappe.cache().set_value("brandpdf_margins_honored", "1" if honored else "0", expires_in_sec=86400)
     except Exception:
         pass
     return honored
+
+
+def clear_probe_cache():
+    """after_migrate: a new deploy may change engine behavior — force a fresh margin probe."""
+    try:
+        frappe.cache().delete_value("brandpdf_margins_honored")
+    except Exception:
+        pass
 
 
 def _finish(html, allowed, renderer, margins=None):

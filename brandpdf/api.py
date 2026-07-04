@@ -103,6 +103,55 @@ def enabled_doctypes():
     return [dt for dt in resolver.enabled_doctypes() if frappe.has_permission(dt, "read")]
 
 
+@frappe.whitelist()
+def engine_diag():
+    """One-click ground truth about the site's PDF engine (System Manager). Open in the browser:
+    /api/method/brandpdf.api.engine_diag — reports how the ACTIVE generator treats margins, so
+    band-layout issues can be diagnosed from facts instead of guessed from output PDFs."""
+    _require_manager()
+    import inspect as _inspect
+    import io as _io
+    from pypdf import PdfReader as _R
+    from frappe.utils.pdf import get_pdf as _gp
+    from brandpdf.config import conf
+    from brandpdf.render.base import get_renderer, default_options
+    from brandpdf import compose as _c
+
+    out = {"frappe_version": getattr(frappe, "__version__", "?"),
+           "engine_conf": conf("engine") or "(default playwright)",
+           "get_pdf_accepts_pdf_generator": "pdf_generator" in _inspect.signature(_gp).parameters,
+           "site_pdf_generator": frappe.conf.get("pdf_generator")}
+    r = get_renderer()
+    out["renderer"] = type(r).__name__
+
+    def pages(html, margin):
+        opts = default_options()
+        if margin:
+            opts["margin"] = margin
+        return len(_R(_io.BytesIO(r.render(html, opts))).pages)
+
+    probe = ('<!DOCTYPE html><html><head><style>@page{size:A4;margin:100mm 0mm;}'
+             'html,body{margin:0;padding:0;}</style></head>'
+             '<body><div style="height:250mm;width:100mm;">probe</div></body></html>')
+    full = ('<!DOCTYPE html><html><head><style>@page{size:A4;margin:0;}html,body{margin:0;padding:0;}</style></head>'
+            '<body><div style="height:280mm;width:100mm;">tall</div></body></html>')
+    try:
+        out["probe_100mm_margins_pages"] = pages(probe, {"top": "100mm", "bottom": "100mm", "left": "0mm", "right": "0mm"})
+        out["margins_honored"] = out["probe_100mm_margins_pages"] >= 2
+    except Exception as e:
+        out["probe_error"] = str(e)[:300]
+    try:
+        out["fullbleed_280mm_pages"] = pages(full, None)  # 1 = full-bleed OK; 2 = forced page margins eat height
+    except Exception as e:
+        out["fullbleed_error"] = str(e)[:300]
+    try:
+        out["cached_margin_verdict"] = frappe.cache().get_value("brandpdf_margins_honored")
+    except Exception:
+        pass
+    _c.clear_probe_cache()  # re-probe on the next real render with fresh eyes
+    return out
+
+
 # --- visual builder: save / load formats -----------------------------------
 
 @frappe.whitelist()

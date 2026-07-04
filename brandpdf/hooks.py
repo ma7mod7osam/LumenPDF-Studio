@@ -42,4 +42,5 @@ scheduler_events = {
 after_migrate = [
     "brandpdf.setup.install_config.ensure_config",
     "brandpdf.setup.install_browser.ensure_chromium",
+    "brandpdf.compose.clear_probe_cache",  # engine behavior may change with a deploy
 ]

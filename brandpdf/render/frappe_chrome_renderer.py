@@ -35,6 +35,10 @@ class FrappeChromeRenderer(BaseRenderer):
             v = str(v or "0mm")
             return v if v.endswith(("mm", "cm", "in", "px")) else f"{v}mm"
 
+        # EXACTLY this key set and nothing more: print_designer's chrome generator reads these
+        # five keys; feeding it an unknown wkhtmltopdf flag (b18 added disable-smart-shrinking)
+        # made it discard the whole option set and fall back to its 15mm top/bottom defaults —
+        # which shifted the bands down and pushed the footer off-page. Proven-good set = b17's.
         if "options" in params:
             call["options"] = {
                 "page-size": (options or {}).get("format") or "A4",
@@ -43,7 +47,6 @@ class FrappeChromeRenderer(BaseRenderer):
                 "margin-left": _mm(m.get("left")),
                 "margin-right": _mm(m.get("right")),
                 "print-media-type": True,
-                "disable-smart-shrinking": "",  # wkhtmltopdf: keep 1mm = 1mm (no auto-rescaling)
             }
 
         pdf = get_pdf(html, **call)
