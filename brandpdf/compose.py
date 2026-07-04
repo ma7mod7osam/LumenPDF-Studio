@@ -104,7 +104,7 @@ def clear_probe_cache():
         pass
 
 
-def _finish(html, allowed, renderer, margins=None):
+def _finish(html, allowed, renderer, margins=None, page=None):
     """margins={'top': mm, 'bottom': mm} passes the band clearance as EXPLICIT page margins.
     The @page CSS alone is not enough: wkhtmltopdf ignores @page margins entirely, and Chrome's
     CDP printToPDF applies param margins when CSS gives none — so the body must carry its
@@ -112,6 +112,10 @@ def _finish(html, allowed, renderer, margins=None):
     html = assets.inline_images(html, allowed=allowed)
     html = assets.neutralize_remote(html)
     options = default_options()
+    if page:
+        # explicit page size beats named format on every engine (wkhtml --page-width/height,
+        # chrome paperWidth/Height, and the .print-format page-width dialect in the HTML)
+        options["page_width_mm"], options["page_height_mm"] = page
     if margins:
         options["margin"] = {
             "top": f"{B._fmt_num(margins.get('top', 0))}mm",
@@ -135,12 +139,12 @@ def _watermark_text(doc, wm):
     return (wm.get("text") or "").strip()
 
 
-def _derive_region(bl, hh, fh):
+def _derive_region(bl, hh, fh, ph=PAGE_H):
     """Back-compat for definitions without an explicit region: derive from the block's Y."""
     y = B._num((bl.get("pos") or {}).get("y"), 0)
     if hh and y < hh:
         return "header"
-    if fh and y >= PAGE_H - fh:
+    if fh and y >= ph - fh:
         return "footer"
     return "body"
 
@@ -152,6 +156,7 @@ def _compose(doc, definition, renderer):
         from PyPDF2 import PdfReader, PdfWriter  # older benches
 
     branding = B._branding_from_def(definition, doc)
+    pw, ph = B.page_dims(definition)  # A4 portrait or landscape
     terms_raw = doc.get("terms")
     terms_html = sanitize_html(terms_raw) if terms_raw else ""
 
@@ -159,11 +164,11 @@ def _compose(doc, definition, renderer):
     f = definition.get("footer") or {}
     h_on = bool(h.get("enabled"))
     f_on = bool(f.get("enabled"))
-    hh = max(0.0, min(float(B._num(h.get("height"), 0) or 0), PAGE_H)) if h_on else 0.0
-    fh = max(0.0, min(float(B._num(f.get("height"), 0) or 0), PAGE_H)) if f_on else 0.0
+    hh = max(0.0, min(float(B._num(h.get("height"), 0) or 0), ph)) if h_on else 0.0
+    fh = max(0.0, min(float(B._num(f.get("height"), 0) or 0), ph)) if f_on else 0.0
     hm = max(0.0, float(B._num(h.get("margin"), 0) or 0)) if h_on else 0.0  # clear gap below header
     fm = max(0.0, float(B._num(f.get("margin"), 0) or 0)) if f_on else 0.0  # clear gap above footer
-    if hh + fh + hm + fm > PAGE_H - 50:  # bands too tall -> let caller single-pass
+    if hh + fh + hm + fm > ph - 50:  # bands too tall -> let caller single-pass
         return None
 
     allowed = {branding.get("header_image"), branding.get("footer_image")}
@@ -176,7 +181,7 @@ def _compose(doc, definition, renderer):
             continue
         if not B._visible(doc, bl):
             continue  # conditionally-hidden block: don't let it drive overlay/page-number/short-circuit
-        region = bl.get("region") or _derive_region(bl, hh, fh)
+        region = bl.get("region") or _derive_region(bl, hh, fh, ph)
         if region == "header" and h_on:
             head.append(bl)
         elif region == "footer" and f_on:
@@ -192,17 +197,19 @@ def _compose(doc, definition, renderer):
     foot = [b for b in foot if b.get("type") != "footer_banner"]
     if h_on and branding.get("header_image"):
         head.insert(0, {"type": "header_banner", "settings": {}, "style": {}, "region": "header",
-                        "pos": {"x": 0, "y": 0, "w": 210, "h": hh}})
+                        "pos": {"x": 0, "y": 0, "w": pw, "h": hh}})
     if f_on and branding.get("footer_image"):
         foot.insert(0, {"type": "footer_banner", "settings": {}, "style": {}, "region": "footer",
-                        "pos": {"x": 0, "y": PAGE_H - fh, "w": 210, "h": fh}})
+                        "pos": {"x": 0, "y": ph - fh, "w": pw, "h": fh}})
 
     # 1) Body in flow (+ floating elements), may span multiple pages, kept clear of the bands.
     honored = _margins_honored(renderer)
     body_pdf = _finish(
         B._flow_body_html(doc, branding, flow_body, {"terms_html": terms_html},
-                          top_mm=hh + hm, bottom_mm=fh + fm, floats=float_body, spacer_mode=not honored),
+                          top_mm=hh + hm, bottom_mm=fh + fm, floats=float_body, spacer_mode=not honored,
+                          pw=pw, ph=ph),
         allowed, renderer, margins=({"top": hh + hm, "bottom": fh + fm} if honored else None),
+        page=(pw, ph),
     )
     reader = PdfReader(io.BytesIO(body_pdf))
     n = len(reader.pages) or 1
@@ -213,9 +220,9 @@ def _compose(doc, definition, renderer):
     if isinstance(wm, dict):
         wm = dict(wm, text=_watermark_text(doc, wm))  # conditional rules may pick the text per doc
     if isinstance(wm, dict) and wm.get("text"):
-        wm_html = B.watermark_page_html(branding, wm)
+        wm_html = B.watermark_page_html(branding, wm, pw=pw, ph=ph)
         if wm_html:
-            wm_bytes = _finish(wm_html, allowed, renderer)
+            wm_bytes = _finish(wm_html, allowed, renderer, page=(pw, ph))
 
     if not head and not foot and not wm_bytes:
         return body_pdf  # nothing to overlay -> plain body
@@ -244,9 +251,10 @@ def _compose(doc, definition, renderer):
             key = (i == 0, i == n - 1, (i + 1) if has_pagenum else 0)
             if key not in cache:
                 ov = B._absolute_page_html(
-                    doc, branding, bands, {"terms_html": terms_html, "page": i + 1, "total": n}, grow=False
+                    doc, branding, bands, {"terms_html": terms_html, "page": i + 1, "total": n}, grow=False,
+                    pw=pw, ph=ph,
                 )
-                cache[key] = PdfReader(io.BytesIO(_finish(ov, allowed, renderer))).pages[0]
+                cache[key] = PdfReader(io.BytesIO(_finish(ov, allowed, renderer, page=(pw, ph)))).pages[0]
             try:
                 page.merge_page(cache[key])
             except AttributeError:

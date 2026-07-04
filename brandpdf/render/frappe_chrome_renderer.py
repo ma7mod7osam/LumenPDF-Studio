@@ -48,6 +48,16 @@ class FrappeChromeRenderer(BaseRenderer):
                 "margin-right": _mm(m.get("right")),
                 "print-media-type": True,
             }
+            # Landscape/custom size ONLY: add explicit dims (portrait keeps the proven key set
+            # byte-identical — some patched generators discard options on unknown keys, and for
+            # those the .print-format page-width/page-height dialect in the HTML still applies).
+            pw = (options or {}).get("page_width_mm")
+            ph = (options or {}).get("page_height_mm")
+            if pw and ph and float(pw) > float(ph):
+                call["options"].pop("page-size", None)
+                call["options"]["page-width"] = _mm(pw)
+                call["options"]["page-height"] = _mm(ph)
+                call["options"]["orientation"] = "Landscape"
 
         pdf = get_pdf(html, **call)
         if isinstance(pdf, str):

@@ -90,14 +90,22 @@ class PlaywrightRenderer(BaseRenderer):
                     page.evaluate("async () => { if (document.fonts) { await document.fonts.ready; } }")
                 except Exception:
                     pass
+                size_kwargs = {}
+                if options.get("page_width_mm") and options.get("page_height_mm"):
+                    # explicit dims (e.g. landscape 297x210) — width/height and format are
+                    # mutually exclusive in Playwright, so pass one or the other.
+                    size_kwargs["width"] = f"{options['page_width_mm']}mm"
+                    size_kwargs["height"] = f"{options['page_height_mm']}mm"
+                else:
+                    size_kwargs["format"] = options.get("format", "A4")
                 return page.pdf(
-                    format=options.get("format", "A4"),
                     print_background=options.get("print_background", True),
                     prefer_css_page_size=options.get("prefer_css_page_size", True),
                     display_header_footer=options.get("display_header_footer", False),
                     header_template=options.get("header_template", "<span></span>"),
                     footer_template=options.get("footer_template", "<span></span>"),
                     margin=options.get("margin", {"top": "0", "bottom": "0", "left": "0", "right": "0"}),
+                    **size_kwargs,
                 )
             finally:
                 browser.close()

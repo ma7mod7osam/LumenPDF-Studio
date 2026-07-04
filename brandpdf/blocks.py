@@ -28,25 +28,37 @@ CONTENT_BLOCKS_ORDER = [
 BANNER_BLOCKS = {"header_banner", "footer_banner"}
 
 
-def _pf_css(top=0, bottom=0, left=0, right=0):
+def _pf_css(top=0, bottom=0, left=0, right=0, pw=None, ph=None):
     """Page margins in the dialect the HOST's PDF pipeline actually parses. Frappe's
     read_options_from_html regexes the RAW html for `.print-format{...margin-top:Xmm;...}`, and
     print_designer's chrome generator parses the same class from the <style> soup — for both,
     this in-HTML contract wins over (or substitutes for) caller options. Values must be plain
-    `margin-x:<n>mm;` — exactly this formatting."""
+    `margin-x:<n>mm;` — exactly this formatting. pw/ph add the page-width/height dialect for
+    non-A4 (landscape) sizes."""
+    size = f"page-width:{_fmt_num(pw)}mm;page-height:{_fmt_num(ph)}mm;" if (pw and ph) else ""
     return ("<style>.print-format{"
             f"margin-top:{_fmt_num(top)}mm;margin-bottom:{_fmt_num(bottom)}mm;"
-            f"margin-left:{_fmt_num(left)}mm;margin-right:{_fmt_num(right)}mm;"
+            f"margin-left:{_fmt_num(left)}mm;margin-right:{_fmt_num(right)}mm;" + size +
             "}</style>")
 
 
-def base_css(b):
+def page_dims(definition):
+    """(width_mm, height_mm) for the definition's page setup. A4 portrait unless
+    page.orientation == 'landscape'."""
+    pg = definition.get("page") if isinstance(definition, dict) else None
+    if isinstance(pg, dict) and (pg.get("orientation") or "").lower() == "landscape":
+        return 297.0, 210.0
+    return 210.0, 297.0
+
+
+def base_css(b, pw=210.0, ph=297.0):
     primary = b.get("primary", "#1C75BC")
     navy = b.get("navy", "#1A1E2A")
     font = b.get("font") or "Montserrat"
+    _pw, _ph = _fmt_num(pw or 210), _fmt_num(ph or 297)
     return f"""<style>
   @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Montserrat:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-  @page {{ size: A4; margin: 0; }}
+  @page {{ size: {_pw}mm {_ph}mm; margin: 0; }}
   html, body {{ margin:0 !important; padding:0 !important; }}
   img {{ max-width:100%; }}
   .bs-banner {{ width:100%; display:block; }}
@@ -866,7 +878,8 @@ def render_definition(doc, definition, terms_html=""):
     ctx = {"terms_html": terms_html}
     if definition.get("layout") == "absolute":
         return _render_absolute(doc, definition, branding, ctx)
-    parts = [base_css(branding)]
+    _pw, _ph = page_dims(definition)
+    parts = [base_css(branding, _pw, _ph)]
     open_ = [False]
 
     def close():
@@ -903,22 +916,22 @@ def render_definition(doc, definition, terms_html=""):
     return "".join(parts)
 
 
-def _absolute_page_html(doc, branding, blocks_list, ctx, grow=False, top_mm=0.0, bottom_mm=0.0, y_shift=0.0):
-    """Render blocks absolutely positioned on an A4 page.
+def _absolute_page_html(doc, branding, blocks_list, ctx, grow=False, top_mm=0.0, bottom_mm=0.0, y_shift=0.0, pw=210.0, ph=297.0):
+    """Render blocks absolutely positioned on the page (A4 portrait or landscape via pw/ph).
     grow=True -> page may flow onto multiple pages (min-height, no clipping).
     top_mm/bottom_mm reserve @page margins so a flowing body stays clear of the running header/
     footer bands on EVERY page; y_shift offsets each block's top so page-1 positions stay correct
     once a top margin is reserved."""
     font = branding.get("font") or "Montserrat"
     navy = branding.get("navy", "#1A1E2A")
-    parts = [base_css(branding)]
-    parts.append(_pf_css(top_mm or 0, bottom_mm or 0))  # host-parsed margin contract (0 = full-bleed overlays)
+    parts = [base_css(branding, pw, ph)]
+    parts.append(_pf_css(top_mm or 0, bottom_mm or 0, pw=pw, ph=ph))  # host-parsed margin contract (0 = full-bleed overlays)
     if top_mm or bottom_mm:
         parts.append(f"<style>@page{{margin:{_fmt_num(top_mm)}mm 0mm {_fmt_num(bottom_mm)}mm 0mm;}}</style>")
     if grow:
-        container = "position:relative;width:210mm;min-height:%smm;" % _fmt_num(max(20, 297 - top_mm - bottom_mm))
+        container = "position:relative;width:%smm;min-height:%smm;" % (_fmt_num(pw), _fmt_num(max(20, ph - top_mm - bottom_mm)))
     else:
-        container = "position:relative;width:210mm;height:297mm;overflow:hidden;"
+        container = "position:relative;width:%smm;height:%smm;overflow:hidden;" % (_fmt_num(pw), _fmt_num(ph))
     parts.append(
         f'<div style="{container}'
         f"font-family:'{font}','Segoe UI',Arial,sans-serif;color:{navy};font-size:8.5pt;"
@@ -948,7 +961,7 @@ def _absolute_page_html(doc, branding, blocks_list, ctx, grow=False, top_mm=0.0,
     return "".join(parts)
 
 
-def _flow_body_html(doc, branding, body_blocks, ctx, top_mm=0.0, bottom_mm=0.0, floats=None, spacer_mode=False):
+def _flow_body_html(doc, branding, body_blocks, ctx, top_mm=0.0, bottom_mm=0.0, floats=None, spacer_mode=False, pw=210.0, ph=297.0):
     """Body in document flow: blocks stack top-to-bottom (so a variable-length items table never
     overlaps the totals/terms below it), reserving @page top/bottom margins so the body stays
     clear of the running header/footer bands on EVERY page. `floats` are free-positioned elements
@@ -960,18 +973,18 @@ def _flow_body_html(doc, branding, body_blocks, ctx, top_mm=0.0, bottom_mm=0.0, 
     table header/footer groups repeat on every printed page in Chromium and wkhtmltopdf alike."""
     font = branding.get("font") or "Montserrat"
     navy = branding.get("navy", "#1A1E2A")
-    parts = [base_css(branding)]
+    parts = [base_css(branding, pw, ph)]
     if spacer_mode:
-        parts.append("<style>@page{size:A4;margin:0mm;}</style>")
-        parts.append(_pf_css(0, 0))
+        parts.append(f"<style>@page{{size:{_fmt_num(pw)}mm {_fmt_num(ph)}mm;margin:0mm;}}</style>")
+        parts.append(_pf_css(0, 0, pw=pw, ph=ph))
     else:
-        parts.append(f"<style>@page{{size:A4;margin:{_fmt_num(top_mm)}mm 0mm {_fmt_num(bottom_mm)}mm 0mm;}}</style>")
-        parts.append(_pf_css(top_mm, bottom_mm))
+        parts.append(f"<style>@page{{size:{_fmt_num(pw)}mm {_fmt_num(ph)}mm;margin:{_fmt_num(top_mm)}mm 0mm {_fmt_num(bottom_mm)}mm 0mm;}}</style>")
+        parts.append(_pf_css(top_mm, bottom_mm, pw=pw, ph=ph))
     parts.append(
         # box-sizing MATTERS: without it this box is 210mm + 28mm padding = 238mm — Chromium
         # silently shrink-to-fits (~0.88x, shrinking fonts with it) and wkhtmltopdf CLIPS the
         # right column off the page. border-box keeps 210mm meaning 210mm.
-        f'<div style="position:relative;width:210mm;box-sizing:border-box;padding:0 14mm;font-family:\'{font}\',\'Segoe UI\',Arial,sans-serif;'
+        f'<div style="position:relative;width:{_fmt_num(pw)}mm;box-sizing:border-box;padding:0 14mm;font-family:\'{font}\',\'Segoe UI\',Arial,sans-serif;'
         f'color:{navy};font-size:8.5pt;-webkit-print-color-adjust:exact;print-color-adjust:exact;">'
     )
     if spacer_mode:
@@ -1028,10 +1041,11 @@ def _render_absolute(doc, definition, branding, ctx):
     blocks_list = definition.get("blocks")
     if not isinstance(blocks_list, list):
         blocks_list = []
-    return _absolute_page_html(doc, branding, blocks_list, ctx, grow=False)
+    pw, ph = page_dims(definition)
+    return _absolute_page_html(doc, branding, blocks_list, ctx, grow=False, pw=pw, ph=ph)
 
 
-def watermark_page_html(branding, wm):
+def watermark_page_html(branding, wm, pw=210.0, ph=297.0):
     """A full A4 page containing just a big rotated, semi-transparent watermark — merged BEHIND
     every page by compose. Empty string if no watermark text."""
     if not isinstance(wm, dict) or not wm.get("text"):
@@ -1045,9 +1059,9 @@ def watermark_page_html(branding, wm):
     # display:flex, but it does support (-webkit-)transform — works on every generator.
     xf = f"translate(-50%,-50%) rotate({_fmt_num(angle)}deg)"
     return (
-        base_css(branding)
-        + _pf_css(0, 0)
-        + f"<div style=\"position:relative;width:210mm;height:297mm;overflow:hidden;font-family:'{font}',Arial,sans-serif;\">"
+        base_css(branding, pw, ph)
+        + _pf_css(0, 0, pw=pw, ph=ph)
+        + f"<div style=\"position:relative;width:{_fmt_num(pw)}mm;height:{_fmt_num(ph)}mm;overflow:hidden;font-family:'{font}',Arial,sans-serif;\">"
         + f'<div style="position:absolute;top:50%;left:50%;-webkit-transform:{xf};transform:{xf};'
         + f'font-size:{_fmt_num(size)}pt;font-weight:800;'
         + f'color:{color};opacity:{_fmt_num((op or 8) / 100.0)};white-space:nowrap;letter-spacing:2px;'

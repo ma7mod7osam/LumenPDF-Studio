@@ -26,6 +26,12 @@ class GotenbergRenderer(BaseRenderer):
             "marginLeft": str(margin.get("left", "0")),
             "marginRight": str(margin.get("right", "0")),
         }
+        # preferCssPageSize=true already makes @page CSS drive the size (incl. landscape); pass
+        # explicit dims too (Gotenberg wants inches) so it's correct even if that flag is off.
+        pw, ph = options.get("page_width_mm"), options.get("page_height_mm")
+        if pw and ph:
+            data["paperWidth"] = f"{float(pw) / 25.4:.3f}"
+            data["paperHeight"] = f"{float(ph) / 25.4:.3f}"
         resp = requests.post(url, files=files, data=data, timeout=conf("render_timeout") or 120)
         resp.raise_for_status()
         return resp.content
