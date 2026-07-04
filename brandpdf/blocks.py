@@ -641,7 +641,7 @@ def _d_totals(doc, b, s, ctx):
     )
     return (
         '<table style="width:100%;border-collapse:collapse;"><tr><td style="border:0;"></td>'
-        '<td style="border:0;width:min(82mm,100%);"><table class="bs-tot" style="width:100%;">' + "".join(lines) + grand + "</table></td></tr></table>"
+        '<td style="border:0;width:82mm;width:min(82mm,100%);"><table class="bs-tot" style="width:100%;">' + "".join(lines) + grand + "</table></td></tr></table>"
     )
 
 
@@ -977,12 +977,15 @@ def watermark_page_html(branding, wm):
     size = _num(wm.get("size"), 60) or 60
     angle = _num(wm.get("angle"), -35)
     font = branding.get("font") or "Montserrat"
+    # Centering via absolute 50%/50% + translate (NOT flex): wkhtmltopdf's QtWebKit has no
+    # display:flex, but it does support (-webkit-)transform — works on every generator.
+    xf = f"translate(-50%,-50%) rotate({_fmt_num(angle)}deg)"
     return (
         base_css(branding)
         + _pf_css(0, 0)
         + f"<div style=\"position:relative;width:210mm;height:297mm;overflow:hidden;font-family:'{font}',Arial,sans-serif;\">"
-        + '<div style="position:absolute;top:0;left:0;width:210mm;height:297mm;display:flex;align-items:center;justify-content:center;">'
-        + f'<div style="transform:rotate({_fmt_num(angle)}deg);font-size:{_fmt_num(size)}pt;font-weight:800;'
+        + f'<div style="position:absolute;top:50%;left:50%;-webkit-transform:{xf};transform:{xf};'
+        + f'font-size:{_fmt_num(size)}pt;font-weight:800;'
         + f'color:{color};opacity:{_fmt_num((op or 8) / 100.0)};white-space:nowrap;letter-spacing:2px;'
-        + f'-webkit-print-color-adjust:exact;print-color-adjust:exact;">{_esc(wm.get("text"))}</div></div></div>'
+        + f'-webkit-print-color-adjust:exact;print-color-adjust:exact;">{_esc(wm.get("text"))}</div></div>'
     )
