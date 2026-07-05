@@ -17,7 +17,7 @@ function _bpdfPreviewPoll(job, tries) {
 frappe.pages['brandpdf-builder'].on_page_load = function (wrapper) {
 	var page = frappe.ui.make_app_page({
 		parent: wrapper,
-		title: 'Lumen PDF Studio',
+		title: 'LumenPDF Studio',
 		single_column: true,
 	});
 	var origin = window.location.origin;

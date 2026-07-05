@@ -1,5 +1,5 @@
-app_name = "brandpdf"
-app_title = "BrandPDF"
+app_name = "brandpdf"  # internal module id — DO NOT rename (breaks imports/hooks/DocType module)
+app_title = "LumenPDF Studio"
 app_publisher = "BSTC"
 app_description = "Pixel-perfect branded PDFs for ERPNext via a real Chromium engine."
 app_email = "support@bstc-bh.com"
