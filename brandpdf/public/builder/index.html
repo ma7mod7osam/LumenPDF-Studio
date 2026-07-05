@@ -24,7 +24,13 @@
   .btn.ghost{background:transparent}
   .zoom{display:flex;align-items:center;gap:6px;color:var(--mut)}
   .zoom button{width:26px;height:26px;border-radius:7px;border:1px solid var(--line2);background:var(--panel2);color:var(--ink);cursor:pointer;font-size:14px}
-  .body{display:grid;grid-template-columns:222px minmax(0,1fr) 300px;min-height:0;min-width:0}
+  .body{display:grid;grid-template-columns:222px minmax(0,1fr) 300px;min-height:0;min-width:0;position:relative}
+  #rgrip{position:absolute;top:0;bottom:0;width:9px;margin-left:-5px;cursor:col-resize;z-index:60;display:flex;align-items:center;justify-content:center}
+  #rgrip::before{content:"";width:2px;height:100%;background:transparent;transition:background .1s}
+  #rgrip:hover::before,#rgrip.drag::before{background:var(--accent)}
+  #rgrip::after{content:"⋮";position:absolute;top:50%;transform:translateY(-50%);color:var(--mut2);font-size:14px;background:var(--panel);border:1px solid var(--line2);border-radius:5px;padding:6px 1px;line-height:.6}
+  #rgrip:hover::after,#rgrip.drag::after{color:var(--accent);border-color:var(--accent)}
+  body.rgripping{cursor:col-resize;user-select:none}
   .rail{background:var(--panel);border-right:1px solid var(--line);overflow:auto;min-width:0}
   .rail.right{border-right:0;border-left:1px solid var(--line)}
   .railhead{display:flex;align-items:center;justify-content:space-between}
@@ -182,7 +188,7 @@
 <body>
 <div class="app">
   <div class="top">
-    <div class="brand"><svg width="22" height="22" viewBox="0 0 48 48" fill="none" aria-label="LumenPDF Studio"><rect x="6" y="6" width="7.5" height="38" rx="3.75" fill="#1463FF"/><rect x="18" y="25" width="4.5" height="19" rx="2.25" fill="#7FA8FF"/><rect x="27" y="25" width="7.5" height="19" rx="3.75" fill="#1463FF"/><rect x="39" y="25" width="4.5" height="19" rx="2.25" fill="#1463FF"/></svg> LumenPDF <small>Studio · b33</small></div>
+    <div class="brand"><svg width="22" height="22" viewBox="0 0 48 48" fill="none" aria-label="LumenPDF Studio"><rect x="6" y="6" width="7.5" height="38" rx="3.75" fill="#1463FF"/><rect x="18" y="25" width="4.5" height="19" rx="2.25" fill="#7FA8FF"/><rect x="27" y="25" width="7.5" height="19" rx="3.75" fill="#1463FF"/><rect x="39" y="25" width="4.5" height="19" rx="2.25" fill="#1463FF"/></svg> LumenPDF <small>Studio · b34</small></div>
     <input class="fmt-name" id="fmtName" value="Quotation - Custom" title="Format name">
     <select class="sel" id="doctypeSel" title="Target DocType" onchange="onDoctype(this.value)"></select>
     <select class="sel" id="openSel" title="Open an existing format" onchange="openFormat(this.value)"><option value="">Open…</option></select>
@@ -202,6 +208,7 @@
   </div>
   <div id="draftBar"><span>↺ You have <b>unsaved changes</b> from your last session.</span><button class="pri" onclick="restoreDraft()">Restore my work</button><button onclick="dismissDraft()">Discard</button></div>
   <div class="body">
+    <div id="rgrip" title="Drag to resize · double-click to reset" onpointerdown="startRgrip(event)" ondblclick="resetRight()"></div>
     <button id="leftExpand" onclick="toggleLeft()" title="Show insert panel">»</button>
     <div class="rail" id="leftRail"><div class="railhead"><h4>Insert</h4><button class="collapse" onclick="toggleLeft()" title="Collapse panel">«</button></div>
       <div style="padding:2px 12px 6px"><div class="seg" id="scopeSeg" title="Where new blocks go"><button class="on" onclick="setScope('body')">Body</button><button onclick="setScope('header')">Header</button><button onclick="setScope('footer')">Footer</button></div></div>
@@ -1223,8 +1230,20 @@ function imgAttach(lbl,key,val,setter){const after=(setter==="setB")?"renderBran
 function renderBrand(){const b=state.branding;document.getElementById("propsBrand").innerHTML=`<div class="ptitle">Branding</div><div class="fld"><label>Primary color</label><div class="color"><input type="color" value="${b.primary}" oninput="setB('primary',this.value)"><input type="text" value="${esc(b.primary)}" oninput="setB('primary',this.value)"></div></div><div class="fld"><label>Secondary / navy</label><div class="color"><input type="color" value="${b.navy}" oninput="setB('navy',this.value)"><input type="text" value="${esc(b.navy)}" oninput="setB('navy',this.value)"></div></div><div class="fld"><label>Font</label><select onchange="setB('font',this.value)">`+fontOptions(b.font)+`</select></div><div class="hint" style="padding:10px 0 0">Header &amp; footer banner images are now in the <b>Page</b> tab, next to the band height.</div>`;}
 
 function zoom(d){scale=Math.min(1.6,Math.max(.35,scale+d));document.getElementById("paperwrap").style.transform=`scale(${scale})`;document.getElementById("zoomv").textContent=Math.round(scale*100)+"%";}
-let leftCollapsed=false, rightCollapsed=false;
-function applyCols(){const body=document.querySelector(".body");if(body)body.style.gridTemplateColumns=(leftCollapsed?"0":"222px")+" minmax(0,1fr) "+(rightCollapsed?"0":"300px");}
+let leftCollapsed=false, rightCollapsed=false, rightW=300;
+try{const w=parseInt(localStorage.getItem("brandpdf_rightw"),10);if(w>=240&&w<=760)rightW=w;}catch(e){}
+function _rightMax(){return Math.max(300,(window.innerWidth||1200)-(leftCollapsed?0:222)-340);}
+function applyCols(){const body=document.querySelector(".body");if(!body)return;
+  rightW=Math.max(240,Math.min(rightW,_rightMax()));
+  body.style.gridTemplateColumns=(leftCollapsed?"0":"222px")+" minmax(0,1fr) "+(rightCollapsed?"0":rightW+"px");
+  const g=document.getElementById("rgrip");if(g){g.style.right=(rightCollapsed?-100:rightW)+"px";g.style.display=rightCollapsed?"none":"flex";}}
+function resetRight(){rightW=300;try{localStorage.setItem("brandpdf_rightw","300");}catch(e){}applyCols();}
+function startRgrip(e){if(rightCollapsed)return;e.preventDefault();const body=document.querySelector(".body");const grip=document.getElementById("rgrip");
+  document.body.classList.add("rgripping");if(grip)grip.classList.add("drag");
+  function mv(ev){rightW=(window.innerWidth||document.documentElement.clientWidth)-ev.clientX;applyCols();}
+  function up(){document.removeEventListener("pointermove",mv);document.removeEventListener("pointerup",up);document.body.classList.remove("rgripping");if(grip)grip.classList.remove("drag");try{localStorage.setItem("brandpdf_rightw",String(Math.round(rightW)));}catch(e){}}
+  document.addEventListener("pointermove",mv);document.addEventListener("pointerup",up);}
+window.addEventListener("resize",applyCols);
 function setLeft(c){leftCollapsed=c;applyCols();const ex=document.getElementById("leftExpand");if(ex)ex.style.display=c?"flex":"none";try{localStorage.setItem("brandpdf_leftcol",c?"1":"0");}catch(e){}}
 function setRight(c){rightCollapsed=c;applyCols();const ex=document.getElementById("rightExpand");if(ex)ex.style.display=c?"flex":"none";try{localStorage.setItem("brandpdf_rightcol",c?"1":"0");}catch(e){}}
 function toggleLeft(){setLeft(!leftCollapsed);}
