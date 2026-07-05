@@ -37,6 +37,7 @@ TEMPLATE_FIELDS = [
     {"fieldname": "target_doctype", "fieldtype": "Link", "label": "Target DocType", "options": "DocType", "reqd": 1, "in_list_view": 1},
     {"fieldname": "language", "fieldtype": "Select", "label": "Language", "options": "en\nar\nbilingual", "default": "bilingual"},
     {"fieldname": "is_standard", "fieldtype": "Check", "label": "Is Standard (read-only)", "read_only": 1},
+    {"fieldname": "in_gallery", "fieldtype": "Check", "label": "Show in Templates gallery", "in_list_view": 1},
     {"fieldname": "src_sb", "fieldtype": "Section Break", "label": "Source"},
     {"fieldname": "source_type", "fieldtype": "Select", "label": "Source Type", "options": "blocks\nhtml_body\njinja_file", "default": "blocks"},
     {"fieldname": "blocks", "fieldtype": "Table", "label": "Blocks (compose your format)", "options": "LumenPDF Block", "depends_on": "eval:doc.source_type=='blocks'"},

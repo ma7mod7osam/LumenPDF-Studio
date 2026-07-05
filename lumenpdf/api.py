@@ -340,6 +340,44 @@ def save_format(definition, name=None):
 
 
 @frappe.whitelist()
+def set_gallery(name, on):
+    """Publish/unpublish a saved format to this site's Templates gallery (visible to every
+    builder user on the site as a starting point). System-Manager only."""
+    _require_manager()
+    if not frappe.db.exists("LumenPDF Template", name):
+        frappe.throw("Unknown format.")
+    t = frappe.get_doc("LumenPDF Template", name)
+    if not t.get("definition"):
+        frappe.throw("Only visual (builder) formats can be published to the gallery.")
+    t.in_gallery = 1 if str(on) in ("1", "true", "True") else 0
+    t.flags.ignore_permissions = True
+    t.flags.lumenpdf_allow_standard_edit = True  # flag change only; body stays read-only
+    t.save()
+    frappe.db.commit()
+    return {"name": name, "in_gallery": bool(t.in_gallery)}
+
+
+@frappe.whitelist()
+def gallery_list():
+    """Site templates published to the gallery (name/label/target only — definitions load on
+    pick via get_format)."""
+    _require_manager()
+    if not frappe.db.exists("DocType", "LumenPDF Template"):
+        return []
+    try:
+        rows = frappe.get_all(
+            "LumenPDF Template",
+            filters={"in_gallery": 1},
+            fields=["name", "template_name", "target_doctype"],
+            order_by="modified desc",
+        )
+    except Exception:
+        return []  # in_gallery column not migrated yet
+    return [{"name": r["name"], "label": r.get("template_name") or r["name"],
+             "target": r.get("target_doctype") or ""} for r in rows]
+
+
+@frappe.whitelist()
 def get_format(name=None, target_doctype="Quotation"):
     """Return a saved design to load into the builder. With a name, that template; otherwise the
     active design for the doctype (so the builder opens on what's currently live)."""
