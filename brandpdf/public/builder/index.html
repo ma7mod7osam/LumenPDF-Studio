@@ -158,6 +158,10 @@
   .psecb{padding:10px 13px 6px}
   .stycardlbl{font-size:10px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--mut2);margin-bottom:6px}
   .stycard .fld label{font-size:10px}
+  #draftBar{display:none;align-items:center;gap:10px;padding:8px 14px;background:#FFF6E0;border-bottom:1px solid #F0D98A;color:#7A5A00;font-size:12.5px;font-weight:600}
+  #draftBar button{border:1px solid #d9c58a;background:#fff;color:#7A5A00;border-radius:7px;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer}
+  #draftBar button.pri{background:#1463FF;border-color:#1463FF;color:#fff}
+  .btn.ghost.on{background:#1463FF;border-color:#1463FF;color:#fff}
   .chips{display:flex;flex-wrap:wrap;gap:5px;margin:2px 0 8px}
   .chip{padding:5px 10px;border:1px solid var(--line2);border-radius:20px;background:var(--panel);color:var(--mut);font-size:11px;font-weight:600;cursor:pointer}
   .chip.on{border-color:var(--accent);background:#1463FF14;color:var(--accent)}
@@ -178,22 +182,25 @@
 <body>
 <div class="app">
   <div class="top">
-    <div class="brand"><svg width="22" height="22" viewBox="0 0 48 48" fill="none" aria-label="LumenPDF Studio"><rect x="6" y="6" width="7.5" height="38" rx="3.75" fill="#1463FF"/><rect x="18" y="25" width="4.5" height="19" rx="2.25" fill="#7FA8FF"/><rect x="27" y="25" width="7.5" height="19" rx="3.75" fill="#1463FF"/><rect x="39" y="25" width="4.5" height="19" rx="2.25" fill="#1463FF"/></svg> LumenPDF <small>Studio · b32</small></div>
+    <div class="brand"><svg width="22" height="22" viewBox="0 0 48 48" fill="none" aria-label="LumenPDF Studio"><rect x="6" y="6" width="7.5" height="38" rx="3.75" fill="#1463FF"/><rect x="18" y="25" width="4.5" height="19" rx="2.25" fill="#7FA8FF"/><rect x="27" y="25" width="7.5" height="19" rx="3.75" fill="#1463FF"/><rect x="39" y="25" width="4.5" height="19" rx="2.25" fill="#1463FF"/></svg> LumenPDF <small>Studio · b33</small></div>
     <input class="fmt-name" id="fmtName" value="Quotation - Custom" title="Format name">
     <select class="sel" id="doctypeSel" title="Target DocType" onchange="onDoctype(this.value)"></select>
     <select class="sel" id="openSel" title="Open an existing format" onchange="openFormat(this.value)"><option value="">Open…</option></select>
     <button class="btn ghost" onclick="newFormat()" title="Start a new blank format">+ New</button>
     <button class="btn ghost" onclick="openGallery()" title="Start from a ready-made design">▦ Templates</button>
+    <button class="btn ghost" onclick="openFormatsMgr()" title="Manage saved formats — set the default, open or delete">⚙ Formats</button>
     <button class="btn ghost" id="undoBtn" onclick="undo()" title="Undo (Ctrl+Z)">↶</button>
     <button class="btn ghost" id="redoBtn" onclick="redo()" title="Redo (Ctrl+Y)">↷</button>
     <button class="btn ghost" id="restoreBtn" onclick="restoreDraft()" style="display:none" title="Restore your last unsaved draft">↺ Restore</button>
     <div class="spacer"></div>
+    <button class="btn ghost" id="fsBtn" onclick="toggleFullscreen()" title="Full screen (F)">⛶</button>
     <div class="zoom"><button onclick="zoom(-.1)">−</button><span id="zoomv">80%</span><button onclick="zoom(.1)">+</button></div>
     <select class="sel" id="dataSel" title="Preview with a real document" onchange="loadData(this.value)"><option value="">Sample data</option></select>
     <button class="btn ghost" onclick="previewPDF()" title="Render the real PDF with this document">👁 Preview PDF</button>
     <button class="btn ghost" onclick="exportJSON()">⇩ Export</button>
     <button class="btn primary" onclick="save()">✓ Save</button>
   </div>
+  <div id="draftBar"><span>↺ You have <b>unsaved changes</b> from your last session.</span><button class="pri" onclick="restoreDraft()">Restore my work</button><button onclick="dismissDraft()">Discard</button></div>
   <div class="body">
     <button id="leftExpand" onclick="toggleLeft()" title="Show insert panel">»</button>
     <div class="rail" id="leftRail"><div class="railhead"><h4>Insert</h4><button class="collapse" onclick="toggleLeft()" title="Collapse panel">«</button></div>
@@ -392,10 +399,20 @@ function isNested(b){return !!b&&state.blocks.indexOf(b)<0;}
 let history=[], hpos=-1, restoring=false;
 function snapState(){return JSON.stringify({blocks:state.blocks.map(function(b){return{type:b.type,settings:b.settings,style:b.style,pos:b.pos,float:b.float,region:b.region,cond:b.cond||null};}),branding:state.branding,header:state.header,footer:state.footer,watermark:state.watermark,target:state.target,page:state.page});}
 let _histT=null;
-function recordHistory(){if(restoring)return;clearTimeout(_histT);_histT=setTimeout(_recordHistoryNow,400);}  // group rapid edits (typing) into ONE undo step
+function _continuousEdit(){
+  // during a drag or while a text/color/range field is focused, coalesce into one undo step
+  try{if(drag||reorderDrag||reorderArm||colDrag||bandDrag)return true;}catch(e){}
+  const a=document.activeElement;
+  return !!(a&&(a.isContentEditable||a.tagName==="TEXTAREA"||(a.tagName==="INPUT"&&["text","color","range","number"].indexOf(a.type)>=0)));
+}
+function recordHistory(){if(restoring)return;clearTimeout(_histT);
+  if(_continuousEdit())_histT=setTimeout(_recordHistoryNow,450);  // typing/dragging -> one step
+  else _recordHistoryNow();  // discrete action (button/select/checkbox/drop) -> its own step
+}
+function commitHistory(){if(restoring)return;clearTimeout(_histT);_recordHistoryNow();}
 function _recordHistoryNow(){if(restoring)return;const s=snapState();if(hpos>=0&&history[hpos]===s)return;history=history.slice(0,hpos+1);history.push(s);hpos=history.length-1;if(history.length>80){history.shift();hpos--;}updateUndoUI();}
 function updateUndoUI(){const u=document.getElementById("undoBtn"),r=document.getElementById("redoBtn");if(u)u.disabled=hpos<=0;if(r)r.disabled=hpos>=history.length-1;}
-function applyHistory(){restoring=true;const s=JSON.parse(history[hpos]);state.blocks=s.blocks.map(function(b){const nb=Object.assign({id:"b"+(idc++)},b);if(nb.type==="row"&&nb.settings&&nb.settings.cells){nb.settings.cells.forEach(function(cell){(cell||[]).forEach(function(c){c.id="b"+(idc++);});});}return nb;});state.branding=s.branding;state.header=s.header;state.footer=s.footer;state.watermark=s.watermark||state.watermark;state.target=s.target;selId=null;renderNowSync();renderProps();renderBrand();restoring=false;updateUndoUI();}
+function applyHistory(){restoring=true;const s=JSON.parse(history[hpos]);state.blocks=s.blocks.map(function(b){const nb=Object.assign({id:"b"+(idc++)},b);if(nb.type==="row"&&nb.settings&&nb.settings.cells){nb.settings.cells.forEach(function(cell){(cell||[]).forEach(function(c){c.id="b"+(idc++);});});}return nb;});state.branding=s.branding;state.header=s.header;state.footer=s.footer;state.watermark=s.watermark||state.watermark;state.target=s.target;state.page=s.page||state.page;selId=null;renderNowSync();renderProps();renderBrand();restoring=false;updateUndoUI();}
 function undo(){clearTimeout(_histT);_recordHistoryNow();if(hpos<=0)return;hpos--;applyHistory();}
 function redo(){clearTimeout(_histT);_recordHistoryNow();if(hpos>=history.length-1)return;hpos++;applyHistory();}
 function duplicate(id){id=id||selId;const b=blockById(id);if(!b)return;const nb=JSON.parse(JSON.stringify(b));nb.id="b"+(idc++);if(nb.type==="row"&&nb.settings&&nb.settings.cells){nb.settings.cells.forEach(function(cell){(cell||[]).forEach(function(c){c.id="b"+(idc++);});});}if(nb.pos){nb.pos=Object.assign({},nb.pos);if(nb.float||regionOf(nb)!=="body"){nb.pos.x=(nb.pos.x||0)+4;nb.pos.y=(nb.pos.y||0)+4;}else{nb.pos.y=(nb.pos.y||0)+0.1;}}const i=state.blocks.findIndex(x=>x.id===id);state.blocks.splice(i+1,0,nb);selId=nb.id;render();renderProps();}
@@ -404,10 +421,17 @@ function duplicate(id){id=id||selId;const b=blockById(id);if(!b)return;const nb=
 let userTouched=false, _asT=null;
 document.addEventListener("pointerdown",function(){userTouched=true;},true);
 document.addEventListener("keydown",function(){userTouched=true;},true);
+document.addEventListener("change",function(){commitHistory();},false);  // each select/checkbox/color-release/text-blur = its own undo step
+document.addEventListener("focusout",function(e){if(e.target&&e.target.isContentEditable)commitHistory();},true);  // finishing an inline cell edit
 function autosaveNow(){if(!userTouched||restoring)return;try{localStorage.setItem("brandpdf_draft",JSON.stringify(definition()));}catch(e){}}
 function scheduleAutosave(){clearTimeout(_asT);_asT=setTimeout(autosaveNow,700);}
-function restoreDraft(){try{const d=localStorage.getItem("brandpdf_draft");if(d){loadDefinition(JSON.parse(d));userTouched=true;}}catch(e){}}
-function clearDraft(){try{localStorage.removeItem("brandpdf_draft");}catch(e){}const r=document.getElementById("restoreBtn");if(r)r.style.display="none";}
+window.addEventListener("pagehide",autosaveNow);
+document.addEventListener("visibilitychange",function(){if(document.visibilityState==="hidden")autosaveNow();});
+window.addEventListener("beforeunload",function(e){if(userTouched){autosaveNow();try{if(localStorage.getItem("brandpdf_draft")){e.preventDefault();e.returnValue="";}}catch(x){}}});
+function showDraftBar(){const bar=document.getElementById("draftBar");if(bar)bar.style.display="flex";}
+function dismissDraft(){clearDraft();const bar=document.getElementById("draftBar");if(bar)bar.style.display="none";}
+function restoreDraft(){try{const d=localStorage.getItem("brandpdf_draft");if(d){loadDefinition(JSON.parse(d));userTouched=true;commitHistory();}}catch(e){}const bar=document.getElementById("draftBar");if(bar)bar.style.display="none";}
+function clearDraft(){try{localStorage.removeItem("brandpdf_draft");}catch(e){}const r=document.getElementById("restoreBtn");if(r)r.style.display="none";const bar=document.getElementById("draftBar");if(bar)bar.style.display="none";}
 
 /* ---- starter template gallery ---- */
 /* ---- FORMAT LIBRARY: complete ready-made designs; pick one, then customize anything ---- */
@@ -829,6 +853,7 @@ document.addEventListener("keydown",function(e){
   if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="z"&&!e.shiftKey){e.preventDefault();undo();return;}
   if((e.ctrlKey||e.metaKey)&&(e.key.toLowerCase()==="y"||(e.shiftKey&&e.key.toLowerCase()==="z"))){e.preventDefault();redo();return;}
   if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="d"){e.preventDefault();if(selId)duplicate(selId);return;}
+  if((e.key==="f"||e.key==="F")&&!e.ctrlKey&&!e.metaKey&&!_continuousEdit()){e.preventDefault();toggleFullscreen();return;}
   if(!selId)return;
   const b=cur();if(!b)return;const st=e.shiftKey?10:1;let m=false;
   if(e.key==="ArrowLeft"){b.pos.x=Math.max(0,b.pos.x-st);m=true;}else if(e.key==="ArrowRight"){b.pos.x+=st;m=true;}else if(e.key==="ArrowUp"){b.pos.y=Math.max(0,b.pos.y-st);m=true;}else if(e.key==="ArrowDown"){b.pos.y+=st;m=true;}else if(e.key==="Delete"){del(null,b.id);e.preventDefault();return;}
@@ -1225,7 +1250,7 @@ function onDoctype(dt){state.target=dt;loadDoctypeMeta(dt);}
 function loadDoctypeMeta(dt){
   rpc("brandpdf.api.doctype_fields",{doctype:dt}).then(function(fl){if(Array.isArray(fl)&&fl.length){DOCFIELDS=fl.map(function(x){return{f:x.fieldname,l:x.label,t:x.fieldtype||""};});if(cur()&&cur().type==="field")renderProps();}});
   rpc("brandpdf.api.child_tables",{doctype:dt}).then(function(ct){if(Array.isArray(ct)&&ct.length){CTABLES=ct;if(cur()&&cur().type==="datatable")renderProps();}});
-  rpc("brandpdf.api.list_formats",{doctype:dt}).then(function(fs){fs=fs||[];const opts=fs.map(function(f){return{value:f.name,label:(f.is_default?"★ ":"")+f.label};});if(fs.length)opts.push({value:"__manage__",label:"⚙ Manage formats…"});setSelOptions("openSel",opts,"Open…","");});
+  rpc("brandpdf.api.list_formats",{doctype:dt}).then(function(fs){fs=fs||[];const opts=fs.map(function(f){return{value:f.name,label:(f.is_default?"★ ":"")+f.label};});setSelOptions("openSel",opts,"Open…","");});
   rpc("brandpdf.api.builder_docs",{doctype:dt,limit:25}).then(function(ds){FIELDVALS=null;SAMPLE=JSON.parse(JSON.stringify(BASE_SAMPLE));setSelOptions("dataSel",(ds||[]).map(function(n){return{value:n,label:n};}),"Sample data","");render();});
 }
 function openFormat(name){if(!name)return;const el=document.getElementById("openSel");if(name==="__manage__"){if(el)el.value="";openFormatsMgr();return;}clearDraft();rpc("brandpdf.api.get_format",{name:name}).then(function(r){if(r&&r.definition)loadDefinition(r.definition);if(el)el.value="";});}
@@ -1253,6 +1278,13 @@ function closeFmtMgr(){document.getElementById("fmtmgr").style.display="none";}
 function openFmtFromMgr(n){closeFmtMgr();openFormat(n);}
 function setDefaultFmt(n){rpc("brandpdf.api.set_default_format",{doctype:state.target,template:n,company:_fmtCompany}).then(function(){_renderFmtMgr();loadDoctypeMeta(state.target);});}
 function deleteFmt(n,lbl){if(!confirm("Delete the format \""+lbl+"\"? This can't be undone."))return;rpc("brandpdf.api.delete_format",{name:n}).then(function(r){if(r&&r.deleted===false){alert("Could not delete that format.");}openFormatsMgr();loadDoctypeMeta(state.target);});}
+let _fs=false;
+function toggleFullscreen(){_fs=!_fs;
+  if(EMBED){window.parent.postMessage({type:"brandpdf-fullscreen",on:_fs},window.location.origin);}
+  else{try{if(_fs){(document.documentElement.requestFullscreen||function(){})();}else if(document.fullscreenElement)document.exitFullscreen();}catch(e){}}
+  const btn=document.getElementById("fsBtn");if(btn){btn.classList.toggle("on",_fs);btn.textContent=_fs?"⛶":"⛶";btn.title=_fs?"Exit full screen (F)":"Full screen (F)";}
+}
+if(!EMBED)document.addEventListener("fullscreenchange",function(){_fs=!!document.fullscreenElement;const btn=document.getElementById("fsBtn");if(btn)btn.classList.toggle("on",_fs);});
 function newFormat(){clearDraft();state.blocks=[];selId=null;FIELDVALS=null;SAMPLE=JSON.parse(JSON.stringify(BASE_SAMPLE));state.branding.header_image="";state.branding.footer_image="";document.getElementById("fmtName").value="New Format";const ds=document.getElementById("dataSel");if(ds)ds.value="";renderNowSync();renderProps();renderBrand();}
 function loadData(name){if(!name){FIELDVALS=null;SAMPLE=JSON.parse(JSON.stringify(BASE_SAMPLE));render();return;}rpc("brandpdf.api.builder_sample",{doctype:state.target,name:name}).then(applyData);}
 function applyData(d){if(!d||!d.name){FIELDVALS=null;SAMPLE=JSON.parse(JSON.stringify(BASE_SAMPLE));render();return;}SAMPLE=Object.assign(JSON.parse(JSON.stringify(BASE_SAMPLE)),{name:d.name,transaction_date:d.transaction_date||"",valid_till:d.valid_till||"",customer_name:d.customer_name||"",address_display:d.address_display||"",total:d.total||"",grand_total:d.grand_total||"",items:(d.items&&d.items.length)?d.items:[],taxes:d.taxes||[],payment_schedule:d.payment_schedule||[],tables:(d.tables&&typeof d.tables==="object")?d.tables:{},terms:String((d.fields&&d.fields.terms)||"").replace(/<[^>]*>/g," ").replace(/\s+/g," ").trim()});FIELDVALS=d.fields||null;render();}
@@ -1266,7 +1298,7 @@ window.addEventListener("message",function(e){if(e.origin!==window.location.orig
 
 buildPalette();render();renderProps();renderBrand();zoom(0);
 try{setLeft(localStorage.getItem("brandpdf_leftcol")==="1");setRight(localStorage.getItem("brandpdf_rightcol")==="1");}catch(e){}
-try{if(localStorage.getItem("brandpdf_draft")){const r=document.getElementById("restoreBtn");if(r)r.style.display="";}}catch(e){}
+try{if(localStorage.getItem("brandpdf_draft")){const r=document.getElementById("restoreBtn");if(r)r.style.display="";showDraftBar();}}catch(e){}
 if(EMBED){
   rpc("brandpdf.api.builder_doctypes").then(function(dts){dts=(dts&&dts.length)?dts:["Quotation"];if(dts.indexOf(state.target)<0)state.target=dts[0];setSelOptions("doctypeSel",dts.map(function(x){return{value:x,label:x};}),null,state.target);loadDoctypeMeta(state.target);});
 } else {

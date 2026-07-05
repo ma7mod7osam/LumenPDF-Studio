@@ -24,8 +24,9 @@ frappe.pages['brandpdf-builder'].on_page_load = function (wrapper) {
 
 	var iframe = document.createElement('iframe');
 	iframe.src = '/assets/brandpdf/builder/index.html';
-	iframe.style.cssText =
-		'width:100%;height:calc(100vh - 110px);border:0;background:#F4F6FA;border-radius:8px';
+	iframe.setAttribute('allowfullscreen', '');
+	var IFRAME_CSS = 'width:100%;height:calc(100vh - 110px);border:0;background:#F4F6FA;border-radius:8px';
+	iframe.style.cssText = IFRAME_CSS;
 	page.main.append(iframe);
 
 	// Push the active design + the doctype's full field list into the builder once it loads.
@@ -86,6 +87,13 @@ frappe.pages['brandpdf-builder'].on_page_load = function (wrapper) {
 					iframe.contentWindow.postMessage({ type: 'brandpdf-saved', error: true }, origin);
 				},
 			});
+		} else if (d.type === 'brandpdf-fullscreen') {
+			// expand the iframe over the whole viewport (covers the desk navbar) and back
+			if (d.on) {
+				iframe.style.cssText = 'position:fixed;inset:0;width:100vw;height:100vh;border:0;z-index:1055;background:#F4F6FA';
+			} else {
+				iframe.style.cssText = IFRAME_CSS;
+			}
 		} else if (d.type === 'brandpdf-preview') {
 			frappe.dom.freeze(__('Rendering preview…'));
 			frappe.call({
