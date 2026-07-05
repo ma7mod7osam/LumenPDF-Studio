@@ -436,7 +436,14 @@ def _style_css(style, type_=None, absolute=False):
         bw = _num(b.get("w"), 1)
         bs = b.get("style") if b.get("style") in _BORDER_STYLE else "solid"
         bc = b["color"].strip() if _hexok(b.get("color")) else "#cfe5f6"
-        p.append(f"border:{_fmt_num(bw)}px {bs} {bc}")
+        sides = b.get("sides") if isinstance(b.get("sides"), dict) else None
+        if sides and not all(sides.get(k, True) for k in ("t", "r", "b", "l")):
+            # per-side borders: e.g. a LEFT accent bar next to a heading block
+            for key, css in (("t", "border-top"), ("r", "border-right"), ("b", "border-bottom"), ("l", "border-left")):
+                if sides.get(key, True):
+                    p.append(f"{css}:{_fmt_num(bw)}px {bs} {bc}")
+        else:
+            p.append(f"border:{_fmt_num(bw)}px {bs} {bc}")
         r = _num(b.get("radius"))
         if r:
             p.append(f"border-radius:{_fmt_num(r)}px")
@@ -599,8 +606,16 @@ def _e_table(doc, b, s, ctx):
                     f'word-wrap:break-word;">{_esc(_cell_value(doc, r[ci] if ci < len(r) else ""))}</td>')
         body.append(f'<tr style="{trbg}">{tds}</tr>')
     outline = f"border:{_fmt_num(tbw)}px {tbs} {tbc};" if (preset == "outline" and tbw) else ""
+    collapse = "border-collapse:collapse;"
+    hr = _num(hs.get("radius"))
+    if hr:
+        r_ = _fmt_num(min(30, max(0, hr)))
+        th = th.replace('style="', f'style="border-top-left-radius:{r_}px;border-bottom-left-radius:{r_}px;', 1)
+        k = th.rfind('style="')
+        th = th[:k] + f'style="border-top-right-radius:{r_}px;border-bottom-right-radius:{r_}px;' + th[k + 7:]
+        collapse = "border-collapse:separate;border-spacing:0;"  # collapse ignores radius
     return (
-        f'<table style="width:100%;border-collapse:collapse;table-layout:fixed;word-wrap:break-word;{outline}">'
+        f'<table style="width:100%;{collapse}table-layout:fixed;word-wrap:break-word;{outline}">'
         f"{colgroup}<thead><tr>{th}</tr></thead><tbody>{''.join(body)}</tbody></table>"
     )
 
@@ -626,9 +641,13 @@ def _d_footer_banner(doc, b, s, ctx):
 def _d_title(doc, b, s, ctx):
     navy = b.get("navy", "#1A1E2A")
     primary = b.get("primary", "#1C75BC")
-    left = f'<div class="bs-title" style="color:{navy}">{_esc(s.get("text") or "QUOTATION")}</div>'
+    tc = s["titleColor"].strip() if _hexok(s.get("titleColor")) else navy
+    tsz = _num(s.get("titleSize"))
+    tszc = f"font-size:{_fmt_num(min(72, max(6, tsz)))}pt;" if tsz else ""
+    ac = s["arabicColor"].strip() if _hexok(s.get("arabicColor")) else primary
+    left = f'<div class="bs-title" style="color:{tc};{tszc}">{_esc(s.get("text") or "QUOTATION")}</div>'
     if s.get("showArabic", True):
-        left += f'<div class="bs-title-ar" style="color:{primary}">{_esc(s.get("arabic") or "عرض سعر")}</div>'
+        left += f'<div class="bs-title-ar" style="color:{ac}">{_esc(s.get("arabic") or "عرض سعر")}</div>'
     meta_cfg = s.get("meta") or {"name": True, "date": True, "valid_till": True}
     m = []
     if meta_cfg.get("name"):
@@ -637,7 +656,12 @@ def _d_title(doc, b, s, ctx):
         m.append(("Date", doc.get_formatted("transaction_date")))
     if meta_cfg.get("valid_till") and doc.get("valid_till"):
         m.append(("Valid Till", doc.get_formatted("valid_till")))
-    rows = "".join(f'<tr><td class="k">{_esc(k)}</td><td><bdi>{_esc(v)}</bdi></td></tr>' for k, v in m)
+    mlc = f'color:{s["metaLabelColor"].strip()};' if _hexok(s.get("metaLabelColor")) else ""
+    mvc = f'color:{s["metaValueColor"].strip()};' if _hexok(s.get("metaValueColor")) else ""
+    mbc = f'border-color:{s["metaBorderColor"].strip()};' if _hexok(s.get("metaBorderColor")) else ""
+    rows = "".join(
+        f'<tr><td class="k" style="{mlc}{mbc}">{_esc(k)}</td><td style="{mvc}{mbc}"><bdi>{_esc(v)}</bdi></td></tr>'
+        for k, v in m)
     if s.get("align") == "center":
         return f'<div style="text-align:center">{left}</div>'
     return (
@@ -650,13 +674,71 @@ def _d_customer(doc, b, s, ctx):
     primary = b.get("primary", "#1C75BC")
     name = _esc(doc.get("customer_name") or doc.get("party_name") or "")
     heading = _esc(s.get("heading") or "Quotation To")
-    out = [f'<div class="bs-billto"><div class="lbl" style="color:{primary}">{heading}</div><div class="name">{name}</div>']
+    hcol = s["headingColor"].strip() if _hexok(s.get("headingColor")) else primary
+    ncol = f'color:{s["nameColor"].strip()};' if _hexok(s.get("nameColor")) else ""
+    nsz = _num(s.get("nameSize"))
+    nszc = f"font-size:{_fmt_num(min(72, max(4, nsz)))}pt;" if nsz else ""
+    out = [f'<div class="bs-billto"><div class="lbl" style="color:{hcol}">{heading}</div><div class="name" style="{ncol}{nszc}">{name}</div>']
     addr = doc.get("address_display")
     if addr:
         from frappe.utils.html_utils import sanitize_html
         out.append(f'<div class="addr">{sanitize_html(addr)}</div>')
     out.append("</div>")
     return "".join(out)
+
+
+def _tbl_skin(s, b, default_hbg):
+    """Shared override skin for the READY tables (items/payment/datatable): returns inline-CSS
+    fragments that are EMPTY when unconfigured (class defaults keep the legacy look).
+    keys: th (header cells), th_first/th_last (radius), td_border, pad, num (numeric cells),
+    table (element style e.g. border-collapse for radius / outline)."""
+    out = {"th": "", "th_first": "", "th_last": "", "td_border": "", "pad": "", "num": "", "table": ""}
+    hs = s.get("headerStyle") if isinstance(s.get("headerStyle"), dict) else {}
+    if _hexok(hs.get("bg")):
+        out["th"] += f'background-color:{hs["bg"].strip()} !important;'
+    else:
+        out["th"] += f'background-color:{default_hbg} !important;'
+    if _hexok(hs.get("color")):
+        out["th"] += f'color:{hs["color"].strip()} !important;'
+    n = _num(hs.get("size"))
+    if n:
+        out["th"] += f"font-size:{_fmt_num(min(72, max(4, n)))}pt;"
+    if str(hs.get("weight")) in _WEIGHT:
+        out["th"] += f'font-weight:{hs.get("weight")};'
+    r = _num(hs.get("radius"))
+    if r:
+        r = _fmt_num(min(30, max(0, r)))
+        out["th_first"] = f"border-top-left-radius:{r}px;border-bottom-left-radius:{r}px;"
+        out["th_last"] = f"border-top-right-radius:{r}px;border-bottom-right-radius:{r}px;"
+        out["table"] += "border-collapse:separate;border-spacing:0;"  # collapse ignores radius
+    bo = s.get("borders") if isinstance(s.get("borders"), dict) else {}
+    if bo:
+        preset = bo.get("preset") if bo.get("preset") in ("grid", "rows", "outline", "none") else "rows"
+        w_ = min(10, max(0, _num(bo.get("w"), 1) or 0))
+        c_ = bo["color"].strip() if _hexok(bo.get("color")) else "#cfe5f6"
+        st_ = bo.get("style") if bo.get("style") in _BORDER_STYLE else "solid"
+        if preset == "grid" and w_:
+            out["td_border"] = f"border:{_fmt_num(w_)}px {st_} {c_};"
+        elif preset == "rows" and w_:
+            out["td_border"] = f"border:0;border-bottom:{_fmt_num(w_)}px {st_} {c_};"
+        else:
+            out["td_border"] = "border:0;"
+            if preset == "outline" and w_:
+                out["table"] += f"border:{_fmt_num(w_)}px {st_} {c_};"
+    pad = s.get("cellPad") if isinstance(s.get("cellPad"), dict) else {}
+    if pad:
+        py = min(30, max(0, _num(pad.get("y"), 6)))
+        px = min(30, max(0, _num(pad.get("x"), 8)))
+        out["pad"] = f"padding:{_fmt_num(py)}px {_fmt_num(px)}px;"
+    ns = s.get("numStyle") if isinstance(s.get("numStyle"), dict) else {}
+    if _hexok(ns.get("color")):
+        out["num"] += f'color:{ns["color"].strip()} !important;'
+    n = _num(ns.get("size"))
+    if n:
+        out["num"] += f"font-size:{_fmt_num(min(72, max(4, n)))}pt;"
+    if str(ns.get("weight")) in _WEIGHT:
+        out["num"] += f'font-weight:{ns.get("weight")} !important;'
+    return out
 
 
 def _zebra_parts(s):
@@ -676,11 +758,13 @@ def _d_items(doc, b, s, ctx):
     hc = navy if s.get("headerColor") == "navy" else primary
     zcls, zbg = _zebra_parts(s)
     zebra = s.get("zebra", True)
+    sk = _tbl_skin(s, b, hc)
 
     w = s.get("widths") if isinstance(s.get("widths"), dict) else {}
 
     def th(txt, cls=""):
-        return f'<th class="{cls}" style="background-color:{hc} !important;-webkit-print-color-adjust:exact;">{txt}</th>'
+        return (f'<th class="{cls}" style="{sk["th"]}{sk["pad"]}{sk["td_border"]}'
+                f'-webkit-print-color-adjust:exact;">{txt}</th>')
 
     # column widths: explicit mm (from the builder) overrides the sensible % default
     coldefs = [("num", "6%"), ("item", "40%")]
@@ -704,16 +788,22 @@ def _d_items(doc, b, s, ctx):
         dh = ""
         if cols_cfg.get("desc", True) and desc_txt and desc_txt != name_txt:
             dh = f'<div class="it-desc">{_esc(desc_txt)}</div>'
-        tds = f'<td class="num">{i}</td><td><div class="it-name">{nm}</div>{dh}</td>'
+        base_td = sk["pad"] + sk["td_border"]
+        num_td = base_td + sk["num"]
+        tds = f'<td class="num" style="{num_td}">{i}</td><td style="{base_td}"><div class="it-name">{nm}</div>{dh}</td>'
         if cols_cfg.get("qty"):
-            tds += f'<td class="num"><bdi>{_esc(it.get_formatted("qty"))} {_esc(it.get("uom") or "")}</bdi></td>'
+            tds += f'<td class="num" style="{num_td}"><bdi>{_esc(it.get_formatted("qty"))} {_esc(it.get("uom") or "")}</bdi></td>'
         if cols_cfg.get("rate"):
-            tds += f'<td class="num"><bdi>{_esc(it.get_formatted("rate"))}</bdi></td>'
+            tds += f'<td class="num" style="{num_td}"><bdi>{_esc(it.get_formatted("rate"))}</bdi></td>'
         if cols_cfg.get("amount"):
-            tds += f'<td class="num"><bdi>{_esc(it.get_formatted("amount"))}</bdi></td>'
+            tds += f'<td class="num" style="{num_td}"><bdi>{_esc(it.get_formatted("amount"))}</bdi></td>'
         rowstyle = f' style="{zbg}"' if (zbg and i % 2 == 0) else ""
         body.append(f"<tr{rowstyle}>{tds}</tr>")
-    return f'<table class="{zcls}">{colgroup}<thead><tr>{heads}</tr></thead><tbody>{"".join(body)}</tbody></table>'
+    if sk["th_first"]:  # rounded first/last header cells
+        heads = heads.replace('style="', 'style="' + sk["th_first"], 1)
+        k = heads.rfind('style="')
+        heads = heads[:k] + 'style="' + sk["th_last"] + heads[k + 7:]
+    return f'<table class="{zcls}" style="{sk["table"]}">{colgroup}<thead><tr>{heads}</tr></thead><tbody>{"".join(body)}</tbody></table>'
 
 
 def _d_datatable(doc, b, s, ctx):
@@ -742,12 +832,20 @@ def _d_datatable(doc, b, s, ctx):
     colgroup = "<colgroup>" + "".join(
         (f'<col style="width:{_fmt_num(c.get("width"))}mm">' if c.get("width") else "<col>") for c in columns
     ) + "</colgroup>"
+    sk = _tbl_skin(s, b, hc)
+    hs_size = _num((s.get("headerStyle") or {}).get("size")) if isinstance(s.get("headerStyle"), dict) else None
+    th_extra = ("" if hs_size else "font-size:7.5pt;") + (sk["pad"] or "padding:6px 8px;") + sk["td_border"]
     heads = "".join(
-        f'<th style="background-color:{hc} !important;color:#fff !important;text-align:{(c.get("align") or "left")};'
-        f'font-weight:600;font-size:7.5pt;padding:6px 8px;word-wrap:break-word;-webkit-print-color-adjust:exact;">'
+        f'<th style="{sk["th"]}{"color:#fff !important;" if "color:" not in sk["th"] else ""}'
+        f'text-align:{(c.get("align") or "left")};font-weight:600;{th_extra}'
+        f'word-wrap:break-word;-webkit-print-color-adjust:exact;">'
         f'{_esc(c.get("label") or c.get("field"))}</th>'
         for c in columns
     )
+    if sk["th_first"]:
+        heads = heads.replace('style="', 'style="' + sk["th_first"], 1)
+        k = heads.rfind('style="')
+        heads = heads[:k] + 'style="' + sk["th_last"] + heads[k + 7:]
     body = []
     for i, row in enumerate(rows, start=1):
         tds = ""
@@ -762,33 +860,45 @@ def _d_datatable(doc, b, s, ctx):
                     val = row.get(f)
                 val = "" if val is None else frappe.utils.strip_html_tags(str(val)).strip()
             align = c.get("align") or "left"
-            tds += (f'<td style="text-align:{align};padding:6px 8px;border-bottom:1px solid #cfe5f6;'
+            td_pad = sk["pad"] or "padding:6px 8px;"
+            td_bor = sk["td_border"] or "border-bottom:1px solid #cfe5f6;"
+            td_num = sk["num"] if align == "right" else ""
+            tds += (f'<td style="text-align:{align};{td_pad}{td_bor}{td_num}'
                     f'word-wrap:break-word;"><bdi>{_esc(val)}</bdi></td>')
         body.append(f"<tr>{tds}</tr>")
     zcls, zbg = _zebra_parts(s)
     if zbg:
         body = [(f'<tr style="{zbg}">' + r[4:]) if (i % 2 == 1) else r for i, r in enumerate(body)]
-    return f'<table class="{zcls}">{colgroup}<thead><tr>{heads}</tr></thead><tbody>{"".join(body)}</tbody></table>'
+    return f'<table class="{zcls}" style="{sk["table"]}">{colgroup}<thead><tr>{heads}</tr></thead><tbody>{"".join(body)}</tbody></table>'
 
 
 def _d_totals(doc, b, s, ctx):
     primary = b.get("primary", "#1C75BC")
     navy = b.get("navy", "#1A1E2A")
-    gc = navy if s.get("grandColor") == "navy" else primary
-    lines = [f'<tr><td class="lbl">Subtotal</td><td class="val"><bdi>{_esc(doc.get_formatted("total"))}</bdi></td></tr>']
+    gc = s["grandBg"].strip() if _hexok(s.get("grandBg")) else (navy if s.get("grandColor") == "navy" else primary)
+    gtc = s["grandTextColor"].strip() if _hexok(s.get("grandTextColor")) else "#fff"
+    gsz = _num(s.get("grandSize"))
+    gszc = f"font-size:{_fmt_num(min(72, max(4, gsz)))}pt;" if gsz else "font-size:10pt;"
+    lc = f'color:{s["labelColor"].strip()};' if _hexok(s.get("labelColor")) else ""
+    vc = f'color:{s["valueColor"].strip()};' if _hexok(s.get("valueColor")) else ""
+    vsz = _num(s.get("valueSize"))
+    vszc = f"font-size:{_fmt_num(min(72, max(4, vsz)))}pt;" if vsz else ""
+    wmm = _num(s.get("width"), 82) or 82
+    wmm = _fmt_num(min(200, max(40, wmm)))
+    lines = [f'<tr><td class="lbl" style="{lc}{vszc}">Subtotal</td><td class="val" style="{vc}{vszc}"><bdi>{_esc(doc.get_formatted("total"))}</bdi></td></tr>']
     if doc.get("discount_amount"):
-        lines.append(f'<tr><td class="lbl">Discount</td><td class="val"><bdi>- {_esc(doc.get_formatted("discount_amount"))}</bdi></td></tr>')
+        lines.append(f'<tr><td class="lbl" style="{lc}{vszc}">Discount</td><td class="val" style="{vc}{vszc}"><bdi>- {_esc(doc.get_formatted("discount_amount"))}</bdi></td></tr>')
     for tax in (doc.get("taxes") or []):
         if tax.tax_amount:
             d = _esc(frappe.utils.strip_html_tags(tax.description or ""))
-            lines.append(f'<tr><td class="lbl">{d}</td><td class="val"><bdi>{_esc(tax.get_formatted("tax_amount"))}</bdi></td></tr>')
+            lines.append(f'<tr><td class="lbl" style="{lc}{vszc}">{d}</td><td class="val" style="{vc}{vszc}"><bdi>{_esc(tax.get_formatted("tax_amount"))}</bdi></td></tr>')
     grand = (
-        f'<tr class="grand"><td style="background-color:{gc} !important;color:#fff !important;font-weight:700;font-size:10pt;text-align:right;padding:6px 8px;-webkit-print-color-adjust:exact;">Grand Total</td>'
-        f'<td style="background-color:{gc} !important;color:#fff !important;font-weight:700;font-size:10pt;text-align:right;white-space:nowrap;padding:6px 8px;-webkit-print-color-adjust:exact;"><bdi>{_esc(doc.get_formatted("grand_total"))}</bdi></td></tr>'
+        f'<tr class="grand"><td style="background-color:{gc} !important;color:{gtc} !important;font-weight:700;{gszc}text-align:right;padding:6px 8px;-webkit-print-color-adjust:exact;">{_esc(s.get("grandLabel") or "Grand Total")}</td>'
+        f'<td style="background-color:{gc} !important;color:{gtc} !important;font-weight:700;{gszc}text-align:right;white-space:nowrap;padding:6px 8px;-webkit-print-color-adjust:exact;"><bdi>{_esc(doc.get_formatted("grand_total"))}</bdi></td></tr>'
     )
     return (
         '<table style="width:100%;border-collapse:collapse;"><tr><td style="border:0;"></td>'
-        '<td style="border:0;width:82mm;width:min(82mm,100%);"><table class="bs-tot" style="width:100%;">' + "".join(lines) + grand + "</table></td></tr></table>"
+        f'<td style="border:0;width:{wmm}mm;width:min({wmm}mm,100%);"><table class="bs-tot" style="width:100%;">' + "".join(lines) + grand + "</table></td></tr></table>"
     )
 
 
@@ -796,24 +906,37 @@ def _d_payment_schedule(doc, b, s, ctx):
     if not doc.get("payment_schedule"):
         return ""
     primary = b.get("primary", "#1C75BC")
+    hc = b.get("navy", "#1A1E2A") if s.get("headerColor") == "navy" else primary
+    sk = _tbl_skin(s, b, hc)
+    zcls, zbg = _zebra_parts(s) if ("zebra" in s or _hexok(s.get("zebraColor"))) else ("bs-items", "")
+    heading = _esc(s.get("heading") or "Payment Schedule")
+    hcolor = f'color:{s["headingColor"].strip()};' if _hexok(s.get("headingColor")) else ""
 
     def th(txt, cls="", w=""):
         wcss = f"width:{w};" if w else ""
-        return f'<th class="{cls}" style="background-color:{primary} !important;{wcss}-webkit-print-color-adjust:exact;">{txt}</th>'
+        return (f'<th class="{cls}" style="{sk["th"]}{sk["pad"]}{sk["td_border"]}{wcss}'
+                f'-webkit-print-color-adjust:exact;">{txt}</th>')
 
     heads = th("#", "num", "6%") + th("Payment Term", "", "46%") + th("Due Date", "num", "18%") + th("Portion %", "num", "12%") + th("Amount", "num", "18%")
+    if sk["th_first"]:
+        heads = heads.replace('style="', 'style="' + sk["th_first"], 1)
+        k = heads.rfind('style="')
+        heads = heads[:k] + 'style="' + sk["th_last"] + heads[k + 7:]
+    base_td = sk["pad"] + sk["td_border"]
+    num_td = base_td + sk["num"]
     body = []
     for i, ps in enumerate(doc.payment_schedule, start=1):
         term = _esc(ps.get("payment_term") or ps.get("description") or "")
+        rowstyle = f' style="{zbg}"' if (zbg and i % 2 == 0) else ""
         body.append(
-            f'<tr><td class="num">{i}</td><td><div class="it-name">{term}</div></td>'
-            f'<td class="num"><bdi>{_esc(ps.get_formatted("due_date"))}</bdi></td>'
-            f'<td class="num"><bdi>{_esc(ps.get_formatted("invoice_portion"))}</bdi></td>'
-            f'<td class="num"><bdi>{_esc(ps.get_formatted("payment_amount"))}</bdi></td></tr>'
+            f'<tr{rowstyle}><td class="num" style="{num_td}">{i}</td><td style="{base_td}"><div class="it-name">{term}</div></td>'
+            f'<td class="num" style="{num_td}"><bdi>{_esc(ps.get_formatted("due_date"))}</bdi></td>'
+            f'<td class="num" style="{num_td}"><bdi>{_esc(ps.get_formatted("invoice_portion"))}</bdi></td>'
+            f'<td class="num" style="{num_td}"><bdi>{_esc(ps.get_formatted("payment_amount"))}</bdi></td></tr>'
         )
     return (
-        f'<div class="bs-sec-lbl">Payment Schedule</div>'
-        f'<table class="bs-items"><thead><tr>{heads}</tr></thead><tbody>{"".join(body)}</tbody></table>'
+        f'<div class="bs-sec-lbl" style="{hcolor}">{heading}</div>'
+        f'<table class="{zcls}" style="{sk["table"]}"><thead><tr>{heads}</tr></thead><tbody>{"".join(body)}</tbody></table>'
     )
 
 

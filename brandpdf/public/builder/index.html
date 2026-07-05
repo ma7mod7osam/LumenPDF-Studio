@@ -149,6 +149,13 @@
   .segbtn.on{border-color:var(--accent);background:#1463FF14;color:var(--accent)}
   .segbtn.on small{color:var(--accent)}
   .stycard{border:1px solid var(--line2);border-radius:9px;padding:9px 10px 4px;margin:0 0 8px;background:#fbfcfe}
+  .psec{border:1px solid var(--line);border-radius:11px;margin:0 0 10px;background:var(--panel);overflow:hidden}
+  .psec>summary{cursor:pointer;padding:10px 13px;font-size:10.5px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:var(--mut);list-style:none;display:flex;align-items:center;justify-content:space-between;user-select:none}
+  .psec>summary::-webkit-details-marker{display:none}
+  .psec>summary::after{content:"▸";font-size:11px;color:var(--mut2);transition:transform .12s}
+  .psec[open]>summary::after{transform:rotate(90deg)}
+  .psec[open]>summary{color:var(--accent);border-bottom:1px solid var(--line)}
+  .psecb{padding:10px 13px 6px}
   .stycardlbl{font-size:10px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--mut2);margin-bottom:6px}
   .stycard .fld label{font-size:10px}
   #gallery .gcard-wrap,#fmtmgr .gcard-wrap{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px 22px;width:700px;max-width:92vw}
@@ -166,7 +173,7 @@
 <body>
 <div class="app">
   <div class="top">
-    <div class="brand"><svg width="22" height="22" viewBox="0 0 48 48" fill="none" aria-label="LumenPDF Studio"><rect x="6" y="6" width="7.5" height="38" rx="3.75" fill="#1463FF"/><rect x="18" y="25" width="4.5" height="19" rx="2.25" fill="#7FA8FF"/><rect x="27" y="25" width="7.5" height="19" rx="3.75" fill="#1463FF"/><rect x="39" y="25" width="4.5" height="19" rx="2.25" fill="#1463FF"/></svg> LumenPDF <small>Studio · b30</small></div>
+    <div class="brand"><svg width="22" height="22" viewBox="0 0 48 48" fill="none" aria-label="LumenPDF Studio"><rect x="6" y="6" width="7.5" height="38" rx="3.75" fill="#1463FF"/><rect x="18" y="25" width="4.5" height="19" rx="2.25" fill="#7FA8FF"/><rect x="27" y="25" width="7.5" height="19" rx="3.75" fill="#1463FF"/><rect x="39" y="25" width="4.5" height="19" rx="2.25" fill="#1463FF"/></svg> LumenPDF <small>Studio · b31</small></div>
     <input class="fmt-name" id="fmtName" value="Quotation - Custom" title="Format name">
     <select class="sel" id="doctypeSel" title="Target DocType" onchange="onDoctype(this.value)"></select>
     <select class="sel" id="openSel" title="Open an existing format" onchange="openFormat(this.value)"><option value="">Open…</option></select>
@@ -204,6 +211,33 @@
 <script>
 const PXMM=96/25.4;
 /* page size: A4 portrait (210x297) or landscape (297x210). PW()/PH() are the live mm dims. */
+const HX=/^#([0-9a-f]{3}|[0-9a-f]{6})$/i;
+function tblSkin(sett,b,defHbg){const out={th:"",thFirst:"",thLast:"",tdBorder:"",pad:"",num:"",table:""};
+  const hs=(sett.headerStyle&&typeof sett.headerStyle==="object")?sett.headerStyle:{};
+  out.th+= "background:"+(HX.test(hs.bg||'')?hs.bg:defHbg)+";";
+  if(HX.test(hs.color||''))out.th+="color:"+hs.color+";";
+  let n=parseFloat(hs.size);if(n&&!isNaN(n))out.th+="font-size:"+Math.min(72,Math.max(4,n))+"pt;";
+  if(hs.weight)out.th+="font-weight:"+hs.weight+";";
+  let r=parseFloat(hs.radius);
+  if(r&&!isNaN(r)){r=Math.min(30,Math.max(0,r));out.thFirst="border-top-left-radius:"+r+"px;border-bottom-left-radius:"+r+"px;";out.thLast="border-top-right-radius:"+r+"px;border-bottom-right-radius:"+r+"px;";out.table+="border-collapse:separate;border-spacing:0;";}
+  const bo=(sett.borders&&typeof sett.borders==="object")?sett.borders:{};
+  if(Object.keys(bo).length){
+    const preset=["grid","rows","outline","none"].indexOf(bo.preset)>=0?bo.preset:"rows";
+    const w=Math.min(10,Math.max(0,bo.w==null?1:(parseFloat(bo.w)||0)));
+    const c=HX.test(bo.color||'')?bo.color:'#cfe5f6';
+    const st=["solid","dashed","dotted","double"].indexOf(bo.style)>=0?bo.style:"solid";
+    if(preset==="grid"&&w)out.tdBorder="border:"+w+"px "+st+" "+c+";";
+    else if(preset==="rows"&&w)out.tdBorder="border:0;border-bottom:"+w+"px "+st+" "+c+";";
+    else{out.tdBorder="border:0;";if(preset==="outline"&&w)out.table+="border:"+w+"px "+st+" "+c+";";}
+  }
+  const pd=(sett.cellPad&&typeof sett.cellPad==="object")?sett.cellPad:{};
+  if(Object.keys(pd).length){const py=Math.min(30,Math.max(0,pd.y==null?6:parseFloat(pd.y)||0)),px=Math.min(30,Math.max(0,pd.x==null?8:parseFloat(pd.x)||0));out.pad="padding:"+py+"px "+px+"px;";}
+  const ns=(sett.numStyle&&typeof sett.numStyle==="object")?sett.numStyle:{};
+  if(HX.test(ns.color||''))out.num+="color:"+ns.color+" !important;";
+  n=parseFloat(ns.size);if(n&&!isNaN(n))out.num+="font-size:"+Math.min(72,Math.max(4,n))+"pt;";
+  if(ns.weight)out.num+="font-weight:"+ns.weight+" !important;";
+  return out;}
+function skinHeads(th,sk){if(!sk.thFirst)return th;th=th.replace('style="','style="'+sk.thFirst);const k=th.lastIndexOf('style="');return th.slice(0,k)+'style="'+sk.thLast+th.slice(k+7);}
 /* Fonts: mirrors blocks.GOOGLE_FONTS (all @import-loaded above) + system fonts, grouped. */
 const FONT_GROUPS=[["Sans (Latin)",["Plus Jakarta Sans","Inter","Montserrat","Roboto","Open Sans","Lato","Poppins"]],["Arabic",["Cairo","Almarai","Tajawal","IBM Plex Sans Arabic","Noto Kufi Arabic","Amiri"]],["System",["Arial","Tahoma"]]];
 function fontOptions(cur){return FONT_GROUPS.map(g=>`<optgroup label="${g[0]}">`+g[1].map(f=>`<option ${cur===f?'selected':''}>${f}</option>`).join("")+`</optgroup>`).join("");}
@@ -250,12 +284,28 @@ function esc(s){return(s==null?"":String(s)).replace(/&/g,"&amp;").replace(/</g,
 const R={
   header_banner:(s,b)=>b.header_image?`<img class="bs-banner" src="${esc(b.header_image)}">`:`<div class="ph-banner" style="background:${b.primary}">Header banner</div>`,
   footer_banner:(s,b)=>b.footer_image?`<img class="bs-banner" src="${esc(b.footer_image)}">`:`<div class="ph-banner" style="background:${b.navy}">Footer banner</div>`,
-  title:(s,b)=>{const m=[];if(s.meta.name)m.push(["Quotation No",SAMPLE.name]);if(s.meta.date)m.push(["Date",SAMPLE.transaction_date]);if(s.meta.valid_till)m.push(["Valid Till",SAMPLE.valid_till]);const rows=m.map(([k,v])=>`<tr><td class="k">${esc(k)}</td><td>${esc(v)}</td></tr>`).join("");const left=`<div class="bs-title" style="color:${b.navy}">${esc(s.text)}</div>`+(s.showArabic?`<div class="bs-title-ar" style="color:${b.primary}">${esc(s.arabic)}</div>`:"");if(s.align==="center")return `<div style="text-align:center">${left}</div>`;return `<table class="bs-head"><tr><td style="text-align:left">${left}</td><td style="text-align:right"><table class="bs-meta">${rows}</table></td></tr></table>`;},
-  customer:(s,b)=>`<div class="bs-billto"><div class="lbl" style="color:${b.primary}">${esc(s.heading)}</div><div class="name">${esc(SAMPLE.customer_name)}</div><div class="addr">${SAMPLE.address_display}</div></div>`,
-  items:(s,b)=>{const w=s.widths||{};const cols=[["#","num",w.num],["Item &amp; Description","",w.item]];if(s.cols.qty)cols.push(["Qty","num",w.qty]);if(s.cols.rate)cols.push(["Rate","num",w.rate]);if(s.cols.amount)cols.push(["Amount","num",w.amount]);const hc=s.headerColor==="navy"?b.navy:b.primary;const cg=`<colgroup>`+cols.map(c=>`<col style="width:${c[2]&&!isNaN(c[2])?(+c[2])+'mm':'auto'}">`).join("")+`</colgroup>`;const th=cols.map(c=>`<th class="${c[1]}" style="background:${hc}">${c[0]}</th>`).join("");const zc=s.zebraColor||"#eef6fc";const rows=SAMPLE.items.map((it,i)=>{let t=`<td class="num">${i+1}</td><td><div class="it-name">${esc(it.n)}</div>`+(s.cols.desc&&it.d?`<div class="it-desc">${esc(it.d)}</div>`:"")+`</td>`;if(s.cols.qty)t+=`<td class="num">${esc(it.q)}</td>`;if(s.cols.rate)t+=`<td class="num">${esc(it.r)}</td>`;if(s.cols.amount)t+=`<td class="num">${esc(it.a)}</td>`;return `<tr${s.zebra&&i%2?` style="background:${zc}"`:''}>${t}</tr>`;}).join("");return `<table class="bs-items">${cg}<thead><tr>${th}</tr></thead><tbody>${rows}</tbody></table>`;},
-  datatable:(s,b)=>{const cols=(s.columns||[]).filter(c=>c&&c.field);const rows=(SAMPLE.tables&&SAMPLE.tables[s.table])||[];const zc=s.zebraColor||"#eef6fc";const hc=s.headerColor==="navy"?b.navy:b.primary;const cg=`<colgroup>`+cols.map(c=>`<col style="width:${c.width&&!isNaN(c.width)?(+c.width)+'mm':'auto'}">`).join("")+`</colgroup>`;const th=cols.map(c=>`<th style="background:${hc};color:#fff;font-weight:600;font-size:7.5pt;padding:6px 8px;text-align:${c.align||'left'};word-wrap:break-word">${esc(c.label||c.field)}</th>`).join("");let body;if(!cols.length){body=`<tr><td style="padding:10px;color:#9aa6c2">Pick a table and add columns in the panel →</td></tr>`;}else if(!rows.length){body=[0,1].map(i=>`<tr${s.zebra&&i%2?` style="background:${zc}"`:''}>`+cols.map(c=>`<td style="padding:6px 8px;border-bottom:1px solid #cfe5f6;text-align:${c.align||'left'};color:#9aa6c2;word-wrap:break-word">${c.field==='idx'?(i+1):'«'+esc(c.label||c.field)+'»'}</td>`).join("")+`</tr>`).join("");}else{body=rows.map((r,i)=>`<tr${s.zebra&&i%2?` style="background:${zc}"`:''}>`+cols.map(c=>`<td style="padding:6px 8px;border-bottom:1px solid #cfe5f6;text-align:${c.align||'left'};word-wrap:break-word">${esc(r[c.field]!==undefined&&r[c.field]!==""?r[c.field]:(c.field==='idx'?(i+1):''))}</td>`).join("")+`</tr>`).join("");}return `<table style="width:100%;border-collapse:collapse;font-size:8pt;table-layout:fixed">${cg}<thead><tr>${th}</tr></thead><tbody>${body}</tbody></table>`;},
-  totals:(s,b)=>{const gc=s.grandColor==="navy"?b.navy:b.primary;let ln=`<tr><td class="lbl">Subtotal</td><td class="val">${esc(SAMPLE.total)}</td></tr>`;SAMPLE.taxes.forEach(t=>ln+=`<tr><td class="lbl">${esc(t.desc)}</td><td class="val">${esc(t.amt)}</td></tr>`);ln+=`<tr><td style="background:${gc};color:#fff;font-weight:700;font-size:10pt;text-align:right;padding:6px 8px">Grand Total</td><td style="background:${gc};color:#fff;font-weight:700;font-size:10pt;text-align:right;padding:6px 8px">${esc(SAMPLE.grand_total)}</td></tr>`;return `<table class="bs-tot">${ln}</table>`;},
-  payment_schedule:(s,b)=>{const rows=SAMPLE.payment_schedule.map((p,i)=>`<tr${i%2?' style="background:#eef6fc"':''}><td class="num">${i+1}</td><td><div class="it-name">${esc(p.t)}</div></td><td class="num">${esc(p.due)}</td><td class="num">${esc(p.pct)}</td><td class="num">${esc(p.amt)}</td></tr>`).join("");return `<div class="bs-sec-lbl" style="color:${b.primary}">Payment Schedule</div><table class="bs-items"><thead><tr><th class="num" style="background:${b.primary}">#</th><th style="background:${b.primary}">Payment Term</th><th class="num" style="background:${b.primary}">Due Date</th><th class="num" style="background:${b.primary}">Portion %</th><th class="num" style="background:${b.primary}">Amount</th></tr></thead><tbody>${rows}</tbody></table>`;},
+  title:(s,b)=>{const m=[];if(s.meta.name)m.push(["Quotation No",SAMPLE.name]);if(s.meta.date)m.push(["Date",SAMPLE.transaction_date]);if(s.meta.valid_till)m.push(["Valid Till",SAMPLE.valid_till]);
+    const mlc=HX.test(s.metaLabelColor||'')?`color:${s.metaLabelColor};`:'';const mvc=HX.test(s.metaValueColor||'')?`color:${s.metaValueColor};`:'';const mbc=HX.test(s.metaBorderColor||'')?`border-color:${s.metaBorderColor};`:'';
+    const rows=m.map(([k,v])=>`<tr><td class="k" style="${mlc}${mbc}">${esc(k)}</td><td style="${mvc}${mbc}">${esc(v)}</td></tr>`).join("");
+    const tc=HX.test(s.titleColor||'')?s.titleColor:b.navy;const tsz=parseFloat(s.titleSize);const tszc=(tsz&&!isNaN(tsz))?`font-size:${Math.min(72,Math.max(6,tsz))}pt;`:'';
+    const ac=HX.test(s.arabicColor||'')?s.arabicColor:b.primary;
+    const left=`<div class="bs-title" style="color:${tc};${tszc}">${esc(s.text)}</div>`+(s.showArabic?`<div class="bs-title-ar" style="color:${ac}">${esc(s.arabic)}</div>`:"");if(s.align==="center")return `<div style="text-align:center">${left}</div>`;return `<table class="bs-head"><tr><td style="text-align:left">${left}</td><td style="text-align:right"><table class="bs-meta">${rows}</table></td></tr></table>`;},
+  customer:(s,b)=>{const hc=HX.test(s.headingColor||'')?s.headingColor:b.primary;const nc=HX.test(s.nameColor||'')?`color:${s.nameColor};`:'';const nsz=parseFloat(s.nameSize);const nszc=(nsz&&!isNaN(nsz))?`font-size:${Math.min(72,Math.max(4,nsz))}pt;`:'';
+    return `<div class="bs-billto"><div class="lbl" style="color:${hc}">${esc(s.heading)}</div><div class="name" style="${nc}${nszc}">${esc(SAMPLE.customer_name)}</div><div class="addr">${SAMPLE.address_display}</div></div>`;},
+  items:(s,b)=>{const w=s.widths||{};const cols=[["#","num",w.num],["Item &amp; Description","",w.item]];if(s.cols.qty)cols.push(["Qty","num",w.qty]);if(s.cols.rate)cols.push(["Rate","num",w.rate]);if(s.cols.amount)cols.push(["Amount","num",w.amount]);const hc=s.headerColor==="navy"?b.navy:b.primary;const sk=tblSkin(s,b,hc);const cg=`<colgroup>`+cols.map(c=>`<col style="width:${c[2]&&!isNaN(c[2])?(+c[2])+'mm':'auto'}">`).join("")+`</colgroup>`;const th=skinHeads(cols.map(c=>`<th class="${c[1]}" style="${sk.th}${sk.pad}${sk.tdBorder}">${c[0]}</th>`).join(""),sk);const zc=s.zebraColor||"#eef6fc";const bt=sk.pad+sk.tdBorder;const nt=bt+sk.num;const rows=SAMPLE.items.map((it,i)=>{let t=`<td class="num" style="${nt}">${i+1}</td><td style="${bt}"><div class="it-name">${esc(it.n)}</div>`+(s.cols.desc&&it.d?`<div class="it-desc">${esc(it.d)}</div>`:"")+`</td>`;if(s.cols.qty)t+=`<td class="num" style="${nt}">${esc(it.q)}</td>`;if(s.cols.rate)t+=`<td class="num" style="${nt}">${esc(it.r)}</td>`;if(s.cols.amount)t+=`<td class="num" style="${nt}">${esc(it.a)}</td>`;return `<tr${s.zebra&&i%2?` style="background:${zc}"`:''}>${t}</tr>`;}).join("");return `<table class="bs-items" style="${sk.table}">${cg}<thead><tr>${th}</tr></thead><tbody>${rows}</tbody></table>`;},
+  datatable:(s,b)=>{const cols=(s.columns||[]).filter(c=>c&&c.field);const rows=(SAMPLE.tables&&SAMPLE.tables[s.table])||[];const zc=s.zebraColor||"#eef6fc";const hc=s.headerColor==="navy"?b.navy:b.primary;const sk=tblSkin(s,b,hc);const thPad=sk.pad||"padding:6px 8px;";const thFs=(s.headerStyle&&s.headerStyle.size)?"":"font-size:7.5pt;";const cg=`<colgroup>`+cols.map(c=>`<col style="width:${c.width&&!isNaN(c.width)?(+c.width)+'mm':'auto'}">`).join("")+`</colgroup>`;const th=skinHeads(cols.map(c=>`<th style="${sk.th}${sk.th.indexOf('color:')<0?'color:#fff;':''}font-weight:600;${thFs}${thPad}${sk.tdBorder}text-align:${c.align||'left'};word-wrap:break-word">${esc(c.label||c.field)}</th>`).join(""),sk);const dtPad=sk.pad||"padding:6px 8px;";const dtBor=sk.tdBorder||"border-bottom:1px solid #cfe5f6;";let body;if(!cols.length){body=`<tr><td style="padding:10px;color:#9aa6c2">Pick a table and add columns in the panel →</td></tr>`;}else if(!rows.length){body=[0,1].map(i=>`<tr${s.zebra&&i%2?` style="background:${zc}"`:''}>`+cols.map(c=>`<td style="${dtPad}${dtBor}text-align:${c.align||'left'};color:#9aa6c2;word-wrap:break-word">${c.field==='idx'?(i+1):'«'+esc(c.label||c.field)+'»'}</td>`).join("")+`</tr>`).join("");}else{body=rows.map((r,i)=>`<tr${s.zebra&&i%2?` style="background:${zc}"`:''}>`+cols.map(c=>`<td style="${dtPad}${dtBor}text-align:${c.align||'left'};${c.align==='right'?sk.num:''}word-wrap:break-word">${esc(r[c.field]!==undefined&&r[c.field]!==""?r[c.field]:(c.field==='idx'?(i+1):''))}</td>`).join("")+`</tr>`).join("");}return `<table style="width:100%;border-collapse:collapse;font-size:8pt;table-layout:fixed;${sk.table}">${cg}<thead><tr>${th}</tr></thead><tbody>${body}</tbody></table>`;},
+  totals:(s,b)=>{const gc=HX.test(s.grandBg||'')?s.grandBg:(s.grandColor==="navy"?b.navy:b.primary);const gtc=HX.test(s.grandTextColor||'')?s.grandTextColor:'#fff';
+    const gsz=parseFloat(s.grandSize);const gszc=(gsz&&!isNaN(gsz))?`font-size:${Math.min(72,Math.max(4,gsz))}pt;`:'font-size:10pt;';
+    const lc=HX.test(s.labelColor||'')?`color:${s.labelColor};`:'';const vc=HX.test(s.valueColor||'')?`color:${s.valueColor};`:'';
+    const vsz=parseFloat(s.valueSize);const vszc=(vsz&&!isNaN(vsz))?`font-size:${Math.min(72,Math.max(4,vsz))}pt;`:'';
+    let ln=`<tr><td class="lbl" style="${lc}${vszc}">Subtotal</td><td class="val" style="${vc}${vszc}">${esc(SAMPLE.total)}</td></tr>`;SAMPLE.taxes.forEach(t=>ln+=`<tr><td class="lbl" style="${lc}${vszc}">${esc(t.desc)}</td><td class="val" style="${vc}${vszc}">${esc(t.amt)}</td></tr>`);
+    ln+=`<tr><td style="background:${gc};color:${gtc};font-weight:700;${gszc}text-align:right;padding:6px 8px">${esc(s.grandLabel||'Grand Total')}</td><td style="background:${gc};color:${gtc};font-weight:700;${gszc}text-align:right;padding:6px 8px">${esc(SAMPLE.grand_total)}</td></tr>`;return `<table class="bs-tot">${ln}</table>`;},
+  payment_schedule:(s,b)=>{const hc=s.headerColor==="navy"?b.navy:b.primary;const sk=tblSkin(s,b,hc);const bt=sk.pad+sk.tdBorder;const nt=bt+sk.num;
+    const zc=(s.zebra===false)?null:(HX.test(s.zebraColor||'')?s.zebraColor:'#eef6fc');
+    const rows=SAMPLE.payment_schedule.map((p,i)=>`<tr${(zc&&i%2)?` style="background:${zc}"`:''}><td class="num" style="${nt}">${i+1}</td><td style="${bt}"><div class="it-name">${esc(p.t)}</div></td><td class="num" style="${nt}">${esc(p.due)}</td><td class="num" style="${nt}">${esc(p.pct)}</td><td class="num" style="${nt}">${esc(p.amt)}</td></tr>`).join("");
+    const hcol=HX.test(s.headingColor||'')?s.headingColor:b.primary;
+    const th=skinHeads([["#","num"],["Payment Term",""],["Due Date","num"],["Portion %","num"],["Amount","num"]].map(x=>`<th class="${x[1]}" style="${sk.th}${sk.pad}${sk.tdBorder}">${x[0]}</th>`).join(""),sk);
+    return `<div class="bs-sec-lbl" style="color:${hcol}">${esc(s.heading||'Payment Schedule')}</div><table class="bs-items" style="${sk.table}"><thead><tr>${th}</tr></thead><tbody>${rows}</tbody></table>`;},
   terms:(s,b)=>SAMPLE.terms
     ?`<div style="font-size:7.5pt;color:#6b6b6e;line-height:1.5"><div class="bs-sec-lbl" style="color:${b.primary}">${esc(s.heading)}</div>${esc(SAMPLE.terms)}</div>`
     :`<div style="border:1px dashed #b9c6e0;border-radius:4px;padding:8px;font-size:7.5pt;color:#9aa6c2"><b>${esc(s.heading)}</b> — this document has no Terms, so this block prints EMPTY. Set the Terms (or pick a Terms &amp; Conditions template) on the document itself.</div>`,
@@ -294,9 +344,12 @@ const R={
     const outline=(preset==="outline"&&tbw)?`;border:${tbw}px ${tbs} ${tbc}`:"";
     const cg=`<colgroup>`+cols.map((c,ci)=>{const w=cs[ci]&&cs[ci].w;return `<col style="width:${(w&&!isNaN(w))?(+w)+'mm':'auto'}">`;}).join("")+`</colgroup>`;
     const _sz=v=>{const n=parseFloat(v);return (n&&!isNaN(n))?`;font-size:${Math.min(72,Math.max(4,n))}pt`:'';};
-    let h=`<table style="width:100%;border-collapse:collapse;table-layout:fixed${outline}">`+cg+`<thead><tr>`+cols.map((c,ci)=>{const st=cs[ci]||{};const hcss=`background:${hbg};color:${hcolor};${padding}text-align:${st.align||'left'};${cbord(st,hasBo?tbc:hbg)}font-weight:${hweight}${_sz(hs.size||st.size)}`;const htok=/^\{([A-Za-z0-9_]+)\}$/.exec(String(c).trim());
+    let thStr=cols.map((c,ci)=>{const st=cs[ci]||{};const hcss=`background:${hbg};color:${hcolor};${padding}text-align:${st.align||'left'};${cbord(st,hasBo?tbc:hbg)}font-weight:${hweight}${_sz(hs.size||st.size)}`;const htok=/^\{([A-Za-z0-9_]+)\}$/.exec(String(c).trim());
       if(htok)return `<th data-th="1" data-c="${ci}" style="${hcss}"><span style="border-bottom:1px dashed #ffffff88" title="${esc(String(c))} — bound to the document field">${esc(fieldVal(htok[1]))}</span></th>`;
-      return `<th data-th="1" data-c="${ci}" contenteditable style="${hcss}">${esc(c)}</th>`;}).join("")+`</tr></thead><tbody>`;
+      return `<th data-th="1" data-c="${ci}" contenteditable style="${hcss}">${esc(c)}</th>`;}).join("");
+    const hr=parseFloat(hs.radius);let collapse="border-collapse:collapse";
+    if(hr&&!isNaN(hr)){const r2=Math.min(30,Math.max(0,hr));thStr=thStr.replace('style="','style="border-top-left-radius:'+r2+'px;border-bottom-left-radius:'+r2+'px;');const kk=thStr.lastIndexOf('style="');thStr=thStr.slice(0,kk)+'style="border-top-right-radius:'+r2+'px;border-bottom-right-radius:'+r2+'px;'+thStr.slice(kk+7);collapse="border-collapse:separate;border-spacing:0";}
+    let h=`<table style="width:100%;${collapse};table-layout:fixed${outline}">`+cg+`<thead><tr>`+thStr+`</tr></thead><tbody>`;
     h+=rows.map((r,ri)=>{const rst=rs[ri]||{};const rowBg=rst.bg||((zbg&&ri%2===1)?zbg:null);const rh=parseFloat(rst.h);const hCss=(!isNaN(rh)&&rh)?`height:${Math.min(100,Math.max(1,rh))}mm;`:"";
       return `<tr${rowBg?` style="background:${rowBg}"`:''}>`+cols.map((c,ci)=>{const st=cs[ci]||{};const v=String(r[ci]||"");const tok=/^\{([A-Za-z0-9_]+)\}$/.exec(v.trim());
       const colBg=(st.bg&&hx.test(st.bg)&&!rst.bg)?`;background-color:${st.bg}`:"";
@@ -469,7 +522,10 @@ function addSection(key){const sdef=SECTIONS.find(function(x){return x.key===key
   });
   selId=firstId;render();renderProps();}
 
-function styleCss(st){if(!st)return "";const p=[];if(st.align)p.push("text-align:"+st.align);if(st.size!=="")p.push("font-size:"+st.size+"pt");if(st.weight)p.push("font-weight:"+st.weight);if(st.italic)p.push("font-style:italic");if(st.color)p.push("color:"+st.color);if(st.bg)p.push("background:"+st.bg);if(st.pad!=="")p.push("padding:"+st.pad+"mm");if(st.border&&st.border.on){p.push(`border:${st.border.w}px ${st.border.style} ${st.border.color}`);if(st.border.radius)p.push("border-radius:"+st.border.radius+"px");}
+function styleCss(st){if(!st)return "";const p=[];if(st.align)p.push("text-align:"+st.align);if(st.size!=="")p.push("font-size:"+st.size+"pt");if(st.weight)p.push("font-weight:"+st.weight);if(st.italic)p.push("font-style:italic");if(st.color)p.push("color:"+st.color);if(st.bg)p.push("background:"+st.bg);if(st.pad!=="")p.push("padding:"+st.pad+"mm");if(st.border&&st.border.on){const sd=st.border.sides;const all=!sd||["t","r","b","l"].every(k=>sd[k]!==false);
+    if(all)p.push(`border:${st.border.w}px ${st.border.style} ${st.border.color}`);
+    else[["t","border-top"],["r","border-right"],["b","border-bottom"],["l","border-left"]].forEach(([k,css])=>{if(sd[k]!==false)p.push(`${css}:${st.border.w}px ${st.border.style} ${st.border.color}`);});
+    if(st.border.radius)p.push("border-radius:"+st.border.radius+"px");}
   if(st.lineHeight&&!isNaN(st.lineHeight))p.push("line-height:"+(+st.lineHeight));
   if(st.letterSpacing&&!isNaN(st.letterSpacing))p.push("letter-spacing:"+(+st.letterSpacing)+"px");
   if(st.underline)p.push("text-decoration:underline");
@@ -819,7 +875,36 @@ function addBlockDrop(t,x,y){
 }
 
 function setTab(t,silent){tab=t;document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("on",x.dataset.tab===t));document.getElementById("propsBlock").style.display=t==="block"?"":"none";document.getElementById("propsPage").style.display=t==="page"?"":"none";document.getElementById("propsBrand").style.display=t==="brand"?"":"none";if(!silent){if(t==="brand")renderBrand();else if(t==="page")renderPage();else renderProps();}}
-function setS(k,v){const b=cur();if(!b)return;const p=k.split(".");let o=b.settings;for(let i=0;i<p.length-1;i++)o=o[p[i]];o[p[p.length-1]]=v;render();}
+function setS(k,v){const b=cur();if(!b)return;const p=k.split(".");let o=b.settings;for(let i=0;i<p.length-1;i++){if(typeof o[p[i]]!=="object"||o[p[i]]===null)o[p[i]]={};o=o[p[i]];}o[p[p.length-1]]=v;render();}
+function setSNum(k,v){const n=parseFloat(v);setS(k,(v===""||isNaN(n))?null:n);}
+function toggleBorderSide(k){const b=cur();if(!b)return;const bd=b.style.border||(b.style.border={on:true,w:1,color:"#cfe5f6",style:"solid",radius:0});const sd=bd.sides||(bd.sides={t:true,r:true,b:true,l:true});sd[k]=(sd[k]===false);render();renderProps();}
+let _secOpen={content:true,tstyle:true,typo:false,box:false};
+function sec(id,title,inner,defOpen){const open=(_secOpen[id]===undefined)?!!defOpen:_secOpen[id];return `<details class="psec" ${open?'open':''} ontoggle="_secOpen['${id}']=this.open"><summary>${title}</summary><div class="psecb">${inner}</div></details>`;}
+/* Shared "Table style" UI for the ready tables (Items / Payment / Data Table): header skin,
+   line presets, cell padding, number styling — mirrors engine _tbl_skin. */
+function tableSkinUI(sett,o){o=o||{};const hs=sett.headerStyle||{},bo=sett.borders||{},pd=sett.cellPad||{},ns=sett.numStyle||{};
+  const C=(l,val,key,ph,fb)=>`<div class="fld"><label>${l}</label><div class="color"><input type="color" value="${HX.test(val||'')?val:fb}" oninput="setS('${key}',this.value)"><input type="text" value="${esc(val||'')}" placeholder="${ph}" oninput="setS('${key}',this.value)"></div></div>`;
+  const N=(l,val,key,ph)=>`<div class="fld"><label>${l}</label><input type="text" value="${val==null?'':val}" placeholder="${ph}" oninput="setSNum('${key}',this.value)"></div>`;
+  const W=(val,key)=>`<div class="fld"><label>Weight</label><select onchange="setS('${key}',this.value)">`+[["","Default"],["600","Semi"],["700","Bold"],["800","Black"]].map(x=>`<option value="${x[0]}" ${(val||'')===x[0]?'selected':''}>${x[1]}</option>`).join("")+`</select></div>`;
+  const preset=["grid","rows","outline","none"].indexOf(bo.preset)>=0?bo.preset:"rows";
+  let h=`<div class="stycard"><div class="stycardlbl">Header</div>`
+    +`<div class="row2">`+C("Background",hs.bg,"headerStyle.bg","theme color","#1463FF")+C("Text color",hs.color,"headerStyle.color","#ffffff","#ffffff")+`</div>`
+    +`<div class="row2">`+W(hs.weight,"headerStyle.weight")+N("Size (pt)",hs.size,"headerStyle.size","inherit")+`</div>`
+    +N("Corner radius (px) — rounds the first & last header cells",hs.radius,"headerStyle.radius","0")
+    +`</div>`;
+  h+=`<div class="stycard"><div class="stycardlbl">Lines</div>`
+    +`<div class="fld"><label>Lines</label><div class="segrow">`+[["rows","Rows","horizontal"],["grid","Grid","all lines"],["outline","Outline","box only"],["none","None","no lines"]].map(x=>`<button class="segbtn ${preset===x[0]?'on':''}" style="padding:6px 2px" onclick="setS('borders.preset','${x[0]}');renderProps()">${x[1]}<small>${x[2]}</small></button>`).join("")+`</div></div>`
+    +`<div class="row2">`+N("Line width (px)",bo.w,"borders.w","1")+`<div class="fld"><label>Line style</label><select onchange="setS('borders.style',this.value)">`+["solid","dashed","dotted","double"].map(x=>`<option ${(bo.style||'solid')===x?'selected':''}>${x}</option>`).join("")+`</select></div></div>`
+    +C("Line color",bo.color,"borders.color","#cfe5f6","#cfe5f6")+`</div>`;
+  h+=`<div class="stycard"><div class="stycardlbl">Cells</div>`
+    +`<div class="row2">`+N("Padding ↕ (px)",pd.y,"cellPad.y","6")+N("Padding ↔ (px)",pd.x,"cellPad.x","8")+`</div>`;
+  if(o.num!==false){h+=`<div class="stycardlbl" style="margin-top:4px">Numbers (qty / rate / amount)</div>`
+    +`<div class="row2">`+C("Color",ns.color,"numStyle.color","inherit","#0C1322")+N("Size (pt)",ns.size,"numStyle.size","inherit")+`</div>`
+    +W(ns.weight,"numStyle.weight");}
+  if(o.zebra){h+=ck("Zebra rows","zebra",sett.zebra);
+    if(sett.zebra)h+=C("Zebra color",sett.zebraColor,"zebraColor","#eef6fc","#eef6fc");}
+  h+=`</div>`;
+  return h;}
 // Data Table block helpers
 function defaultDTCols(tb){const out=[{field:"idx",label:"#",width:8,align:"right"}];if(tb&&tb.fields)tb.fields.filter(f=>f.fieldname!=="idx").slice(0,5).forEach(f=>out.push({field:f.fieldname,label:f.label,width:null,align:"left"}));return out;}
 function setDT(k,v){const b=cur();if(!b)return;b.settings[k]=v;if(k==="table"){const tb=CTABLES.find(x=>x.fieldname===v);if(tb){b.settings.child_doctype=tb.child_doctype||"";b.settings.columns=defaultDTCols(tb);}}render();renderProps();}
@@ -862,21 +947,23 @@ function styleControls(st,type){const seg=(l,k,v,o)=>`<div class="fld"><label>${
   const num=(l,k,v)=>`<div class="fld"><label>${l}</label><input type="text" value="${v===undefined||v===null?'':v}" oninput="setStyle('${k}',this.value)"></div>`;
   const col=(l,k,v)=>`<div class="fld"><label>${l}</label><div class="color"><input type="color" value="${v||'#000000'}" oninput="setStyle('${k}',this.value)"><input type="text" value="${esc(v||'')}" placeholder="none" oninput="setStyle('${k}',this.value)"></div></div>`;
   const ckk=(l,k,o)=>`<label class="chk"><input type="checkbox" ${o?'checked':''} onchange="setStyle('${k}',this.checked);renderProps()"> ${l}</label>`;
-  let h=`<div class="styhead">Style</div>`;h+=seg("Alignment","align",st.align,[["left","Left"],["center","Center"],["right","Right"]]);
-  const showFont=["heading","text","field","box","customer","terms"].includes(type);
-  if(showFont){h+=`<div class="row2">${num("Font size (pt)","size",st.size)}${segW(st.weight)}</div>`;h+=ckk("Italic","italic",st.italic);h+=col("Text color","color",st.color);}
+  let typo=seg("Alignment","align",st.align,[["left","Left"],["center","Center"],["right","Right"]]);
+  typo+=`<div class="row2">${num("Font size (pt)","size",st.size)}${segW(st.weight)}</div>`;
+  typo+=col("Text color","color",st.color);
+  typo+=`<div class="fld"><label>Font (this block)</label><select onchange="setStyle('font',this.value)"><option value="" ${st.font?'':'selected'}>Inherit (branding font)</option>`+fontOptions(st.font)+`</select></div>`;
+  typo+=`<div class="row2">${num("Line height","lineHeight",st.lineHeight)}${num("Letter spacing (px)","letterSpacing",st.letterSpacing)}</div>`;
+  typo+=ckk("Italic","italic",st.italic)+ckk("Underline","underline",st.underline)+ckk("RTL (right-to-left)","rtl",st.rtl);
   const bd=st.border||{on:false,w:1,color:"#cfe5f6",style:"solid",radius:0};
-  h+=`<div class="fld"><label>Font (this block)</label><select onchange="setStyle('font',this.value)"><option value="" ${st.font?'':'selected'}>Inherit (branding font)</option>`+fontOptions(st.font)+`</select></div>`;
-  h+=`<div class="row2">${num("Line height","lineHeight",st.lineHeight)}${num("Letter spacing (px)","letterSpacing",st.letterSpacing)}</div>`;
-  h+=ckk("Underline","underline",st.underline)+ckk("RTL (right-to-left)","rtl",st.rtl);
-  h+=col("Background","bg",st.bg);h+=num("Padding (mm)","pad",st.pad);h+=ckk("Border","border.on",bd.on);
-  if(bd.on){h+=`<div class="row2">${num("Border width","border.w",bd.w)}${num("Radius","border.radius",bd.radius)}</div>`;h+=col("Border color","border.color",bd.color);h+=seg("Border style","border.style",bd.style,[["solid","Solid"],["dashed","Dashed"],["dotted","Dotted"]]);}
-  return `<div class="stygrp">`+h+`</div>`;}
+  let box=col("Background","bg",st.bg)+num("Padding (mm)","pad",st.pad)+ckk("Border","border.on",bd.on);
+  if(bd.on){const sd=bd.sides||{};const sideOn=k=>sd[k]!==false;
+    box+=`<div class="fld"><label>Sides (e.g. Left only = accent bar)</label><div class="seg">`+[["t","Top"],["r","Right"],["b","Bottom"],["l","Left"]].map(([k,l])=>`<button class="${sideOn(k)?'on':''}" onclick="toggleBorderSide('${k}')">${l}</button>`).join("")+`</div></div>`;
+    box+=`<div class="row2">${num("Border width","border.w",bd.w)}${num("Radius","border.radius",bd.radius)}</div>`;box+=col("Border color","border.color",bd.color);box+=seg("Border style","border.style",bd.style,[["solid","Solid"],["dashed","Dashed"],["dotted","Dotted"]]);}
+  return sec("typo","Typography",typo)+sec("box","Background & Border",box);}
 function segW(v){return `<div class="fld"><label>Weight</label><div class="seg">`+[["","Reg"],["600","Semi"],["700","Bold"],["800","Black"]].map(o=>`<button class="${v===o[0]?'on':''}" onclick="setStyle('weight','${o[0]}');renderProps()">${o[1]}</button>`).join("")+`</div></div>`;}
 
 function renderProps(){const host=document.getElementById("propsBlock"),b=cur();
   if(!b){host.innerHTML=`<div class="noselect">Click a block on the page to edit it,<br>or insert one from the left.</div>`;return;}
-  const s=b.settings,t=b.type;let h=`<div class="ptitle">${META[t].l}</div>`;
+  const s=b.settings,t=b.type;const ptitle=`<div class="ptitle">${META[t].l}</div>`;let h="";
   if(t==="heading"){h+=tx("Text","text",s.text);h+=`<div class="fld"><label>Level</label><div class="seg">`+["h1","h2","h3","h4"].map(l=>`<button class="${s.level===l?'on':''}" onclick="setHeadingLevel('${l}')">${l.toUpperCase()}</button>`).join("")+`</div></div>`;}
   else if(t==="text"){h+=ta("Text","text",s.text);}
   else if(t==="field"){h+=`<div class="fld"><label>Document field (${DOCFIELDS.length})</label><select onchange="setS('field',this.value)">`+DOCFIELDS.map(f=>`<option value="${f.f}" ${s.field===f.f?'selected':''}>${esc(f.l)}</option>`).join("")+`</select></div>`+tx("Prefix","prefix",s.prefix);}
@@ -897,7 +984,8 @@ function renderProps(){const host=document.getElementById("propsBlock"),b=cur();
     const hs=s.headerStyle||(s.headerStyle={});
     h+=`<div class="styhead">Header row</div><div class="stycard"><div class="stycardlbl">Table header</div>`
       +`<div class="row2">`+colorFld("Background",hs.bg,"tblHeader('bg',this.value)","overrides Primary/Navy","#1463FF")+colorFld("Text color",hs.color,"tblHeader('color',this.value)","#ffffff","#ffffff")+`</div>`
-      +`<div class="row2">`+fld("Weight",wsel(hs.weight||'700',`tblHeader('weight',this.value)`))+fld("Size (pt)",`<input type="text" value="${hs.size==null?'':hs.size}" placeholder="inherit" oninput="tblHeader('size',this.value)">`)+`</div></div>`;
+      +`<div class="row2">`+fld("Weight",wsel(hs.weight||'700',`tblHeader('weight',this.value)`))+fld("Size (pt)",`<input type="text" value="${hs.size==null?'':hs.size}" placeholder="inherit" oninput="tblHeader('size',this.value)">`)+`</div>`
+      +fld("Corner radius (px) — first &amp; last header cells",`<input type="text" value="${hs.radius==null?'':hs.radius}" placeholder="0" oninput="tblHeader('radius',this.value)">`)+`</div>`;
     const bo=s.borders||{};const bpre=["grid","rows","outline","none"].indexOf(bo.preset)>=0?bo.preset:"grid";
     h+=`<div class="styhead">Table borders</div><div class="stycard"><div class="stycardlbl">All cells</div>`
       +fld("Lines",`<div class="segrow">`+[["grid","Grid","all lines"],["rows","Rows","horizontal"],["outline","Outline","box only"],["none","None","no lines"]].map(o=>`<button class="segbtn ${bpre===o[0]?'on':''}" style="padding:6px 2px" onclick="tblBorders('preset','${o[0]}')">${o[1]}<small>${o[2]}</small></button>`).join("")+`</div>`)
@@ -925,8 +1013,18 @@ function renderProps(){const host=document.getElementById("propsBlock"),b=cur();
         +`<div class="row2">`+fld("Weight",wsel(st.weight,`tblRow(${ri},'weight',this.value)`))+fld("Size (pt)",`<input type="text" value="${st.size==null?'':st.size}" placeholder="inherit" oninput="tblRow(${ri},'size',this.value)">`)+`</div>`
         +`<div class="row2">`+colorFld("Background",st.bg,`tblRow(${ri},'bg',this.value)`,"none (hex)","#ffffff")+fld("Min height (mm)",`<input type="text" value="${st.h==null?'':st.h}" placeholder="auto" oninput="tblRow(${ri},'h',this.value)">`)+`</div>`
         +`</div>`;});}
-  else if(t==="title"){h+=tx("Title text","text",s.text);h+=ck("Show Arabic subtitle","showArabic",s.showArabic);if(s.showArabic)h+=tx("Arabic","arabic",s.arabic);h+=sg("Layout","align",s.align,[["split","Title + Info"],["center","Centered"]]);h+=`<div class="fld"><label>Info box fields</label>`+ck("Quotation No","meta.name",s.meta.name)+ck("Date","meta.date",s.meta.date)+ck("Valid Till","meta.valid_till",s.meta.valid_till)+`</div>`;}
-  else if(t==="customer"){h+=tx("Heading","heading",s.heading);}
+  else if(t==="title"){h+=tx("Title text","text",s.text);h+=ck("Show Arabic subtitle","showArabic",s.showArabic);if(s.showArabic)h+=tx("Arabic","arabic",s.arabic);h+=sg("Layout","align",s.align,[["split","Title + Info"],["center","Centered"]]);h+=`<div class="fld"><label>Info box fields</label>`+ck("Quotation No","meta.name",s.meta.name)+ck("Date","meta.date",s.meta.date)+ck("Valid Till","meta.valid_till",s.meta.valid_till)+`</div>`;
+    const cfl=(l,val,key,ph,fb)=>`<div class="fld"><label>${l}</label><div class="color"><input type="color" value="${HX.test(val||'')?val:fb}" oninput="setS('${key}',this.value)"><input type="text" value="${esc(val||'')}" placeholder="${ph}" oninput="setS('${key}',this.value)"></div></div>`;
+    h+=`<div class="stycard"><div class="stycardlbl">Colors &amp; sizes</div>`
+      +`<div class="row2">`+cfl("Title color",s.titleColor,"titleColor","theme navy","#0C1322")+`<div class="fld"><label>Title size (pt)</label><input type="text" value="${s.titleSize==null?'':s.titleSize}" placeholder="23" oninput="setSNum('titleSize',this.value)"></div></div>`
+      +cfl("Arabic color",s.arabicColor,"arabicColor","theme color","#1463FF")
+      +`<div class="row2">`+cfl("Info labels",s.metaLabelColor,"metaLabelColor","inherit","#0C1322")+cfl("Info values",s.metaValueColor,"metaValueColor","inherit","#0C1322")+`</div>`
+      +cfl("Info box border",s.metaBorderColor,"metaBorderColor","#cfe5f6","#cfe5f6")+`</div>`;}
+  else if(t==="customer"){h+=tx("Heading","heading",s.heading);
+    const cfl=(l,val,key,ph,fb)=>`<div class="fld"><label>${l}</label><div class="color"><input type="color" value="${HX.test(val||'')?val:fb}" oninput="setS('${key}',this.value)"><input type="text" value="${esc(val||'')}" placeholder="${ph}" oninput="setS('${key}',this.value)"></div></div>`;
+    h+=`<div class="stycard"><div class="stycardlbl">Colors &amp; sizes</div>`
+      +`<div class="row2">`+cfl("Heading color",s.headingColor,"headingColor","theme color","#1463FF")+cfl("Name color",s.nameColor,"nameColor","inherit","#0C1322")+`</div>`
+      +`<div class="fld"><label>Name size (pt)</label><input type="text" value="${s.nameSize==null?'':s.nameSize}" placeholder="10" oninput="setSNum('nameSize',this.value)"></div></div>`;}
   else if(t==="items"){const w=s.widths||(s.widths={});const wnum=(l,k,v)=>`<div class="fld"><label>${l}</label><input type="text" value="${v==null?'':v}" placeholder="auto" oninput="setS('${k}',this.value===''?null:(parseFloat(this.value)||null))"></div>`;
     h+=`<div class="fld"><label>Columns</label>`+ck("Description","cols.desc",s.cols.desc)+ck("Qty","cols.qty",s.cols.qty)+ck("Rate","cols.rate",s.cols.rate)+ck("Amount","cols.amount",s.cols.amount)+`</div>`+ck("Zebra rows","zebra",s.zebra);
     if(s.zebra)h+=`<div class="fld"><label>Zebra color</label><div class="color"><input type="color" value="${s.zebraColor||'#eef6fc'}" oninput="setS('zebraColor',this.value)"><input type="text" value="${esc(s.zebraColor||'')}" placeholder="#eef6fc" oninput="setS('zebraColor',this.value)"></div></div>`;
@@ -941,24 +1039,40 @@ function renderProps(){const host=document.getElementById("propsBlock"),b=cur();
     h+=ck("Zebra rows","zebra",s.zebra);
     if(s.zebra)h+=`<div class="fld"><label>Zebra color</label><div class="color"><input type="color" value="${s.zebraColor||'#eef6fc'}" oninput="setS('zebraColor',this.value)"><input type="text" value="${esc(s.zebraColor||'')}" placeholder="#eef6fc" oninput="setS('zebraColor',this.value)"></div></div>`;
     h+=sg("Header color","headerColor",s.headerColor,[["primary","Primary"],["navy","Navy"]]);}
-  else if(t==="totals"){h+=sg("Grand-total color","grandColor",s.grandColor,[["primary","Primary"],["navy","Navy"]]);}
+  else if(t==="totals"){h+=sg("Grand-total color","grandColor",s.grandColor,[["primary","Primary"],["navy","Navy"]]);
+    h+=tx("Grand-total label","grandLabel",s.grandLabel==null?"":s.grandLabel);
+    h+=`<div class="fld"><label>Box width (mm)</label><input type="text" value="${s.width==null?'':s.width}" placeholder="82" oninput="setSNum('width',this.value)"></div>`;
+    const cfl=(l,val,key,ph,fb)=>`<div class="fld"><label>${l}</label><div class="color"><input type="color" value="${HX.test(val||'')?val:fb}" oninput="setS('${key}',this.value)"><input type="text" value="${esc(val||'')}" placeholder="${ph}" oninput="setS('${key}',this.value)"></div></div>`;
+    h+=`<div class="stycard"><div class="stycardlbl">Colors &amp; sizes</div>`
+      +`<div class="row2">`+cfl("Label color",s.labelColor,"labelColor","inherit","#6b6b6e")+cfl("Value color",s.valueColor,"valueColor","inherit","#0C1322")+`</div>`
+      +`<div class="fld"><label>Lines size (pt)</label><input type="text" value="${s.valueSize==null?'':s.valueSize}" placeholder="inherit" oninput="setSNum('valueSize',this.value)"></div>`
+      +`<div class="row2">`+cfl("Grand bg",s.grandBg,"grandBg","theme color","#1463FF")+cfl("Grand text",s.grandTextColor,"grandTextColor","#ffffff","#ffffff")+`</div>`
+      +`<div class="fld"><label>Grand size (pt)</label><input type="text" value="${s.grandSize==null?'':s.grandSize}" placeholder="10" oninput="setSNum('grandSize',this.value)"></div></div>`;}
   else if(t==="terms"){h+=tx("Heading","heading",s.heading);}
   else if(t==="signature"){h+=tx("Label","label",s.label);}
   else if(t==="row"){h+=rowControls(b);}
   else if(t==="header_banner"||t==="footer_banner"){h+=`<div class="noselect" style="padding:14px 0">Uses the banner image from the Branding tab.</div>`;}
+  let tstyle="";
+  if(t==="items")tstyle=sec("tstyle","Table style",tableSkinUI(s,{num:true,zebra:false}));
+  else if(t==="payment_schedule"){h+=tx("Heading","heading",s.heading==null?"":s.heading);
+    tstyle=sec("tstyle","Table style",tableSkinUI(s,{num:true,zebra:true}));}
+  else if(t==="datatable")tstyle=sec("tstyle","Table style",tableSkinUI(s,{num:true,zebra:false}));
+  const content=sec("content","Content",h,true);
   if(isNested(b)){  // a block living inside a Row column: only its own content + style, no placement
-    h+=`<div class="stygrp"><div class="styhead">Placement</div><div class="hint" style="padding:4px 0 0">Inside a <b>Row</b> column — it flows within its column.</div></div>`;
-    h+=styleControls(b.style,t);
-    h+=`<button class="delblk" onclick="del(null,'${b.id}')">Remove from row</button>`;
-    host.innerHTML=h;return;
+    let out=ptitle+content+tstyle;
+    out+=`<div class="stygrp"><div class="styhead">Placement</div><div class="hint" style="padding:4px 0 0">Inside a <b>Row</b> column — it flows within its column.</div></div>`;
+    out+=styleControls(b.style,t);
+    out+=`<button class="delblk" onclick="del(null,'${b.id}')">Remove from row</button>`;
+    host.innerHTML=out;return;
   }
   const reg=regionOf(b);
-  h+=regionControl(b,reg);
-  if(reg!=="body"||b.float)h+=posControls(b.pos);  // bands + floating elements are positioned; flowing body is not
-  if(t!=="header_banner"&&t!=="footer_banner"&&t!=="row")h+=styleControls(b.style,t);
-  h+=condControl(b);
-  h+=`<button class="delblk" onclick="del(null,'${b.id}')">Delete this block</button>`;
-  host.innerHTML=h;}
+  let out=ptitle+content+tstyle;
+  out+=regionControl(b,reg);
+  if(reg!=="body"||b.float)out+=posControls(b.pos);  // bands + floating elements are positioned; flowing body is not
+  if(t!=="header_banner"&&t!=="footer_banner"&&t!=="row")out+=styleControls(b.style,t);
+  out+=condControl(b);
+  out+=`<button class="delblk" onclick="del(null,'${b.id}')">Delete this block</button>`;
+  host.innerHTML=out;}
 function regionControl(b,reg){
   if(reg==="body"){
     let h=`<div class="stygrp"><div class="styhead">Placement</div>`;
@@ -994,7 +1108,7 @@ function delCol(){const b=cur();if(b.settings.cols.length<=1)return;b.settings.c
 function delRow(){const b=cur();if(!b.settings.rows.length)return;b.settings.rows.pop();if(b.settings.rowStyle)b.settings.rowStyle.pop();_lastCell=null;render();renderProps();}
 function tblCol(ci,k,v){const b=cur();if(!b)return;const cs=b.settings.colStyle||(b.settings.colStyle=[]);while(cs.length<=ci)cs.push({});if(k==="w"||k==="size"||k==="bw"){const n=parseFloat(v);cs[ci][k]=(v===""||isNaN(n))?null:n;}else cs[ci][k]=v;render();}
 function tblRow(ri,k,v){const b=cur();if(!b)return;const rs=b.settings.rowStyle||(b.settings.rowStyle=[]);while(rs.length<=ri)rs.push({});if(k==="size"||k==="h"){const n=parseFloat(v);rs[ri][k]=(v===""||isNaN(n))?null:n;}else rs[ri][k]=v;render();}
-function tblHeader(k,v){const b=cur();if(!b)return;const hs=b.settings.headerStyle||(b.settings.headerStyle={});if(k==="size"){const n=parseFloat(v);hs.size=(v===""||isNaN(n))?null:n;}else hs[k]=v;render();}
+function tblHeader(k,v){const b=cur();if(!b)return;const hs=b.settings.headerStyle||(b.settings.headerStyle={});if(k==="size"||k==="radius"){const n=parseFloat(v);hs[k]=(v===""||isNaN(n))?null:n;}else hs[k]=v;render();}
 function tblBorders(k,v){const b=cur();if(!b)return;const bo=b.settings.borders||(b.settings.borders={});if(k==="w"){const n=parseFloat(v);bo.w=(v===""||isNaN(n))?null:n;}else bo[k]=v;render();if(k==="preset")renderProps();}
 function tblPad(k,v){const b=cur();if(!b)return;const pd=b.settings.cellPad||(b.settings.cellPad={});const n=parseFloat(v);pd[k]=(v===""||isNaN(n))?null:n;render();}
 function tblInsertField(f){if(!f)return;const b=cur();if(!b||b.type!=="table")return;
