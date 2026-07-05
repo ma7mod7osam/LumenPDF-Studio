@@ -535,15 +535,45 @@ def _e_table(doc, b, s, ctx):
         n = _num(v)
         return f"font-size:{_fmt_num(min(72, max(4, n)))}pt;" if n else ""
 
+    # ---- table-wide borders (preset + width/color/style), overridable per column -----------
+    bo = s.get("borders") if isinstance(s.get("borders"), dict) else {}
+    preset = bo.get("preset") if bo.get("preset") in ("grid", "rows", "outline", "none") else "grid"
+    tbw = min(10, max(0, _num(bo.get("w"), 1) or 0))
+    tbc = bo["color"].strip() if _hexok(bo.get("color")) else "#cfe5f6"
+    tbs = bo.get("style") if bo.get("style") in _BORDER_STYLE else "solid"
+
+    def cell_border(st, default_color):
+        """Border CSS for one cell: the column's override wins, else the table preset."""
+        cbw = _num(st.get("bw"))
+        cbc = st["bcolor"].strip() if _hexok(st.get("bcolor")) else None
+        cbs = st.get("bstyle") if st.get("bstyle") in _BORDER_STYLE else None
+        if cbw is not None or cbc or cbs:
+            w_ = min(10, max(0, cbw if cbw is not None else (tbw or 1)))
+            return f"border:{_fmt_num(w_)}px {cbs or tbs} {cbc or tbc};"
+        if preset == "grid":
+            return f"border:{_fmt_num(tbw)}px {tbs} {default_color};" if tbw else "border:0;"
+        if preset == "rows":
+            return f"border:0;border-bottom:{_fmt_num(tbw)}px {tbs} {default_color};" if tbw else "border:0;"
+        return "border:0;"  # outline / none: no cell borders (outline drawn on the table)
+
+    pad = s.get("cellPad") if isinstance(s.get("cellPad"), dict) else {}
+    py = min(30, max(0, _num(pad.get("y"), 5)))
+    px = min(30, max(0, _num(pad.get("x"), 8)))
+    padding = f"padding:{_fmt_num(py)}px {_fmt_num(px)}px;"
+
+    zebra_bg = (s.get("zebraColor").strip() if _hexok(s.get("zebraColor")) else "#eef6fc") if s.get("zebra") else None
+
     # Header (thead) styling: headerStyle overrides the Primary/Navy quick-pick + white text.
     hs = s.get("headerStyle") if isinstance(s.get("headerStyle"), dict) else {}
     hbg = hs["bg"].strip() if _hexok(hs.get("bg")) else hb
     hcolor = hs["color"].strip() if _hexok(hs.get("color")) else "#fff"
     hweight = str(hs.get("weight")) if str(hs.get("weight")) in _WEIGHT else "600"
+    # Legacy look when no border config: th border matches the header bg. Configured -> table rules.
     th = "".join(
-        f'<th style="background-color:{hbg} !important;color:{hcolor};padding:5px 8px;'
+        f'<th style="background-color:{hbg} !important;color:{hcolor};{padding}'
         f'text-align:{_esc(cst(ci).get("align") or "left")};{_sz(hs.get("size") or cst(ci).get("size"))}'
-        f'border:1px solid {hbg};font-weight:{hweight};-webkit-print-color-adjust:exact;">'
+        f'{cell_border(cst(ci), tbc if bo else hbg)}'
+        f'font-weight:{hweight};-webkit-print-color-adjust:exact;">'
         f"{_esc(_cell_value(doc, cols[ci]))}</th>"
         for ci in range(len(cols))
     )
@@ -551,19 +581,26 @@ def _e_table(doc, b, s, ctx):
     for ri, r in enumerate(rows):
         r = r if isinstance(r, (list, tuple)) else []
         rst = rstyles[ri] if ri < len(rstyles) and isinstance(rstyles[ri], dict) else {}
-        trbg = f'background:{_esc(rst["bg"])};-webkit-print-color-adjust:exact;' if _hexok(rst.get("bg")) else ""
+        row_bg = rst["bg"].strip() if _hexok(rst.get("bg")) else (zebra_bg if (zebra_bg and ri % 2 == 1) else None)
+        trbg = f'background:{row_bg};-webkit-print-color-adjust:exact;' if row_bg else ""
+        rh = _num(rst.get("h"))
+        height = f"height:{_fmt_num(min(100, max(1, rh)))}mm;" if rh else ""
         tds = ""
         for ci in range(len(cols)):
             st = cst(ci)
             weight = rst.get("weight") or st.get("weight") or "normal"
             color = f'color:{_esc(st["color"])};' if _hexok(st.get("color")) else ""
             size = _sz(rst.get("size") or st.get("size"))  # row size wins over column size
-            tds += (f'<td style="padding:5px 8px;border:1px solid #cfe5f6;'
-                    f'text-align:{_esc(st.get("align") or "left")};font-weight:{_esc(weight)};{color}{size}'
+            # bg precedence: explicit row bg (on the tr) > column bg > zebra (on the tr)
+            colbg = f'background-color:{st["bg"].strip()};-webkit-print-color-adjust:exact;' \
+                if (_hexok(st.get("bg")) and not _hexok(rst.get("bg"))) else ""
+            tds += (f'<td style="{padding}{cell_border(st, tbc)}{height}'
+                    f'text-align:{_esc(st.get("align") or "left")};font-weight:{_esc(weight)};{color}{size}{colbg}'
                     f'word-wrap:break-word;">{_esc(_cell_value(doc, r[ci] if ci < len(r) else ""))}</td>')
         body.append(f'<tr style="{trbg}">{tds}</tr>')
+    outline = f"border:{_fmt_num(tbw)}px {tbs} {tbc};" if (preset == "outline" and tbw) else ""
     return (
-        '<table style="width:100%;border-collapse:collapse;table-layout:fixed;word-wrap:break-word;">'
+        f'<table style="width:100%;border-collapse:collapse;table-layout:fixed;word-wrap:break-word;{outline}">'
         f"{colgroup}<thead><tr>{th}</tr></thead><tbody>{''.join(body)}</tbody></table>"
     )
 
