@@ -51,13 +51,37 @@ def page_dims(definition):
     return 210.0, 297.0
 
 
+# Curated Google Fonts (Latin + Arabic). Name -> Google css2 family spec. The builder mirrors
+# this list; SYSTEM_FONTS need no web fetch. Browsers download glyph files only for families
+# actually applied, so listing all in one @import is a single CSS request.
+GOOGLE_FONTS = {
+    "Plus Jakarta Sans": "Plus+Jakarta+Sans:wght@400;500;600;700;800",
+    "Inter": "Inter:wght@400;500;600;700;800",
+    "Montserrat": "Montserrat:wght@300;400;500;600;700;800",
+    "Roboto": "Roboto:wght@400;500;700",
+    "Open Sans": "Open+Sans:wght@400;600;700;800",
+    "Lato": "Lato:wght@400;700;900",
+    "Poppins": "Poppins:wght@400;500;600;700;800",
+    "Cairo": "Cairo:wght@400;600;700;800",
+    "Almarai": "Almarai:wght@400;700;800",
+    "Tajawal": "Tajawal:wght@400;500;700;800",
+    "IBM Plex Sans Arabic": "IBM+Plex+Sans+Arabic:wght@400;500;600;700",
+    "Noto Kufi Arabic": "Noto+Kufi+Arabic:wght@400;600;700",
+    "Amiri": "Amiri:wght@400;700",
+}
+SYSTEM_FONTS = ["Arial", "Tahoma"]
+FONT_IMPORT_URL = ("https://fonts.googleapis.com/css2?"
+                   + "&".join("family=" + spec for spec in GOOGLE_FONTS.values())
+                   + "&display=swap")
+
+
 def base_css(b, pw=210.0, ph=297.0):
     primary = b.get("primary", "#1C75BC")
     navy = b.get("navy", "#1A1E2A")
     font = b.get("font") or "Montserrat"
     _pw, _ph = _fmt_num(pw or 210), _fmt_num(ph or 297)
     return f"""<style>
-  @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Montserrat:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+  @import url('{FONT_IMPORT_URL}');
   @page {{ size: {_pw}mm {_ph}mm; margin: 0; }}
   html, body {{ margin:0 !important; padding:0 !important; }}
   img {{ max-width:100%; }}
@@ -295,7 +319,7 @@ _ALIGN = {"left", "center", "right", "justify"}
 _BORDER_STYLE = {"solid", "dashed", "dotted", "double", "none"}
 _WEIGHT = {"400", "500", "600", "700", "800", "normal", "bold"}
 _WIDTH = re.compile(r"^\d+(\.\d+)?(mm|%|px|cm)$")
-_FONTS = {"Montserrat", "Cairo", "Arial", "Tahoma", "Plus Jakarta Sans"}  # allow-list (font is injected into <style>)
+_FONTS = set(GOOGLE_FONTS) | set(SYSTEM_FONTS)  # allow-list (font is injected into <style>)
 
 
 def _esc(s):
@@ -511,10 +535,15 @@ def _e_table(doc, b, s, ctx):
         n = _num(v)
         return f"font-size:{_fmt_num(min(72, max(4, n)))}pt;" if n else ""
 
+    # Header (thead) styling: headerStyle overrides the Primary/Navy quick-pick + white text.
+    hs = s.get("headerStyle") if isinstance(s.get("headerStyle"), dict) else {}
+    hbg = hs["bg"].strip() if _hexok(hs.get("bg")) else hb
+    hcolor = hs["color"].strip() if _hexok(hs.get("color")) else "#fff"
+    hweight = str(hs.get("weight")) if str(hs.get("weight")) in _WEIGHT else "600"
     th = "".join(
-        f'<th style="background-color:{hb} !important;color:#fff;padding:5px 8px;'
-        f'text-align:{_esc(cst(ci).get("align") or "left")};{_sz(cst(ci).get("size"))}'
-        f'border:1px solid {hb};font-weight:600;-webkit-print-color-adjust:exact;">'
+        f'<th style="background-color:{hbg} !important;color:{hcolor};padding:5px 8px;'
+        f'text-align:{_esc(cst(ci).get("align") or "left")};{_sz(hs.get("size") or cst(ci).get("size"))}'
+        f'border:1px solid {hbg};font-weight:{hweight};-webkit-print-color-adjust:exact;">'
         f"{_esc(_cell_value(doc, cols[ci]))}</th>"
         for ci in range(len(cols))
     )
