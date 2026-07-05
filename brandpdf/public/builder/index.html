@@ -190,7 +190,7 @@
 <body>
 <div class="app">
   <div class="top">
-    <div class="brand"><svg width="22" height="22" viewBox="0 0 48 48" fill="none" aria-label="LumenPDF Studio"><rect x="6" y="6" width="7.5" height="38" rx="3.75" fill="#1463FF"/><rect x="18" y="25" width="4.5" height="19" rx="2.25" fill="#7FA8FF"/><rect x="27" y="25" width="7.5" height="19" rx="3.75" fill="#1463FF"/><rect x="39" y="25" width="4.5" height="19" rx="2.25" fill="#1463FF"/></svg> LumenPDF <small>Studio · b35</small></div>
+    <div class="brand"><svg width="22" height="22" viewBox="0 0 48 48" fill="none" aria-label="LumenPDF Studio"><rect x="6" y="6" width="7.5" height="38" rx="3.75" fill="#1463FF"/><rect x="18" y="25" width="4.5" height="19" rx="2.25" fill="#7FA8FF"/><rect x="27" y="25" width="7.5" height="19" rx="3.75" fill="#1463FF"/><rect x="39" y="25" width="4.5" height="19" rx="2.25" fill="#1463FF"/></svg> LumenPDF <small>Studio · b36</small></div>
     <input class="fmt-name" id="fmtName" value="Quotation - Custom" title="Format name">
     <select class="sel" id="doctypeSel" title="Target DocType" onchange="onDoctype(this.value)"></select>
     <select class="sel" id="openSel" title="Open an existing format" onchange="openFormat(this.value)"><option value="">Open…</option></select>
@@ -205,7 +205,8 @@
     <div class="zoom"><button onclick="zoom(-.1)">−</button><span id="zoomv">80%</span><button onclick="zoom(.1)">+</button></div>
     <select class="sel" id="dataSel" title="Preview with a real document" onchange="loadData(this.value)"><option value="">Sample data</option></select>
     <button class="btn ghost" onclick="previewPDF()" title="Render the real PDF with this document">👁 Preview PDF</button>
-    <button class="btn ghost" onclick="exportJSON()">⇩ Export</button>
+    <button class="btn ghost" onclick="importJSON()" title="Import a format from a .json file (made with Export)">⇧ Import</button>
+    <button class="btn ghost" onclick="exportJSON()" title="Download this format as a .json backup">⇩ Export</button>
     <button class="btn primary" onclick="save()">✓ Save</button>
   </div>
   <div id="draftBar"><span>↺ You have <b>unsaved changes</b> from your last session.</span><button class="pri" onclick="restoreDraft()">Restore my work</button><button onclick="dismissDraft()">Discard</button></div>
@@ -1255,6 +1256,17 @@ function toggleLeft(){setLeft(!leftCollapsed);}
 function toggleRight(){setRight(!rightCollapsed);}
 function definition(){return{name:document.getElementById("fmtName").value,layout:"absolute",target_doctype:state.target,page:state.page,header:state.header,footer:state.footer,watermark:state.watermark,branding:state.branding,blocks:state.blocks.map(function(b){var o={type:b.type,settings:b.settings,style:b.style,pos:b.pos,float:b.float||false,region:b.region||"body",cond:b.cond||null};if(b.type==="row"&&b.settings&&b.settings.cells){o.settings=Object.assign({},b.settings,{cells:b.settings.cells.map(function(cell){return (cell||[]).map(function(c){return{type:c.type,settings:c.settings,style:c.style};});})});}return o;})};}
 function exportJSON(){const blob=new Blob([JSON.stringify(definition(),null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=(document.getElementById("fmtName").value||"format")+".json";a.click();}
+function importJSON(){const inp=document.createElement("input");inp.type="file";inp.accept="application/json,.json";
+  inp.onchange=function(){const f=inp.files&&inp.files[0];if(!f)return;const r=new FileReader();
+    r.onload=function(){let def;try{def=JSON.parse(r.result);}catch(e){toast("Could not read that file — is it a valid format .json?",true);return;}
+      if(!def||typeof def!=="object"||!Array.isArray(def.blocks)){toast("That doesn't look like a LumenPDF format export.",true);return;}
+      clearDraft();loadDefinition(def);commitHistory();
+      toast("Format imported — click ✓ Save to store it"+(EMBED?"":" (demo)")+".");};
+    r.readAsText(f);};
+  inp.click();}
+function toast(msg,err){let t=document.getElementById("bpToast");if(!t){t=document.createElement("div");t.id="bpToast";document.body.appendChild(t);}
+  t.textContent=msg;t.style.cssText="position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:99999;padding:11px 18px;border-radius:10px;font:600 13px 'Plus Jakarta Sans',sans-serif;box-shadow:0 8px 26px rgba(0,0,0,.28);"+(err?"background:#E0413F;color:#fff":"background:#0C1322;color:#fff");
+  t.style.display="block";clearTimeout(toast._t);toast._t=setTimeout(function(){t.style.display="none";},4200);}
 function previewPDF(){if(!EMBED){alert("Preview PDF works inside ERPNext (renders the real PDF with your engine).");return;}const ds=document.getElementById("dataSel");const name=ds?ds.value:"";window.parent.postMessage({type:"brandpdf-preview",definition:definition(),doctype:state.target,name:name||""},window.location.origin);}
 const EMBED=(window.parent&&window.parent!==window);
 function save(){const def=definition();if(EMBED){window.parent.postMessage({type:"brandpdf-save",definition:def},window.location.origin);flashSaved();clearDraft();return;}if(window.frappe&&frappe.call){frappe.call({method:"brandpdf.api.save_format",args:{definition:JSON.stringify(def)},callback:()=>frappe.show_alert({message:"Format saved",indicator:"green"})});return;}console.log("DEFINITION",def);alert("Saved (demo) - logged to console.");}
