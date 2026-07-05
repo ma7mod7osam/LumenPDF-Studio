@@ -158,6 +158,11 @@
   .psecb{padding:10px 13px 6px}
   .stycardlbl{font-size:10px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--mut2);margin-bottom:6px}
   .stycard .fld label{font-size:10px}
+  .chips{display:flex;flex-wrap:wrap;gap:5px;margin:2px 0 8px}
+  .chip{padding:5px 10px;border:1px solid var(--line2);border-radius:20px;background:var(--panel);color:var(--mut);font-size:11px;font-weight:600;cursor:pointer}
+  .chip.on{border-color:var(--accent);background:#1463FF14;color:var(--accent)}
+  .psecb .fld input,.psecb .fld select{padding:6px 9px;font-size:12px}
+  .psecb .fld{margin-bottom:7px}
   #gallery .gcard-wrap,#fmtmgr .gcard-wrap{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px 22px;width:700px;max-width:92vw}
   #gallery h3,#fmtmgr h3{margin:0;font-size:16px}
   #gallery .ghint,#fmtmgr .ghint{font-size:12px;color:var(--mut);margin-top:4px}
@@ -173,7 +178,7 @@
 <body>
 <div class="app">
   <div class="top">
-    <div class="brand"><svg width="22" height="22" viewBox="0 0 48 48" fill="none" aria-label="LumenPDF Studio"><rect x="6" y="6" width="7.5" height="38" rx="3.75" fill="#1463FF"/><rect x="18" y="25" width="4.5" height="19" rx="2.25" fill="#7FA8FF"/><rect x="27" y="25" width="7.5" height="19" rx="3.75" fill="#1463FF"/><rect x="39" y="25" width="4.5" height="19" rx="2.25" fill="#1463FF"/></svg> LumenPDF <small>Studio · b31</small></div>
+    <div class="brand"><svg width="22" height="22" viewBox="0 0 48 48" fill="none" aria-label="LumenPDF Studio"><rect x="6" y="6" width="7.5" height="38" rx="3.75" fill="#1463FF"/><rect x="18" y="25" width="4.5" height="19" rx="2.25" fill="#7FA8FF"/><rect x="27" y="25" width="7.5" height="19" rx="3.75" fill="#1463FF"/><rect x="39" y="25" width="4.5" height="19" rx="2.25" fill="#1463FF"/></svg> LumenPDF <small>Studio · b32</small></div>
     <input class="fmt-name" id="fmtName" value="Quotation - Custom" title="Format name">
     <select class="sel" id="doctypeSel" title="Target DocType" onchange="onDoctype(this.value)"></select>
     <select class="sel" id="openSel" title="Open an existing format" onchange="openFormat(this.value)"><option value="">Open…</option></select>
@@ -237,6 +242,16 @@ function tblSkin(sett,b,defHbg){const out={th:"",thFirst:"",thLast:"",tdBorder:"
   n=parseFloat(ns.size);if(n&&!isNaN(n))out.num+="font-size:"+Math.min(72,Math.max(4,n))+"pt;";
   if(ns.weight)out.num+="font-weight:"+ns.weight+" !important;";
   return out;}
+function colCss(sett,key,numeric){const cs=(sett.colStyles&&typeof sett.colStyles==="object")?sett.colStyles:{};
+  let st=(cs[key]&&typeof cs[key]==="object")?cs[key]:null;
+  if(!st&&numeric)st=(sett.numStyle&&typeof sett.numStyle==="object")?sett.numStyle:{};
+  st=st||{};let out="";
+  if(HX.test(st.color||''))out+="color:"+st.color+" !important;";
+  const n=parseFloat(st.size);if(n&&!isNaN(n))out+="font-size:"+Math.min(72,Math.max(4,n))+"pt;";
+  if(st.weight)out+="font-weight:"+st.weight+" !important;";
+  if(["left","center","right"].indexOf(st.align)>=0)out+="text-align:"+st.align+";";
+  if(HX.test(st.bg||''))out+="background-color:"+st.bg+";";
+  return out;}
 function skinHeads(th,sk){if(!sk.thFirst)return th;th=th.replace('style="','style="'+sk.thFirst);const k=th.lastIndexOf('style="');return th.slice(0,k)+'style="'+sk.thLast+th.slice(k+7);}
 /* Fonts: mirrors blocks.GOOGLE_FONTS (all @import-loaded above) + system fonts, grouped. */
 const FONT_GROUPS=[["Sans (Latin)",["Plus Jakarta Sans","Inter","Montserrat","Roboto","Open Sans","Lato","Poppins"]],["Arabic",["Cairo","Almarai","Tajawal","IBM Plex Sans Arabic","Noto Kufi Arabic","Amiri"]],["System",["Arial","Tahoma"]]];
@@ -292,7 +307,9 @@ const R={
     const left=`<div class="bs-title" style="color:${tc};${tszc}">${esc(s.text)}</div>`+(s.showArabic?`<div class="bs-title-ar" style="color:${ac}">${esc(s.arabic)}</div>`:"");if(s.align==="center")return `<div style="text-align:center">${left}</div>`;return `<table class="bs-head"><tr><td style="text-align:left">${left}</td><td style="text-align:right"><table class="bs-meta">${rows}</table></td></tr></table>`;},
   customer:(s,b)=>{const hc=HX.test(s.headingColor||'')?s.headingColor:b.primary;const nc=HX.test(s.nameColor||'')?`color:${s.nameColor};`:'';const nsz=parseFloat(s.nameSize);const nszc=(nsz&&!isNaN(nsz))?`font-size:${Math.min(72,Math.max(4,nsz))}pt;`:'';
     return `<div class="bs-billto"><div class="lbl" style="color:${hc}">${esc(s.heading)}</div><div class="name" style="${nc}${nszc}">${esc(SAMPLE.customer_name)}</div><div class="addr">${SAMPLE.address_display}</div></div>`;},
-  items:(s,b)=>{const w=s.widths||{};const cols=[["#","num",w.num],["Item &amp; Description","",w.item]];if(s.cols.qty)cols.push(["Qty","num",w.qty]);if(s.cols.rate)cols.push(["Rate","num",w.rate]);if(s.cols.amount)cols.push(["Amount","num",w.amount]);const hc=s.headerColor==="navy"?b.navy:b.primary;const sk=tblSkin(s,b,hc);const cg=`<colgroup>`+cols.map(c=>`<col style="width:${c[2]&&!isNaN(c[2])?(+c[2])+'mm':'auto'}">`).join("")+`</colgroup>`;const th=skinHeads(cols.map(c=>`<th class="${c[1]}" style="${sk.th}${sk.pad}${sk.tdBorder}">${c[0]}</th>`).join(""),sk);const zc=s.zebraColor||"#eef6fc";const bt=sk.pad+sk.tdBorder;const nt=bt+sk.num;const rows=SAMPLE.items.map((it,i)=>{let t=`<td class="num" style="${nt}">${i+1}</td><td style="${bt}"><div class="it-name">${esc(it.n)}</div>`+(s.cols.desc&&it.d?`<div class="it-desc">${esc(it.d)}</div>`:"")+`</td>`;if(s.cols.qty)t+=`<td class="num" style="${nt}">${esc(it.q)}</td>`;if(s.cols.rate)t+=`<td class="num" style="${nt}">${esc(it.r)}</td>`;if(s.cols.amount)t+=`<td class="num" style="${nt}">${esc(it.a)}</td>`;return `<tr${s.zebra&&i%2?` style="background:${zc}"`:''}>${t}</tr>`;}).join("");return `<table class="bs-items" style="${sk.table}">${cg}<thead><tr>${th}</tr></thead><tbody>${rows}</tbody></table>`;},
+  items:(s,b)=>{const w=s.widths||{};const cols=[["#","num",w.num],["Item &amp; Description","",w.item]];if(s.cols.qty)cols.push(["Qty","num",w.qty]);if(s.cols.rate)cols.push(["Rate","num",w.rate]);if(s.cols.amount)cols.push(["Amount","num",w.amount]);const hc=s.headerColor==="navy"?b.navy:b.primary;const sk=tblSkin(s,b,hc);const cg=`<colgroup>`+cols.map(c=>`<col style="width:${c[2]&&!isNaN(c[2])?(+c[2])+'mm':'auto'}">`).join("")+`</colgroup>`;const th=skinHeads(cols.map(c=>`<th class="${c[1]}" style="${sk.th}${sk.pad}${sk.tdBorder}">${c[0]}</th>`).join(""),sk);const zc=s.zebraColor||"#eef6fc";const bt=sk.pad+sk.tdBorder;const cN=bt+colCss(s,"num",true),cI=bt+colCss(s,"item",false),cQ=bt+colCss(s,"qty",true),cR=bt+colCss(s,"rate",true),cA=bt+colCss(s,"amount",true);
+    const ds=s.descStyle||{};let dcss="";if(HX.test(ds.color||''))dcss+="color:"+ds.color+" !important;";const dn=parseFloat(ds.size);if(dn&&!isNaN(dn))dcss+="font-size:"+Math.min(72,Math.max(4,dn))+"pt;";
+    const rows=SAMPLE.items.map((it,i)=>{let t=`<td class="num" style="${cN}">${i+1}</td><td style="${cI}"><div class="it-name">${esc(it.n)}</div>`+(s.cols.desc&&it.d?`<div class="it-desc" style="${dcss}">${esc(it.d)}</div>`:"")+`</td>`;if(s.cols.qty)t+=`<td class="num" style="${cQ}">${esc(it.q)}</td>`;if(s.cols.rate)t+=`<td class="num" style="${cR}">${esc(it.r)}</td>`;if(s.cols.amount)t+=`<td class="num" style="${cA}">${esc(it.a)}</td>`;return `<tr${s.zebra&&i%2?` style="background:${zc}"`:''}>${t}</tr>`;}).join("");return `<table class="bs-items" style="${sk.table}">${cg}<thead><tr>${th}</tr></thead><tbody>${rows}</tbody></table>`;},
   datatable:(s,b)=>{const cols=(s.columns||[]).filter(c=>c&&c.field);const rows=(SAMPLE.tables&&SAMPLE.tables[s.table])||[];const zc=s.zebraColor||"#eef6fc";const hc=s.headerColor==="navy"?b.navy:b.primary;const sk=tblSkin(s,b,hc);const thPad=sk.pad||"padding:6px 8px;";const thFs=(s.headerStyle&&s.headerStyle.size)?"":"font-size:7.5pt;";const cg=`<colgroup>`+cols.map(c=>`<col style="width:${c.width&&!isNaN(c.width)?(+c.width)+'mm':'auto'}">`).join("")+`</colgroup>`;const th=skinHeads(cols.map(c=>`<th style="${sk.th}${sk.th.indexOf('color:')<0?'color:#fff;':''}font-weight:600;${thFs}${thPad}${sk.tdBorder}text-align:${c.align||'left'};word-wrap:break-word">${esc(c.label||c.field)}</th>`).join(""),sk);const dtPad=sk.pad||"padding:6px 8px;";const dtBor=sk.tdBorder||"border-bottom:1px solid #cfe5f6;";let body;if(!cols.length){body=`<tr><td style="padding:10px;color:#9aa6c2">Pick a table and add columns in the panel →</td></tr>`;}else if(!rows.length){body=[0,1].map(i=>`<tr${s.zebra&&i%2?` style="background:${zc}"`:''}>`+cols.map(c=>`<td style="${dtPad}${dtBor}text-align:${c.align||'left'};color:#9aa6c2;word-wrap:break-word">${c.field==='idx'?(i+1):'«'+esc(c.label||c.field)+'»'}</td>`).join("")+`</tr>`).join("");}else{body=rows.map((r,i)=>`<tr${s.zebra&&i%2?` style="background:${zc}"`:''}>`+cols.map(c=>`<td style="${dtPad}${dtBor}text-align:${c.align||'left'};${c.align==='right'?sk.num:''}word-wrap:break-word">${esc(r[c.field]!==undefined&&r[c.field]!==""?r[c.field]:(c.field==='idx'?(i+1):''))}</td>`).join("")+`</tr>`).join("");}return `<table style="width:100%;border-collapse:collapse;font-size:8pt;table-layout:fixed;${sk.table}">${cg}<thead><tr>${th}</tr></thead><tbody>${body}</tbody></table>`;},
   totals:(s,b)=>{const gc=HX.test(s.grandBg||'')?s.grandBg:(s.grandColor==="navy"?b.navy:b.primary);const gtc=HX.test(s.grandTextColor||'')?s.grandTextColor:'#fff';
     const gsz=parseFloat(s.grandSize);const gszc=(gsz&&!isNaN(gsz))?`font-size:${Math.min(72,Math.max(4,gsz))}pt;`:'font-size:10pt;';
@@ -300,9 +317,10 @@ const R={
     const vsz=parseFloat(s.valueSize);const vszc=(vsz&&!isNaN(vsz))?`font-size:${Math.min(72,Math.max(4,vsz))}pt;`:'';
     let ln=`<tr><td class="lbl" style="${lc}${vszc}">Subtotal</td><td class="val" style="${vc}${vszc}">${esc(SAMPLE.total)}</td></tr>`;SAMPLE.taxes.forEach(t=>ln+=`<tr><td class="lbl" style="${lc}${vszc}">${esc(t.desc)}</td><td class="val" style="${vc}${vszc}">${esc(t.amt)}</td></tr>`);
     ln+=`<tr><td style="background:${gc};color:${gtc};font-weight:700;${gszc}text-align:right;padding:6px 8px">${esc(s.grandLabel||'Grand Total')}</td><td style="background:${gc};color:${gtc};font-weight:700;${gszc}text-align:right;padding:6px 8px">${esc(SAMPLE.grand_total)}</td></tr>`;return `<table class="bs-tot">${ln}</table>`;},
-  payment_schedule:(s,b)=>{const hc=s.headerColor==="navy"?b.navy:b.primary;const sk=tblSkin(s,b,hc);const bt=sk.pad+sk.tdBorder;const nt=bt+sk.num;
+  payment_schedule:(s,b)=>{const hc=s.headerColor==="navy"?b.navy:b.primary;const sk=tblSkin(s,b,hc);const bt=sk.pad+sk.tdBorder;
+    const cN=bt+colCss(s,"num",true),cT=bt+colCss(s,"term",false),cD=bt+colCss(s,"due",true),cP=bt+colCss(s,"pct",true),cA=bt+colCss(s,"amount",true);
     const zc=(s.zebra===false)?null:(HX.test(s.zebraColor||'')?s.zebraColor:'#eef6fc');
-    const rows=SAMPLE.payment_schedule.map((p,i)=>`<tr${(zc&&i%2)?` style="background:${zc}"`:''}><td class="num" style="${nt}">${i+1}</td><td style="${bt}"><div class="it-name">${esc(p.t)}</div></td><td class="num" style="${nt}">${esc(p.due)}</td><td class="num" style="${nt}">${esc(p.pct)}</td><td class="num" style="${nt}">${esc(p.amt)}</td></tr>`).join("");
+    const rows=SAMPLE.payment_schedule.map((p,i)=>`<tr${(zc&&i%2)?` style="background:${zc}"`:''}><td class="num" style="${cN}">${i+1}</td><td style="${cT}"><div class="it-name">${esc(p.t)}</div></td><td class="num" style="${cD}">${esc(p.due)}</td><td class="num" style="${cP}">${esc(p.pct)}</td><td class="num" style="${cA}">${esc(p.amt)}</td></tr>`).join("");
     const hcol=HX.test(s.headingColor||'')?s.headingColor:b.primary;
     const th=skinHeads([["#","num"],["Payment Term",""],["Due Date","num"],["Portion %","num"],["Amount","num"]].map(x=>`<th class="${x[1]}" style="${sk.th}${sk.pad}${sk.tdBorder}">${x[0]}</th>`).join(""),sk);
     return `<div class="bs-sec-lbl" style="color:${hcol}">${esc(s.heading||'Payment Schedule')}</div><table class="bs-items" style="${sk.table}"><thead><tr>${th}</tr></thead><tbody>${rows}</tbody></table>`;},
@@ -878,7 +896,9 @@ function setTab(t,silent){tab=t;document.querySelectorAll(".tab").forEach(x=>x.c
 function setS(k,v){const b=cur();if(!b)return;const p=k.split(".");let o=b.settings;for(let i=0;i<p.length-1;i++){if(typeof o[p[i]]!=="object"||o[p[i]]===null)o[p[i]]={};o=o[p[i]];}o[p[p.length-1]]=v;render();}
 function setSNum(k,v){const n=parseFloat(v);setS(k,(v===""||isNaN(n))?null:n);}
 function toggleBorderSide(k){const b=cur();if(!b)return;const bd=b.style.border||(b.style.border={on:true,w:1,color:"#cfe5f6",style:"solid",radius:0});const sd=bd.sides||(bd.sides={t:true,r:true,b:true,l:true});sd[k]=(sd[k]===false);render();renderProps();}
-let _secOpen={content:true,tstyle:true,typo:false,box:false};
+let _secOpen={content:true,tstyle:false,typo:false,box:false};
+let _colSel={};  // per-block selected column chip in "Table style"
+let _tblSel={col:0,row:0};  // custom table: selected column/row for the chip editor
 function sec(id,title,inner,defOpen){const open=(_secOpen[id]===undefined)?!!defOpen:_secOpen[id];return `<details class="psec" ${open?'open':''} ontoggle="_secOpen['${id}']=this.open"><summary>${title}</summary><div class="psecb">${inner}</div></details>`;}
 /* Shared "Table style" UI for the ready tables (Items / Payment / Data Table): header skin,
    line presets, cell padding, number styling — mirrors engine _tbl_skin. */
@@ -898,12 +918,24 @@ function tableSkinUI(sett,o){o=o||{};const hs=sett.headerStyle||{},bo=sett.borde
     +C("Line color",bo.color,"borders.color","#cfe5f6","#cfe5f6")+`</div>`;
   h+=`<div class="stycard"><div class="stycardlbl">Cells</div>`
     +`<div class="row2">`+N("Padding ↕ (px)",pd.y,"cellPad.y","6")+N("Padding ↔ (px)",pd.x,"cellPad.x","8")+`</div>`;
-  if(o.num!==false){h+=`<div class="stycardlbl" style="margin-top:4px">Numbers (qty / rate / amount)</div>`
-    +`<div class="row2">`+C("Color",ns.color,"numStyle.color","inherit","#0C1322")+N("Size (pt)",ns.size,"numStyle.size","inherit")+`</div>`
-    +W(ns.weight,"numStyle.weight");}
   if(o.zebra){h+=ck("Zebra rows","zebra",sett.zebra);
     if(sett.zebra)h+=C("Zebra color",sett.zebraColor,"zebraColor","#eef6fc","#eef6fc");}
   h+=`</div>`;
+  if(o.columns&&o.columns.length){
+    const cur=_colSel[o.id||"x"]||o.columns[0].k;
+    const cs=(sett.colStyles||{})[cur]||{};
+    h+=`<div class="stycard"><div class="stycardlbl">Columns — pick one, style it</div>`
+      +`<div class="chips">`+o.columns.map(c=>`<button class="chip ${cur===c.k?'on':''}" onclick="_colSel['${o.id||'x'}']='${c.k}';renderProps()">${c.l}</button>`).join("")+`</div>`
+      +`<div class="row2">`+C("Text color",cs.color,`colStyles.${cur}.color`,"inherit","#0C1322")+C("Background",cs.bg,`colStyles.${cur}.bg`,"none","#ffffff")+`</div>`
+      +`<div class="row2">`+N("Size (pt)",cs.size,`colStyles.${cur}.size`,"inherit")+W(cs.weight,`colStyles.${cur}.weight`)+`</div>`
+      +`<div class="fld"><label>Align</label><select onchange="setS('colStyles.${cur}.align',this.value)"><option value="" ${cs.align?'':'selected'}>default</option>`+["left","center","right"].map(x=>`<option ${cs.align===x?'selected':''}>${x}</option>`).join("")+`</select></div>`;
+    if(cur==="item"&&o.desc){const ds=sett.descStyle||{};
+      h+=`<div class="stycardlbl" style="margin-top:4px">Description line</div>`
+        +`<div class="row2">`+C("Color",ds.color,"descStyle.color","#6b6b6e","#6b6b6e")+N("Size (pt)",ds.size,"descStyle.size","7")+`</div>`;}
+    h+=`</div>`;}
+  else if(o.num){h+=`<div class="stycard"><div class="stycardlbl">Numbers (right-aligned columns)</div>`
+    +`<div class="row2">`+C("Color",ns.color,"numStyle.color","inherit","#0C1322")+N("Size (pt)",ns.size,"numStyle.size","inherit")+`</div>`
+    +W(ns.weight,"numStyle.weight")+`</div>`;}
   return h;}
 // Data Table block helpers
 function defaultDTCols(tb){const out=[{field:"idx",label:"#",width:8,align:"right"}];if(tb&&tb.fields)tb.fields.filter(f=>f.fieldname!=="idx").slice(0,5).forEach(f=>out.push({field:f.fieldname,label:f.label,width:null,align:"left"}));return out;}
@@ -997,22 +1029,22 @@ function renderProps(){const host=document.getElementById("propsBlock"),b=cur();
       +ck("Zebra rows (alternate background)","zebra",s.zebra);
     if(s.zebra)h+=colorFld("Zebra color",s.zebraColor,"setS('zebraColor',this.value)","#eef6fc","#eef6fc");
     h+=`</div>`;
-    h+=`<div class="styhead">Column styles</div><div class="hint" style="padding:0 0 6px">Blank size = inherit the block's font size (Style ▸ Font size). Set a value to override one column. Border fields override the table lines for that column only.</div>`;
-    s.cols.forEach((c,ci)=>{const st=cs[ci]||{};const hdr=String(c||"").replace(/[{}]/g,"").trim();
-      h+=`<div class="stycard"><div class="stycardlbl">Column ${ci+1}${hdr?` · ${esc(hdr.slice(0,16))}`:''}</div>`
-        +`<div class="row2">`+fld("Width (mm)",`<input type="text" value="${st.w==null?'':st.w}" placeholder="auto" oninput="tblCol(${ci},'w',this.value)">`)+fld("Align",asel(st.align,`tblCol(${ci},'align',this.value)`))+`</div>`
-        +`<div class="row2">`+fld("Weight",wsel(st.weight,`tblCol(${ci},'weight',this.value)`))+fld("Size (pt)",`<input type="text" value="${st.size==null?'':st.size}" placeholder="inherit" oninput="tblCol(${ci},'size',this.value)">`)+`</div>`
-        +`<div class="row2">`+colorFld("Text color",st.color,`tblCol(${ci},'color',this.value)`,"inherit (hex)","#0C1322")+colorFld("Background",st.bg,`tblCol(${ci},'bg',this.value)`,"none (hex)","#ffffff")+`</div>`
-        +`<div class="row2">`+fld("Border width (px)",`<input type="text" value="${st.bw==null?'':st.bw}" placeholder="table lines" oninput="tblCol(${ci},'bw',this.value)">`)+fld("Border style",`<select onchange="tblCol(${ci},'bstyle',this.value)"><option value="" ${st.bstyle?'':'selected'}>table lines</option>`+["solid","dashed","dotted","double"].map(x=>`<option ${st.bstyle===x?'selected':''}>${x}</option>`).join("")+`</select>`)+`</div>`
-        +colorFld("Border color",st.bcolor,`tblCol(${ci},'bcolor',this.value)`,"table lines (hex)","#cfe5f6")
-        +`</div>`;});
-    const rs=s.rowStyle||(s.rowStyle=[]);
-    h+=`<div class="styhead">Row styles</div>`;
-    s.rows.forEach((r,ri)=>{const st=rs[ri]||{};
-      h+=`<div class="stycard"><div class="stycardlbl">Row ${ri+1}</div>`
-        +`<div class="row2">`+fld("Weight",wsel(st.weight,`tblRow(${ri},'weight',this.value)`))+fld("Size (pt)",`<input type="text" value="${st.size==null?'':st.size}" placeholder="inherit" oninput="tblRow(${ri},'size',this.value)">`)+`</div>`
-        +`<div class="row2">`+colorFld("Background",st.bg,`tblRow(${ri},'bg',this.value)`,"none (hex)","#ffffff")+fld("Min height (mm)",`<input type="text" value="${st.h==null?'':st.h}" placeholder="auto" oninput="tblRow(${ri},'h',this.value)">`)+`</div>`
-        +`</div>`;});}
+    h+=`<div class="styhead">Columns &amp; rows</div><div class="hint" style="padding:0 0 6px">Pick a column or row chip, then style just that one. Blank = inherit.</div>`;
+    {const ci=Math.min(_tblSel.col,Math.max(0,s.cols.length-1));const st=cs[ci]||{};
+    h+=`<div class="stycard"><div class="stycardlbl">Column</div>`
+      +`<div class="chips">`+s.cols.map((c,i)=>{const hdr=String(c||"").replace(/[{}]/g,"").trim();return `<button class="chip ${ci===i?'on':''}" onclick="_tblSel.col=${i};renderProps()">${i+1}${hdr?` · ${esc(hdr.slice(0,10))}`:''}</button>`;}).join("")+`</div>`
+      +`<div class="row2">`+fld("Width (mm)",`<input type="text" value="${st.w==null?'':st.w}" placeholder="auto" oninput="tblCol(${ci},'w',this.value)">`)+fld("Align",asel(st.align,`tblCol(${ci},'align',this.value)`))+`</div>`
+      +`<div class="row2">`+fld("Weight",wsel(st.weight,`tblCol(${ci},'weight',this.value)`))+fld("Size (pt)",`<input type="text" value="${st.size==null?'':st.size}" placeholder="inherit" oninput="tblCol(${ci},'size',this.value)">`)+`</div>`
+      +`<div class="row2">`+colorFld("Text color",st.color,`tblCol(${ci},'color',this.value)`,"inherit (hex)","#0C1322")+colorFld("Background",st.bg,`tblCol(${ci},'bg',this.value)`,"none (hex)","#ffffff")+`</div>`
+      +`<div class="row2">`+fld("Border width (px)",`<input type="text" value="${st.bw==null?'':st.bw}" placeholder="table lines" oninput="tblCol(${ci},'bw',this.value)">`)+fld("Border style",`<select onchange="tblCol(${ci},'bstyle',this.value)"><option value="" ${st.bstyle?'':'selected'}>table lines</option>`+["solid","dashed","dotted","double"].map(x=>`<option ${st.bstyle===x?'selected':''}>${x}</option>`).join("")+`</select>`)+`</div>`
+      +colorFld("Border color",st.bcolor,`tblCol(${ci},'bcolor',this.value)`,"table lines (hex)","#cfe5f6")
+      +`</div>`;}
+    {const rs=s.rowStyle||(s.rowStyle=[]);const ri=Math.min(_tblSel.row,Math.max(0,s.rows.length-1));const st=rs[ri]||{};
+    h+=`<div class="stycard"><div class="stycardlbl">Row</div>`
+      +`<div class="chips">`+s.rows.map((r,i)=>`<button class="chip ${ri===i?'on':''}" onclick="_tblSel.row=${i};renderProps()">${i+1}</button>`).join("")+`</div>`
+      +`<div class="row2">`+fld("Weight",wsel(st.weight,`tblRow(${ri},'weight',this.value)`))+fld("Size (pt)",`<input type="text" value="${st.size==null?'':st.size}" placeholder="inherit" oninput="tblRow(${ri},'size',this.value)">`)+`</div>`
+      +`<div class="row2">`+colorFld("Background",st.bg,`tblRow(${ri},'bg',this.value)`,"none (hex)","#ffffff")+fld("Min height (mm)",`<input type="text" value="${st.h==null?'':st.h}" placeholder="auto" oninput="tblRow(${ri},'h',this.value)">`)+`</div>`
+      +`</div>`;}}
   else if(t==="title"){h+=tx("Title text","text",s.text);h+=ck("Show Arabic subtitle","showArabic",s.showArabic);if(s.showArabic)h+=tx("Arabic","arabic",s.arabic);h+=sg("Layout","align",s.align,[["split","Title + Info"],["center","Centered"]]);h+=`<div class="fld"><label>Info box fields</label>`+ck("Quotation No","meta.name",s.meta.name)+ck("Date","meta.date",s.meta.date)+ck("Valid Till","meta.valid_till",s.meta.valid_till)+`</div>`;
     const cfl=(l,val,key,ph,fb)=>`<div class="fld"><label>${l}</label><div class="color"><input type="color" value="${HX.test(val||'')?val:fb}" oninput="setS('${key}',this.value)"><input type="text" value="${esc(val||'')}" placeholder="${ph}" oninput="setS('${key}',this.value)"></div></div>`;
     h+=`<div class="stycard"><div class="stycardlbl">Colors &amp; sizes</div>`
@@ -1053,10 +1085,10 @@ function renderProps(){const host=document.getElementById("propsBlock"),b=cur();
   else if(t==="row"){h+=rowControls(b);}
   else if(t==="header_banner"||t==="footer_banner"){h+=`<div class="noselect" style="padding:14px 0">Uses the banner image from the Branding tab.</div>`;}
   let tstyle="";
-  if(t==="items")tstyle=sec("tstyle","Table style",tableSkinUI(s,{num:true,zebra:false}));
+  if(t==="items")tstyle=sec("tstyle","Table style",tableSkinUI(s,{id:b.id,zebra:false,desc:true,columns:[{k:"num",l:"#"},{k:"item",l:"Item"},{k:"qty",l:"Qty"},{k:"rate",l:"Rate"},{k:"amount",l:"Amount"}]}));
   else if(t==="payment_schedule"){h+=tx("Heading","heading",s.heading==null?"":s.heading);
-    tstyle=sec("tstyle","Table style",tableSkinUI(s,{num:true,zebra:true}));}
-  else if(t==="datatable")tstyle=sec("tstyle","Table style",tableSkinUI(s,{num:true,zebra:false}));
+    tstyle=sec("tstyle","Table style",tableSkinUI(s,{id:b.id,zebra:true,columns:[{k:"num",l:"#"},{k:"term",l:"Term"},{k:"due",l:"Due"},{k:"pct",l:"Portion"},{k:"amount",l:"Amount"}]}));}
+  else if(t==="datatable")tstyle=sec("tstyle","Table style",tableSkinUI(s,{id:b.id,num:true,zebra:false}));
   const content=sec("content","Content",h,true);
   if(isNested(b)){  // a block living inside a Row column: only its own content + style, no placement
     let out=ptitle+content+tstyle;

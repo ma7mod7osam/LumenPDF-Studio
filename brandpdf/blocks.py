@@ -741,6 +741,28 @@ def _tbl_skin(s, b, default_hbg):
     return out
 
 
+def _col_css(sett, key, numeric):
+    """Inline CSS for ONE ready-table column: settings.colStyles[key] {color,size,weight,align}
+    wins; numeric columns fall back to the legacy aggregate settings.numStyle."""
+    cs = sett.get("colStyles") if isinstance(sett.get("colStyles"), dict) else {}
+    st = cs.get(key) if isinstance(cs.get(key), dict) else {}
+    if not st and numeric:
+        st = sett.get("numStyle") if isinstance(sett.get("numStyle"), dict) else {}
+    out = ""
+    if _hexok(st.get("color")):
+        out += f'color:{st["color"].strip()} !important;'
+    n = _num(st.get("size"))
+    if n:
+        out += f"font-size:{_fmt_num(min(72, max(4, n)))}pt;"
+    if str(st.get("weight")) in _WEIGHT:
+        out += f'font-weight:{st.get("weight")} !important;'
+    if st.get("align") in _ALIGN:
+        out += f'text-align:{st.get("align")};'
+    if _hexok(st.get("bg")):
+        out += f'background-color:{st["bg"].strip()};-webkit-print-color-adjust:exact;'
+    return out
+
+
 def _zebra_parts(s):
     """(table_class, even_row_inline_bg) honoring settings.zebra + settings.zebraColor."""
     if not s.get("zebra", True):
@@ -789,14 +811,22 @@ def _d_items(doc, b, s, ctx):
         if cols_cfg.get("desc", True) and desc_txt and desc_txt != name_txt:
             dh = f'<div class="it-desc">{_esc(desc_txt)}</div>'
         base_td = sk["pad"] + sk["td_border"]
-        num_td = base_td + sk["num"]
-        tds = f'<td class="num" style="{num_td}">{i}</td><td style="{base_td}"><div class="it-name">{nm}</div>{dh}</td>'
+        c_num = base_td + _col_css(s, "num", True)
+        c_item = base_td + _col_css(s, "item", False)
+        c_qty = base_td + _col_css(s, "qty", True)
+        c_rate = base_td + _col_css(s, "rate", True)
+        c_amount = base_td + _col_css(s, "amount", True)
+        ds = s.get("descStyle") if isinstance(s.get("descStyle"), dict) else {}
+        dcss = (f'color:{ds["color"].strip()} !important;' if _hexok(ds.get("color")) else "") +                (f"font-size:{_fmt_num(min(72, max(4, _num(ds.get('size')))))}pt;" if _num(ds.get("size")) else "")
+        if dh and dcss:
+            dh = dh.replace('class="it-desc"', f'class="it-desc" style="{dcss}"')
+        tds = f'<td class="num" style="{c_num}">{i}</td><td style="{c_item}"><div class="it-name">{nm}</div>{dh}</td>'
         if cols_cfg.get("qty"):
-            tds += f'<td class="num" style="{num_td}"><bdi>{_esc(it.get_formatted("qty"))} {_esc(it.get("uom") or "")}</bdi></td>'
+            tds += f'<td class="num" style="{c_qty}"><bdi>{_esc(it.get_formatted("qty"))} {_esc(it.get("uom") or "")}</bdi></td>'
         if cols_cfg.get("rate"):
-            tds += f'<td class="num" style="{num_td}"><bdi>{_esc(it.get_formatted("rate"))}</bdi></td>'
+            tds += f'<td class="num" style="{c_rate}"><bdi>{_esc(it.get_formatted("rate"))}</bdi></td>'
         if cols_cfg.get("amount"):
-            tds += f'<td class="num" style="{num_td}"><bdi>{_esc(it.get_formatted("amount"))}</bdi></td>'
+            tds += f'<td class="num" style="{c_amount}"><bdi>{_esc(it.get_formatted("amount"))}</bdi></td>'
         rowstyle = f' style="{zbg}"' if (zbg and i % 2 == 0) else ""
         body.append(f"<tr{rowstyle}>{tds}</tr>")
     if sk["th_first"]:  # rounded first/last header cells
@@ -923,16 +953,20 @@ def _d_payment_schedule(doc, b, s, ctx):
         k = heads.rfind('style="')
         heads = heads[:k] + 'style="' + sk["th_last"] + heads[k + 7:]
     base_td = sk["pad"] + sk["td_border"]
-    num_td = base_td + sk["num"]
+    c_num = base_td + _col_css(s, "num", True)
+    c_term = base_td + _col_css(s, "term", False)
+    c_due = base_td + _col_css(s, "due", True)
+    c_pct = base_td + _col_css(s, "pct", True)
+    c_amount = base_td + _col_css(s, "amount", True)
     body = []
     for i, ps in enumerate(doc.payment_schedule, start=1):
         term = _esc(ps.get("payment_term") or ps.get("description") or "")
         rowstyle = f' style="{zbg}"' if (zbg and i % 2 == 0) else ""
         body.append(
-            f'<tr{rowstyle}><td class="num" style="{num_td}">{i}</td><td style="{base_td}"><div class="it-name">{term}</div></td>'
-            f'<td class="num" style="{num_td}"><bdi>{_esc(ps.get_formatted("due_date"))}</bdi></td>'
-            f'<td class="num" style="{num_td}"><bdi>{_esc(ps.get_formatted("invoice_portion"))}</bdi></td>'
-            f'<td class="num" style="{num_td}"><bdi>{_esc(ps.get_formatted("payment_amount"))}</bdi></td></tr>'
+            f'<tr{rowstyle}><td class="num" style="{c_num}">{i}</td><td style="{c_term}"><div class="it-name">{term}</div></td>'
+            f'<td class="num" style="{c_due}"><bdi>{_esc(ps.get_formatted("due_date"))}</bdi></td>'
+            f'<td class="num" style="{c_pct}"><bdi>{_esc(ps.get_formatted("invoice_portion"))}</bdi></td>'
+            f'<td class="num" style="{c_amount}"><bdi>{_esc(ps.get_formatted("payment_amount"))}</bdi></td></tr>'
         )
     return (
         f'<div class="bs-sec-lbl" style="{hcolor}">{heading}</div>'
