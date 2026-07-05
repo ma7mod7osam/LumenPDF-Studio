@@ -113,6 +113,8 @@
   .tablebtns button{background:var(--panel2);border:1px solid var(--line2);color:var(--ink);border-radius:8px;padding:7px;cursor:pointer;font-size:12px}
   .noselect{color:var(--mut2);text-align:center;padding:36px 16px;font-size:12px;line-height:1.6}
   .delblk{margin-top:16px;width:100%;border:1px solid #5a2a32;background:#2a1820;color:#ff9aa6;border-radius:8px;padding:9px;cursor:pointer;font-weight:600}
+  .dupblk{width:100%;border:1px solid var(--line2);background:var(--panel2);color:var(--ink);border-radius:8px;padding:9px;cursor:pointer;font-weight:600}
+  .dupblk:hover{border-color:var(--accent);color:var(--accent)}
   /* document CSS (scoped to .paper) */
   .paper img{max-width:100%}
   .paper .bs-banner{width:100%;display:block}
@@ -188,7 +190,7 @@
 <body>
 <div class="app">
   <div class="top">
-    <div class="brand"><svg width="22" height="22" viewBox="0 0 48 48" fill="none" aria-label="LumenPDF Studio"><rect x="6" y="6" width="7.5" height="38" rx="3.75" fill="#1463FF"/><rect x="18" y="25" width="4.5" height="19" rx="2.25" fill="#7FA8FF"/><rect x="27" y="25" width="7.5" height="19" rx="3.75" fill="#1463FF"/><rect x="39" y="25" width="4.5" height="19" rx="2.25" fill="#1463FF"/></svg> LumenPDF <small>Studio · b34</small></div>
+    <div class="brand"><svg width="22" height="22" viewBox="0 0 48 48" fill="none" aria-label="LumenPDF Studio"><rect x="6" y="6" width="7.5" height="38" rx="3.75" fill="#1463FF"/><rect x="18" y="25" width="4.5" height="19" rx="2.25" fill="#7FA8FF"/><rect x="27" y="25" width="7.5" height="19" rx="3.75" fill="#1463FF"/><rect x="39" y="25" width="4.5" height="19" rx="2.25" fill="#1463FF"/></svg> LumenPDF <small>Studio · b35</small></div>
     <input class="fmt-name" id="fmtName" value="Quotation - Custom" title="Format name">
     <select class="sel" id="doctypeSel" title="Target DocType" onchange="onDoctype(this.value)"></select>
     <select class="sel" id="openSel" title="Open an existing format" onchange="openFormat(this.value)"><option value="">Open…</option></select>
@@ -422,7 +424,10 @@ function updateUndoUI(){const u=document.getElementById("undoBtn"),r=document.ge
 function applyHistory(){restoring=true;const s=JSON.parse(history[hpos]);state.blocks=s.blocks.map(function(b){const nb=Object.assign({id:"b"+(idc++)},b);if(nb.type==="row"&&nb.settings&&nb.settings.cells){nb.settings.cells.forEach(function(cell){(cell||[]).forEach(function(c){c.id="b"+(idc++);});});}return nb;});state.branding=s.branding;state.header=s.header;state.footer=s.footer;state.watermark=s.watermark||state.watermark;state.target=s.target;state.page=s.page||state.page;selId=null;renderNowSync();renderProps();renderBrand();restoring=false;updateUndoUI();}
 function undo(){clearTimeout(_histT);_recordHistoryNow();if(hpos<=0)return;hpos--;applyHistory();}
 function redo(){clearTimeout(_histT);_recordHistoryNow();if(hpos>=history.length-1)return;hpos++;applyHistory();}
-function duplicate(id){id=id||selId;const b=blockById(id);if(!b)return;const nb=JSON.parse(JSON.stringify(b));nb.id="b"+(idc++);if(nb.type==="row"&&nb.settings&&nb.settings.cells){nb.settings.cells.forEach(function(cell){(cell||[]).forEach(function(c){c.id="b"+(idc++);});});}if(nb.pos){nb.pos=Object.assign({},nb.pos);if(nb.float||regionOf(nb)!=="body"){nb.pos.x=(nb.pos.x||0)+4;nb.pos.y=(nb.pos.y||0)+4;}else{nb.pos.y=(nb.pos.y||0)+0.1;}}const i=state.blocks.findIndex(x=>x.id===id);state.blocks.splice(i+1,0,nb);selId=nb.id;render();renderProps();}
+function duplicate(id){id=id||selId;const b=blockById(id);if(!b)return;const nb=JSON.parse(JSON.stringify(b));nb.id="b"+(idc++);if(nb.type==="row"&&nb.settings&&nb.settings.cells){nb.settings.cells.forEach(function(cell){(cell||[]).forEach(function(c){c.id="b"+(idc++);});});}
+  // nested block (inside a Row column): duplicate right after it within the same cell
+  for(var bi=0;bi<state.blocks.length;bi++){var rb=state.blocks[bi];if(rb.type==="row"&&rb.settings&&rb.settings.cells){for(var ci=0;ci<rb.settings.cells.length;ci++){var k=rb.settings.cells[ci].findIndex(function(c){return c&&c.id===id;});if(k>=0){delete nb.pos;rb.settings.cells[ci].splice(k+1,0,nb);selId=nb.id;render();renderProps();return;}}}}
+  if(nb.pos){nb.pos=Object.assign({},nb.pos);if(nb.float||regionOf(nb)!=="body"){nb.pos.x=(nb.pos.x||0)+4;nb.pos.y=(nb.pos.y||0)+4;}else{nb.pos.y=(nb.pos.y||0)+0.1;}}const i=state.blocks.findIndex(x=>x.id===id);state.blocks.splice(i+1,0,nb);selId=nb.id;render();renderProps();}
 
 /* ---- autosave: keep a local draft so unsaved work survives a closed tab ---- */
 let userTouched=false, _asT=null;
@@ -1126,7 +1131,7 @@ function renderProps(){const host=document.getElementById("propsBlock"),b=cur();
     let out=ptitle+content+tstyle;
     out+=`<div class="stygrp"><div class="styhead">Placement</div><div class="hint" style="padding:4px 0 0">Inside a <b>Row</b> column — it flows within its column.</div></div>`;
     out+=styleControls(b.style,t);
-    out+=`<button class="delblk" onclick="del(null,'${b.id}')">Remove from row</button>`;
+    out+=`<div class="prow" style="margin-top:16px"><button class="dupblk" onclick="duplicate('${b.id}')" title="Duplicate (Ctrl+D)">⧉ Duplicate</button><button class="delblk" onclick="del(null,'${b.id}')" style="margin-top:0">Remove</button></div>`;
     host.innerHTML=out;return;
   }
   const reg=regionOf(b);
@@ -1135,7 +1140,7 @@ function renderProps(){const host=document.getElementById("propsBlock"),b=cur();
   if(reg!=="body"||b.float)out+=posControls(b.pos);  // bands + floating elements are positioned; flowing body is not
   if(t!=="header_banner"&&t!=="footer_banner"&&t!=="row")out+=styleControls(b.style,t);
   out+=condControl(b);
-  out+=`<button class="delblk" onclick="del(null,'${b.id}')">Delete this block</button>`;
+  out+=`<div class="prow" style="margin-top:16px"><button class="dupblk" onclick="duplicate('${b.id}')" title="Duplicate (Ctrl+D)">⧉ Duplicate</button><button class="delblk" onclick="del(null,'${b.id}')" style="margin-top:0">🗑 Delete</button></div>`;
   host.innerHTML=out;}
 function regionControl(b,reg){
   if(reg==="body"){
