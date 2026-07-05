@@ -1,4 +1,4 @@
-# BrandPDF — Install & Run
+# LumenPDF — Install & Run
 
 Target: ERPNext/Frappe **v15** on Cloudways (SSH + bench access). Chromium and its system
 libs are already present (print_designer's chrome generator runs), so no `apt`/root is needed.
@@ -8,21 +8,21 @@ The whole design hinges on one validation (PLAN §7). On the server:
 
 ```bash
 cd ~/frappe-bench
-./env/bin/pip install -r /path/to/BrandPDF-ERPNext/m0-spike/requirements.txt
+./env/bin/pip install -r /path/to/LumenPDF-ERPNext/m0-spike/requirements.txt
 ./env/bin/playwright install chromium          # browser only, no root
-./env/bin/python /path/to/BrandPDF-ERPNext/m0-spike/m0_spike.py
+./env/bin/python /path/to/LumenPDF-ERPNext/m0-spike/m0_spike.py
 ```
 Open the three PDFs it writes. Confirm: footer pins on the short page; Arabic renders; a
 Chromium was driven without root. If Playwright won't use the system Chromium, set
-`BRANDPDF_CHROMIUM=/path/to/chrome` and re-run. **Only proceed once M0 passes.**
+`LUMENPDF_CHROMIUM=/path/to/chrome` and re-run. **Only proceed once M0 passes.**
 
 ## 1. Install the app
 ```bash
 cd ~/frappe-bench
-bench get-app /path/to/BrandPDF-ERPNext        # app root == repo root; or a git remote
+bench get-app /path/to/LumenPDF-ERPNext        # app root == repo root; or a git remote
 ./env/bin/playwright install chromium          # browser only (Python deps install via the app)
-bench --site <your-site> install-app brandpdf
-bench build --app brandpdf
+bench --site <your-site> install-app lumenpdf
+bench build --app lumenpdf
 bench --site <your-site> migrate
 bench restart                                  # ensure a 'long' queue worker is running
 ```
@@ -31,13 +31,13 @@ bench restart                                  # ensure a 'long' queue worker is
 `~/frappe-bench/sites/<your-site>/site_config.json`:
 ```json
 {
-  "brandpdf_engine": "playwright",
-  "brandpdf_chromium_path": null,
-  "brandpdf_render_url": "http://localhost:3000"
+  "lumenpdf_engine": "playwright",
+  "lumenpdf_chromium_path": null,
+  "lumenpdf_render_url": "http://localhost:3000"
 }
 ```
-- `brandpdf_chromium_path`: set to the system Chromium path if M0 showed Playwright needs it.
-- Switch `brandpdf_engine` to `"gotenberg"` only after a container is proven on your plan.
+- `lumenpdf_chromium_path`: set to the system Chromium path if M0 showed Playwright needs it.
+- Switch `lumenpdf_engine` to `"gotenberg"` only after a container is proven on your plan.
 
 ## 3. Make the banner images Public
 Upload `2Header.png` and `2Footer.png` and ensure the File records are **Public**

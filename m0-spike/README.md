@@ -14,7 +14,7 @@ cd ~/frappe-bench
 ./env/bin/playwright install chromium
 ./env/bin/python <path>/m0-spike/m0_spike.py
 # optional, if Playwright needs the existing binary:
-BRANDPDF_CHROMIUM=/path/to/chrome ./env/bin/python <path>/m0-spike/m0_spike.py
+LUMENPDF_CHROMIUM=/path/to/chrome ./env/bin/python <path>/m0-spike/m0_spike.py
 ```
 
 Outputs three PDFs next to the script. **Open them** — measurement alone can mislead for

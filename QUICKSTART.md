@@ -1,7 +1,7 @@
-# BrandPDF — Quick Start
+# LumenPDF — Quick Start
 
 **Forward this whole page to whoever manages your ERPNext server** (or follow it yourself).
-It installs the BrandPDF add-on so a "Download Branded PDF" button appears on Quotations.
+It installs the LumenPDF add-on so a "Download Branded PDF" button appears on Quotations.
 
 It needs: SSH / bench access to the ERPNext **v15** site. Chromium is already on the server
 (Print Designer installed it), so no root/apt is required.
@@ -9,15 +9,15 @@ It needs: SSH / bench access to the ERPNext **v15** site. Chromium is already on
 ---
 
 ## 1. Copy the app folder onto the server
-Put this whole `BrandPDF-ERPNext` folder somewhere on the server, e.g. `/home/frappe/BrandPDF-ERPNext`.
+Put this whole `LumenPDF-ERPNext` folder somewhere on the server, e.g. `/home/frappe/LumenPDF-ERPNext`.
 (Or push it to a private git repo and use that URL in step 3.)
 
 ## 2. Quick sanity test (5 min, optional but recommended)
 ```bash
 cd ~/frappe-bench
-./env/bin/pip install -r /home/frappe/BrandPDF-ERPNext/m0-spike/requirements.txt
+./env/bin/pip install -r /home/frappe/LumenPDF-ERPNext/m0-spike/requirements.txt
 ./env/bin/playwright install chromium
-./env/bin/python /home/frappe/BrandPDF-ERPNext/m0-spike/m0_spike.py
+./env/bin/python /home/frappe/LumenPDF-ERPNext/m0-spike/m0_spike.py
 ```
 This writes 3 sample PDFs next to the script. Open them — the header should sit at the top,
 the footer at the bottom, and Arabic should look correct. If yes, the engine works here.
@@ -25,10 +25,10 @@ the footer at the bottom, and Arabic should look correct. If yes, the engine wor
 ## 3. Install the app
 ```bash
 cd ~/frappe-bench
-bench get-app /home/frappe/BrandPDF-ERPNext
+bench get-app /home/frappe/LumenPDF-ERPNext
 ./env/bin/playwright install chromium          # if step 2 was skipped
-bench --site <your-site> install-app brandpdf
-bench build --app brandpdf
+bench --site <your-site> install-app lumenpdf
+bench build --app lumenpdf
 bench --site <your-site> migrate
 bench restart
 ```
@@ -46,13 +46,13 @@ Open any **Quotation** → click **Download Branded PDF**. You get the branded P
 Optional — lets you set logo/colors/templates from a form instead of code:
 ```bash
 bench set-config -g developer_mode 1 && bench restart
-bench --site <your-site> execute brandpdf.setup.install_config.run
+bench --site <your-site> execute lumenpdf.setup.install_config.run
 bench --site <your-site> migrate
 ```
 
 ## If something looks wrong
 - Banners missing → the image Files aren't set to Public (step 4).
-- Button missing → run `bench build --app brandpdf` and hard-refresh the browser.
+- Button missing → run `bench build --app lumenpdf` and hard-refresh the browser.
 - Render error → check **Error Log** in ERPNext.
 - Full details for a developer: `docs/INSTALL.md`, `docs/PLAN.md`.
 

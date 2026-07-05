@@ -1,25 +1,25 @@
 # Phase 2 — Config DocTypes (the no-code spine)
 
 > **These are now built programmatically** (no hand-written JSON) by
-> `brandpdf/setup/install_config.py`. Run it on the bench after M0–M3 prove the BSTC loop:
+> `lumenpdf/setup/install_config.py`. Run it on the bench after M0–M3 prove the BSTC loop:
 >
 > ```bash
 > bench set-config -g developer_mode 1 && bench restart
-> bench --site <site> execute brandpdf.setup.install_config.run
-> bench --site <site> migrate          # then commit the generated brandpdf/brandpdf/doctype/* JSON
+> bench --site <site> execute lumenpdf.setup.install_config.run
+> bench --site <site> migrate          # then commit the generated lumenpdf/lumenpdf/doctype/* JSON
 > ```
 > Can't enable developer_mode? Create Custom DocTypes instead:
-> `bench --site <site> execute brandpdf.setup.install_config.run --kwargs "{'as_custom': True}"`
+> `bench --site <site> execute lumenpdf.setup.install_config.run --kwargs "{'as_custom': True}"`
 >
 > The creator also **seeds** a standard "Quotation - BSTC" template + a Quotation mapping, so
-> the app routes through the spine immediately. `brandpdf/resolver.py` already reads these
+> the app routes through the spine immediately. `lumenpdf/resolver.py` already reads these
 > (branding by `doc.company`, template via mapping) with graceful fallback to Phase-1 defaults.
 
 The field spec each DocType is built from (kept here as the source of truth):
 
 ---
 
-## 1. BrandPDF Settings  (one per Company; `is_single = 0`)
+## 1. LumenPDF Settings  (one per Company; `is_single = 0`)
 Branding resolved by `doc.company`, with `render_html.DEFAULT_BRANDING` as fallback.
 
 | Field | Type | Notes |
@@ -37,7 +37,7 @@ Branding resolved by `doc.company`, with `render_html.DEFAULT_BRANDING` as fallb
 
 Permissions: read = All; write = System Manager. Missing record → safe default branding (never throw).
 
-## 2. BrandPDF Template  (the library)
+## 2. LumenPDF Template  (the library)
 | Field | Type | Notes |
 |---|---|---|
 | template_name | Data | primary key (autoname) |
@@ -52,19 +52,19 @@ Permissions: write = System Manager only. Standard templates ship as fixtures AN
 edit-locked (a `validate` guard blocks edits when `is_standard`), so `migrate` can never
 clobber a user's work.
 
-## 3. BrandPDF Mapping  (no-code routing)
+## 3. LumenPDF Mapping  (no-code routing)
 | Field | Type | Notes |
 |---|---|---|
 | target_doctype | Link → DocType | |
-| template | Link → BrandPDF Template | |
+| template | Link → LumenPDF Template | |
 | enabled | Check | |
 | priority | Int | lower wins among overlapping mappings (deterministic precedence) |
 | auto_attach | Check | attach PDF on submit |
 | replace_print_pdf | Check | route Print>PDF through us |
 | replace_email_attach | Check | swap email attachment |
-| conditions | Table → BrandPDF Mapping Condition | structured, **no eval** |
+| conditions | Table → LumenPDF Mapping Condition | structured, **no eval** |
 
-### 3a. BrandPDF Mapping Condition (child)
+### 3a. LumenPDF Mapping Condition (child)
 | Field | Type |
 |---|---|
 | fieldname | Data |

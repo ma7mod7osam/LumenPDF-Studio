@@ -1,4 +1,4 @@
-# BrandPDF for ERPNext
+# LumenPDF for ERPNext
 
 A custom Frappe/ERPNext v15 app that renders pixel-perfect, branded PDFs (Quotations first, then Sales Invoices and beyond) through a **real Chromium engine** — bypassing Frappe's PDF wrapper, which hides the `printToPDF` options needed for full-bleed banners, exact margins, reliable backgrounds, and clean RTL/Arabic.
 
@@ -15,7 +15,7 @@ A custom Frappe/ERPNext v15 app that renders pixel-perfect, branded PDFs (Quotat
 ## Repo layout
 This repo **is** the installable Frappe app (repo root = app root):
 - `pyproject.toml`, `license.txt` — app packaging.
-- `brandpdf/` — the Python package (engine, api, job, template, button).
+- `lumenpdf/` — the Python package (engine, api, job, template, button).
 - `docs/PLAN.md` — the approved, consolidated build plan (read this first).
 - `docs/CODE-REVIEW.md` — adversarial code review of the scaffold + the fixes applied.
 - `docs/QA-REVIEW.md`, `docs/PLANNER.md`, `docs/EXECUTER.md` — planning-phase role outputs.
@@ -23,7 +23,7 @@ This repo **is** the installable Frappe app (repo root = app root):
 - `reference/quotation-reference.html` — the Chromium-verified HTML the template was built from.
 - `m0-spike/` — the de-risking spike (see below).
 
-Install with `bench get-app /path/to/this-repo` → `bench --site <site> install-app brandpdf` (see `docs/INSTALL.md`).
+Install with `bench get-app /path/to/this-repo` → `bench --site <site> install-app lumenpdf` (see `docs/INSTALL.md`).
 
 ## The one thing that de-risks everything: M0
 Before any app code, run the **M0 spike** on the real server:
