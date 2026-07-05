@@ -1,5 +1,5 @@
 [project]
-name = "lumenpdf"
+name = "brandpdf"
 authors = [
     { name = "BSTC", email = "support@bstc-bh.com" },
 ]
@@ -20,7 +20,7 @@ requires = ["flit_core >=3.4,<4"]
 build-backend = "flit_core.buildapi"
 
 [tool.flit.module]
-name = "lumenpdf"
+name = "brandpdf"
 
 [tool.bench.frappe-dependencies]
 frappe = ">=15.0.0,<16.0.0"

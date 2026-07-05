@@ -1,2 +1,0 @@
-# LumenPDF patches
-# (none yet)

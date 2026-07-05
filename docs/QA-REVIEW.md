@@ -2,7 +2,7 @@ I have what I need. The `tfoot`-floats-up-on-short-pages issue is a real, well-k
 
 ---
 
-# Adversarial Review: LumenPDF for ERPNext — Planner + Executer Plans
+# Adversarial Review: BrandPDF for ERPNext — Planner + Executer Plans
 
 Both plans are competent and the core thesis (own the `printToPDF` call, set the hidden options) is sound. But "low technical risk, high polish effort" is over-confident. Below are the concrete gaps, ordered by severity.
 
@@ -49,8 +49,8 @@ A per-process semaphore does nothing because gunicorn/Frappe runs multiple worke
 
 ### 8. [HIGH] Sandboxed Jinja claim is overstated — and the `condition` `safe_eval` story has known escapes.
 
-The plan says render via Frappe's sandboxed Jinja and evaluate mapping conditions with `frappe.safe_eval`. Both are reasonable but (a) Frappe's "sandbox" is `jinja2.sandbox` + an allowlist, and template authors are System Managers who can already run code — so the sandbox is defense-in-depth, not a real boundary; the plan markets it as a security control. (b) `frappe.safe_eval` has had documented bypasses historically and is only as safe as the current Frappe version. (c) Phase 2 stores templates in a DocType editable in the UI — if a *non-System-Manager* role is ever granted write on `LumenPDF Template`, that's RCE.
-**Fix:** Lock `LumenPDF Template` write permission to System Manager only, hard-coded, with a permission test. Treat the Jinja sandbox as hardening, not a guarantee — state this honestly. Pin and track Frappe `safe_eval` CVEs. Consider replacing free-form `condition` expressions with a structured filter (fieldname/operator/value rows) to eliminate eval entirely.
+The plan says render via Frappe's sandboxed Jinja and evaluate mapping conditions with `frappe.safe_eval`. Both are reasonable but (a) Frappe's "sandbox" is `jinja2.sandbox` + an allowlist, and template authors are System Managers who can already run code — so the sandbox is defense-in-depth, not a real boundary; the plan markets it as a security control. (b) `frappe.safe_eval` has had documented bypasses historically and is only as safe as the current Frappe version. (c) Phase 2 stores templates in a DocType editable in the UI — if a *non-System-Manager* role is ever granted write on `BrandPDF Template`, that's RCE.
+**Fix:** Lock `BrandPDF Template` write permission to System Manager only, hard-coded, with a permission test. Treat the Jinja sandbox as hardening, not a guarantee — state this honestly. Pin and track Frappe `safe_eval` CVEs. Consider replacing free-form `condition` expressions with a structured filter (fieldname/operator/value rows) to eliminate eval entirely.
 
 ### 9. [HIGH] Survives-`bench migrate` / upgrade-safety claims have a concrete hole: fixtures + the `pdf_generator` hook.
 
@@ -84,7 +84,7 @@ Browser-per-request with a 30s timeout: on timeout you "kill the browser," but a
 
 ### 15. [MEDIUM] Multi-company branding resolves by `doc.company` — but Quotations can lack/override company, and File assets are per-site not per-company.
 
-`resolve_branding(doc.company)` assumes every doc has a clean company link and a matching `LumenPDF Settings`. Missing settings → unhandled exception at render. Also the banner Files are uploaded to `/files/` site-wide; nothing scopes them per company, and private vs public File permission on the banner matters when inlining.
+`resolve_branding(doc.company)` assumes every doc has a clean company link and a matching `BrandPDF Settings`. Missing settings → unhandled exception at render. Also the banner Files are uploaded to `/files/` site-wide; nothing scopes them per company, and private vs public File permission on the banner matters when inlining.
 **Fix:** Default-branding fallback when no per-company settings exist (don't throw); validate banner Files exist and are readable at render time with a clear error; decide public vs private for banners (public is simpler for inlining and they're not sensitive).
 
 ### 16. [LOW] No "Letter Head suppression" — Frappe may inject its own header/footer/margins into the print HTML you fetch.

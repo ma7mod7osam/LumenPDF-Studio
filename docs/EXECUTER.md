@@ -1,10 +1,10 @@
-This is a planning/documentation task. The deployment memory confirms the Cloudways environment realities (SSH/SFTP access, master-user file-creation limits, secrets-injection discipline, Varnish purges, server-side curl testing) that I'll fold into the plan. Note: that memory is about the *WordPress/static assessment site*; this LumenPDF task is a *separate ERPNext/Frappe app*, so I'll keep the Cloudways operational lessons but not the WP-specific bits.
+This is a planning/documentation task. The deployment memory confirms the Cloudways environment realities (SSH/SFTP access, master-user file-creation limits, secrets-injection discipline, Varnish purges, server-side curl testing) that I'll fold into the plan. Note: that memory is about the *WordPress/static assessment site*; this BrandPDF task is a *separate ERPNext/Frappe app*, so I'll keep the Cloudways operational lessons but not the WP-specific bits.
 
 Here is the technical execution plan.
 
 ---
 
-# LumenPDF for ERPNext — Technical Execution Plan
+# BrandPDF for ERPNext — Technical Execution Plan
 
 *Concrete, build-from-this spec. Phase 1 target: BSTC Quotation, one button, pixel-perfect via real Chromium.*
 
@@ -37,12 +37,12 @@ Exit criteria: render the owner's proven HTML to a correct PDF *from the server*
 
 ### 1.1 Folder structure
 ```
-lumenpdf/
+brandpdf/
 ├── pyproject.toml
 ├── README.md
 ├── docker/
 │   └── gotenberg.compose.yml          # Phase 2 bring-up
-├── lumenpdf/
+├── brandpdf/
 │   ├── hooks.py
 │   ├── modules.txt
 │   ├── patches.txt
@@ -52,45 +52,45 @@ lumenpdf/
 │   │   ├── base.py                    # Renderer ABC: render(html, options) -> bytes
 │   │   ├── playwright_engine.py
 │   │   ├── gotenberg_engine.py        # Phase 2
-│   │   └── factory.py                 # get_renderer() reads site_config lumenpdf_engine
+│   │   └── factory.py                 # get_renderer() reads site_config brandpdf_engine
 │   ├── core/
 │   │   ├── context.py                 # build_render_context(doc, branding)
 │   │   ├── branding.py                # resolve_branding(company) -> dict
 │   │   ├── templating.py              # render_html(doctype,name,template) sandboxed Jinja
 │   │   └── assets.py                  # inline_assets(html) -> base64 data URIs
 │   ├── templates/
-│   │   └── lumenpdf/
+│   │   └── brandpdf/
 │   │       └── quotation_bstc.html    # Phase 1 proven HTML, Jinja-ized
 │   ├── public/
-│   │   └── js/lumenpdf_button.js      # form button (doctype_js)
+│   │   └── js/brandpdf_button.js      # form button (doctype_js)
 │   ├── config/
-│   │   └── lumenpdf.py                # desk module config (Phase 2)
-│   └── lumenpdf/doctype/             # Phase 2 config DocTypes
-│       ├── lumenpdf_settings/
-│       ├── lumenpdf_template/
-│       └── lumenpdf_mapping/
+│   │   └── brandpdf.py                # desk module config (Phase 2)
+│   └── brandpdf/doctype/             # Phase 2 config DocTypes
+│       ├── brandpdf_settings/
+│       ├── brandpdf_template/
+│       └── brandpdf_mapping/
 ```
 
 ### 1.2 `hooks.py` (key entries)
 ```python
-app_name = "lumenpdf"
+app_name = "brandpdf"
 
 # Phase 1: inject the form button on Quotation (Phase 2: read mapping for all mapped doctypes)
-doctype_js = {"Quotation": "public/js/lumenpdf_button.js"}
+doctype_js = {"Quotation": "public/js/brandpdf_button.js"}
 
 # Phase 2 integrations (added incrementally, never monkey-patch core):
 # auto-attach on submit
 doc_events = {
-    "Quotation":     {"on_submit": "lumenpdf.api.auto_attach"},
-    "Sales Invoice": {"on_submit": "lumenpdf.api.auto_attach"},
+    "Quotation":     {"on_submit": "brandpdf.api.auto_attach"},
+    "Sales Invoice": {"on_submit": "brandpdf.api.auto_attach"},
 }
 # Phase 2: route the standard Print/PDF + Email-attach through us for mapped doctypes
 # override_doctype_class / pdf_generator hook OR a custom print_format hook — see §1.5
 
 # scheduled cleanup of temp render artifacts (Phase 2)
-scheduler_events = {"daily": ["lumenpdf.core.assets.cleanup_tmp"]}
+scheduler_events = {"daily": ["brandpdf.core.assets.cleanup_tmp"]}
 
-fixtures = ["LumenPDF Settings", "LumenPDF Template", "LumenPDF Mapping"]  # Phase 2
+fixtures = ["BrandPDF Settings", "BrandPDF Template", "BrandPDF Mapping"]  # Phase 2
 ```
 
 ### 1.3 Whitelisted endpoint signatures (`api.py`)
@@ -112,7 +112,7 @@ def enqueue_download(doctype: str, name: str, template: str | None = None):
     """For multi-page / heavy docs: render in a background job, return job id;
        client polls and downloads the resulting File. Returns {job_id}."""
     _authorize(doctype, name)
-    job = frappe.enqueue("lumenpdf.api._render_to_file",
+    job = frappe.enqueue("brandpdf.api._render_to_file",
                          queue="long", timeout=120,
                          doctype=doctype, name=name, template=template,
                          user=frappe.session.user)
@@ -129,7 +129,7 @@ def auto_attach(doc, method=None):
 
 **Why `@frappe.whitelist()` and not `allow_guest=True`:** the endpoint must run as the logged-in user so `has_permission` reflects their role. Never expose guest access.
 
-### 1.4 Form button (`public/js/lumenpdf_button.js`)
+### 1.4 Form button (`public/js/brandpdf_button.js`)
 ```javascript
 frappe.ui.form.on("Quotation", {
   refresh(frm) {
@@ -137,7 +137,7 @@ frappe.ui.form.on("Quotation", {
     frm.add_custom_button(__("Download Branded PDF"), () => {
       // open via a GET to the whitelisted method so the browser handles the download
       const url = frappe.urllib.get_full_url(
-        "/api/method/lumenpdf.api.download"
+        "/api/method/brandpdf.api.download"
         + `?doctype=${encodeURIComponent(frm.doc.doctype)}`
         + `&name=${encodeURIComponent(frm.doc.name)}`
       );
@@ -149,7 +149,7 @@ frappe.ui.form.on("Quotation", {
 Phase 2: replace the hard-coded `"Quotation"` with a generic loader that reads enabled mappings and registers the button on every mapped DocType.
 
 ### 1.5 Print / Email / Attach integration (Phase 2 specifics)
-- **Print/PDF button**: Frappe v15 supports a `pdf_generator` concept (this is exactly what print_designer hooks). Register a `lumenpdf` generator so the stock **Print > PDF** routes through `get_renderer()` for mapped DocTypes; fall back to stock for unmapped. This avoids overriding the UI — it reuses the existing print toolbar.
+- **Print/PDF button**: Frappe v15 supports a `pdf_generator` concept (this is exactly what print_designer hooks). Register a `brandpdf` generator so the stock **Print > PDF** routes through `get_renderer()` for mapped DocTypes; fall back to stock for unmapped. This avoids overriding the UI — it reuses the existing print toolbar.
 - **Email attach**: override the attachment builder via `make_communication`/the email dialog's `get_pdf` path for mapped doctypes only (least surprise). Concretely, hook the point where the Email dialog builds `print_format` attachments and substitute our bytes when a mapping exists; leave everything else stock.
 - **Attach-on-submit**: the `doc_events on_submit` above, gated by a per-mapping `auto_attach` checkbox.
 
@@ -159,7 +159,7 @@ Phase 2: replace the hard-coded `"Quotation"` with a generic loader that reads e
 
 Three DocTypes (Phase 2). Phase 1 hard-codes equivalents in `branding.py`/the template.
 
-### 2.1 `LumenPDF Settings` (per company)
+### 2.1 `BrandPDF Settings` (per company)
 Single-per-company (Link to Company, unique). Fields:
 
 | Fieldname | Type | Notes |
@@ -178,7 +178,7 @@ Single-per-company (Link to Company, unique). Fields:
 | `footer_registration_text` | Small Text | CR no., VAT no., etc. |
 | `default_engine` | Select | playwright / gotenberg (overrides site default) |
 
-### 2.2 `LumenPDF Template`
+### 2.2 `BrandPDF Template`
 | Fieldname | Type | Notes |
 |---|---|---|
 | `template_name` | Data | e.g. "Quotation – Standard", "Quotation – Tender" |
@@ -188,22 +188,22 @@ Single-per-company (Link to Company, unique). Fields:
 | `is_standard` | Check | shipped starter (read-only; clone to edit) |
 
 How a template is **authored/stored/edited**:
-- **Phase 1**: a `.html` file in `templates/lumenpdf/`. Edited in the repo, deployed via SFTP.
-- **Phase 2**: stored in `LumenPDF Template.body`, edited in the desk Code editor. Standard templates ship as **fixtures** (read-only); the business **Duplicates** one to customize, so `bench migrate` never clobbers their edits.
+- **Phase 1**: a `.html` file in `templates/brandpdf/`. Edited in the repo, deployed via SFTP.
+- **Phase 2**: stored in `BrandPDF Template.body`, edited in the desk Code editor. Standard templates ship as **fixtures** (read-only); the business **Duplicates** one to customize, so `bench migrate` never clobbers their edits.
 - **Long-term option**: map to a print_designer Print Format and render *its* HTML through our engine (reuse their visual editor, our correct output). Keep this behind a `source_type` select (`jinja_file` / `template_doctype` / `print_format`).
 
-### 2.3 `LumenPDF Mapping`
+### 2.3 `BrandPDF Mapping`
 | Fieldname | Type | Notes |
 |---|---|---|
 | `target_doctype` | Link → DocType | |
 | `condition` | Small Text (optional) | safe expression, e.g. `doc.transaction_type=="Tender"` → picks a template |
-| `template` | Link → LumenPDF Template | |
+| `template` | Link → BrandPDF Template | |
 | `enabled` | Check | |
 | `auto_attach` | Check | render+attach on submit |
 | `replace_print_pdf` | Check | route stock Print>PDF through us |
 | `replace_email_attach` | Check | substitute the email attachment |
 
-**Resolution at render time:** `doctype → enabled mappings → first whose condition passes → template`; branding from `doc.company → LumenPDF Settings`. This is the "no code each time" spine: onboarding is filling forms.
+**Resolution at render time:** `doctype → enabled mappings → first whose condition passes → template`; branding from `doc.company → BrandPDF Settings`. This is the "no code each time" spine: onboarding is filling forms.
 
 ---
 
@@ -218,13 +218,13 @@ cd ~/frappe-bench
 
 # DO NOT 'playwright install' a fresh browser (apt/root may be blocked, and Chromium already exists).
 # Instead point Playwright at the print_designer Chromium found in M0:
-bench set-config -g lumenpdf_engine playwright
-bench set-config -g lumenpdf_chromium_path "/abs/path/to/chromium"   # from M0 discovery
+bench set-config -g brandpdf_engine playwright
+bench set-config -g brandpdf_chromium_path "/abs/path/to/chromium"   # from M0 discovery
 # If Playwright insists on its own chromium and root apt is available:
 #   ./env/bin/playwright install-deps chromium && ./env/bin/playwright install chromium
 # but prefer reusing the existing binary to avoid the chromium_path gotcha.
 ```
-Note the verified config gotcha: print_designer uses `chromium_binary_path` vs others' `chromium_path`. We namespace ours as **`lumenpdf_chromium_path`** and never read theirs, so a print_designer change can't break us.
+Note the verified config gotcha: print_designer uses `chromium_binary_path` vs others' `chromium_path`. We namespace ours as **`brandpdf_chromium_path`** and never read theirs, so a print_designer change can't break us.
 
 ### 3.2 Renderer interface (`render/base.py`)
 ```python
@@ -240,7 +240,7 @@ import frappe
 
 class PlaywrightRenderer(Renderer):
     def render(self, html: str, options: dict) -> bytes:
-        chromium_path = frappe.conf.get("lumenpdf_chromium_path")  # explicit, namespaced
+        chromium_path = frappe.conf.get("brandpdf_chromium_path")  # explicit, namespaced
         with sync_playwright() as p:
             browser = p.chromium.launch(
                 executable_path=chromium_path or None,
@@ -270,13 +270,13 @@ These are exactly the options Frappe's wrapper hid — `prefer_css_page_size`, `
 # docker/gotenberg.compose.yml — single container on the same server
 # image: gotenberg/gotenberg:8 ; expose 127.0.0.1:3000 only (never public)
 docker compose -f docker/gotenberg.compose.yml up -d
-bench set-config -g lumenpdf_engine gotenberg
-bench set-config -g lumenpdf_render_url "http://127.0.0.1:3000"
+bench set-config -g brandpdf_engine gotenberg
+bench set-config -g brandpdf_render_url "http://127.0.0.1:3000"
 ```
 ```python
 class GotenbergRenderer(Renderer):
     def render(self, html, options):
-        url = frappe.conf["lumenpdf_render_url"] + "/forms/chromium/convert/html"
+        url = frappe.conf["brandpdf_render_url"] + "/forms/chromium/convert/html"
         files = {"index.html": ("index.html", html)}              # assets inlined as base64
         data  = {"marginTop":"0","marginBottom":"0","marginLeft":"0","marginRight":"0",
                  "printBackground":"true","preferCssPageSize":"true",
@@ -333,13 +333,13 @@ def _pdf_options(doctype, name):
 ### 5.1 Install (single-site owner)
 ```bash
 ssh <bench-host>; cd ~/frappe-bench
-bench get-app https://github.com/<owner>/lumenpdf    # or local path during dev
-bench --site <site> install-app lumenpdf
+bench get-app https://github.com/<owner>/brandpdf    # or local path during dev
+bench --site <site> install-app brandpdf
 ./env/bin/pip install playwright
-bench set-config -g lumenpdf_engine playwright
-bench set-config -g lumenpdf_chromium_path "<path from M0>"
+bench set-config -g brandpdf_engine playwright
+bench set-config -g brandpdf_chromium_path "<path from M0>"
 bench --site <site> migrate
-bench build --app lumenpdf
+bench build --app brandpdf
 bench restart
 ```
 
@@ -349,21 +349,21 @@ bench restart
 - **File-creation permission quirks** seen on the WP side don't apply to the bench (owner owns the bench dir), but still deploy via `bench get-app`/git pull, not ad-hoc scp of single files.
 - **Test the endpoint server-side first** (mirrors the project's curl-on-loopback habit), bypassing any edge protection:
   ```bash
-  bench --site <site> execute lumenpdf.api.download --kwargs "{'doctype':'Quotation','name':'<QTN>'}"
+  bench --site <site> execute brandpdf.api.download --kwargs "{'doctype':'Quotation','name':'<QTN>'}"
   # or hit it authenticated:
-  curl -s -b "sid=<session>" "https://127.0.0.1/api/method/lumenpdf.api.download?doctype=Quotation&name=<QTN>" -H "Host: <site>" -o /tmp/out.pdf
+  curl -s -b "sid=<session>" "https://127.0.0.1/api/method/brandpdf.api.download?doctype=Quotation&name=<QTN>" -H "Host: <site>" -o /tmp/out.pdf
   ```
 
 ### 5.3 Upgrade-safety rules (productization-critical)
 - **No monkey-patching** of Frappe/ERPNext core — only `hooks.py` (doctype_js, doc_events, pdf_generator hook, scheduler_events).
-- **All config namespaced** `lumenpdf_*` in site_config + our own DocTypes; never read print_designer's keys.
+- **All config namespaced** `brandpdf_*` in site_config + our own DocTypes; never read print_designer's keys.
 - **Engine isolated** behind the abstraction — a Chromium/Playwright/Gotenberg bump never touches business code.
 - **Standard templates as read-only fixtures**; business edits live in Duplicated records so `migrate` can't clobber them.
 - **Version pinning**: pin Playwright + Gotenberg image tag; run the visual-regression suite (§6) against each ERPNext v15 point release before declaring compatibility.
 
 ### 5.4 Packaging for sale (Phase 2+)
 - Repo ships: the app, `docker/gotenberg.compose.yml`, starter templates (fixtures), an onboarding wizard, docs.
-- Two install paths documented: **Playwright (no container)** and **Gotenberg (container)** — selected by `lumenpdf_engine`.
+- Two install paths documented: **Playwright (no container)** and **Gotenberg (container)** — selected by `brandpdf_engine`.
 - List on Frappe Cloud Marketplace once Phase 2 is stable.
 
 ---
@@ -374,14 +374,14 @@ bench restart
 
 - [ ] **T0 — M0 spike (server)**
   *Do:* run the M0 commands; locate Chromium; confirm/deny Docker; render the owner's proven HTML to PDF from the server with our options.
-  *Accept:* a PDF on the server that visually matches the owner's reference (full-bleed header/footer repeating, blue header, zebra, total bar, correct margins, clean Arabic). Engine choice recorded in `lumenpdf_engine`.
+  *Accept:* a PDF on the server that visually matches the owner's reference (full-bleed header/footer repeating, blue header, zebra, total bar, correct margins, clean Arabic). Engine choice recorded in `brandpdf_engine`.
 
 - [ ] **T1 — App scaffold + renderer abstraction**
-  *Do:* `bench new-app lumenpdf`; add `render/base.py`, `playwright_engine.py`, `factory.py` (reads `lumenpdf_engine`).
+  *Do:* `bench new-app brandpdf`; add `render/base.py`, `playwright_engine.py`, `factory.py` (reads `brandpdf_engine`).
   *Accept:* `get_renderer().render(known_html, opts)` returns valid PDF bytes from a bench console call.
 
 - [ ] **T2 — Quotation Jinja template**
-  *Do:* port the proven `<table>/<thead>/<tfoot>` full-bleed HTML into `templates/lumenpdf/quotation_bstc.html`; parametrize colors/banners/currency(BHD)/EN-AR via a context dict (still hard-coded values acceptable).
+  *Do:* port the proven `<table>/<thead>/<tfoot>` full-bleed HTML into `templates/brandpdf/quotation_bstc.html`; parametrize colors/banners/currency(BHD)/EN-AR via a context dict (still hard-coded values acceptable).
   *Accept:* `render_html("Quotation", <name>)` produces HTML that renders identically to T0's static file when fed real Quotation data.
 
 - [ ] **T3 — Asset inlining**
@@ -393,7 +393,7 @@ bench restart
   *Accept:* a permitted user downloads the PDF; a user without read perm on that Quotation gets `PermissionError` (403), not a PDF; an unknown doctype is rejected.
 
 - [ ] **T5 — Form button**
-  *Do:* `doctype_js` → `lumenpdf_button.js` adds the primary "Download Branded PDF" button on saved Quotations.
+  *Do:* `doctype_js` → `brandpdf_button.js` adds the primary "Download Branded PDF" button on saved Quotations.
   *Accept:* button appears on a saved Quotation, click downloads the correct branded PDF; hidden on new/unsaved.
 
 - [ ] **T6 — Concurrency guard + timeouts + error UX**
@@ -415,7 +415,7 @@ bench restart
 
 ### Product (Phase 2 — config spine, multi-DocType, integrations)
 
-- [ ] **T10 — Config DocTypes** (`LumenPDF Settings`, `Template`, `Mapping`) with hex/expression validation; branding resolves by `doc.company`.
+- [ ] **T10 — Config DocTypes** (`BrandPDF Settings`, `Template`, `Mapping`) with hex/expression validation; branding resolves by `doc.company`.
   *Accept:* re-skin BSTC (colors/banners/footer text) entirely via the Settings form, no code change; standard templates ship as read-only fixtures, Duplicate-to-edit survives `migrate`.
 
 - [ ] **T11 — Mapping-driven button + template resolution** (generic loader replaces hard-coded Quotation; `condition` via safe_eval).
@@ -427,8 +427,8 @@ bench restart
 - [ ] **T13 — Print/Email/Attach integration** (`pdf_generator` hook for Print>PDF; email-attach substitution; auto-attach-on-submit) — all gated per mapping (`replace_print_pdf`, `replace_email_attach`, `auto_attach`).
   *Accept:* stock Print>PDF and the Email dialog produce our branded PDF for mapped doctypes only; unmapped doctypes behave exactly as stock (least surprise).
 
-- [ ] **T14 — Gotenberg engine + Docker bring-up** (only if M0 confirmed Docker) behind `lumenpdf_engine=gotenberg`, bound to `127.0.0.1`.
-  *Accept:* identical PDF output via Gotenberg; flipping `lumenpdf_engine` requires no code change; renderer reachable only on loopback.
+- [ ] **T14 — Gotenberg engine + Docker bring-up** (only if M0 confirmed Docker) behind `brandpdf_engine=gotenberg`, bound to `127.0.0.1`.
+  *Accept:* identical PDF output via Gotenberg; flipping `brandpdf_engine` requires no code change; renderer reachable only on loopback.
 
 - [ ] **T15 — Onboarding wizard + starter library + docs + upgrade pass.**
   *Accept:* a fresh business configures branding + picks a starter template + previews + downloads, entirely via forms; visual-regression suite green against the current ERPNext v15 point release.
@@ -440,4 +440,4 @@ bench restart
 - **Stay on Playwright for Phase 1** even if you intend Gotenberg later; the abstraction (T1) keeps that reversible at zero rewrite cost.
 - **Reuse the project's proven Cloudways discipline**: test server-side on loopback first, namespace all config, never commit secrets, key-preserve on deploy.
 
-Relevant paths (to create): app root `~/frappe-bench/apps/lumenpdf/`; Phase-1 template `lumenpdf/lumenpdf/templates/lumenpdf/quotation_bstc.html`; engine `lumenpdf/lumenpdf/render/`; endpoint `lumenpdf/lumenpdf/api.py`; button `lumenpdf/lumenpdf/public/js/lumenpdf_button.js`.
+Relevant paths (to create): app root `~/frappe-bench/apps/brandpdf/`; Phase-1 template `brandpdf/brandpdf/templates/brandpdf/quotation_bstc.html`; engine `brandpdf/brandpdf/render/`; endpoint `brandpdf/brandpdf/api.py`; button `brandpdf/brandpdf/public/js/brandpdf_button.js`.

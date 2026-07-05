@@ -1,4 +1,4 @@
-# LumenPDF — Consolidated Fix List
+# BrandPDF — Consolidated Fix List
 
 Merged from 5 reviews (frappe, security, engine, template, packaging). Duplicates collapsed; items the reviewers themselves cleared (correct-as-written) are dropped.
 
@@ -8,7 +8,7 @@ Merged from 5 reviews (frappe, security, engine, template, packaging). Duplicate
 
 **B1. Path-traversal + SSTI/RCE via the `template` param** — `api.py:11`, `render_html.py:27-44`, `pdf_job.py:15`
 `request_pdf` whitelists a free-form `template` string that flows unvalidated into `open()` and then `frappe.render_template` (Jinja). A logged-in user can read arbitrary files (`../../../etc/passwd`, `site_config.json`) and reach server-side template injection.
-**Fix:** Drop the client `template` param; resolve server-side from `TEMPLATE_MAP[doc.doctype]`. If selectable templates are needed, accept an opaque key against an allowlist (`ALLOWED_TEMPLATES = {"quotation_bstc": "templates/lumenpdf/quotation_bstc.html"}`). Defensively, in `_read_template` `os.path.realpath(full)` and assert it stays within `get_app_path("lumenpdf","templates")`.
+**Fix:** Drop the client `template` param; resolve server-side from `TEMPLATE_MAP[doc.doctype]`. If selectable templates are needed, accept an opaque key against an allowlist (`ALLOWED_TEMPLATES = {"quotation_bstc": "templates/brandpdf/quotation_bstc.html"}`). Defensively, in `_read_template` `os.path.realpath(full)` and assert it stays within `get_app_path("brandpdf","templates")`.
 
 **B2. `get_job_result` is unscoped — any user can read another user's PDF** — `api.py:28-30`, `pdf_job.py`
 No check that the caller owns `job_id`; unguessable hash is not access control.
@@ -31,13 +31,13 @@ Write `_user=user` explicitly from the worker's cache writes.
 `page.evaluate("document.fonts && document.fonts.ready")` returns immediately; `page.pdf()` can fire before Arabic fonts load — defeating the app's core quality promise (PLAN H5). The spike has the same bug, so the gate was never actually validated.
 **Fix:** `page.evaluate("async () => { if (document.fonts) { await document.fonts.ready; } }")`. Fix the spike too.
 
-**B4. `modules.txt` declares `LumenPDF` but no matching module folder exists** — `lumenpdf/lumenpdf/modules.txt`
-Frappe scrubs the module name to a folder and expects it to exist; `bench migrate`/`install-app`/DocType discovery break. (Reviewers split on `lumenpdf` vs `brand_pdf` scrub, so do not guess — verify scrub output and make folder + modules.txt + Module Def consistent.)
-**Fix:** Set `modules.txt` to `Brandpdf` and create `lumenpdf/lumenpdf/lumenpdf/__init__.py` (or match `LumenPDF`→`brand_pdf` folder); keep all three consistent. Required before any Phase-2 DocType.
+**B4. `modules.txt` declares `BrandPDF` but no matching module folder exists** — `brandpdf/brandpdf/modules.txt`
+Frappe scrubs the module name to a folder and expects it to exist; `bench migrate`/`install-app`/DocType discovery break. (Reviewers split on `brandpdf` vs `brand_pdf` scrub, so do not guess — verify scrub output and make folder + modules.txt + Module Def consistent.)
+**Fix:** Set `modules.txt` to `Brandpdf` and create `brandpdf/brandpdf/brandpdf/__init__.py` (or match `BrandPDF`→`brand_pdf` folder); keep all three consistent. Required before any Phase-2 DocType.
 
 **B5. Git-root vs app-root layout breaks `bench get-app`** — repo layout, `docs/INSTALL.md`, `README.md`
-`.git` is at `LumenPDF-ERPNext/` but `pyproject.toml`/`README`/`license.txt` live in `LumenPDF-ERPNext/lumenpdf/`. `bench get-app` expects the app root to be a git repo.
-**Fix:** Move `pyproject.toml`, `README.md`, `license.txt`, `.gitignore` up to the repo root (app root == git root), or make `lumenpdf/` its own repo.
+`.git` is at `BrandPDF-ERPNext/` but `pyproject.toml`/`README`/`license.txt` live in `BrandPDF-ERPNext/brandpdf/`. `bench get-app` expects the app root to be a git repo.
+**Fix:** Move `pyproject.toml`, `README.md`, `license.txt`, `.gitignore` up to the repo root (app root == git root), or make `brandpdf/` its own repo.
 
 ---
 
@@ -91,7 +91,7 @@ RQ workers are long-lived; a leaked session means later work could run as the pr
 
 **M3. Error path swallows the real failure and mislabels permission errors** — `pdf_job.py:27-31`
 Bare `except Exception` catches `frappe.PermissionError` from `check_permission("read")` and reports it as "Render failed"; `frappe.log_error(title=...)` with no message logs an empty body.
-**Fix:** Do the permission check before the try (or branch on `PermissionError` with a distinct status); log with `frappe.log_error(message=frappe.get_traceback(), title="LumenPDF render failed")`.
+**Fix:** Do the permission check before the try (or branch on `PermissionError` with a distinct status); log with `frappe.log_error(message=frappe.get_traceback(), title="BrandPDF render failed")`.
 
 **M4. Gotenberg margin unit conversion is unnecessary and mishandles edge cases** — `gotenberg_renderer.py:32-39`
 `_mm` strips the unit and emits a bare inch number; only bites non-zero mm margins, and newer Gotenberg accepts the suffix directly. (Multipart `index.html` filename is correct — not a bug.)
@@ -126,7 +126,7 @@ Spike-only, so not in `pyproject.toml` (correct), but the ad-hoc install command
 ---
 
 ## Dropped as fine/speculative (reviewers cleared these)
-`_lumenpdf` File key (frappe reviewer called it a BLOCKER, but it's a dead/no-op tag, not a crash — remove the line as cleanup, not a blocker); `frappe.cache().set_value(expires_in_sec=)` kwarg (correct in v15); `doctype_js` path (correct); `render_template` string-vs-path handling (correct); `get_app_path` join (correct — the *traversal* is the real issue, see B1); flit packaging/`dynamic=["version"]`/`bench get-app` path string (correct — the *git-root* is the real issue, see B5); flit data-file inclusion (correct); empty `__init__.py`/`patches.txt` (fine); sync-Playwright-in-RQ-worker (correct, but add a "not in web context" assert as cheap insurance); Gotenberg `index.html` filename (correct); `striptags`/`<bdi>`/`break-inside`/taxes-loop/branding-keys in the template (all correct).
+`_brandpdf` File key (frappe reviewer called it a BLOCKER, but it's a dead/no-op tag, not a crash — remove the line as cleanup, not a blocker); `frappe.cache().set_value(expires_in_sec=)` kwarg (correct in v15); `doctype_js` path (correct); `render_template` string-vs-path handling (correct); `get_app_path` join (correct — the *traversal* is the real issue, see B1); flit packaging/`dynamic=["version"]`/`bench get-app` path string (correct — the *git-root* is the real issue, see B5); flit data-file inclusion (correct); empty `__init__.py`/`patches.txt` (fine); sync-Playwright-in-RQ-worker (correct, but add a "not in web context" assert as cheap insurance); Gotenberg `index.html` filename (correct); `striptags`/`<bdi>`/`break-inside`/taxes-loop/branding-keys in the template (all correct).
 
 ---
 

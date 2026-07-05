@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-LumenPDF — M0 de-risking spike.  Run ON THE REAL SERVER inside the bench env.
+BrandPDF — M0 de-risking spike.  Run ON THE REAL SERVER inside the bench env.
 
 Validates the three load-bearing questions from docs/PLAN.md before app code matters:
   1. Can Playwright drive a Chromium on this box WITHOUT root?
@@ -148,8 +148,8 @@ def main():
         print("  ./env/bin/playwright install chromium")
         sys.exit(1)
     discover_chromium()
-    exe = os.environ.get("LUMENPDF_CHROMIUM")
-    if exe: print("== using LUMENPDF_CHROMIUM:", exe)
+    exe = os.environ.get("BRANDPDF_CHROMIUM")
+    if exe: print("== using BRANDPDF_CHROMIUM:", exe)
     jobs = [
         ("m0_threadtfoot_short.pdf", lambda o: render_css(thead_tfoot(4), o, exe)),
         ("m0_threadtfoot_long.pdf",  lambda o: render_css(thead_tfoot(45), o, exe)),

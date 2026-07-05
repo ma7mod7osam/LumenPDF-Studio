@@ -4,7 +4,7 @@ Here is the plan.
 
 ---
 
-# LumenPDF for ERPNext — Product & Architecture Plan
+# BrandPDF for ERPNext — Product & Architecture Plan
 
 *A custom Frappe app that renders pixel-perfect, branded PDFs through a real Chromium engine, bypassing Frappe's PDF wrapper.*
 
@@ -31,7 +31,7 @@ A drop-in Frappe app that makes ERPNext print formats look like they came from a
 4. **Design-conscious ERPNext SMBs globally** — anyone whose customer-facing PDFs are part of their brand (agencies, premium product sellers, contractors bidding on tenders).
 
 ### The broader product
-Start as "branded PDF that actually works." Grow into **the document-presentation layer for ERPNext**: a template library, a branding settings hub, per-DocType template mapping, and a rendering service that the whole site routes print/email/attach through. The long-term framing: *"print_designer is the visual editor; LumenPDF is the engine that makes the output correct."* We are complementary to print_designer, not competing with its editor.
+Start as "branded PDF that actually works." Grow into **the document-presentation layer for ERPNext**: a template library, a branding settings hub, per-DocType template mapping, and a rendering service that the whole site routes print/email/attach through. The long-term framing: *"print_designer is the visual editor; BrandPDF is the engine that makes the output correct."* We are complementary to print_designer, not competing with its editor.
 
 ---
 
@@ -41,8 +41,8 @@ Start as "branded PDF that actually works." Grow into **the document-presentatio
 The bar: BSTC can press one button on a Quotation and get the exact PDF the owner already proved renders perfectly in Chromium.
 
 In scope:
-- Custom app `lumenpdf` installed on the site.
-- One whitelisted endpoint: `lumenpdf.api.download(doctype, name, template)` → permission check → Jinja render → real-Chromium PDF → stream as download.
+- Custom app `brandpdf` installed on the site.
+- One whitelisted endpoint: `brandpdf.api.download(doctype, name, template)` → permission check → Jinja render → real-Chromium PDF → stream as download.
 - **One** hand-built Jinja template for Quotation (the proven `<table>`/`<thead>`/`<tfoot>` full-bleed structure), with BSTC branding hard-coded but pulled from a few config fields (logo/banner paths, colors, currency BHD, EN/AR).
 - A native-feeling **"Download Branded PDF"** button injected on the Quotation form via client script / `doctype_js`.
 - Rendering via the engine chosen in §3, calling Chromium with our own `printToPDF` options.
@@ -75,7 +75,7 @@ This is the one place I'll be most opinionated, and I'm going to *disagree sligh
 
 The decisive constraint is **Cloudways managed hosting: apt/root may be restricted.** That single fact reshapes the ranking:
 
-- **Gotenberg** is a single Docker container exposing a clean HTTP API (`/forms/chromium/convert/html`) that accepts our HTML + assets and the exact knobs we need: `marginTop=0`, `printBackground=true`, `preferCssPageSize=true`, native header/footer HTML. It is *purpose-built* for exactly this "real Chromium, my options, over HTTP" pattern. The Frappe app stays pure-Python (just `requests.post`), so the app itself is trivially upgrade-safe and has **zero browser-management code** — no chromium path gotchas (the very `chromium_binary_path` vs `chromium_path` mismatch the search surfaced), no Playwright version drift, no zombie browser processes in the bench. The rendering concern is fully isolated behind a URL. **For productization this is the killer feature**: the same app works on Frappe Cloud, self-hosted, or Cloudways by just pointing `LUMENPDF_RENDER_URL` at a container — and we can later run that container as a **shared SaaS rendering endpoint** (see §5, the SaaS option falls out for free).
+- **Gotenberg** is a single Docker container exposing a clean HTTP API (`/forms/chromium/convert/html`) that accepts our HTML + assets and the exact knobs we need: `marginTop=0`, `printBackground=true`, `preferCssPageSize=true`, native header/footer HTML. It is *purpose-built* for exactly this "real Chromium, my options, over HTTP" pattern. The Frappe app stays pure-Python (just `requests.post`), so the app itself is trivially upgrade-safe and has **zero browser-management code** — no chromium path gotchas (the very `chromium_binary_path` vs `chromium_path` mismatch the search surfaced), no Playwright version drift, no zombie browser processes in the bench. The rendering concern is fully isolated behind a URL. **For productization this is the killer feature**: the same app works on Frappe Cloud, self-hosted, or Cloudways by just pointing `BRANDPDF_RENDER_URL` at a container — and we can later run that container as a **shared SaaS rendering endpoint** (see §5, the SaaS option falls out for free).
 - The cost: it's a second moving part (a container). On Cloudways you'd run it as a Docker container on the same server or a small side VPS. If Docker is genuinely unavailable on the managed plan, that's the trigger to fall back.
 
 ### Why Playwright is the fallback, not the primary
@@ -85,7 +85,7 @@ Playwright gives the **best raw fidelity and is "already paid for"** — Chromiu
 WeasyPrint is pure-Python and lovely for paged media, but it is **not Chromium** — it has its own CSS engine. The owner's entire proof rests on "this exact HTML renders perfectly *in Chromium*." Switching to WeasyPrint throws away the verified artifact and reopens the CSS-compat fight (flexbox, `-webkit-print-color-adjust`, web-font quirks, RTL edge cases). Using a non-Chromium engine would mean re-validating everything. Not worth it when Chromium is already on the box. Keep it nowhere in the stack.
 
 ### Non-negotiable: an engine abstraction
-Define a one-method internal interface — `render(html, options) -> pdf_bytes` — with `GotenbergRenderer` and `PlaywrightRenderer` implementations selected by site config (`lumenpdf_engine`). This makes the primary/fallback choice a config flag, protects against any single engine surprise, and is itself a productization asset ("works with whatever Chromium you have").
+Define a one-method internal interface — `render(html, options) -> pdf_bytes` — with `GotenbergRenderer` and `PlaywrightRenderer` implementations selected by site config (`brandpdf_engine`). This makes the primary/fallback choice a config flag, protects against any single engine surprise, and is itself a productization asset ("works with whatever Chromium you have").
 
 ---
 
@@ -96,7 +96,7 @@ Define a one-method internal interface — `render(html, options) -> pdf_bytes` 
 User clicks "Download Branded PDF" on Quotation form
         │
         ▼
-client script → frappe.call("lumenpdf.api.download", {doctype, name, template})
+client script → frappe.call("brandpdf.api.download", {doctype, name, template})
         │
         ▼  (server, whitelisted)
 1. frappe.get_doc(doctype, name)        ← permission check via has_permission(read)
@@ -129,7 +129,7 @@ Outside the Frappe PDF pipeline entirely. We never call `frappe.utils.pdf.get_pd
 
 ### Upgrade-safety rules (productization-critical)
 - No monkey-patching of Frappe/ERPNext core. Only `hooks.py` (doctype_js, override where Frappe officially supports it, scheduled/email hooks).
-- All config in our own DocTypes + site config keys namespaced `lumenpdf_*`.
+- All config in our own DocTypes + site config keys namespaced `brandpdf_*`.
 - Engine isolated behind the abstraction so a Chromium/Playwright/Gotenberg bump never touches business code.
 
 ---
@@ -138,14 +138,14 @@ Outside the Frappe PDF pipeline entirely. We never call `frappe.utils.pdf.get_pd
 
 ### How a business configures branding + templates
 A three-DocType spine (introduced in Phase 2):
-1. **LumenPDF Settings** (per company): banners, logo, colors (primary/navy hex), fonts, page size, margins, RTL toggle, footer registration text, default engine.
-2. **LumenPDF Template** (the template library): name, target DocType, Jinja body (or link to a Print Format), language(s). Ships with curated starters; businesses clone and edit.
-3. **LumenPDF Mapping**: (DocType + optional condition) → Template + Branding. This is what makes it "no code each time" — onboarding is *filling forms*, not writing Python.
+1. **BrandPDF Settings** (per company): banners, logo, colors (primary/navy hex), fonts, page size, margins, RTL toggle, footer registration text, default engine.
+2. **BrandPDF Template** (the template library): name, target DocType, Jinja body (or link to a Print Format), language(s). Ships with curated starters; businesses clone and edit.
+3. **BrandPDF Mapping**: (DocType + optional condition) → Template + Branding. This is what makes it "no code each time" — onboarding is *filling forms*, not writing Python.
 
 Onboarding wizard: upload banners → pick colors/fonts → choose a starter template per DocType → click "Preview" → done. The owner's BSTC setup becomes the first showcase/demo template.
 
 ### Packaging & install
-- Standard Frappe app: `bench get-app lumenpdf && bench --site x install-app lumenpdf`.
+- Standard Frappe app: `bench get-app brandpdf && bench --site x install-app brandpdf`.
 - Plus a one-line Gotenberg bring-up (docker compose snippet shipped in the repo) or a "use Playwright (no container)" install path.
 - List on **Frappe Cloud Marketplace** once Phase 2 is stable — that's the discovery channel for the broader market.
 
@@ -172,7 +172,7 @@ Onboarding wizard: upload banners → pick colors/fonts → choose a starter tem
 - **Concurrency / memory** (Playwright path) — headless Chromium is heavy under load. *Mitigation:* Gotenberg handles this natively; for Playwright, a small queue/limit.
 - **Arabic/RTL edge cases** in real documents beyond the proven sample (mixed LTR numbers in RTL lines, long product names). *Mitigation:* test with real BSTC data early.
 - **SaaS data sensitivity** — customer invoices through our endpoint. *Mitigation:* self-host option always available; the SaaS path is opt-in.
-- **print_designer coexistence** — both want Chromium; config-key clash is documented. *Mitigation:* we don't depend on print_designer's generator at all; we manage our own engine config under `lumenpdf_*`. Optionally *reuse* its editor later (read its Print Format HTML, render through our engine).
+- **print_designer coexistence** — both want Chromium; config-key clash is documented. *Mitigation:* we don't depend on print_designer's generator at all; we manage our own engine config under `brandpdf_*`. Optionally *reuse* its editor later (read its Print Format HTML, render through our engine).
 
 **Open questions (for the Executer / owner)**
 1. Is Docker available on the BSTC Cloudways plan? (Decides Gotenberg vs Playwright for Phase 1 infra.)
@@ -190,9 +190,9 @@ Effort is **relative** (1 = a focused day-ish unit), not calendar time.
 | Milestone | Goal | Deliverable / exit criteria | Effort |
 |---|---|---|---|
 | **M0 — Spike & engine pick** | De-risk the environment | On the real server: confirm Docker (Gotenberg) *or* reach the existing Chromium via Playwright; render the owner's proven HTML to a correct PDF *from the server*, options set by us. Pick primary engine. | **2** |
-| **M1 — MVP loop (Phase 1)** | BSTC Quotation, one button | `lumenpdf` app + whitelisted `download` endpoint (with permission check) + engine abstraction + one Quotation Jinja template + form button. Output visually matches the owner's reference PDF (full-bleed, repeating header/footer, blue header, zebra, total bar, correct margins, clean EN/AR). | **5** |
+| **M1 — MVP loop (Phase 1)** | BSTC Quotation, one button | `brandpdf` app + whitelisted `download` endpoint (with permission check) + engine abstraction + one Quotation Jinja template + form button. Output visually matches the owner's reference PDF (full-bleed, repeating header/footer, blue header, zebra, total bar, correct margins, clean EN/AR). | **5** |
 | **M2 — Harden Phase 1** | Production-trustworthy for BSTC | Asset inlining, error handling, real-data Arabic/RTL testing, attach-to-doc option, basic golden-PDF regression test. BSTC uses it for real quotations. | **3** |
-| **M3 — Config spine (Phase 2 start)** | "No code each time" | LumenPDF Settings + Template + Mapping DocTypes; branding resolves per company; multiple templates per DocType. Re-skin BSTC purely via config. | **6** |
+| **M3 — Config spine (Phase 2 start)** | "No code each time" | BrandPDF Settings + Template + Mapping DocTypes; branding resolves per company; multiple templates per DocType. Re-skin BSTC purely via config. | **6** |
 | **M4 — Multi-DocType + integrations** | Beyond Quotation | Sales Invoice + ≥1 more template; hook Print view + Email attach + auto-attach-on-submit; optional bulk. | **6** |
 | **M5 — Productize & package** | Sellable | Onboarding wizard, starter template library, docs site, install paths (Gotenberg compose + Playwright), upgrade-safety pass, visual regression suite. | **6** |
 | **M6 — Go-to-market** | Reach other businesses | Marketplace listing, pricing/licensing implementation (per chosen model), partner/white-label tier, SaaS rendering endpoint *if* pursued. | **5** |
@@ -204,6 +204,6 @@ Effort is **relative** (1 = a focused day-ish unit), not calendar time.
 ### Sources
 - [frappe/print_designer (GitHub)](https://github.com/frappe/print_designer) — the chrome generator that confirms Chromium is on the server.
 - [Ponnusamy1-V/frappe-pdf (GitHub)](https://github.com/Ponnusamy1-V/frappe-pdf) — proven precedent: a Frappe app rendering PDF via headless google-chrome, our exact pattern.
-- [Chrome PDF Generator issues — Frappe Forum](https://discuss.frappe.io/t/chrome-pdf-generator-issues-print-designer/149158) and [print_designer issue #437](https://github.com/frappe/print_designer/issues/437) — the `chromium_binary_path` vs `chromium_path` config gotcha (argument for isolating engine config under `lumenpdf_*`).
+- [Chrome PDF Generator issues — Frappe Forum](https://discuss.frappe.io/t/chrome-pdf-generator-issues-print-designer/149158) and [print_designer issue #437](https://github.com/frappe/print_designer/issues/437) — the `chromium_binary_path` vs `chromium_path` config gotcha (argument for isolating engine config under `brandpdf_*`).
 - [Having Print Designer installed breaks pdf generation via chromium #1821](https://github.com/frappe/frappe_docker/issues/1821) — print_designer/Chromium coexistence pitfalls (why we manage our own engine).
 - [Guide to Frappe PDF Generation & Fixing wkhtmltopdf — Sabbirz](https://www.sabbirz.com/blog/guide-to-frappe-pdf-generation-fixing-wkhtmltopdf-meta) — corroborates the wkhtmltopdf limitations driving this project.
