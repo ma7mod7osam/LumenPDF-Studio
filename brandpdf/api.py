@@ -152,6 +152,37 @@ def set_default_format(doctype, template, company=None):
 
 
 @frappe.whitelist()
+def duplicate_format(name, new_name=None):
+    """Copy a saved format to a new one (a fresh, non-standard, non-gallery copy). Returns the new
+    name (made unique if needed). System-Manager only."""
+    _require_manager()
+    if not frappe.db.exists("BrandPDF Template", name):
+        frappe.throw("Unknown format.")
+    src = frappe.get_doc("BrandPDF Template", name)
+    base = (new_name or "").strip() or ((src.template_name or name) + " copy")
+    nm, i = base, 2
+    while frappe.db.exists("BrandPDF Template", nm):  # unique name (autoname = template_name)
+        nm, i = f"{base} {i}", i + 1
+    definition = src.get("definition")
+    try:  # keep the name inside the definition JSON in sync
+        d = json.loads(definition) if isinstance(definition, str) else definition
+        if isinstance(d, dict):
+            d["name"] = nm
+            definition = json.dumps(d)
+    except Exception:
+        pass
+    t = frappe.get_doc({
+        "doctype": "BrandPDF Template", "template_name": nm, "target_doctype": src.target_doctype,
+        "source_type": src.get("source_type") or "blocks", "is_standard": 0, "in_gallery": 0,
+        "definition": definition, "body": src.get("body"), "jinja_path": src.get("jinja_path"),
+    })
+    t.flags.ignore_permissions = True
+    t.insert()
+    frappe.db.commit()
+    return {"name": nm, "target_doctype": src.target_doctype}
+
+
+@frappe.whitelist()
 def delete_format(name):
     """Delete a custom (non-standard) format. If it was the default, repoint the mapping to another
     format for the same doctype, or disable it so printing falls back to native. System-Manager only."""
