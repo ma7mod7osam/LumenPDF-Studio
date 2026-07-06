@@ -7,6 +7,15 @@
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&family=Montserrat:wght@300;400;500;600;700;800&family=Roboto:wght@400;500;700&family=Open+Sans:wght@400;600;700;800&family=Lato:wght@400;700;900&family=Poppins:wght@400;500;600;700;800&family=Cairo:wght@400;600;700;800&family=Almarai:wght@400;700;800&family=Tajawal:wght@400;500;700;800&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Noto+Kufi+Arabic:wght@400;600;700&family=Amiri:wght@400;700&display=swap');
   :root{--bg:#F4F6FA;--panel:#FFFFFF;--panel2:#F0F3F8;--line:#E4E8F0;--line2:#D4DAE5;--ink:#0C1322;--mut:#687386;--mut2:#98A1B2;--accent:#1463FF;--ok:#0F9D7A;--paper:#fff;--shadow:0 24px 60px rgba(16,24,40,.14),0 8px 18px rgba(16,24,40,.06)}
+  /* Dark mode: darken only the CHROME neutrals. --paper/--accent/--ok stay light so the document
+     preview stays white paper (the PDF is white) and the brand blue is unchanged. Follows the
+     user's Frappe theme (desk posts it in); standalone falls back to the OS setting. */
+  :root[data-theme="dark"]{--bg:#0E141F;--panel:#161B26;--panel2:#1E2431;--line:#2A3140;--line2:#3A4150;--ink:#E7EBF3;--mut:#9BA6B8;--mut2:#6D7688;--shadow:0 24px 60px rgba(0,0,0,.55),0 8px 18px rgba(0,0,0,.35)}
+  :root[data-theme="dark"] .stage{background:radial-gradient(circle at 1px 1px,#2A3140 1px,transparent 0) 0 0/22px 22px,var(--bg)}
+  :root[data-theme="dark"] .props input[type=text],:root[data-theme="dark"] .props textarea,:root[data-theme="dark"] .props select,:root[data-theme="dark"] .top select,:root[data-theme="dark"] .fmt-name{background:var(--panel2);color:var(--ink);border-color:var(--line2)}
+  :root[data-theme="dark"] .btn.ghost{background:var(--panel2);color:var(--ink)}
+  :root[data-theme="dark"] #draftBar{background:#2A2410;border-color:#5A4A18;color:#F0D98A}
+  :root[data-theme="dark"] #draftBar button{background:var(--panel2);color:#F0D98A;border-color:#5A4A18}
   *{box-sizing:border-box}
   html,body{height:100%;margin:0}
   body{background:var(--bg);color:var(--ink);font-family:'Plus Jakarta Sans','Segoe UI',system-ui,Arial,sans-serif;font-size:13px;-webkit-font-smoothing:antialiased;overflow:hidden}
@@ -190,7 +199,7 @@
 <body>
 <div class="app">
   <div class="top">
-    <div class="brand"><svg width="22" height="22" viewBox="0 0 48 48" fill="none" aria-label="LumenPDF Studio"><rect x="6" y="6" width="7.5" height="38" rx="3.75" fill="#1463FF"/><rect x="18" y="25" width="4.5" height="19" rx="2.25" fill="#7FA8FF"/><rect x="27" y="25" width="7.5" height="19" rx="3.75" fill="#1463FF"/><rect x="39" y="25" width="4.5" height="19" rx="2.25" fill="#1463FF"/></svg> LumenPDF <small>Studio · b39</small></div>
+    <div class="brand"><svg width="22" height="22" viewBox="0 0 48 48" fill="none" aria-label="LumenPDF Studio"><rect x="6" y="6" width="7.5" height="38" rx="3.75" fill="#1463FF"/><rect x="18" y="25" width="4.5" height="19" rx="2.25" fill="#7FA8FF"/><rect x="27" y="25" width="7.5" height="19" rx="3.75" fill="#1463FF"/><rect x="39" y="25" width="4.5" height="19" rx="2.25" fill="#1463FF"/></svg> LumenPDF <small>Studio · b41</small></div>
     <input class="fmt-name" id="fmtName" value="Quotation - Custom" title="Format name">
     <select class="sel" id="doctypeSel" title="Target DocType" onchange="onDoctype(this.value)"></select>
     <select class="sel" id="openSel" title="Open an existing format" onchange="openFormat(this.value)"><option value="">Open…</option></select>
@@ -1274,6 +1283,20 @@ function toast(msg,err){let t=document.getElementById("bpToast");if(!t){t=docume
   t.style.display="block";clearTimeout(toast._t);toast._t=setTimeout(function(){t.style.display="none";},4200);}
 function previewPDF(){if(!EMBED){alert("Preview PDF works inside ERPNext (renders the real PDF with your engine).");return;}const ds=document.getElementById("dataSel");const name=ds?ds.value:"";window.parent.postMessage({type:"brandpdf-preview",definition:definition(),doctype:state.target,name:name||""},window.location.origin);}
 const EMBED=(window.parent&&window.parent!==window);
+/* Theme: follows the user's Frappe theme. Embedded, the builder reads the parent desk's
+   data-theme directly (same origin) and watches it live; standalone falls back to the OS.
+   Only the chrome darkens — the paper preview stays white (the PDF is white). */
+function setTheme(mode){document.documentElement.setAttribute("data-theme",(mode==="dark")?"dark":"light");}
+(function initTheme(){
+  if(EMBED){try{
+    const pdoc=window.parent.document, ph=pdoc.documentElement;
+    const read=()=>ph.getAttribute("data-theme")||((pdoc.body&&pdoc.body.classList.contains("dark"))?"dark":"light");
+    setTheme(read());
+    new MutationObserver(()=>setTheme(read())).observe(ph,{attributes:true,attributeFilter:["data-theme","class"]});
+    return;  // reading the parent worked -> done
+  }catch(e){/* cross-origin/no parent -> fall through to OS (desk host may still post the theme) */}}
+  try{const mq=window.matchMedia("(prefers-color-scheme: dark)");setTheme(mq.matches?"dark":"light");mq.addEventListener("change",e=>setTheme(e.matches?"dark":"light"));}catch(e){}
+})();
 function save(){const def=definition();if(EMBED){window.parent.postMessage({type:"brandpdf-save",definition:def},window.location.origin);flashSaved();clearDraft();return;}if(window.frappe&&frappe.call){frappe.call({method:"brandpdf.api.save_format",args:{definition:JSON.stringify(def)},callback:()=>frappe.show_alert({message:"Format saved",indicator:"green"})});return;}console.log("DEFINITION",def);alert("Saved (demo) - logged to console.");}
 function flashSaved(){const b=document.querySelector(".btn.primary");if(!b)return;const t=b.textContent;b.textContent="✓ Saved";setTimeout(function(){b.textContent=t;},1400);}
 function loadDefinition(def){try{userTouched=false;state.page=Object.assign({orientation:"portrait"},def.page||{});if(def.branding)state.branding=Object.assign({primary:"#1463FF",navy:"#0C1322",font:"Montserrat",header_image:"",footer_image:""},def.branding);
@@ -1336,6 +1359,7 @@ function applyData(d){if(!d||!d.name){FIELDVALS=null;SAMPLE=JSON.parse(JSON.stri
 window.addEventListener("message",function(e){if(e.origin!==window.location.origin)return;const d=e.data||{};
   if(d.type==="brandpdf-rpc-res"&&_rpcCbs[d.reqId]){const cb=_rpcCbs[d.reqId];delete _rpcCbs[d.reqId];cb(d.ok?d.message:null);return;}
   if(d.type==="brandpdf-upload-res"&&_upCbs[d.reqId]){const cb=_upCbs[d.reqId];delete _upCbs[d.reqId];if(cb&&d.file_url)cb(d.file_url);return;}
+  if(d.type==="brandpdf-theme")setTheme(d.theme);
   if(d.type==="brandpdf-load"&&d.definition)loadDefinition(d.definition);
   if(d.type==="brandpdf-fields"&&Array.isArray(d.fields)){DOCFIELDS=d.fields.map(function(x){return{f:x.fieldname,l:x.label,t:x.fieldtype||""};});render();if(cur()&&cur().type==="field")renderProps();}
   if(d.type==="brandpdf-saved")flashSaved();});

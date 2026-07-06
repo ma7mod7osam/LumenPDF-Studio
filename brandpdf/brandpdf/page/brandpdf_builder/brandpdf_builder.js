@@ -29,8 +29,23 @@ frappe.pages['brandpdf-builder'].on_page_load = function (wrapper) {
 	iframe.style.cssText = IFRAME_CSS;
 	page.main.append(iframe);
 
+	// Dark mode: mirror the user's Frappe theme into the builder iframe, and keep it in sync.
+	function bpdfTheme() {
+		return document.documentElement.getAttribute('data-theme')
+			|| (document.body.classList.contains('dark') ? 'dark' : 'light');
+	}
+	function pushTheme() {
+		try { iframe.contentWindow.postMessage({ type: 'brandpdf-theme', theme: bpdfTheme() }, origin); } catch (e) {}
+	}
+	try {
+		new MutationObserver(pushTheme).observe(document.documentElement, {
+			attributes: true, attributeFilter: ['data-theme'],
+		});
+	} catch (e) {}
+
 	// Push the active design + the doctype's full field list into the builder once it loads.
 	iframe.addEventListener('load', function () {
+		pushTheme();  // apply the current theme immediately on load
 		frappe.call({
 			method: 'brandpdf.api.get_format',
 			callback: function (r) {
