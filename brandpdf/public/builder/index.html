@@ -203,7 +203,7 @@
 <body>
 <div class="app">
   <div class="top">
-    <div class="brand"><svg width="22" height="22" viewBox="0 0 48 48" fill="none" aria-label="LumenPDF Studio"><rect x="6" y="6" width="7.5" height="38" rx="3.75" fill="#1463FF"/><rect x="18" y="25" width="4.5" height="19" rx="2.25" fill="#7FA8FF"/><rect x="27" y="25" width="7.5" height="19" rx="3.75" fill="#1463FF"/><rect x="39" y="25" width="4.5" height="19" rx="2.25" fill="#1463FF"/></svg> LumenPDF <small>Studio · b48</small></div>
+    <div class="brand"><svg width="22" height="22" viewBox="0 0 48 48" fill="none" aria-label="LumenPDF Studio"><rect x="6" y="6" width="7.5" height="38" rx="3.75" fill="#1463FF"/><rect x="18" y="25" width="4.5" height="19" rx="2.25" fill="#7FA8FF"/><rect x="27" y="25" width="7.5" height="19" rx="3.75" fill="#1463FF"/><rect x="39" y="25" width="4.5" height="19" rx="2.25" fill="#1463FF"/></svg> LumenPDF <small>Studio · b49</small></div>
     <input class="fmt-name" id="fmtName" value="Quotation - Custom" title="Format name">
     <select class="sel" id="targetKindSel" title="Brand a document or a report" onchange="onTargetKind(this.value)"><option value="doctype">Document</option><option value="report">Report</option></select>
     <select class="sel" id="doctypeSel" title="Target DocType" onchange="onDoctype(this.value)"></select>
@@ -307,13 +307,21 @@ let SAMPLE=JSON.parse(JSON.stringify(BASE_SAMPLE)); let FIELDVALS=null;
 let REPORTSAMPLE={name:"Report",columns:[],rows:[],filters:[],printed_on:"",note:""};
 const FIELDS=[{f:"name",l:"Quotation No",v:SAMPLE.name},{f:"customer_name",l:"Customer Name",v:SAMPLE.customer_name},{f:"transaction_date",l:"Date",v:SAMPLE.transaction_date},{f:"valid_till",l:"Valid Till",v:SAMPLE.valid_till},{f:"grand_total",l:"Grand Total",v:SAMPLE.grand_total},{f:"total",l:"Subtotal",v:SAMPLE.total},{f:"company",l:"Company",v:SAMPLE.company}];
 let DOCFIELDS=FIELDS.slice();  // replaced with the real doctype field list when embedded in ERPNext
+let LINKFIELDS=[];  // per Link field, the linked doctype's fields -> one-hop paths like customer.email_id
 // child tables + their fields (replaced with the real doctype meta when embedded); used by the Data Table block
 let CTABLES=[
   {fieldname:"items",label:"Items",child_doctype:"",fields:[{fieldname:"idx",label:"#"},{fieldname:"item_code",label:"Item Code"},{fieldname:"item_name",label:"Item"},{fieldname:"description",label:"Description"},{fieldname:"qty",label:"Qty"},{fieldname:"uom",label:"UOM"},{fieldname:"rate",label:"Rate"},{fieldname:"amount",label:"Amount"}]},
   {fieldname:"taxes",label:"Taxes and Charges",child_doctype:"",fields:[{fieldname:"idx",label:"#"},{fieldname:"description",label:"Description"},{fieldname:"rate",label:"Rate"},{fieldname:"tax_amount",label:"Amount"}]},
   {fieldname:"payment_schedule",label:"Payment Schedule",child_doctype:"",fields:[{fieldname:"idx",label:"#"},{fieldname:"payment_term",label:"Payment Term"},{fieldname:"due_date",label:"Due Date"},{fieldname:"invoice_portion",label:"Portion %"},{fieldname:"payment_amount",label:"Amount"}]}
 ];
-function fieldVal(f){let v;if(FIELDVALS&&FIELDVALS[f]!==undefined)v=FIELDVALS[f];else{const x=DOCFIELDS.find(z=>z.f===f);if(!x)return "«"+f+"»";v=(x.v!==undefined)?x.v:("«"+x.l+"»");}
+function fieldVal(f){
+  if(f&&f.indexOf(".")>=0){  // linked field: real value if the preview doc supplied it, else a friendly placeholder
+    if(FIELDVALS&&FIELDVALS[f]!==undefined&&FIELDVALS[f]!==null&&FIELDVALS[f]!=="")return FIELDVALS[f];
+    const p=f.split("."),lf=(LINKFIELDS||[]).find(x=>x.link_field===p[0]);
+    if(lf){const sf=(lf.fields||[]).find(y=>y.fieldname===p[1]);return "«"+lf.link_label+" → "+((sf&&sf.label)||p[1])+"»";}
+    return "«"+f+"»";
+  }
+  let v;if(FIELDVALS&&FIELDVALS[f]!==undefined)v=FIELDVALS[f];else{const x=DOCFIELDS.find(z=>z.f===f);if(!x)return "«"+f+"»";v=(x.v!==undefined)?x.v:("«"+x.l+"»");}
   const d=DOCFIELDS.find(z=>z.f===f);
   if(d&&/Editor|HTML|Markdown/.test(d.t||""))return String(v==null?"":v).replace(/<[^>]*>/g," ").replace(/\s+/g," ").trim();  // rich fields: plain preview (PDF prints styled)
   return v;}
@@ -398,14 +406,14 @@ const R={
     const outline=(preset==="outline"&&tbw)?`;border:${tbw}px ${tbs} ${tbc}`:"";
     const cg=`<colgroup>`+cols.map((c,ci)=>{const w=cs[ci]&&cs[ci].w;return `<col style="width:${(w&&!isNaN(w))?(+w)+'mm':'auto'}">`;}).join("")+`</colgroup>`;
     const _sz=v=>{const n=parseFloat(v);return (n&&!isNaN(n))?`;font-size:${Math.min(72,Math.max(4,n))}pt`:'';};
-    let thStr=cols.map((c,ci)=>{const st=cs[ci]||{};const hcss=`background:${hbg};color:${hcolor};${padding}text-align:${st.align||'left'};${cbord(st,hasBo?tbc:hbg)}font-weight:${hweight}${_sz(hs.size||st.size)}`;const htok=/^\{([A-Za-z0-9_]+)\}$/.exec(String(c).trim());
+    let thStr=cols.map((c,ci)=>{const st=cs[ci]||{};const hcss=`background:${hbg};color:${hcolor};${padding}text-align:${st.align||'left'};${cbord(st,hasBo?tbc:hbg)}font-weight:${hweight}${_sz(hs.size||st.size)}`;const htok=/^\{([A-Za-z0-9_.]+)\}$/.exec(String(c).trim());
       if(htok)return `<th data-th="1" data-c="${ci}" style="${hcss}"><span style="border-bottom:1px dashed #ffffff88" title="${esc(String(c))} — bound to the document field">${esc(fieldVal(htok[1]))}</span></th>`;
       return `<th data-th="1" data-c="${ci}" contenteditable style="${hcss}">${esc(c)}</th>`;}).join("");
     const hr=parseFloat(hs.radius);let collapse="border-collapse:collapse";
     if(hr&&!isNaN(hr)){const r2=Math.min(30,Math.max(0,hr));thStr=thStr.replace('style="','style="border-top-left-radius:'+r2+'px;border-bottom-left-radius:'+r2+'px;');const kk=thStr.lastIndexOf('style="');thStr=thStr.slice(0,kk)+'style="border-top-right-radius:'+r2+'px;border-bottom-right-radius:'+r2+'px;'+thStr.slice(kk+7);collapse="border-collapse:separate;border-spacing:0";}
     let h=`<table style="width:100%;${collapse};table-layout:fixed${outline}">`+cg+`<thead><tr>`+thStr+`</tr></thead><tbody>`;
     h+=rows.map((r,ri)=>{const rst=rs[ri]||{};const rowBg=rst.bg||((zbg&&ri%2===1)?zbg:null);const rh=parseFloat(rst.h);const hCss=(!isNaN(rh)&&rh)?`height:${Math.min(100,Math.max(1,rh))}mm;`:"";
-      return `<tr${rowBg?` style="background:${rowBg}"`:''}>`+cols.map((c,ci)=>{const st=cs[ci]||{};const v=String(r[ci]||"");const tok=/^\{([A-Za-z0-9_]+)\}$/.exec(v.trim());
+      return `<tr${rowBg?` style="background:${rowBg}"`:''}>`+cols.map((c,ci)=>{const st=cs[ci]||{};const v=String(r[ci]||"");const tok=/^\{([A-Za-z0-9_.]+)\}$/.exec(v.trim());
       const colBg=(st.bg&&hx.test(st.bg)&&!rst.bg)?`;background-color:${st.bg}`:"";
       const css=`${padding}${cbord(st,tbc)}${hCss}text-align:${st.align||'left'};font-weight:${rst.weight||st.weight||'normal'}${st.color?';color:'+st.color:''}${_sz(rst.size||st.size)}${colBg};word-wrap:break-word`;
       if(tok)return `<td data-td="1" data-r="${ri}" data-c="${ci}" style="${css}"><span style="border-bottom:1px dashed #7FA8FF" title="${esc(v)} — bound to the document field">${esc(fieldVal(tok[1]))}</span></td>`;
@@ -1285,7 +1293,12 @@ function renderProps(){const host=document.getElementById("propsBlock"),b=cur();
   const s=b.settings,t=b.type;const ptitle=`<div class="ptitle">${META[t].l}</div>`;let h="";
   if(t==="heading"){h+=tx("Text","text",s.text);h+=`<div class="fld"><label>Level</label><div class="seg">`+["h1","h2","h3","h4"].map(l=>`<button class="${s.level===l?'on':''}" onclick="setHeadingLevel('${l}')">${l.toUpperCase()}</button>`).join("")+`</div></div>`;}
   else if(t==="text"){h+=ta("Text","text",s.text);}
-  else if(t==="field"){h+=`<div class="fld"><label>Document field (${DOCFIELDS.length})</label><select onchange="setS('field',this.value)">`+DOCFIELDS.map(f=>`<option value="${f.f}" ${s.field===f.f?'selected':''}>${esc(f.l)}</option>`).join("")+`</select></div>`+tx("Prefix","prefix",s.prefix);}
+  else if(t==="field"){
+    let opts='<optgroup label="This document">'+DOCFIELDS.map(f=>`<option value="${esc(f.f)}" ${s.field===f.f?'selected':''}>${esc(f.l)}</option>`).join("")+'</optgroup>';
+    (LINKFIELDS||[]).forEach(function(lf){opts+=`<optgroup label="Via ${esc(lf.link_label)} → ${esc(lf.target_doctype)}">`+(lf.fields||[]).map(function(sf){const val=lf.link_field+"."+sf.fieldname;return `<option value="${esc(val)}" ${s.field===val?'selected':''}>${esc(sf.label)}</option>`;}).join("")+'</optgroup>';});
+    h+=`<div class="fld"><label>Field</label><select onchange="setS('field',this.value)">`+opts+`</select></div>`+tx("Prefix","prefix",s.prefix);
+    if(String(s.field||"").indexOf(".")>=0){const lk=s.field.split(".")[0];h+=`<div class="hint" style="padding:2px 0 0">Pulled from the linked <b>${esc(lk)}</b> record. Empty if that link is blank or you can't read it.</div>`;}
+  }
   else if(t==="image"){h+=imgAttach("Image","src",s.src,"setS");h+=tx("Width inside box (%)","width",s.width);}
   else if(t==="divider"){h+=tx("Thickness (px)","thickness",s.thickness);h+=`<div class="fld"><label>Color</label><div class="color"><input type="color" value="${s.color}" oninput="setS('color',this.value)"><input type="text" value="${esc(s.color)}" oninput="setS('color',this.value)"></div></div>`+sg("Style","lstyle",s.lstyle,[["solid","Solid"],["dashed","Dashed"],["dotted","Dotted"]]);}
   else if(t==="box"){h+=ta("Content (HTML allowed)","html",s.html);}
@@ -1294,7 +1307,7 @@ function renderProps(){const host=document.getElementById("propsBlock"),b=cur();
     const tgt=(_lastCell&&_lastCell.id===b.id)?_lastCell:null;
     h+=`<div class="styhead">Field in a cell</div><div class="hint" style="padding:0 0 4px">Target: <b id="tblTarget">${tgt?(tgt.r<0?("header col "+(tgt.c+1)):("row "+(tgt.r+1)+", col "+(tgt.c+1))):"click a cell on the page first"}</b></div>`;
     h+=`<div class="fld"><select onchange="tblInsertField(this.value)"><option value="">Insert document field into that cell…</option>`+DOCFIELDS.map(f=>`<option value="${esc(f.f)}">${esc(f.l)} (${esc(f.f)})</option>`).join("")+`</select></div>`;
-    if(tgt&&tgt.r>=0&&/^\{[A-Za-z0-9_]+\}$/.test(String((s.rows[tgt.r]||[])[tgt.c]||"").trim()))h+=`<button class="btn ghost" style="width:100%" onclick="tblClearField()">✕ Unbind field (back to text)</button>`;
+    if(tgt&&tgt.r>=0&&/^\{[A-Za-z0-9_.]+\}$/.test(String((s.rows[tgt.r]||[])[tgt.c]||"").trim()))h+=`<button class="btn ghost" style="width:100%" onclick="tblClearField()">✕ Unbind field (back to text)</button>`;
     const cs=s.colStyle||(s.colStyle=[]);
     const wsel=(cur,on)=>`<select onchange="${on}">`+[["","Regular"],["600","Semi"],["700","Bold"]].map(a=>`<option value="${a[0]}" ${(cur||'')===a[0]?'selected':''}>${a[1]}</option>`).join("")+`</select>`;
     const asel=(cur,on)=>`<select onchange="${on}">`+[["left","Left"],["center","Center"],["right","Right"]].map(a=>`<option value="${a[0]}" ${(cur||'left')===a[0]?'selected':''}>${a[1]}</option>`).join("")+`</select>`;
@@ -1608,6 +1621,7 @@ function newReportFormat(){clearDraft();state.page=Object.assign({},state.page,{
   selId=null;document.getElementById("fmtName").value=((state.report||"Report"))+" - Branded";renderNowSync();renderProps();renderBrand();}
 function loadDoctypeMeta(dt){
   rpc("brandpdf.api.doctype_fields",{doctype:dt}).then(function(fl){if(Array.isArray(fl)&&fl.length){DOCFIELDS=fl.map(function(x){return{f:x.fieldname,l:x.label,t:x.fieldtype||""};});if(cur()&&cur().type==="field")renderProps();}});
+  rpc("brandpdf.api.doctype_link_fields",{doctype:dt}).then(function(lf){LINKFIELDS=Array.isArray(lf)?lf:[];if(cur()&&cur().type==="field")renderProps();});
   rpc("brandpdf.api.child_tables",{doctype:dt}).then(function(ct){if(Array.isArray(ct)&&ct.length){CTABLES=ct;if(cur()&&cur().type==="datatable")renderProps();}});
   rpc("brandpdf.api.list_formats",{doctype:dt}).then(function(fs){fs=fs||[];const opts=fs.map(function(f){return{value:f.name,label:(f.is_default?"★ ":"")+f.label};});setSelOptions("openSel",opts,"Open…","");});
   rpc("brandpdf.api.builder_docs",{doctype:dt,limit:25}).then(function(ds){FIELDVALS=null;SAMPLE=JSON.parse(JSON.stringify(BASE_SAMPLE));setSelOptions("dataSel",(ds||[]).map(function(n){return{value:n,label:n};}),"Sample data","");render();});

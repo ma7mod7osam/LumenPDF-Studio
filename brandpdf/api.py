@@ -559,6 +559,43 @@ def doctype_fields(doctype="Quotation"):
 
 
 @frappe.whitelist()
+def doctype_link_fields(doctype="Quotation"):
+    """For each Link field on the doctype, the linked doctype's value-bearing (permlevel-0) fields,
+    so the builder's Field block can offer one-hop cross-doctype paths like `customer.email_id`.
+    Only links + targets the caller may read; permlevel>0 fields are never offered."""
+    _require_manager()
+    if not doctype or not frappe.db.exists("DocType", doctype):
+        return []
+    skip = {
+        "Section Break", "Column Break", "Tab Break", "HTML", "Table", "Table MultiSelect",
+        "Button", "Heading", "Fold", "Image", "Geolocation", "Signature", "Barcode",
+    }
+    out = []
+    seen = set()
+    for df in frappe.get_meta(doctype).fields:
+        if df.fieldtype != "Link" or not df.options or (df.permlevel or 0) != 0:
+            continue
+        if df.fieldname in seen or not frappe.db.exists("DocType", df.options):
+            continue
+        seen.add(df.fieldname)
+        try:
+            if not frappe.has_permission(df.options, "read"):
+                continue  # don't expose paths into doctypes the user can't read
+            tmeta = frappe.get_meta(df.options)
+        except Exception:
+            continue
+        fields = [{"fieldname": "name", "label": "ID (name)", "fieldtype": "Data"}]
+        for tf in tmeta.fields:
+            if tf.fieldtype in skip or not tf.fieldname or (tf.permlevel or 0) != 0:
+                continue
+            fields.append({"fieldname": tf.fieldname, "label": tf.label or tf.fieldname, "fieldtype": tf.fieldtype})
+        if len(fields) > 1:
+            out.append({"link_field": df.fieldname, "link_label": df.label or df.fieldname,
+                        "target_doctype": df.options, "fields": fields})
+    return out
+
+
+@frappe.whitelist()
 def child_tables(doctype="Quotation"):
     """List a doctype's child tables and each table's value-bearing fields, so the Data Table
     block can pull rows from ANY child table (items, taxes, payment schedule, custom child tables)."""

@@ -361,9 +361,12 @@ def _field_value(doc, field):
     """Resolve a parent-doc field for Field blocks / {token} table cells. Permission-gated
     fields (permlevel > 0) never render — same safety rule as _d_datatable's column filter, so a
     saved format can't print e.g. cost/margin to whoever holds print permission (defense in
-    depth on top of apply_fieldlevel_read_permissions, which does not cover every render path)."""
+    depth on top of apply_fieldlevel_read_permissions, which does not cover every render path).
+    A dotted `link_field.target_field` (e.g. customer.email_id) hops ONE link to a related doc."""
     if not field:
         return ""
+    if "." in field:
+        return _linked_field_value(doc, field)
     try:
         df = frappe.get_meta(doc.doctype).get_field(field)
         if df is not None and (df.permlevel or 0) != 0:
@@ -374,6 +377,49 @@ def _field_value(doc, field):
         v = doc.get_formatted(field)
     except Exception:
         v = doc.get(field)
+    return "" if v is None else str(v)
+
+
+def _linked_field_value(doc, field):
+    """Resolve a ONE-HOP link path 'link_field.target_field' (e.g. customer.email_id). Safe by
+    construction: the link field must be a permlevel-0 Link/Dynamic Link, the target field must be
+    permlevel-0 (or 'name'), and the caller must have read permission on the target doctype — so a
+    print format can never hop across doctypes to leak gated data."""
+    link_field, _, sub = field.partition(".")
+    if not link_field or not sub or "." in sub:  # one hop only
+        return ""
+    try:
+        df = frappe.get_meta(doc.doctype).get_field(link_field)
+    except Exception:
+        df = None
+    if not df or (df.permlevel or 0) != 0 or df.fieldtype not in ("Link", "Dynamic Link"):
+        return ""
+    target = doc.get(df.options) if df.fieldtype == "Dynamic Link" else df.options
+    link_value = doc.get(link_field)
+    if not target or not link_value or not frappe.db.exists("DocType", target):
+        return ""
+    try:
+        sdf = frappe.get_meta(target).get_field(sub)
+    except Exception:
+        sdf = None
+    if sub != "name" and (not sdf or (sdf.permlevel or 0) != 0):
+        return ""
+    try:
+        if not frappe.has_permission(target, "read"):
+            return ""
+    except Exception:
+        return ""
+    try:
+        tdoc = frappe.get_cached_doc(target, link_value)
+        try:
+            v = tdoc.get_formatted(sub)
+        except Exception:
+            v = tdoc.get(sub)
+    except Exception:
+        try:
+            v = frappe.db.get_value(target, link_value, sub)
+        except Exception:
+            v = None
     return "" if v is None else str(v)
 
 
@@ -511,7 +557,7 @@ def _e_box(doc, b, s, ctx):
     return sanitize_html(raw) if raw else ""
 
 
-_CELL_TOKEN = re.compile(r"^\{([A-Za-z0-9_]+)\}$")
+_CELL_TOKEN = re.compile(r"^\{([A-Za-z0-9_.]+)\}$")  # dots allowed: one-hop link paths
 
 
 def _cell_value(doc, v):
