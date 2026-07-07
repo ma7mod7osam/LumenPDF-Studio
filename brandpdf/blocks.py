@@ -68,6 +68,13 @@ GOOGLE_FONTS = {
     "IBM Plex Sans Arabic": "IBM+Plex+Sans+Arabic:wght@400;500;600;700",
     "Noto Kufi Arabic": "Noto+Kufi+Arabic:wght@400;600;700",
     "Amiri": "Amiri:wght@400;700",
+    # Fonts used by the premium invoice/quotation gallery templates.
+    "Archivo": "Archivo:wght@400;500;600;700;800",
+    "Manrope": "Manrope:wght@400;500;600;700;800",
+    "Newsreader": "Newsreader:ital,wght@0,400;0,500;0,600;1,400;1,500",
+    "IBM Plex Mono": "IBM+Plex+Mono:wght@400;500;600",
+    "Instrument Serif": "Instrument+Serif:ital@0;1",
+    "Bricolage Grotesque": "Bricolage+Grotesque:wght@400;600;700;800",
 }
 SYSTEM_FONTS = ["Arial", "Tahoma"]
 FONT_IMPORT_URL = ("https://fonts.googleapis.com/css2?"

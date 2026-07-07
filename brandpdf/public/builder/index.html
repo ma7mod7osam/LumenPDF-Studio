@@ -202,7 +202,7 @@
 <body>
 <div class="app">
   <div class="top">
-    <div class="brand"><svg width="22" height="22" viewBox="0 0 48 48" fill="none" aria-label="LumenPDF Studio"><rect x="6" y="6" width="7.5" height="38" rx="3.75" fill="#1463FF"/><rect x="18" y="25" width="4.5" height="19" rx="2.25" fill="#7FA8FF"/><rect x="27" y="25" width="7.5" height="19" rx="3.75" fill="#1463FF"/><rect x="39" y="25" width="4.5" height="19" rx="2.25" fill="#1463FF"/></svg> LumenPDF <small>Studio · b44</small></div>
+    <div class="brand"><svg width="22" height="22" viewBox="0 0 48 48" fill="none" aria-label="LumenPDF Studio"><rect x="6" y="6" width="7.5" height="38" rx="3.75" fill="#1463FF"/><rect x="18" y="25" width="4.5" height="19" rx="2.25" fill="#7FA8FF"/><rect x="27" y="25" width="7.5" height="19" rx="3.75" fill="#1463FF"/><rect x="39" y="25" width="4.5" height="19" rx="2.25" fill="#1463FF"/></svg> LumenPDF <small>Studio · b45</small></div>
     <input class="fmt-name" id="fmtName" value="Quotation - Custom" title="Format name">
     <select class="sel" id="targetKindSel" title="Brand a document or a report" onchange="onTargetKind(this.value)"><option value="doctype">Document</option><option value="report">Report</option></select>
     <select class="sel" id="doctypeSel" title="Target DocType" onchange="onDoctype(this.value)"></select>
@@ -285,7 +285,7 @@ function colCss(sett,key,numeric){const cs=(sett.colStyles&&typeof sett.colStyle
   return out;}
 function skinHeads(th,sk){if(!sk.thFirst)return th;th=th.replace('style="','style="'+sk.thFirst);const k=th.lastIndexOf('style="');return th.slice(0,k)+'style="'+sk.thLast+th.slice(k+7);}
 /* Fonts: mirrors blocks.GOOGLE_FONTS (all @import-loaded above) + system fonts, grouped. */
-const FONT_GROUPS=[["Sans (Latin)",["Plus Jakarta Sans","Inter","Montserrat","Roboto","Open Sans","Lato","Poppins"]],["Arabic",["Cairo","Almarai","Tajawal","IBM Plex Sans Arabic","Noto Kufi Arabic","Amiri"]],["System",["Arial","Tahoma"]]];
+const FONT_GROUPS=[["Sans (Latin)",["Plus Jakarta Sans","Inter","Montserrat","Roboto","Open Sans","Lato","Poppins","Archivo","Manrope","Bricolage Grotesque"]],["Serif & Mono",["Newsreader","Instrument Serif","IBM Plex Mono"]],["Arabic",["Cairo","Almarai","Tajawal","IBM Plex Sans Arabic","Noto Kufi Arabic","Amiri"]],["System",["Arial","Tahoma"]]];
 function fontOptions(cur){return FONT_GROUPS.map(g=>`<optgroup label="${g[0]}">`+g[1].map(f=>`<option ${cur===f?'selected':''}>${f}</option>`).join("")+`</optgroup>`).join("");}
 function LAND(){return !!(state&&state.page&&state.page.orientation==="landscape");}
 function PW(){return LAND()?297:210;}
@@ -557,7 +557,143 @@ function T_bilingual(){return _fmtDef("Bilingual EN·AR",{primary:"#1463FF",navy
  {type:"divider",region:"footer",settings:{thickness:1,color:"#1463FF",lstyle:"solid"},pos:{x:14,y:282,w:182,h:null}},
  {type:"pagenum",region:"footer",settings:{format:"{p} / {n}"},style:{size:7,align:"center",color:"#687386"},pos:{x:74,y:287,w:62,h:null}},
  {type:"field",region:"footer",settings:{field:"company",prefix:""},style:{size:7,color:"#687386"},pos:{x:14,y:287,w:70,h:null}}]);}
+/* ===== Premium invoice / quotation gallery (from the design handoff) ===== */
+/* 01 — Meridian · classic serif tax invoice */
+function T_meridian(){return _fmtDef("Meridian",{primary:"#9a1f2e",navy:"#16233d",font:"Newsreader"},
+ {enabled:true,height:27,repeat:true,margin:5},{enabled:true,height:14,repeat:true,margin:5},[
+ {type:"heading",region:"header",settings:{text:"YOUR COMPANY",level:"h2"},style:{size:15,weight:"600",align:"center",color:"#16233d",font:"Newsreader",letterSpacing:4},pos:{x:14,y:5,w:182,h:null}},
+ {type:"text",region:"header",settings:{text:"Chartered Advisors · GSTIN 00XXXXX0000X0X0"},style:{size:8,align:"center",color:"#9a1f2e",letterSpacing:1},pos:{x:14,y:13,w:182,h:null}},
+ {type:"divider",region:"header",settings:{thickness:2.5,color:"#16233d",lstyle:"solid"},pos:{x:30,y:20,w:150,h:null}},
+ {type:"divider",region:"header",settings:{thickness:1,color:"#16233d",lstyle:"solid"},pos:{x:30,y:22,w:150,h:null}},
+ {type:"title",region:"body",settings:{text:"TAX INVOICE",showArabic:false,arabic:"عرض سعر",meta:{name:false,date:false,valid_till:false},align:"center",titleColor:"#9a1f2e",titleSize:15},style:{font:"Newsreader",letterSpacing:6},pos:{x:14,y:34,w:182,h:null}},
+ {type:"row",region:"body",settings:{cols:2,gap:10,width:100,widths:[null,66],cells:[[{type:"customer",settings:{heading:"Billed To",headingColor:"#9a1f2e"},style:{}}],[{type:"heading",settings:{text:"Invoice Details",level:"h4"},style:{size:8,weight:"700",color:"#5b6577",letterSpacing:1}},{type:"field",settings:{field:"name",prefix:"No.  "},style:{size:9,weight:"600"}},{type:"field",settings:{field:"transaction_date",prefix:"Date  "},style:{size:9}}]]},pos:{x:14,y:48,w:182,h:null}},
+ {type:"items",region:"body",settings:{cols:{desc:true,qty:true,rate:true,amount:true},widths:{num:8},zebra:false,headerColor:"navy",headerStyle:{bg:"#ffffff",color:"#16233d",weight:"700",size:8},borders:{preset:"rows",w:1.5,color:"#16233d",style:"solid"},cellPad:{y:7,x:8}},pos:{x:14,y:76,w:182,h:null}},
+ {type:"totals",region:"body",settings:{grandColor:"navy",grandBg:"#16233d",grandTextColor:"#ffffff",grandLabel:"Total Due",labelColor:"#5b6577"},pos:{x:14,y:154,w:182,h:null}},
+ {type:"row",region:"body",settings:{cols:2,gap:10,width:100,widths:[null,70],cells:[[{type:"box",settings:{html:"<b style=\"color:#9a1f2e\">Payment</b><br>Bank transfer within 15 days."},style:{size:8,color:"#5b6577",pad:"",bg:"",border:{on:false,w:1,color:"#eceef2",style:"solid",radius:0}}}],[{type:"signature",settings:{label:"For Your Company"},style:{}}]]},pos:{x:14,y:192,w:182,h:null}},
+ {type:"terms",region:"body",settings:{heading:"Terms & Conditions"},pos:{x:14,y:230,w:182,h:null}},
+ {type:"field",region:"footer",settings:{field:"company",prefix:""},style:{size:7,align:"center",color:"#5b6577"},pos:{x:56,y:286,w:98,h:null}},
+ {type:"pagenum",region:"footer",settings:{format:"Page {p} of {n}"},style:{size:7,align:"center",color:"#5b6577"},pos:{x:74,y:290,w:62,h:null}}]);}
+/* 02 — Ledger · accounting grid, monospace figures */
+function T_ledger2(){return _fmtDef("Ledger",{primary:"#2f6b3f",navy:"#23281f",font:"IBM Plex Mono"},
+ {enabled:true,height:20,repeat:true,margin:5},{enabled:true,height:13,repeat:true,margin:4},[
+ {type:"heading",region:"header",settings:{text:"LEDGER & CO.",level:"h2"},style:{size:14,weight:"800",color:"#23281f",font:"Archivo",letterSpacing:1},pos:{x:14,y:6,w:120,h:null}},
+ {type:"text",region:"header",settings:{text:"Bookkeeping · Payroll · Tax"},style:{size:7.5,color:"#2f6b3f",font:"Archivo"},pos:{x:14,y:14,w:120,h:null}},
+ {type:"heading",region:"header",settings:{text:"INVOICE",level:"h2"},style:{size:15,weight:"800",align:"right",color:"#2f6b3f",font:"Archivo"},pos:{x:120,y:5,w:76,h:null}},
+ {type:"field",region:"header",settings:{field:"name",prefix:"No. "},style:{size:8,align:"right",color:"#23281f"},pos:{x:120,y:14,w:76,h:null}},
+ {type:"row",region:"body",settings:{cols:2,gap:0,width:100,widths:[null,null],cells:[[{type:"customer",settings:{heading:"Bill To",headingColor:"#2f6b3f"},style:{}}],[{type:"field",settings:{field:"transaction_date",prefix:"Date  "},style:{size:9}},{type:"field",settings:{field:"valid_till",prefix:"Due   "},style:{size:9}}]]},pos:{x:14,y:32,w:182,h:null}},
+ {type:"items",region:"body",settings:{cols:{desc:true,qty:true,rate:true,amount:true},widths:{num:8},zebra:false,headerColor:"primary",headerStyle:{bg:"#eef1e8",color:"#23281f",weight:"700",size:8},borders:{preset:"grid",w:1,color:"#d6d8cb",style:"solid"},cellPad:{y:6,x:8}},pos:{x:14,y:58,w:182,h:null}},
+ {type:"totals",region:"body",settings:{grandColor:"primary",grandBg:"#2f6b3f",grandTextColor:"#ffffff",grandLabel:"Total"},pos:{x:14,y:138,w:182,h:null}},
+ {type:"datatable",region:"body",settings:{table:"taxes",child_doctype:"",columns:[{field:"description",label:"Tax",width:null,align:"left"},{field:"tax_amount",label:"Amount",width:34,align:"right"}],headerColor:"primary",zebra:false,headerStyle:{bg:"#eef1e8",color:"#23281f"},borders:{preset:"grid",w:1,color:"#d6d8cb",style:"solid"}},pos:{x:14,y:176,w:182,h:null}},
+ {type:"box",region:"body",settings:{html:"<b style=\"color:#2f6b3f\">REMIT TO ›</b>  Bank name · A/C 0000 0000 · Routing 000000"},style:{size:8,color:"#23281f",pad:"",bg:"",border:{on:true,w:1,color:"#d6d8cb",style:"dashed",radius:0}},pos:{x:14,y:214,w:182,h:null}},
+ {type:"pagenum",region:"footer",settings:{format:"{p}/{n}"},style:{size:7,align:"right",color:"#8a8f80"},pos:{x:166,y:289,w:30,h:null}}]);}
+/* 03 — Aperture · minimal, oversized type */
+function T_aperture(){return _fmtDef("Aperture",{primary:"#ff4d2e",navy:"#0b0b0c",font:"Manrope"},
+ {enabled:true,height:16,repeat:true,margin:6},{enabled:true,height:12,repeat:true,margin:5},[
+ {type:"box",region:"header",settings:{html:"<span style=\"color:#ff4d2e\">●</span> <b>YOUR STUDIO</b>"},style:{size:10,color:"#0b0b0c",pad:"",bg:"",border:{on:false,w:1,color:"#ededef",style:"solid",radius:0}},pos:{x:14,y:7,w:110,h:null}},
+ {type:"field",region:"header",settings:{field:"company",prefix:""},style:{size:8,align:"right",color:"#6c6c70"},pos:{x:126,y:8,w:70,h:null}},
+ {type:"heading",region:"body",settings:{text:"Invoice",level:"h1"},style:{size:44,weight:"800",color:"#0b0b0c",font:"Archivo",letterSpacing:-1},pos:{x:14,y:30,w:182,h:null}},
+ {type:"row",region:"body",settings:{cols:2,gap:10,width:100,widths:[null,66],cells:[[{type:"customer",settings:{heading:"Billed To",headingColor:"#0b0b0c"},style:{}}],[{type:"field",settings:{field:"name",prefix:"No.  "},style:{size:9,weight:"600"}},{type:"field",settings:{field:"transaction_date",prefix:"Date  "},style:{size:9}}]]},pos:{x:14,y:66,w:182,h:null}},
+ {type:"items",region:"body",settings:{cols:{desc:true,qty:true,rate:true,amount:true},widths:{num:8},zebra:false,headerColor:"navy",headerStyle:{bg:"#ffffff",color:"#0b0b0c",weight:"700",size:8},borders:{preset:"rows",w:1,color:"#ededef",style:"solid"},cellPad:{y:8,x:8}},pos:{x:14,y:96,w:182,h:null}},
+ {type:"totals",region:"body",settings:{grandColor:"primary",grandBg:"#ffffff",grandTextColor:"#ff4d2e",grandSize:20,grandLabel:"Total",labelColor:"#6c6c70"},pos:{x:14,y:176,w:182,h:null}},
+ {type:"box",region:"body",settings:{html:"50% deposit due on acceptance · balance on delivery."},style:{size:8,color:"#6c6c70",pad:"",bg:"",border:{on:false,w:1,color:"#ededef",style:"solid",radius:0}},pos:{x:14,y:214,w:182,h:null}},
+ {type:"terms",region:"body",settings:{heading:"Terms"},pos:{x:14,y:228,w:182,h:null}},
+ {type:"pagenum",region:"footer",settings:{format:"{p} / {n}"},style:{size:7,align:"center",color:"#6c6c70"},pos:{x:74,y:289,w:62,h:null}}]);}
+/* 04 — Nordic · soft Scandinavian, pale bands */
+function T_nordic(){return _fmtDef("Nordic",{primary:"#6b8ea3",navy:"#2b3138",font:"Manrope"},
+ {enabled:true,height:26,repeat:true,margin:6},{enabled:true,height:14,repeat:true,margin:5},[
+ {type:"box",region:"header",settings:{html:"<span style=\"display:inline-block;width:11px;height:11px;background:#6b8ea3;border-radius:3px;vertical-align:-1px\"></span> <b style=\"font-size:13pt\">Nordhavn</b>"},style:{size:10,color:"#2b3138",pad:6,bg:"#e7edf0",border:{on:false,w:1,color:"#e7edf0",style:"solid",radius:0}},pos:{x:0,y:0,w:210,h:26}},
+ {type:"heading",region:"header",settings:{text:"INVOICE",level:"h3"},style:{size:12,weight:"800",align:"right",color:"#6b8ea3"},pos:{x:120,y:7,w:80,h:null}},
+ {type:"field",region:"header",settings:{field:"name",prefix:"No. "},style:{size:8,align:"right",color:"#6b7681"},pos:{x:120,y:15,w:80,h:null}},
+ {type:"row",region:"body",settings:{cols:2,gap:8,width:100,widths:[null,74],cells:[[{type:"customer",settings:{heading:"Billed To",headingColor:"#6b8ea3"},style:{pad:3,bg:"#ffffff",border:{on:true,w:1,color:"#e7edf0",style:"solid",radius:8}}}],[{type:"box",settings:{html:"<b>Payment</b><br>VAT included · Net 14 days"},style:{pad:3,bg:"#ffffff",size:8,border:{on:true,w:1,color:"#e7edf0",style:"solid",radius:8}}}]]},pos:{x:14,y:38,w:182,h:null}},
+ {type:"items",region:"body",settings:{cols:{desc:true,qty:true,rate:true,amount:true},widths:{num:8},zebra:true,zebraColor:"#eef3f5",headerColor:"primary",headerStyle:{bg:"#e7edf0",color:"#2b3138",weight:"700",size:8,radius:8},borders:{preset:"none",w:0,color:"#e7edf0",style:"solid"},cellPad:{y:8,x:9}},pos:{x:14,y:74,w:182,h:null}},
+ {type:"totals",region:"body",settings:{grandColor:"primary",grandBg:"#6b8ea3",grandTextColor:"#ffffff",grandLabel:"Total",labelColor:"#6b7681"},pos:{x:14,y:156,w:182,h:null}},
+ {type:"terms",region:"body",settings:{heading:"Notes"},pos:{x:14,y:200,w:182,h:null}},
+ {type:"pagenum",region:"footer",settings:{format:"Page {p} of {n}"},style:{size:7,align:"center",color:"#6b7681"},pos:{x:74,y:289,w:62,h:null}}]);}
+/* 05 — Slate · dark masthead, bold contrast */
+function T_slate(){return _fmtDef("Slate",{primary:"#d8a24a",navy:"#232830",font:"Manrope"},
+ {enabled:true,height:30,repeat:true,margin:6},{enabled:true,height:15,repeat:true,margin:5},[
+ {type:"box",region:"header",settings:{html:"<span style=\"font-family:Archivo;font-size:15pt;font-weight:800;letter-spacing:1px\">SLATE &amp; STONE</span><br><span style=\"font-size:7pt;letter-spacing:4px;color:#d8a24a\">BUILD · GROUNDWORKS</span>"},style:{pad:6,bg:"#232830",color:"#ffffff",size:9,border:{on:false,w:1,color:"#232830",style:"solid",radius:0}},pos:{x:0,y:0,w:210,h:30}},
+ {type:"heading",region:"header",settings:{text:"INVOICE",level:"h2"},style:{size:17,weight:"800",align:"right",color:"#d8a24a",font:"Archivo"},pos:{x:120,y:7,w:78,h:null}},
+ {type:"field",region:"header",settings:{field:"name",prefix:"Claim "},style:{size:7.5,align:"right",color:"#aab0ba"},pos:{x:120,y:20,w:78,h:null}},
+ {type:"row",region:"body",settings:{cols:2,gap:10,width:100,widths:[null,66],cells:[[{type:"customer",settings:{heading:"Billed To",headingColor:"#232830"},style:{}}],[{type:"field",settings:{field:"transaction_date",prefix:"Date  "},style:{size:9}},{type:"field",settings:{field:"valid_till",prefix:"Due   "},style:{size:9}}]]},pos:{x:14,y:42,w:182,h:null}},
+ {type:"items",region:"body",settings:{cols:{desc:true,qty:true,rate:true,amount:true},widths:{num:8},zebra:false,headerColor:"navy",headerStyle:{bg:"#ffffff",color:"#232830",weight:"700",size:8},borders:{preset:"rows",w:2,color:"#232830",style:"solid"},cellPad:{y:7,x:8}},pos:{x:14,y:72,w:182,h:null}},
+ {type:"box",region:"body",settings:{html:"Less: deposit received will be applied on the final claim."},style:{size:8,color:"#9a5b1f",pad:"",bg:"",border:{on:false,w:1,color:"#edeff2",style:"solid",radius:0}},pos:{x:14,y:150,w:182,h:null}},
+ {type:"totals",region:"body",settings:{grandColor:"primary",grandBg:"#d8a24a",grandTextColor:"#232830",grandLabel:"Balance Due"},pos:{x:14,y:162,w:182,h:null}},
+ {type:"row",region:"body",settings:{cols:2,gap:10,width:100,widths:[null,70],cells:[[{type:"terms",settings:{heading:"Terms"},style:{}}],[{type:"signature",settings:{label:"Authorised signatory"},style:{}}]]},pos:{x:14,y:206,w:182,h:null}},
+ {type:"pagenum",region:"footer",settings:{format:"Page {p} of {n}"},style:{size:7,align:"center",color:"#6a7280"},pos:{x:74,y:290,w:62,h:null}}]);}
+/* 06 — Botanica · warm editorial boutique */
+function T_botanica(){return _fmtDef("Botanica",{primary:"#b5654a",navy:"#3d3630",font:"Manrope"},
+ {enabled:true,height:24,repeat:true,margin:6},{enabled:true,height:16,repeat:true,margin:5},[
+ {type:"box",region:"header",settings:{html:"<span style=\"display:inline-block;width:14px;height:14px;border:3px solid #b5654a;border-radius:50%;vertical-align:-2px\"></span> <b style=\"font-family:Newsreader;font-size:14pt\">Botanica Floral Atelier</b>"},style:{size:10,color:"#3d3630",pad:"",bg:"",border:{on:false,w:1,color:"#ece2d4",style:"solid",radius:0}},pos:{x:14,y:7,w:182,h:null}},
+ {type:"text",region:"header",settings:{text:"FLORAL DESIGN · EVENTS"},style:{size:7.5,color:"#8a7f74",letterSpacing:3},pos:{x:14,y:16,w:182,h:null}},
+ {type:"heading",region:"body",settings:{text:"Invoice",level:"h1"},style:{size:34,weight:"400",italic:true,color:"#b5654a",font:"Instrument Serif"},pos:{x:14,y:30,w:182,h:null}},
+ {type:"row",region:"body",settings:{cols:2,gap:10,width:100,widths:[null,66],cells:[[{type:"customer",settings:{heading:"Prepared For",headingColor:"#b5654a"},style:{}}],[{type:"field",settings:{field:"name",prefix:"No.  "},style:{size:9,weight:"600"}},{type:"field",settings:{field:"transaction_date",prefix:"Date  "},style:{size:9}}]]},pos:{x:14,y:60,w:182,h:null}},
+ {type:"items",region:"body",settings:{cols:{desc:true,qty:true,rate:true,amount:true},widths:{num:8},zebra:false,headerColor:"primary",headerStyle:{bg:"#fbf6ee",color:"#3d3630",weight:"700",size:8},borders:{preset:"rows",w:1.5,color:"#d9c3b3",style:"solid"},cellPad:{y:7,x:8}},pos:{x:14,y:90,w:182,h:null}},
+ {type:"totals",region:"body",settings:{grandColor:"primary",grandBg:"#fbf6ee",grandTextColor:"#b5654a",grandSize:16,grandLabel:"Balance due",labelColor:"#8a7f74"},pos:{x:14,y:168,w:182,h:null}},
+ {type:"box",region:"body",settings:{html:"<i style=\"font-family:Instrument Serif;font-size:12pt;color:#b5654a\">With gratitude for your celebration.</i><br>Bank transfer · A/C 0000 0000"},style:{size:8,align:"center",color:"#8a7f74",pad:"",bg:"",border:{on:false,w:1,color:"#ece2d4",style:"solid",radius:0}},pos:{x:14,y:212,w:182,h:null}},
+ {type:"pagenum",region:"footer",settings:{format:"Page {p} of {n}"},style:{size:7,align:"center",color:"#8a7f74"},pos:{x:74,y:289,w:62,h:null}}]);}
+/* 07 — Studio · asymmetric agency, color rail */
+function T_studio(){return _fmtDef("Studio",{primary:"#6c4cff",navy:"#14141a",font:"Manrope"},
+ {enabled:true,height:14,repeat:true,margin:4},{enabled:true,height:12,repeat:true,margin:4},[
+ {type:"box",region:"header",settings:{html:"<b style=\"font-family:Bricolage Grotesque;font-size:12pt\">STUDIO KINETIC</b>"},style:{size:10,color:"#ffffff",pad:5,bg:"#6c4cff",border:{on:false,w:1,color:"#6c4cff",style:"solid",radius:0}},pos:{x:0,y:0,w:210,h:14}},
+ {type:"heading",region:"body",settings:{text:"Invoice",level:"h1"},style:{size:34,weight:"800",color:"#14141a",font:"Bricolage Grotesque"},pos:{x:14,y:24,w:130,h:null}},
+ {type:"field",region:"body",settings:{field:"name",prefix:"No.  "},style:{size:9,align:"right",weight:"600",color:"#14141a"},pos:{x:120,y:26,w:76,h:null}},
+ {type:"field",region:"body",settings:{field:"transaction_date",prefix:"Date  "},style:{size:9,align:"right",color:"#7a7a86"},pos:{x:120,y:32,w:76,h:null}},
+ {type:"customer",region:"body",settings:{heading:"Billed To",headingColor:"#6c4cff"},pos:{x:14,y:52,w:120,h:null}},
+ {type:"items",region:"body",settings:{cols:{desc:true,qty:true,rate:true,amount:true},widths:{num:8},zebra:false,headerColor:"primary",headerStyle:{bg:"#ffffff",color:"#14141a",weight:"700",size:8},borders:{preset:"rows",w:2,color:"#6c4cff",style:"solid"},cellPad:{y:8,x:8}},pos:{x:14,y:82,w:182,h:null}},
+ {type:"totals",region:"body",settings:{grandColor:"primary",grandBg:"#6c4cff",grandTextColor:"#ffffff",grandLabel:"Total",labelColor:"#7a7a86"},pos:{x:14,y:162,w:182,h:null}},
+ {type:"box",region:"body",settings:{html:"<b style=\"color:#6c4cff\">Remit to</b> · Bank name · A/C 0000 0000 · Net 15"},style:{size:8,color:"#14141a",pad:"",bg:"",border:{on:false,w:1,color:"#eeeef1",style:"solid",radius:0}},pos:{x:14,y:206,w:182,h:null}},
+ {type:"pagenum",region:"footer",settings:{format:"{p} / {n}"},style:{size:7,align:"center",color:"#7a7a86"},pos:{x:74,y:289,w:62,h:null}}]);}
+/* 08 — Corporate · formal GST tax invoice */
+function T_corporate(){return _fmtDef("Corporate",{primary:"#2563a8",navy:"#1f2a37",font:"Manrope"},
+ {enabled:true,height:24,repeat:true,margin:5},{enabled:true,height:14,repeat:true,margin:5},[
+ {type:"box",region:"header",settings:{html:"<span style=\"display:inline-block;width:20px;height:20px;background:#2563a8;color:#fff;border-radius:5px;text-align:center;line-height:20px;font-family:Archivo;font-weight:800\">V</span> <b style=\"font-family:Archivo;font-size:12pt\">YOUR COMPANY PVT. LTD.</b>"},style:{size:9,color:"#1f2a37",pad:"",bg:"",border:{on:false,w:1,color:"#e3e8ee",style:"solid",radius:0}},pos:{x:14,y:5,w:130,h:null}},
+ {type:"heading",region:"header",settings:{text:"TAX INVOICE",level:"h3"},style:{size:13,weight:"700",align:"right",color:"#2563a8",font:"Archivo"},pos:{x:120,y:5,w:76,h:null}},
+ {type:"text",region:"header",settings:{text:"Original for Recipient"},style:{size:7,align:"right",color:"#657688"},pos:{x:120,y:13,w:76,h:null}},
+ {type:"divider",region:"header",settings:{thickness:3,color:"#2563a8",lstyle:"solid"},pos:{x:14,y:20,w:182,h:null}},
+ {type:"row",region:"body",settings:{cols:2,gap:8,width:100,widths:[null,88],cells:[[{type:"customer",settings:{heading:"Bill To · GSTIN",headingColor:"#2563a8"},style:{pad:3,bg:"#eef1f5",border:{on:false,w:1,color:"#eef1f5",style:"solid",radius:8}}}],[{type:"field",settings:{field:"name",prefix:"Invoice  "},style:{size:8,weight:"600"}},{type:"field",settings:{field:"transaction_date",prefix:"Date  "},style:{size:8}},{type:"text",settings:{text:"Supply · Interstate (IGST)"},style:{size:8,color:"#657688"}}]]},pos:{x:14,y:34,w:182,h:null}},
+ {type:"items",region:"body",settings:{cols:{desc:true,qty:true,rate:true,amount:true},widths:{num:8},zebra:false,headerColor:"primary",headerStyle:{bg:"#2563a8",color:"#ffffff",weight:"700",size:8},borders:{preset:"rows",w:1,color:"#e3e8ee",style:"solid"},cellPad:{y:7,x:8}},pos:{x:14,y:70,w:182,h:null}},
+ {type:"totals",region:"body",settings:{grandColor:"navy",grandBg:"#1f2a37",grandTextColor:"#ffffff",grandLabel:"Total Payable",labelColor:"#657688"},pos:{x:14,y:150,w:182,h:null}},
+ {type:"row",region:"body",settings:{cols:2,gap:10,width:100,widths:[null,70],cells:[[{type:"box",settings:{html:"<b style=\"color:#2563a8\">Declaration</b><br>We declare this invoice shows the actual price and particulars are true."},style:{size:7.5,color:"#5b6b7b",pad:"",bg:"",border:{on:false,w:1,color:"#e3e8ee",style:"solid",radius:0}}}],[{type:"signature",settings:{label:"Authorised Signatory"},style:{}}]]},pos:{x:14,y:190,w:182,h:null}},
+ {type:"field",region:"footer",settings:{field:"company",prefix:""},style:{size:7,align:"center",color:"#657688"},pos:{x:56,y:288,w:98,h:null}},
+ {type:"pagenum",region:"footer",settings:{format:"Page {p} of {n}"},style:{size:7,align:"right",color:"#657688"},pos:{x:166,y:288,w:30,h:null}}]);}
+/* 09 — Vantage · quotation with terms & acceptance */
+function T_vantage(){return _fmtDef("Vantage",{primary:"#0f766e",navy:"#16302e",font:"Manrope"},
+ {enabled:true,height:28,repeat:true,margin:6},{enabled:true,height:15,repeat:true,margin:5},[
+ {type:"box",region:"header",settings:{html:"<span style=\"font-family:Archivo;font-size:14pt;font-weight:800\">VANTAGE ENGINEERING</span>"},style:{pad:6,bg:"#0f766e",color:"#ffffff",size:9,border:{on:false,w:1,color:"#0f766e",style:"solid",radius:0}},pos:{x:0,y:0,w:210,h:28}},
+ {type:"heading",region:"header",settings:{text:"QUOTATION",level:"h2"},style:{size:16,weight:"800",align:"right",color:"#ffffff",font:"Archivo"},pos:{x:120,y:6,w:78,h:null}},
+ {type:"field",region:"header",settings:{field:"name",prefix:"Ref "},style:{size:7.5,align:"right",color:"#bfe0dc"},pos:{x:120,y:18,w:78,h:null}},
+ {type:"row",region:"body",settings:{cols:2,gap:8,width:100,widths:[null,74],cells:[[{type:"customer",settings:{heading:"Prepared For",headingColor:"#0f766e"},style:{}}],[{type:"field",settings:{field:"valid_till",prefix:"Valid until  "},style:{size:8,weight:"600"}},{type:"text",settings:{text:"Lead time · 4-6 weeks"},style:{size:8}},{type:"text",settings:{text:"Payment · 40% advance"},style:{size:8,color:"#5c716d"}}]]},pos:{x:14,y:40,w:182,h:null}},
+ {type:"box",region:"body",settings:{html:"<b style=\"color:#0f766e\">Scope</b> — supply, install and commission as detailed below."},style:{size:8.5,color:"#16302e",pad:3,bg:"#f4faf9",border:{on:true,w:3,color:"#0f766e",style:"solid",radius:0,sides:{l:true,t:false,r:false,b:false}}},pos:{x:14,y:72,w:182,h:null}},
+ {type:"items",region:"body",settings:{cols:{desc:true,qty:true,rate:true,amount:true},widths:{num:8},zebra:true,zebraColor:"#f4faf9",headerColor:"primary",headerStyle:{bg:"#0f766e",color:"#ffffff",weight:"700",size:8},borders:{preset:"rows",w:1,color:"#e6efed",style:"solid"},cellPad:{y:7,x:8}},pos:{x:14,y:88,w:182,h:null}},
+ {type:"totals",region:"body",settings:{grandColor:"primary",grandBg:"#0f766e",grandTextColor:"#ffffff",grandLabel:"Estimated total",labelColor:"#5c716d"},pos:{x:14,y:164,w:182,h:null}},
+ {type:"box",region:"body",settings:{html:"Estimate only · taxes exclusive · valid for 30 days."},style:{size:7.5,color:"#5c716d",pad:"",bg:"",border:{on:false,w:1,color:"#e6efed",style:"solid",radius:0}},pos:{x:14,y:202,w:182,h:null}},
+ {type:"row",region:"body",settings:{cols:2,gap:10,width:100,widths:[null,null],cells:[[{type:"signature",settings:{label:"Prepared by"},style:{}}],[{type:"signature",settings:{label:"Accepted by"},style:{}}]]},pos:{x:14,y:216,w:182,h:null}},
+ {type:"pagenum",region:"footer",settings:{format:"Page {p} of {n}"},style:{size:7,align:"center",color:"#5c716d"},pos:{x:74,y:290,w:62,h:null}}]);}
+/* 10 — Beacon · quotation with optional add-ons */
+function T_beacon(){return _fmtDef("Beacon",{primary:"#3a4ff0",navy:"#1b1f3b",font:"Manrope"},
+ {enabled:true,height:22,repeat:true,margin:6},{enabled:true,height:15,repeat:true,margin:5},[
+ {type:"box",region:"header",settings:{html:"<span style=\"display:inline-block;width:14px;height:14px;border:3px solid #3a4ff0;border-radius:50%;vertical-align:-2px\"></span> <b style=\"font-size:13pt\">Beacon Media Group</b>"},style:{size:10,color:"#1b1f3b",pad:"",bg:"",border:{on:false,w:1,color:"#e4e6f4",style:"solid",radius:0}},pos:{x:14,y:6,w:130,h:null}},
+ {type:"heading",region:"header",settings:{text:"QUOTATION",level:"h3"},style:{size:13,weight:"800",align:"right",color:"#3a4ff0",font:"Archivo"},pos:{x:120,y:5,w:76,h:null}},
+ {type:"text",region:"header",settings:{text:"Valid 21 days"},style:{size:7,align:"right",color:"#7c81a0"},pos:{x:120,y:14,w:76,h:null}},
+ {type:"row",region:"body",settings:{cols:2,gap:8,width:100,widths:[null,74],cells:[[{type:"customer",settings:{heading:"Prepared For",headingColor:"#3a4ff0"},style:{}}],[{type:"field",settings:{field:"transaction_date",prefix:"Issued  "},style:{size:8,weight:"600"}},{type:"field",settings:{field:"valid_till",prefix:"Valid until  "},style:{size:8}},{type:"text",settings:{text:"Deposit · 30% to confirm"},style:{size:8,color:"#7c81a0"}}]]},pos:{x:14,y:34,w:182,h:null}},
+ {type:"heading",region:"body",settings:{text:"Core scope · included",level:"h4"},style:{size:9,weight:"700",color:"#3a4ff0"},pos:{x:14,y:66,w:182,h:null}},
+ {type:"items",region:"body",settings:{cols:{desc:true,qty:true,rate:true,amount:true},widths:{num:8},zebra:false,headerColor:"primary",headerStyle:{bg:"#ffffff",color:"#1b1f3b",weight:"700",size:8},borders:{preset:"rows",w:1,color:"#eef0ff",style:"solid"},cellPad:{y:7,x:8}},pos:{x:14,y:74,w:182,h:null}},
+ {type:"totals",region:"body",settings:{grandColor:"primary",grandBg:"#3a4ff0",grandTextColor:"#ffffff",grandLabel:"Total",labelColor:"#7c81a0"},pos:{x:14,y:150,w:182,h:null}},
+ {type:"box",region:"body",settings:{html:"<b style=\"color:#3a4ff0\">Optional add-ons · select any</b><br>☐ Extended coverage &nbsp; +price &nbsp;&nbsp; ☐ Rush delivery &nbsp; +price &nbsp;&nbsp; ☐ Extra edits &nbsp; +price"},style:{size:8.5,color:"#1b1f3b",pad:3,bg:"#eef0ff",border:{on:false,w:1,color:"#eef0ff",style:"solid",radius:8}},pos:{x:14,y:190,w:182,h:null}},
+ {type:"row",region:"body",settings:{cols:2,gap:10,width:100,widths:[null,80],cells:[[{type:"terms",settings:{heading:"Terms"},style:{}}],[{type:"signature",settings:{label:"Accepted — signature & date"},style:{}}]]},pos:{x:14,y:214,w:182,h:null}},
+ {type:"pagenum",region:"footer",settings:{format:"Page {p} of {n}"},style:{size:7,align:"center",color:"#7c81a0"},pos:{x:74,y:290,w:62,h:null}}]);}
 const FORMATS=[
+ {make:T_meridian,name:"Meridian",desc:"Classic serif tax invoice: centered wordmark, double rule, ruled table, navy Total Due bar.",sw:{hdr:"#16233d",hdrH:5,foot:"#9a1f2e"}},
+ {make:T_ledger2,name:"Ledger",desc:"Accounting grid with monospace figures: fully lined table, tinted header, green total.",sw:{hdr:"#2f6b3f",hdrH:6,foot:"#eef1e8"}},
+ {make:T_aperture,name:"Aperture",desc:"Minimal studio invoice: oversized headline, hairline table, vermilion grand total.",sw:{hdr:"#ff4d2e",hdrH:4,foot:"#ededef"}},
+ {make:T_nordic,name:"Nordic",desc:"Soft Scandinavian: pale rounded header band, white cards, dusty-blue total.",sw:{hdr:"#6b8ea3",hdrH:8,foot:"#e7edf0"}},
+ {make:T_slate,name:"Slate",desc:"Dark charcoal masthead with gold accents and a gold Balance Due bar.",sw:{hdr:"#232830",hdrH:9,foot:"#d8a24a"}},
+ {make:T_botanica,name:"Botanica",desc:"Warm editorial boutique: cream palette, italic serif headline, terracotta balance.",sw:{hdr:"#b5654a",hdrH:5,foot:"#fbf6ee"}},
+ {make:T_studio,name:"Studio",desc:"Creative agency: violet rail masthead, bold display headline, violet total.",sw:{hdr:"#6c4cff",hdrH:6,foot:"#eeeef1"}},
+ {make:T_corporate,name:"Corporate",desc:"Formal GST tax invoice: blue logo tile, blue-filled table header, ink Total Payable.",sw:{hdr:"#2563a8",hdrH:6,foot:"#eef1f5"}},
+ {make:T_vantage,name:"Vantage",desc:"Engineering quotation: teal masthead, scope callout, dual Prepared/Accepted signatures.",sw:{hdr:"#0f766e",hdrH:8,foot:"#e9f4f2"}},
+ {make:T_beacon,name:"Beacon",desc:"Media quotation: core scope + optional add-ons, indigo palette, acceptance line.",sw:{hdr:"#3a4ff0",hdrH:6,foot:"#eef0ff"}},
  {make:T_lumen,name:"Lumen Clean",desc:"Light and modern: Lumen Blue, two-column parties, bank + totals row.",sw:{hdr:"#1463FF",hdrH:6,foot:"#E4E8F0"}},
  {make:T_bilingual,name:"Bilingual EN·AR",desc:"English + Arabic side by side: Cairo font, RTL notes, bilingual headings.",sw:{hdr:"#C9821B",hdrH:6,foot:"#FBF0DC"}},
  {make:T_banner,name:"Bold Banner",desc:"Full-width colored header and footer strips, strong presence.",sw:{hdr:"#1463FF",hdrH:14,foot:"#0C1322"}},
