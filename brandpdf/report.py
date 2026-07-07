@@ -333,10 +333,20 @@ def report_sample(report_name, filters=None, limit=50):
         rdoc, _land = _build_report_doc(report_name, filters, limit=limit)
         return rdoc.get("_bpdf_report")
     except Exception:
-        # Reports with mandatory filters throw on an empty run — don't break the builder; return
-        # the shell so the designer can still add a report table (all columns render at print time).
+        # Reports with mandatory filters throw on an empty run (e.g. "Based On is mandatory").
+        # This is expected in the builder's optional preview — swallow the report's own queued
+        # popup and return a shell so the designer can still add a report table (all columns
+        # render at print time once the report is actually run with its filters).
+        try:
+            frappe.clear_messages()
+        except Exception:
+            pass
+        try:
+            frappe.local.message_log = []
+        except Exception:
+            pass
         label = frappe.db.get_value("Report", report_name, "report_name") or report_name
         return {"name": label, "columns": [], "rows": [], "filters": _filter_summary(filters),
                 "printed_on": frappe.utils.formatdate(frappe.utils.nowdate(), "medium"),
                 "native_html": "", "truncated": False,
-                "note": "Preview needs filters — run this report in ERPNext to see sample rows."}
+                "note": "Preview needs the report's mandatory filters — it renders fully when you run the report in ERPNext and click Branded PDF."}
