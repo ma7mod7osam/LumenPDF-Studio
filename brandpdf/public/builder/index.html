@@ -212,7 +212,7 @@
 <body>
 <div class="app">
   <div class="top">
-    <div class="brand"><svg width="22" height="22" viewBox="0 0 48 48" fill="none" aria-label="LumenPDF Studio"><rect x="6" y="6" width="7.5" height="38" rx="3.75" fill="#1463FF"/><rect x="18" y="25" width="4.5" height="19" rx="2.25" fill="#7FA8FF"/><rect x="27" y="25" width="7.5" height="19" rx="3.75" fill="#1463FF"/><rect x="39" y="25" width="4.5" height="19" rx="2.25" fill="#1463FF"/></svg> LumenPDF <small>Studio · b51</small></div>
+    <div class="brand"><svg width="22" height="22" viewBox="0 0 48 48" fill="none" aria-label="LumenPDF Studio"><rect x="6" y="6" width="7.5" height="38" rx="3.75" fill="#1463FF"/><rect x="18" y="25" width="4.5" height="19" rx="2.25" fill="#7FA8FF"/><rect x="27" y="25" width="7.5" height="19" rx="3.75" fill="#1463FF"/><rect x="39" y="25" width="4.5" height="19" rx="2.25" fill="#1463FF"/></svg> LumenPDF <small>Studio · b52</small></div>
     <div class="menuwrap"><button class="btn ghost" id="fileBtn" onclick="toggleFileMenu(event)" title="New, open, duplicate, import/export, manage">☰ File</button>
       <div class="menu" id="fileMenu">
         <button onclick="closeFileMenu();openNewFmt()">＋ New format…</button>
@@ -1633,7 +1633,11 @@ function importJSON(){const inp=document.createElement("input");inp.type="file";
 function toast(msg,err){let t=document.getElementById("bpToast");if(!t){t=document.createElement("div");t.id="bpToast";document.body.appendChild(t);}
   t.textContent=msg;t.style.cssText="position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:99999;padding:11px 18px;border-radius:10px;font:600 13px 'Plus Jakarta Sans',sans-serif;box-shadow:0 8px 26px rgba(0,0,0,.28);"+(err?"background:#E0413F;color:#fff":"background:#0C1322;color:#fff");
   t.style.display="block";clearTimeout(toast._t);toast._t=setTimeout(function(){t.style.display="none";},4200);}
-function previewPDF(){if(!EMBED){alert("Preview PDF works inside ERPNext (renders the real PDF with your engine).");return;}const ds=document.getElementById("dataSel");const name=ds?ds.value:"";window.parent.postMessage({type:"brandpdf-preview",definition:definition(),doctype:state.target,name:name||""},window.location.origin);}
+function previewPDF(){if(!EMBED){alert("Preview PDF works inside ERPNext (renders the real PDF with your engine).");return;}
+  if(state.targetKind==="report"){  // report formats preview by re-running the REPORT, not a document
+    if(!state.report){alert("Pick a report first.");return;}
+    window.parent.postMessage({type:"brandpdf-preview-report",definition:definition(),report_name:state.report},window.location.origin);return;}
+  const ds=document.getElementById("dataSel");const name=ds?ds.value:"";window.parent.postMessage({type:"brandpdf-preview",definition:definition(),doctype:state.target,name:name||""},window.location.origin);}
 const EMBED=(window.parent&&window.parent!==window);
 /* Theme: follows the user's Frappe theme. Embedded, the builder reads the parent desk's
    data-theme directly (same origin) and watches it live; standalone falls back to the OS.

@@ -110,6 +110,24 @@ frappe.pages['brandpdf-builder'].on_page_load = function (wrapper) {
 			} else {
 				iframe.style.cssText = IFRAME_CSS;
 			}
+		} else if (d.type === 'brandpdf-preview-report') {
+			// Report preview: re-run the report server-side and render the UNSAVED design.
+			frappe.dom.freeze(__('Rendering report preview…'));
+			fetch('/api/method/brandpdf.report.report_pdf', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json', 'X-Frappe-CSRF-Token': frappe.csrf_token },
+				body: JSON.stringify({ report_name: d.report_name, definition: JSON.stringify(d.definition), preview: 1 }),
+			}).then(function (r) {
+				frappe.dom.unfreeze();
+				if (!r.ok) {
+					return r.json().catch(function () { return {}; }).then(function (j) {
+						var msg = '';
+						try { msg = JSON.parse(JSON.parse(j._server_messages)[0]).message; } catch (e) {}
+						frappe.msgprint(__(msg || 'Report preview failed.'));
+					});
+				}
+				return r.blob().then(function (b) { window.open(URL.createObjectURL(b), '_blank'); });
+			}).catch(function () { frappe.dom.unfreeze(); frappe.msgprint(__('Report preview failed.')); });
 		} else if (d.type === 'brandpdf-preview') {
 			frappe.dom.freeze(__('Rendering preview…'));
 			frappe.call({

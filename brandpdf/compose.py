@@ -129,11 +129,12 @@ def _margins_honored(renderer):
 
 
 def clear_probe_cache():
-    """after_migrate: a new deploy may change engine behavior — force a fresh margin probe."""
-    try:
-        frappe.cache().delete_value("brandpdf_margins_honored")
-    except Exception:
-        pass
+    """after_migrate: a new deploy may change engine behavior — force fresh probes."""
+    for key in ("brandpdf_margins_honored", "brandpdf_chrome_landscape"):
+        try:
+            frappe.cache().delete_value(key)
+        except Exception:
+            pass
 
 
 def _finish(html, allowed, renderer, margins=None, page=None):

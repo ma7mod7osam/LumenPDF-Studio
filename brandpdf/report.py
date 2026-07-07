@@ -283,18 +283,39 @@ def report_to_pdf(html, orientation="Landscape"):
 # --- Mode B: styled report PDF (toolbar button / builder) ------------------
 
 @frappe.whitelist()
-def report_pdf(report_name, filters=None, template=None, orientation=None):
-    """Render a report through a BrandPDF Template (or a branded default). Sets the file response."""
+def report_pdf(report_name, filters=None, template=None, orientation=None, definition=None, preview=0):
+    """Render a report through a BrandPDF Template (or a branded default). Sets the file response.
+    `definition` (System-Manager only) renders an UNSAVED builder design — the builder's report
+    Preview PDF; `preview=1` merges best-effort default filters so the design can be previewed
+    without opening the report first."""
     _check_report_perm(report_name)
     if isinstance(filters, str):
         try:
             filters = json.loads(filters or "{}")
         except Exception:
             filters = {}
-    rdoc, land = _build_report_doc(report_name, filters, limit=REPORT_ROW_CAP)
-    tmpl = template or _report_mapping(report_name)
-    definition = None
-    if not tmpl:
+    if isinstance(definition, str):
+        try:
+            definition = json.loads(definition) if definition.strip() else None
+        except Exception:
+            definition = None
+    if isinstance(definition, dict) and "System Manager" not in frappe.get_roles():
+        definition = None  # ad-hoc definitions are a builder (System Manager) feature
+    preview = str(preview) in ("1", "true", "True")
+    if preview:
+        merged = _guess_default_filters()
+        merged.update(filters or {})
+        filters = merged
+    try:
+        rdoc, land = _build_report_doc(report_name, filters, limit=REPORT_ROW_CAP)
+    except Exception:
+        if not preview:
+            raise
+        _clear_messages()
+        frappe.throw("This report needs its mandatory filters for a preview — open the report in "
+                     "ERPNext, set the filters, then use the Branded PDF button.")
+    tmpl = None if isinstance(definition, dict) else (template or _report_mapping(report_name))
+    if not tmpl and not isinstance(definition, dict):
         branding = _report_branding(_company_from_filters(filters))
         definition = _default_report_def(orientation or ("landscape" if land else "portrait"),
                                           branding, "report_table", include_meta=True)

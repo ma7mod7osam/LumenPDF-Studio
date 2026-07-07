@@ -5,13 +5,48 @@ even though we can't find/launch the binary ourselves. This engine feeds OUR ren
 straight into `frappe.utils.pdf.get_pdf(..., pdf_generator="chrome")`, so it reuses that
 working Chromium and skips the whole "install a browser in the bench" problem.
 
+Landscape: some hosts' chrome generators silently IGNORE the page-width/page-height/orientation
+keys (observed live: landscape-positioned content on a portrait A4 page). The renderer therefore
+VERIFIES the output orientation and, when the chrome generator can't turn the page, re-renders
+through wkhtmltopdf (a hard Frappe dependency that honors --orientation). The verdict is cached
+so the double render happens at most once a day.
+
 Enable with site_config: "brandpdf_engine": "frappe_chrome".
 """
 import inspect
+import io
 
 import frappe
 
 from brandpdf.render.base import BaseRenderer
+
+_LAND_CACHE = "brandpdf_chrome_landscape"  # "ok" | "broken", probed from real output
+
+
+def _is_landscape_pdf(pdf: bytes) -> bool:
+    try:
+        try:
+            from pypdf import PdfReader
+        except Exception:
+            from PyPDF2 import PdfReader
+        page = PdfReader(io.BytesIO(pdf)).pages[0]
+        return float(page.mediabox.width) > float(page.mediabox.height)
+    except Exception:
+        return True  # can't inspect -> assume fine (never fall back on a guess)
+
+
+def _land_state():
+    try:
+        return frappe.cache().get_value(_LAND_CACHE)
+    except Exception:
+        return None
+
+
+def _set_land_state(v):
+    try:
+        frappe.cache().set_value(_LAND_CACHE, v, expires_in_sec=86400)
+    except Exception:
+        pass
 
 
 class FrappeChromeRenderer(BaseRenderer):
@@ -39,6 +74,9 @@ class FrappeChromeRenderer(BaseRenderer):
         # five keys; feeding it an unknown wkhtmltopdf flag (b18 added disable-smart-shrinking)
         # made it discard the whole option set and fall back to its 15mm top/bottom defaults —
         # which shifted the bands down and pushed the footer off-page. Proven-good set = b17's.
+        pw = (options or {}).get("page_width_mm")
+        ph = (options or {}).get("page_height_mm")
+        want_landscape = bool(pw and ph and float(pw) > float(ph))
         if "options" in params:
             call["options"] = {
                 "page-size": (options or {}).get("format") or "A4",
@@ -51,17 +89,62 @@ class FrappeChromeRenderer(BaseRenderer):
             # Landscape/custom size ONLY: add explicit dims (portrait keeps the proven key set
             # byte-identical — some patched generators discard options on unknown keys, and for
             # those the .print-format page-width/page-height dialect in the HTML still applies).
-            pw = (options or {}).get("page_width_mm")
-            ph = (options or {}).get("page_height_mm")
-            if pw and ph and float(pw) > float(ph):
+            if want_landscape:
                 call["options"].pop("page-size", None)
                 call["options"]["page-width"] = _mm(pw)
                 call["options"]["page-height"] = _mm(ph)
                 call["options"]["orientation"] = "Landscape"
+
+        # Known-broken chrome landscape on this host -> go straight to wkhtml (no wasted render).
+        if want_landscape and _land_state() == "broken":
+            wk = self._wkhtml_landscape(html, m, _mm)
+            if wk is not None:
+                return wk
 
         pdf = get_pdf(html, **call)
         if isinstance(pdf, str):
             pdf = pdf.encode("latin-1", errors="ignore")
         if not pdf:
             frappe.throw("BrandPDF (frappe_chrome): get_pdf returned empty output.")
+
+        # Verify landscape actually happened; some hosts' chrome generators ignore the dims.
+        if want_landscape:
+            if _is_landscape_pdf(pdf):
+                _set_land_state("ok")
+            else:
+                _set_land_state("broken")
+                wk = self._wkhtml_landscape(html, m, _mm)
+                if wk is not None and _is_landscape_pdf(wk):
+                    return wk
         return pdf
+
+    def _wkhtml_landscape(self, html, m, _mm):
+        """wkhtmltopdf honors --orientation Landscape; use it when chrome can't turn the page.
+        Returns None on any failure so the caller keeps the chrome output (never worse)."""
+        try:
+            from frappe.utils.pdf import get_pdf
+
+            params = inspect.signature(get_pdf).parameters
+            call = {}
+            if "pdf_generator" in params:
+                call["pdf_generator"] = "wkhtmltopdf"
+            call["options"] = {
+                "page-size": "A4",
+                "orientation": "Landscape",
+                "margin-top": _mm(m.get("top")),
+                "margin-bottom": _mm(m.get("bottom")),
+                "margin-left": _mm(m.get("left")),
+                "margin-right": _mm(m.get("right")),
+                "print-media-type": True,
+            }
+            pdf = get_pdf(html, **call)
+            if isinstance(pdf, str):
+                pdf = pdf.encode("latin-1", errors="ignore")
+            return pdf or None
+        except Exception:
+            try:
+                frappe.log_error(title="BrandPDF wkhtml landscape fallback failed",
+                                 message=frappe.get_traceback())
+            except Exception:
+                pass
+            return None

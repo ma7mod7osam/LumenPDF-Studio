@@ -379,6 +379,17 @@ def engine_diag():
         out["cached_margin_verdict"] = frappe.cache().get_value("brandpdf_margins_honored")
     except Exception:
         pass
+    try:
+        # Landscape end-to-end: with the renderer's wkhtml fallback this reports what the
+        # user actually gets, not just what the chrome generator supports.
+        opts = default_options()
+        opts["page_width_mm"], opts["page_height_mm"] = 297.0, 210.0
+        p = _R(_io.BytesIO(r.render("<!DOCTYPE html><html><body>landscape probe</body></html>", opts))).pages[0]
+        out["landscape_page_mm"] = f"{float(p.mediabox.width) * 25.4 / 72:.0f}x{float(p.mediabox.height) * 25.4 / 72:.0f}"
+        out["landscape_honored"] = float(p.mediabox.width) > float(p.mediabox.height)
+        out["chrome_landscape_verdict"] = frappe.cache().get_value("brandpdf_chrome_landscape")
+    except Exception as e:
+        out["landscape_error"] = str(e)[:300]
     _c.clear_probe_cache()  # re-probe on the next real render with fresh eyes
     return out
 
