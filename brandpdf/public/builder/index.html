@@ -17,6 +17,7 @@
   :root[data-theme="dark"] .color input[type=color]::-webkit-color-swatch-wrapper{background:var(--panel2)}
   :root[data-theme="dark"] .color input[type=color]::-webkit-color-swatch{border:1px solid var(--line2)}
   :root[data-theme="dark"] .btn.ghost{background:var(--panel2);color:var(--ink)}
+  :root[data-theme="dark"] .stycard{background:var(--panel2);border-color:var(--line2)}
   :root[data-theme="dark"] #draftBar{background:#2A2410;border-color:#5A4A18;color:#F0D98A}
   :root[data-theme="dark"] #draftBar button{background:var(--panel2);color:#F0D98A;border-color:#5A4A18}
   *{box-sizing:border-box}
@@ -203,7 +204,7 @@
 <body>
 <div class="app">
   <div class="top">
-    <div class="brand"><svg width="22" height="22" viewBox="0 0 48 48" fill="none" aria-label="LumenPDF Studio"><rect x="6" y="6" width="7.5" height="38" rx="3.75" fill="#1463FF"/><rect x="18" y="25" width="4.5" height="19" rx="2.25" fill="#7FA8FF"/><rect x="27" y="25" width="7.5" height="19" rx="3.75" fill="#1463FF"/><rect x="39" y="25" width="4.5" height="19" rx="2.25" fill="#1463FF"/></svg> LumenPDF <small>Studio · b49</small></div>
+    <div class="brand"><svg width="22" height="22" viewBox="0 0 48 48" fill="none" aria-label="LumenPDF Studio"><rect x="6" y="6" width="7.5" height="38" rx="3.75" fill="#1463FF"/><rect x="18" y="25" width="4.5" height="19" rx="2.25" fill="#7FA8FF"/><rect x="27" y="25" width="7.5" height="19" rx="3.75" fill="#1463FF"/><rect x="39" y="25" width="4.5" height="19" rx="2.25" fill="#1463FF"/></svg> LumenPDF <small>Studio · b50</small></div>
     <input class="fmt-name" id="fmtName" value="Quotation - Custom" title="Format name">
     <select class="sel" id="targetKindSel" title="Brand a document or a report" onchange="onTargetKind(this.value)"><option value="doctype">Document</option><option value="report">Report</option></select>
     <select class="sel" id="doctypeSel" title="Target DocType" onchange="onDoctype(this.value)"></select>
@@ -1238,6 +1239,9 @@ function setRTCol(ci,k,v){const b=cur();if(!b||!b.settings.columns||!b.settings.
 function delRTCol(ci){const b=cur();if(!b||!b.settings.columns)return;b.settings.columns.splice(ci,1);render();renderProps();}
 function addRTCol(field){if(!field)return;const b=cur();if(!b)return;const c=(REPORTSAMPLE.columns||[]).find(x=>x.fieldname===field)||{};if(!b.settings.columns)b.settings.columns=[];b.settings.columns.push({field:field,label:c.label||field,width:null,align:c.align||"left"});render();renderProps();}
 function clearRTCols(){const b=cur();if(!b)return;b.settings.columns=[];render();renderProps();}
+function addRTColManual(){const el=document.getElementById("rtManualCol");if(!el)return;const raw=(el.value||"").trim();if(!raw)return;const b=cur();if(!b)return;if(!b.settings.columns)b.settings.columns=[];
+  raw.split(",").map(x=>x.trim()).filter(Boolean).forEach(function(f){if((b.settings.columns||[]).some(c=>c.field===f))return;const src=(REPORTSAMPLE.columns||[]).find(x=>x.fieldname===f)||{};b.settings.columns.push({field:f,label:src.label||f.replace(/_/g," ").replace(/\b\w/g,c=>c.toUpperCase()),width:null,align:src.align||"left"});});
+  el.value="";render();renderProps();}
 // Row / Columns block helpers (nested children live in settings.cells[i])
 function rowControls(b){const s=b.settings;const cols=Math.max(1,Math.min(4,+s.cols||2));
   let h=`<div class="fld"><label>Columns</label><div class="seg">`+[2,3,4].map(n=>`<button class="${cols===n?'on':''}" onclick="setRowCols(${n})">${n}</button>`).join("")+`</div></div>`;
@@ -1394,7 +1398,9 @@ function renderProps(){const host=document.getElementById("propsBlock"),b=cur();
     h+=`<div class="styhead">Columns</div>`;
     (s.columns||[]).forEach((c,ci)=>{h+=`<div style="margin-bottom:8px;border-bottom:1px solid var(--line);padding-bottom:6px"><div class="row2"><input type="text" value="${esc(c.label||'')}" placeholder="Header label" oninput="setRTCol(${ci},'label',this.value)"><input type="text" value="${c.width==null?'':c.width}" placeholder="W mm" oninput="setRTCol(${ci},'width',this.value)"></div><div class="row2"><select onchange="setRTCol(${ci},'align',this.value)">`+[["left","Left"],["center","Center"],["right","Right"]].map(a=>`<option value="${a[0]}" ${(c.align||'left')===a[0]?'selected':''}>${a[1]}</option>`).join("")+`</select><button class="btn ghost" title="Remove column" onclick="delRTCol(${ci})">✕ remove</button></div><div class="hint" style="padding:2px 0 0">field: <b>${esc(c.field)}</b></div></div>`;});
     const remain=avail.filter(f=>!(s.columns||[]).some(c=>c.field===f.fieldname));
-    h+=`<div class="fld"><label>Add a report column</label><select onchange="addRTCol(this.value)"><option value="">+ Add column…</option>`+remain.map(f=>`<option value="${esc(f.fieldname)}">${esc(f.label||f.fieldname)}</option>`).join("")+`</select></div>`;
+    if(remain.length)h+=`<div class="fld"><label>Add a report column</label><select onchange="addRTCol(this.value)"><option value="">+ Add column…</option>`+remain.map(f=>`<option value="${esc(f.fieldname)}">${esc(f.label||f.fieldname)}</option>`).join("")+`</select></div>`;
+    h+=`<div class="fld"><label>…or add a column by fieldname</label><div style="display:flex;gap:6px"><input type="text" id="rtManualCol" placeholder="e.g. account, debit, credit, balance" style="flex:1" onkeydown="if(event.key==='Enter'){event.preventDefault();addRTColManual();}"><button class="btn ghost" onclick="addRTColManual()">Add</button></div></div>`;
+    if(!avail.length)h+=`<div class="hint" style="padding:0 0 6px">${REPORTSAMPLE.note?esc(REPORTSAMPLE.note):"Columns couldn't be auto-loaded. Type the report's fieldnames above (e.g. General Ledger: posting_date, account, debit, credit, balance), or leave empty to print every column."}</div>`;
     if((s.columns||[]).length)h+=`<button class="btn ghost" style="width:100%;margin-bottom:6px" onclick="clearRTCols()">Use all report columns</button>`;
     h+=ck("Zebra rows","zebra",s.zebra);
     if(s.zebra)h+=`<div class="fld"><label>Zebra color</label><div class="color"><input type="color" value="${s.zebraColor||'#eef6fc'}" oninput="setS('zebraColor',this.value)"><input type="text" value="${esc(s.zebraColor||'')}" placeholder="#eef6fc" oninput="setS('zebraColor',this.value)"></div></div>`;

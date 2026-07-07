@@ -329,24 +329,72 @@ def report_sample(report_name, filters=None, limit=50):
         limit = max(1, min(200, int(limit)))
     except Exception:
         limit = 50
-    try:
-        rdoc, _land = _build_report_doc(report_name, filters, limit=limit)
+
+    def _run(f):
+        rdoc, _land = _build_report_doc(report_name, f, limit=limit)
         return rdoc.get("_bpdf_report")
+
+    # 1) the plain run; 2) if that throws or returns no columns (mandatory company/dates on most
+    #    financial reports), retry with best-effort defaults just to DISCOVER the columns.
+    try:
+        rep = _run(filters or {})
+        if rep.get("columns"):
+            return rep
     except Exception:
-        # Reports with mandatory filters throw on an empty run (e.g. "Based On is mandatory").
-        # This is expected in the builder's optional preview — swallow the report's own queued
-        # popup and return a shell so the designer can still add a report table (all columns
-        # render at print time once the report is actually run with its filters).
-        try:
-            frappe.clear_messages()
-        except Exception:
-            pass
-        try:
-            frappe.local.message_log = []
-        except Exception:
-            pass
-        label = frappe.db.get_value("Report", report_name, "report_name") or report_name
-        return {"name": label, "columns": [], "rows": [], "filters": _filter_summary(filters),
-                "printed_on": frappe.utils.formatdate(frappe.utils.nowdate(), "medium"),
-                "native_html": "", "truncated": False,
-                "note": "Preview needs the report's mandatory filters — it renders fully when you run the report in ERPNext and click Branded PDF."}
+        _clear_messages()
+    try:
+        merged = _guess_default_filters()
+        merged.update(filters or {})
+        rep = _run(merged)
+        if rep.get("columns"):
+            rep["note"] = "Columns loaded with default filters — the real PDF uses the filters you run the report with."
+            return rep
+    except Exception:
+        pass
+    _clear_messages()
+    label = frappe.db.get_value("Report", report_name, "report_name") or report_name
+    return {"name": label, "columns": [], "rows": [], "filters": _filter_summary(filters),
+            "printed_on": frappe.utils.formatdate(frappe.utils.nowdate(), "medium"),
+            "native_html": "", "truncated": False,
+            "note": "This report needs its own filters to list columns — add columns by fieldname below, "
+                    "or leave empty to print every column when the report is run."}
+
+
+def _clear_messages():
+    """Swallow a report's own queued 'X is mandatory' popup (the builder preview is optional)."""
+    try:
+        frappe.clear_messages()
+    except Exception:
+        pass
+    try:
+        frappe.local.message_log = []
+    except Exception:
+        pass
+
+
+def _guess_default_filters():
+    """Best-effort defaults so a column-discovery run of a standard financial report succeeds
+    (company + a 1-year date window + current fiscal year). Only used for the builder preview;
+    the real Branded PDF always uses the user's actual report filters."""
+    f = {}
+    try:
+        comp = frappe.defaults.get_user_default("company") or frappe.defaults.get_global_default("company")
+        if comp:
+            f["company"] = comp
+    except Exception:
+        pass
+    try:
+        today = frappe.utils.nowdate()
+        start = frappe.utils.add_years(today, -1)
+        f["from_date"] = f["period_start_date"] = start
+        f["to_date"] = f["period_end_date"] = today
+    except Exception:
+        pass
+    try:
+        fy = frappe.defaults.get_user_default("fiscal_year") or frappe.db.get_value(
+            "Fiscal Year", {"disabled": 0}, "name", order_by="year_start_date desc")
+        if fy:
+            f["fiscal_year"] = fy
+    except Exception:
+        pass
+    return f
