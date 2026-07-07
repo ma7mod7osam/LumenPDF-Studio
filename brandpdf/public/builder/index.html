@@ -156,7 +156,12 @@
   .paper .bs-sign-box{display:block;text-align:center;border-top:1.5px solid #0C1322;padding-top:4px;font-size:8.5pt;font-weight:600}
   .ph-banner{width:100%;height:30mm;display:flex;align-items:center;justify-content:center;color:#ffffffcc;font-size:9pt;letter-spacing:2px;text-transform:uppercase}
   .paper .cellempty,.sheet .cellempty{border:1px dashed #b9c6e0;color:#9aa6c2;padding:10px;text-align:center;font-size:8pt;border-radius:4px}
-  #gallery,#fmtmgr{position:fixed;inset:0;background:#000a;display:none;align-items:center;justify-content:center;z-index:200}
+  #gallery,#fmtmgr,#newfmt{position:fixed;inset:0;background:#000a;display:none;align-items:center;justify-content:center;z-index:200}
+  .menuwrap{position:relative}
+  .menu{position:absolute;top:calc(100% + 6px);left:0;background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);z-index:300;min-width:196px;padding:5px;display:none}
+  .menu button{display:block;width:100%;text-align:left;background:none;border:0;border-radius:7px;padding:8px 11px;font-size:12.5px;color:var(--ink);cursor:pointer}
+  .menu button:hover{background:var(--panel2)}
+  .menu .msep{height:1px;background:var(--line);margin:5px 8px}
   .fmtrow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 4px;border-bottom:1px solid var(--line)}
   .fmtname{font-size:13px;color:var(--ink);font-weight:600;min-width:0}
   .fmtname .star{color:#F5A623;margin-right:5px}
@@ -188,10 +193,13 @@
   .chip.on{border-color:var(--accent);background:#1463FF14;color:var(--accent)}
   .psecb .fld input,.psecb .fld select{padding:6px 9px;font-size:12px}
   .psecb .fld{margin-bottom:7px}
-  #gallery .gcard-wrap,#fmtmgr .gcard-wrap{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px 22px;width:700px;max-width:92vw;max-height:90vh;display:flex;flex-direction:column}
-  #gallery h3,#fmtmgr h3{margin:0;font-size:16px;flex:0 0 auto}
-  #gallery .ghint,#fmtmgr .ghint{font-size:12px;color:var(--mut);margin-top:4px;flex:0 0 auto}
-  #gallery .gclose,#fmtmgr .gclose{float:right;cursor:pointer;color:var(--ink);font-weight:600}
+  #gallery .gcard-wrap,#fmtmgr .gcard-wrap,#newfmt .gcard-wrap{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px 22px;width:700px;max-width:92vw;max-height:90vh;display:flex;flex-direction:column}
+  #gallery h3,#fmtmgr h3,#newfmt h3{margin:0;font-size:16px;flex:0 0 auto}
+  #gallery .ghint,#fmtmgr .ghint,#newfmt .ghint{font-size:12px;color:var(--mut);margin-top:4px;flex:0 0 auto}
+  #gallery .gclose,#fmtmgr .gclose,#newfmt .gclose{float:right;cursor:pointer;color:var(--ink);font-weight:600}
+  #newfmt .fld{margin-bottom:11px}
+  #newfmt .fld label{display:block;font-size:11px;color:var(--mut);margin-bottom:4px}
+  #newfmt input[type=text],#newfmt select{width:100%;background:var(--panel2);color:var(--ink);border:1px solid var(--line2);border-radius:8px;padding:8px 10px;font-size:13px}
   .gscroll{flex:1 1 auto;min-height:0;overflow-y:auto;margin-top:6px}
   .gcards{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:10px}
   .gcard{background:var(--panel2);border:1px solid var(--line2);border-radius:10px;padding:12px;cursor:pointer;transition:.12s}
@@ -204,25 +212,29 @@
 <body>
 <div class="app">
   <div class="top">
-    <div class="brand"><svg width="22" height="22" viewBox="0 0 48 48" fill="none" aria-label="LumenPDF Studio"><rect x="6" y="6" width="7.5" height="38" rx="3.75" fill="#1463FF"/><rect x="18" y="25" width="4.5" height="19" rx="2.25" fill="#7FA8FF"/><rect x="27" y="25" width="7.5" height="19" rx="3.75" fill="#1463FF"/><rect x="39" y="25" width="4.5" height="19" rx="2.25" fill="#1463FF"/></svg> LumenPDF <small>Studio · b50</small></div>
+    <div class="brand"><svg width="22" height="22" viewBox="0 0 48 48" fill="none" aria-label="LumenPDF Studio"><rect x="6" y="6" width="7.5" height="38" rx="3.75" fill="#1463FF"/><rect x="18" y="25" width="4.5" height="19" rx="2.25" fill="#7FA8FF"/><rect x="27" y="25" width="7.5" height="19" rx="3.75" fill="#1463FF"/><rect x="39" y="25" width="4.5" height="19" rx="2.25" fill="#1463FF"/></svg> LumenPDF <small>Studio · b51</small></div>
+    <div class="menuwrap"><button class="btn ghost" id="fileBtn" onclick="toggleFileMenu(event)" title="New, open, duplicate, import/export, manage">☰ File</button>
+      <div class="menu" id="fileMenu">
+        <button onclick="closeFileMenu();openNewFmt()">＋ New format…</button>
+        <button onclick="closeFileMenu();openFormatsMgr()">📂 Open / manage formats…</button>
+        <button onclick="closeFileMenu();dupCurrentFmt()">⧉ Duplicate this format…</button>
+        <div class="msep"></div>
+        <button onclick="closeFileMenu();importJSON()">⇧ Import from .json</button>
+        <button onclick="closeFileMenu();exportJSON()">⇩ Export as .json</button>
+      </div></div>
     <input class="fmt-name" id="fmtName" value="Quotation - Custom" title="Format name">
     <select class="sel" id="targetKindSel" title="Brand a document or a report" onchange="onTargetKind(this.value)"><option value="doctype">Document</option><option value="report">Report</option></select>
     <select class="sel" id="doctypeSel" title="Target DocType" onchange="onDoctype(this.value)"></select>
     <select class="sel" id="reportSel" title="Target Report" style="display:none" onchange="onReport(this.value)"></select>
-    <select class="sel" id="openSel" title="Open an existing format" onchange="openFormat(this.value)"><option value="">Open…</option></select>
-    <button class="btn ghost" onclick="newFormat()" title="Start a new blank format">+ New</button>
     <button class="btn ghost" onclick="openGallery()" title="Start from a ready-made design">▦ Templates</button>
-    <button class="btn ghost" onclick="openFormatsMgr()" title="Manage saved formats — set the default, open or delete">⚙ Formats</button>
-    <button class="btn ghost" id="undoBtn" onclick="undo()" title="Undo (Ctrl+Z)">↶</button>
-    <button class="btn ghost" id="redoBtn" onclick="redo()" title="Redo (Ctrl+Y)">↷</button>
     <button class="btn ghost" id="restoreBtn" onclick="restoreDraft()" style="display:none" title="Restore your last unsaved draft">↺ Restore</button>
     <div class="spacer"></div>
+    <button class="btn ghost" id="undoBtn" onclick="undo()" title="Undo (Ctrl+Z)">↶</button>
+    <button class="btn ghost" id="redoBtn" onclick="redo()" title="Redo (Ctrl+Y)">↷</button>
     <button class="btn ghost" id="fsBtn" onclick="toggleFullscreen()" title="Full screen (F)">⛶</button>
     <div class="zoom"><button onclick="zoom(-.1)">−</button><span id="zoomv">80%</span><button onclick="zoom(.1)">+</button></div>
     <select class="sel" id="dataSel" title="Preview with a real document" onchange="loadData(this.value)"><option value="">Sample data</option></select>
     <button class="btn ghost" onclick="previewPDF()" title="Render the real PDF with this document">👁 Preview PDF</button>
-    <button class="btn ghost" onclick="importJSON()" title="Import a format from a .json file (made with Export)">⇧ Import</button>
-    <button class="btn ghost" onclick="exportJSON()" title="Download this format as a .json backup">⇩ Export</button>
     <button class="btn primary" onclick="save()">✓ Save</button>
   </div>
   <div id="draftBar"><span>↺ You have <b>unsaved changes</b> from your last session.</span><button class="pri" onclick="restoreDraft()">Restore my work</button><button onclick="dismissDraft()">Discard</button></div>
@@ -246,6 +258,14 @@
 </div>
 <div id="gallery"><div class="gcard-wrap"><h3>Start from a template</h3><div class="ghint">Pick a ready-made design, then customize it.<span class="gclose" onclick="closeGallery()">✕ Close</span></div><div class="gscroll"><div class="gcards" id="gcards"></div><div id="gsite"></div></div></div></div>
 <div id="fmtmgr"><div class="gcard-wrap" style="width:580px"><h3 id="fmtmgrTitle">Formats</h3><div class="ghint">The ★ default is what <b>Print → PDF</b> uses. Set the default, open, or delete a format.<span class="gclose" onclick="closeFmtMgr()">✕ Close</span></div><div id="fmtmgrBody" style="margin-top:14px;max-height:60vh;overflow:auto"></div></div></div>
+<div id="newfmt"><div class="gcard-wrap" style="width:420px"><h3>New format</h3><div class="ghint">Name it and choose what it prints.<span class="gclose" onclick="closeNewFmt()">✕ Close</span></div>
+  <div style="margin-top:14px">
+    <div class="fld"><label>Format name</label><input type="text" id="nfName" placeholder="e.g. Sales Invoice - Branded" onkeydown="if(event.key==='Enter'){event.preventDefault();confirmNewFmt();}"></div>
+    <div class="fld"><label>Format type</label><div class="seg" id="nfKindSeg"><button class="on" onclick="nfKind('doctype')">Document</button><button onclick="nfKind('report')">Report</button></div></div>
+    <div class="fld" id="nfDocWrap"><label>Document type</label><select id="nfDoc"></select></div>
+    <div class="fld" id="nfRepWrap" style="display:none"><label>Report</label><select id="nfRep"></select></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px"><button class="btn ghost" onclick="closeNewFmt()">Cancel</button><button class="btn primary" onclick="confirmNewFmt()">Create</button></div>
+  </div></div></div>
 <script>
 const PXMM=96/25.4;
 /* page size: A4 portrait (210x297) or landscape (297x210). PW()/PH() are the live mm dims. */
@@ -788,10 +808,57 @@ function openGallery(){const isRep=state.targetKind==="report";_galSet=isRep?REP
       host.innerHTML=`<h3 style="margin:18px 0 0">Your site's templates</h3><div class="gcards">`+rows.map(function(r){return `<div class="gcard" onclick="pickSiteTemplate('${esc(r.name)}')"><div class="gsw" style="background:linear-gradient(135deg,#1463FF22,#E4E8F0);display:flex;align-items:center;justify-content:center"><span style="font-size:22px">▦</span></div><div class="gt">${esc(r.label)}</div><div class="gd">${esc(r.target)} · saved on this site</div></div>`;}).join("")+`</div>`;});}}
 function pickSiteTemplate(name){clearDraft();rpc("brandpdf.api.get_format",{name:name}).then(function(r){if(r&&r.definition){loadDefinition(r.definition);document.getElementById("fmtName").value=(r.definition.name||name)+" copy";commitHistory();}closeGallery();});}
 function closeGallery(){document.getElementById("gallery").style.display="none";}
+/* ---- File menu ---- */
+function toggleFileMenu(e){if(e)e.stopPropagation();const m=document.getElementById("fileMenu");m.style.display=(m.style.display==="block")?"none":"block";}
+function closeFileMenu(){document.getElementById("fileMenu").style.display="none";}
+document.addEventListener("mousedown",function(e){const w=e.target.closest?e.target.closest(".menuwrap"):null;if(!w)closeFileMenu();});
+/* ---- Duplicate the format being edited: save the current design under a new name ---- */
+function dupCurrentFmt(){const curName=document.getElementById("fmtName").value||"Format";const nm=prompt("Name for the copy:",curName+" copy");if(nm===null)return;const nn=(nm||"").trim();if(!nn)return;document.getElementById("fmtName").value=nn;save();toast('Now editing the copy "'+nn+'".');}
+/* ---- New format dialog: name + type (document/report) + target ---- */
+let _nfKind="doctype";
+function openNewFmt(){
+  _nfKind=(state.targetKind==="report")?"report":"doctype";nfKind(_nfKind,true);
+  const nd=document.getElementById("nfDoc");const src=document.getElementById("doctypeSel");
+  nd.innerHTML=(src&&src.options.length)?src.innerHTML:`<option>${esc(state.target||"Quotation")}</option>`;
+  if(state.target)nd.value=state.target;
+  ensureReports(function(){const nr=document.getElementById("nfRep");nr.innerHTML=(_reports||[]).length?_reports.map(function(r){return `<option value="${esc(r.name)}">${esc(r.label)}</option>`;}).join(""):'<option value="">(no reports available)</option>';if(state.report)nr.value=state.report;});
+  document.getElementById("nfName").value="";
+  document.getElementById("newfmt").style.display="flex";
+  setTimeout(function(){document.getElementById("nfName").focus();},50);
+}
+function nfKind(k,skipState){_nfKind=(k==="report")?"report":"doctype";
+  document.querySelectorAll("#nfKindSeg button").forEach(function(b){b.classList.toggle("on",(b.textContent==="Report")===(_nfKind==="report"));});
+  document.getElementById("nfDocWrap").style.display=_nfKind==="doctype"?"":"none";
+  document.getElementById("nfRepWrap").style.display=_nfKind==="report"?"":"none";
+  const n=document.getElementById("nfName");
+  if(!skipState&&n&&!n.value)n.placeholder=_nfKind==="report"?"e.g. General Ledger - Branded":"e.g. Sales Invoice - Branded";
+}
+function closeNewFmt(){document.getElementById("newfmt").style.display="none";}
+function confirmNewFmt(){
+  const name=(document.getElementById("nfName").value||"").trim();
+  if(!name){document.getElementById("nfName").focus();return;}
+  const ksel=document.getElementById("targetKindSel");
+  if(_nfKind==="report"){
+    const rep=document.getElementById("nfRep").value;
+    if(!rep){alert("Pick a report.");return;}
+    state.targetKind="report";state.report=rep;if(ksel)ksel.value="report";
+    document.getElementById("doctypeSel").style.display="none";
+    const rs=document.getElementById("reportSel");rs.style.display="";ensureReports(function(){rs.value=rep;});
+    buildPalette();loadReportSample(rep);newReportFormat();
+  } else {
+    const dt=document.getElementById("nfDoc").value||state.target||"Quotation";
+    state.targetKind="doctype";state.target=dt;if(ksel)ksel.value="doctype";
+    document.getElementById("reportSel").style.display="none";
+    const ds=document.getElementById("doctypeSel");ds.style.display="";ds.value=dt;
+    buildPalette();loadDoctypeMeta(dt);newFormat();
+  }
+  document.getElementById("fmtName").value=name;
+  commitHistory();closeNewFmt();
+}
 /* Extra ways out of the modals: click the dark backdrop, or press Escape. */
 (function(){function bd(id,close){var el=document.getElementById(id);if(el)el.addEventListener("mousedown",function(e){if(e.target===el)close();});}
-  bd("gallery",closeGallery);bd("fmtmgr",function(){closeFmtMgr();});
-  document.addEventListener("keydown",function(e){if(e.key==="Escape"){var g=document.getElementById("gallery"),f=document.getElementById("fmtmgr");if(g&&g.style.display!=="none"&&g.style.display!=="")closeGallery();if(f&&f.style.display!=="none"&&f.style.display!=="")closeFmtMgr();}});})();
+  bd("gallery",closeGallery);bd("fmtmgr",function(){closeFmtMgr();});bd("newfmt",closeNewFmt);
+  document.addEventListener("keydown",function(e){if(e.key==="Escape"){["gallery","fmtmgr","newfmt"].forEach(function(id){var el=document.getElementById(id);if(el&&el.style.display==="flex"){if(id==="gallery")closeGallery();else if(id==="fmtmgr")closeFmtMgr();else closeNewFmt();}});}});})();
 function pickStarter(i){const f=(_galSet||FORMATS)[i];if(!f)return;clearDraft();loadDefinition(f.make());closeGallery();}
 /* ---- READY SECTIONS: pre-composed block groups you insert into the current design ---- */
 const SECTIONS=[
@@ -1190,7 +1257,11 @@ function toggleBorderSide(k){const b=cur();if(!b)return;const bd=b.style.border|
 let _secOpen={content:true,tstyle:false,typo:false,box:false};
 let _colSel={};  // per-block selected column chip in "Table style"
 let _tblSel={col:0,row:0};  // custom table: selected column/row for the chip editor
-function sec(id,title,inner,defOpen){const open=(_secOpen[id]===undefined)?!!defOpen:_secOpen[id];return `<details class="psec" ${open?'open':''} ontoggle="_secOpen['${id}']=this.open"><summary>${title}</summary><div class="psecb">${inner}</div></details>`;}
+function sec(id,title,inner,defOpen){const open=(_secOpen[id]===undefined)?!!defOpen:_secOpen[id];return `<details class="psec" ${open?'open':''} ontoggle="secToggle(this,'${id}')"><summary>${title}</summary><div class="psecb">${inner}</div></details>`;}
+function secToggle(el,id){_secOpen[id]=el.open;
+  if(!el.open||!el.parentElement)return;
+  // accordion: opening one section closes its siblings (less to scan at once)
+  el.parentElement.querySelectorAll(":scope > details.psec[open]").forEach(function(d){if(d!==el){d.open=false;}});}
 /* Shared "Table style" UI for the ready tables (Items / Payment / Data Table): header skin,
    line presets, cell padding, number styling — mirrors engine _tbl_skin. */
 function tableSkinUI(sett,o){o=o||{};const hs=sett.headerStyle||{},bo=sett.borders||{},pd=sett.cellPad||{},ns=sett.numStyle||{};
@@ -1239,6 +1310,10 @@ function setRTCol(ci,k,v){const b=cur();if(!b||!b.settings.columns||!b.settings.
 function delRTCol(ci){const b=cur();if(!b||!b.settings.columns)return;b.settings.columns.splice(ci,1);render();renderProps();}
 function addRTCol(field){if(!field)return;const b=cur();if(!b)return;const c=(REPORTSAMPLE.columns||[]).find(x=>x.fieldname===field)||{};if(!b.settings.columns)b.settings.columns=[];b.settings.columns.push({field:field,label:c.label||field,width:null,align:c.align||"left"});render();renderProps();}
 function clearRTCols(){const b=cur();if(!b)return;b.settings.columns=[];render();renderProps();}
+function hideRTCol(field){const b=cur();if(!b)return;const avail=REPORTSAMPLE.columns||[];
+  // "hide" while printing ALL columns: materialize the explicit list = every column except this one
+  b.settings.columns=avail.filter(c=>c.fieldname!==field).map(c=>({field:c.fieldname,label:c.label||c.fieldname,width:null,align:c.align||"left"}));
+  render();renderProps();}
 function addRTColManual(){const el=document.getElementById("rtManualCol");if(!el)return;const raw=(el.value||"").trim();if(!raw)return;const b=cur();if(!b)return;if(!b.settings.columns)b.settings.columns=[];
   raw.split(",").map(x=>x.trim()).filter(Boolean).forEach(function(f){if((b.settings.columns||[]).some(c=>c.field===f))return;const src=(REPORTSAMPLE.columns||[]).find(x=>x.fieldname===f)||{};b.settings.columns.push({field:f,label:src.label||f.replace(/_/g," ").replace(/\b\w/g,c=>c.toUpperCase()),width:null,align:src.align||"left"});});
   el.value="";render();renderProps();}
@@ -1396,6 +1471,11 @@ function renderProps(){const host=document.getElementById("propsBlock"),b=cur();
   else if(t==="report_table"){const avail=REPORTSAMPLE.columns||[];
     h+=`<div class="hint" style="padding:0 0 6px">${avail.length?('This report has <b>'+avail.length+'</b> columns.'):'Pick a report to load its columns.'} With none chosen below, <b>all</b> report columns print.</div>`;
     h+=`<div class="styhead">Columns</div>`;
+    if(!(s.columns||[]).length&&avail.length){
+      h+=`<div class="hint" style="padding:0 0 4px">Printing all columns — hide any to start customizing:</div>`;
+      avail.forEach(function(c){h+=`<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:4px 2px;border-bottom:1px solid var(--line)"><span style="font-size:11.5px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(c.label||c.fieldname)}</span><button class="btn ghost" style="padding:3px 8px;font-size:10.5px;flex:0 0 auto" onclick="hideRTCol('${esc(c.fieldname)}')">✕ hide</button></div>`;});
+      h+=`<div style="height:8px"></div>`;
+    }
     (s.columns||[]).forEach((c,ci)=>{h+=`<div style="margin-bottom:8px;border-bottom:1px solid var(--line);padding-bottom:6px"><div class="row2"><input type="text" value="${esc(c.label||'')}" placeholder="Header label" oninput="setRTCol(${ci},'label',this.value)"><input type="text" value="${c.width==null?'':c.width}" placeholder="W mm" oninput="setRTCol(${ci},'width',this.value)"></div><div class="row2"><select onchange="setRTCol(${ci},'align',this.value)">`+[["left","Left"],["center","Center"],["right","Right"]].map(a=>`<option value="${a[0]}" ${(c.align||'left')===a[0]?'selected':''}>${a[1]}</option>`).join("")+`</select><button class="btn ghost" title="Remove column" onclick="delRTCol(${ci})">✕ remove</button></div><div class="hint" style="padding:2px 0 0">field: <b>${esc(c.field)}</b></div></div>`;});
     const remain=avail.filter(f=>!(s.columns||[]).some(c=>c.field===f.fieldname));
     if(remain.length)h+=`<div class="fld"><label>Add a report column</label><select onchange="addRTCol(this.value)"><option value="">+ Add column…</option>`+remain.map(f=>`<option value="${esc(f.fieldname)}">${esc(f.label||f.fieldname)}</option>`).join("")+`</select></div>`;
