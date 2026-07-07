@@ -203,7 +203,7 @@
 <body>
 <div class="app">
   <div class="top">
-    <div class="brand"><svg width="22" height="22" viewBox="0 0 48 48" fill="none" aria-label="LumenPDF Studio"><rect x="6" y="6" width="7.5" height="38" rx="3.75" fill="#1463FF"/><rect x="18" y="25" width="4.5" height="19" rx="2.25" fill="#7FA8FF"/><rect x="27" y="25" width="7.5" height="19" rx="3.75" fill="#1463FF"/><rect x="39" y="25" width="4.5" height="19" rx="2.25" fill="#1463FF"/></svg> LumenPDF <small>Studio · b47</small></div>
+    <div class="brand"><svg width="22" height="22" viewBox="0 0 48 48" fill="none" aria-label="LumenPDF Studio"><rect x="6" y="6" width="7.5" height="38" rx="3.75" fill="#1463FF"/><rect x="18" y="25" width="4.5" height="19" rx="2.25" fill="#7FA8FF"/><rect x="27" y="25" width="7.5" height="19" rx="3.75" fill="#1463FF"/><rect x="39" y="25" width="4.5" height="19" rx="2.25" fill="#1463FF"/></svg> LumenPDF <small>Studio · b48</small></div>
     <input class="fmt-name" id="fmtName" value="Quotation - Custom" title="Format name">
     <select class="sel" id="targetKindSel" title="Brand a document or a report" onchange="onTargetKind(this.value)"><option value="doctype">Document</option><option value="report">Report</option></select>
     <select class="sel" id="doctypeSel" title="Target DocType" onchange="onDoctype(this.value)"></select>
@@ -702,8 +702,77 @@ const FORMATS=[
  {make:T_ledger,name:"Compact Ledger",desc:"Dense and efficient: fits the most items per page, tax table.",sw:{hdr:"#0F9D7A",hdrH:5,foot:"#F0F3F8"}},
  {make:T_split,name:"Elegant Split",desc:"Violet accents, split rows for parties, taxes and signature.",sw:{hdr:"#6D4AFF",hdrH:6,foot:"#EDE8FF"}},
 ];
+/* ===== Financial report formats (house style from the finance-reports handoff) =====
+   Report mode: the header lockup + accent + orientation + table conventions are the design;
+   the actual columns/rows come from whatever ERPNext report is selected (report_table is dynamic).
+   Operational reports use a left lockup + right filters; statements are centered. */
+function _rptDef(name,accent,orient,footer,blocks){return{name:name,layout:"absolute",target_kind:"report",report_name:state.report||"",target_doctype:state.target||"Report",page:{orientation:orient},header:{enabled:false,height:0,repeat:false,margin:0},footer:footer,watermark:{text:"",color:"#0C1322",opacity:8,size:60},branding:{primary:accent,navy:"#1a2436",font:"Manrope",header_image:"",footer_image:""},blocks:blocks};}
+function _rptFooterL(W,y){return [
+ {type:"divider",region:"footer",settings:{thickness:1,color:"#e7eaef",lstyle:"solid"},pos:{x:16,y:y,w:W,h:null}},
+ {type:"text",region:"footer",settings:{text:"Prepared by Your Firm · Chartered Accountants"},style:{size:7,color:"#98a2b3"},pos:{x:16,y:y+3,w:150,h:null}},
+ {type:"pagenum",region:"footer",settings:{format:"Page {p} of {n}"},style:{size:7,align:"right",color:"#98a2b3"},pos:{x:W-44,y:y+3,w:60,h:null}}];}
+function _rptTable(accent,zebra,x,y,W){return {type:"report_table",region:"body",settings:{columns:[],headerColor:"primary",zebra:zebra,zebraColor:"#fafbfc",headerStyle:{bg:"#ffffff",color:"#98a2b3",weight:"600",size:8},borders:{preset:"rows",w:1,color:"#eef1f5",style:"solid"},cellPad:{y:7,x:10}},pos:{x:x,y:y,w:W,h:null}};}
+/* operational (landscape): left eyebrow + entity + report title, right filters, 2px rule, table */
+function _rptOperational(name,accent,eyebrow){return _rptDef(name,accent,"landscape",{enabled:true,height:14,repeat:true,margin:4},[
+ {type:"row",region:"body",settings:{cols:2,gap:12,width:100,widths:[null,120],cells:[
+   [{type:"text",settings:{text:eyebrow},style:{font:"Manrope",size:8,weight:"700",color:accent,letterSpacing:3}},{type:"heading",settings:{text:"YOUR COMPANY",level:"h2"},style:{font:"Archivo",size:15,weight:"700",color:"#1a2436"}},{type:"report_title",settings:{text:"",showDate:false,titleColor:"#1a2436"},style:{font:"Archivo",size:20,weight:"800"}}],
+   [{type:"report_filters",settings:{heading:"Report",labelColor:accent},style:{align:"right"}}]
+ ]},pos:{x:16,y:14,w:265,h:null}},
+ {type:"divider",region:"body",settings:{thickness:2,color:"#1a2436",lstyle:"solid"},pos:{x:16,y:44,w:265,h:null}},
+ _rptTable(accent,true,16,50,265)
+].concat(_rptFooterL(265,197)));}
+/* statement (portrait): centered entity + accent title + period filters, 2px rule, table */
+function _rptStatement(name,accent){return _rptDef(name,accent,"portrait",{enabled:true,height:14,repeat:true,margin:4},[
+ {type:"heading",region:"body",settings:{text:"YOUR COMPANY",level:"h2"},style:{font:"Archivo",size:16,weight:"700",align:"center",color:"#1a2436"},pos:{x:16,y:16,w:178,h:null}},
+ {type:"report_title",region:"body",settings:{text:"",showDate:false,align:"center",titleColor:accent,titleSize:21},style:{font:"Archivo",weight:"800"},pos:{x:16,y:25,w:178,h:null}},
+ {type:"report_filters",region:"body",settings:{heading:"",labelColor:"#647082"},style:{align:"center"},pos:{x:16,y:34,w:178,h:null}},
+ {type:"divider",region:"body",settings:{thickness:2,color:"#1a2436",lstyle:"solid"},pos:{x:16,y:44,w:178,h:null}},
+ _rptTable(accent,false,16,52,178)
+].concat(_rptFooterL(178,284)));}
+/* 01 Sterling - General Ledger (landscape, teal) */
+function T_r_sterling(){return _rptOperational("Sterling · General Ledger","#0f766e","GENERAL LEDGER");}
+/* 02 Equinox - Trial Balance (landscape, blue, centered) */
+function T_r_equinox(){return _rptDef("Equinox · Trial Balance","#2563a8","landscape",{enabled:true,height:14,repeat:true,margin:4},[
+ {type:"heading",region:"body",settings:{text:"YOUR COMPANY",level:"h2"},style:{font:"Archivo",size:16,weight:"700",align:"center",color:"#1a2436"},pos:{x:16,y:14,w:265,h:null}},
+ {type:"report_title",region:"body",settings:{text:"",showDate:false,align:"center",titleColor:"#2563a8",titleSize:21},style:{font:"Archivo",weight:"800"},pos:{x:16,y:23,w:265,h:null}},
+ {type:"report_filters",region:"body",settings:{heading:"",labelColor:"#647082"},style:{align:"center"},pos:{x:16,y:32,w:265,h:null}},
+ {type:"divider",region:"body",settings:{thickness:2,color:"#1a2436",lstyle:"solid"},pos:{x:16,y:42,w:265,h:null}},
+ _rptTable("#2563a8",true,16,48,265)
+].concat(_rptFooterL(265,197)));}
+/* 03 Horizon - Aged Receivables (landscape, amber) */
+function T_r_horizon(){return _rptOperational("Horizon · Aged Receivables","#b45309","AGED RECEIVABLES");}
+/* 04 Compass - Budget vs Actual (landscape, slate) */
+function T_r_compass(){return _rptOperational("Compass · Budget vs Actual","#445a7a","MANAGEMENT REPORT");}
+/* 05 Summit - Profit & Loss (portrait, green) */
+function T_r_summit(){return _rptStatement("Summit · Profit & Loss","#2f7d4f");}
+/* 06 Keystone - Balance Sheet (portrait, indigo-slate) */
+function T_r_keystone(){return _rptStatement("Keystone · Balance Sheet","#3b4d8f");}
+/* 07 Cascade - Cash Flow (portrait, cyan) */
+function T_r_cascade(){return _rptStatement("Cascade · Cash Flow","#0e7490");}
+/* 08 Harbor - Statement of Account (portrait, teal-green, lettered tile) */
+function T_r_harbor(){return _rptDef("Harbor · Statement of Account","#1f6f5c","portrait",{enabled:true,height:14,repeat:true,margin:4},[
+ {type:"box",region:"body",settings:{html:"<span style=\"display:inline-block;width:22px;height:22px;background:#1f6f5c;color:#fff;border-radius:6px;text-align:center;line-height:22px;font-family:Archivo;font-weight:800\">H</span> <b style=\"font-family:Archivo;font-size:13pt\">YOUR COMPANY</b>"},style:{font:"Manrope",size:9,color:"#1a2436"},pos:{x:16,y:15,w:120,h:null}},
+ {type:"report_title",region:"body",settings:{text:"",showDate:false,align:"right",titleColor:"#1f6f5c",titleSize:16},style:{font:"Archivo",weight:"800"},pos:{x:120,y:15,w:74,h:null}},
+ {type:"divider",region:"body",settings:{thickness:2,color:"#1a2436",lstyle:"solid"},pos:{x:16,y:30,w:178,h:null}},
+ {type:"report_filters",region:"body",settings:{heading:"Statement",labelColor:"#1f6f5c"},style:{},pos:{x:16,y:36,w:178,h:null}},
+ _rptTable("#1f6f5c",true,16,50,178)
+].concat(_rptFooterL(178,284)));}
+const REPORTFORMATS=[
+ {make:T_r_sterling,name:"Sterling",desc:"General Ledger (landscape): teal, left lockup, account-detail table with running balance.",sw:{hdr:"#0f766e",hdrH:6,foot:"#eef1f5"}},
+ {make:T_r_equinox,name:"Equinox",desc:"Trial Balance (landscape): blue, centered header, debit/credit columns.",sw:{hdr:"#2563a8",hdrH:6,foot:"#eef1f5"}},
+ {make:T_r_horizon,name:"Horizon",desc:"Aged Receivables (landscape): amber, ageing-bucket columns, totals row.",sw:{hdr:"#b45309",hdrH:6,foot:"#fbf3ea"}},
+ {make:T_r_compass,name:"Compass",desc:"Budget vs Actual (landscape): slate, variance columns, management report.",sw:{hdr:"#445a7a",hdrH:6,foot:"#eef1f5"}},
+ {make:T_r_summit,name:"Summit",desc:"Profit & Loss (portrait): green, centered statement, comparative figures.",sw:{hdr:"#2f7d4f",hdrH:6,foot:"#f5f8f6"}},
+ {make:T_r_keystone,name:"Keystone",desc:"Balance Sheet (portrait): indigo-slate, centered, double-rule totals.",sw:{hdr:"#3b4d8f",hdrH:6,foot:"#eef1f5"}},
+ {make:T_r_cascade,name:"Cascade",desc:"Cash Flow (portrait): cyan, centered, indirect-method sections.",sw:{hdr:"#0e7490",hdrH:6,foot:"#eef1f5"}},
+ {make:T_r_harbor,name:"Harbor",desc:"Statement of Account (portrait): teal-green, lettered tile, running balance.",sw:{hdr:"#1f6f5c",hdrH:6,foot:"#f2f7f5"}},
+];
 function _swatch(s){return `<div class="gswatch"><div style="height:${s.sw.hdrH}px;background:${s.sw.hdr}"></div><div style="flex:1;padding:6px 9px;display:flex;flex-direction:column;gap:3px;justify-content:center">`+[75,92,58,84].map(function(w){return `<div style="height:3px;width:${w}%;background:#E4E8F0;border-radius:2px"></div>`;}).join("")+`</div><div style="height:5px;background:${s.sw.foot}"></div></div>`;}
-function openGallery(){document.getElementById("gcards").innerHTML=FORMATS.map(function(s,i){return `<div class="gcard" onclick="pickStarter(${i})">`+_swatch(s)+`<div class="gt">${esc(s.name)}</div><div class="gd">${esc(s.desc)}</div></div>`;}).join("");document.getElementById("gallery").style.display="flex";
+let _galSet=null;  // which set the open gallery is showing (FORMATS or REPORTFORMATS)
+function openGallery(){const isRep=state.targetKind==="report";_galSet=isRep?REPORTFORMATS:FORMATS;
+  const h3=document.querySelector("#gallery h3");if(h3)h3.textContent=isRep?"Start from a report format":"Start from a template";
+  document.getElementById("gcards").innerHTML=_galSet.map(function(s,i){return `<div class="gcard" onclick="pickStarter(${i})">`+_swatch(s)+`<div class="gt">${esc(s.name)}</div><div class="gd">${esc(s.desc)}</div></div>`;}).join("");document.getElementById("gallery").style.display="flex";
+  if(isRep){const gs=document.getElementById("gsite");if(gs)gs.innerHTML="";return;}  // site-templates list is document-oriented
   // site templates: formats published to the gallery (visible to every builder user on this site)
   const host=document.getElementById("gsite");if(host){host.innerHTML="";
     rpc("brandpdf.api.gallery_list").then(function(rows){rows=rows||[];if(!rows.length){host.innerHTML=EMBED?'<div class="hint" style="padding:6px 0 0">No site templates yet — open <b>⚙ Formats</b> and click “▦ To gallery” on a format you like.</div>':"";return;}
@@ -714,7 +783,7 @@ function closeGallery(){document.getElementById("gallery").style.display="none";
 (function(){function bd(id,close){var el=document.getElementById(id);if(el)el.addEventListener("mousedown",function(e){if(e.target===el)close();});}
   bd("gallery",closeGallery);bd("fmtmgr",function(){closeFmtMgr();});
   document.addEventListener("keydown",function(e){if(e.key==="Escape"){var g=document.getElementById("gallery"),f=document.getElementById("fmtmgr");if(g&&g.style.display!=="none"&&g.style.display!=="")closeGallery();if(f&&f.style.display!=="none"&&f.style.display!=="")closeFmtMgr();}});})();
-function pickStarter(i){const f=FORMATS[i];if(!f)return;clearDraft();loadDefinition(f.make());closeGallery();}
+function pickStarter(i){const f=(_galSet||FORMATS)[i];if(!f)return;clearDraft();loadDefinition(f.make());closeGallery();}
 /* ---- READY SECTIONS: pre-composed block groups you insert into the current design ---- */
 const SECTIONS=[
  {key:"parties",label:"Customer | Company",desc:"Two columns: customer left, your company right",make:function(){return[
