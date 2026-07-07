@@ -329,5 +329,14 @@ def report_sample(report_name, filters=None, limit=50):
         limit = max(1, min(200, int(limit)))
     except Exception:
         limit = 50
-    rdoc, _land = _build_report_doc(report_name, filters, limit=limit)
-    return rdoc.get("_bpdf_report")
+    try:
+        rdoc, _land = _build_report_doc(report_name, filters, limit=limit)
+        return rdoc.get("_bpdf_report")
+    except Exception:
+        # Reports with mandatory filters throw on an empty run — don't break the builder; return
+        # the shell so the designer can still add a report table (all columns render at print time).
+        label = frappe.db.get_value("Report", report_name, "report_name") or report_name
+        return {"name": label, "columns": [], "rows": [], "filters": _filter_summary(filters),
+                "printed_on": frappe.utils.formatdate(frappe.utils.nowdate(), "medium"),
+                "native_html": "", "truncated": False,
+                "note": "Preview needs filters — run this report in ERPNext to see sample rows."}

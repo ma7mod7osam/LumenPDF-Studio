@@ -202,9 +202,11 @@
 <body>
 <div class="app">
   <div class="top">
-    <div class="brand"><svg width="22" height="22" viewBox="0 0 48 48" fill="none" aria-label="LumenPDF Studio"><rect x="6" y="6" width="7.5" height="38" rx="3.75" fill="#1463FF"/><rect x="18" y="25" width="4.5" height="19" rx="2.25" fill="#7FA8FF"/><rect x="27" y="25" width="7.5" height="19" rx="3.75" fill="#1463FF"/><rect x="39" y="25" width="4.5" height="19" rx="2.25" fill="#1463FF"/></svg> LumenPDF <small>Studio · b43</small></div>
+    <div class="brand"><svg width="22" height="22" viewBox="0 0 48 48" fill="none" aria-label="LumenPDF Studio"><rect x="6" y="6" width="7.5" height="38" rx="3.75" fill="#1463FF"/><rect x="18" y="25" width="4.5" height="19" rx="2.25" fill="#7FA8FF"/><rect x="27" y="25" width="7.5" height="19" rx="3.75" fill="#1463FF"/><rect x="39" y="25" width="4.5" height="19" rx="2.25" fill="#1463FF"/></svg> LumenPDF <small>Studio · b44</small></div>
     <input class="fmt-name" id="fmtName" value="Quotation - Custom" title="Format name">
+    <select class="sel" id="targetKindSel" title="Brand a document or a report" onchange="onTargetKind(this.value)"><option value="doctype">Document</option><option value="report">Report</option></select>
     <select class="sel" id="doctypeSel" title="Target DocType" onchange="onDoctype(this.value)"></select>
+    <select class="sel" id="reportSel" title="Target Report" style="display:none" onchange="onReport(this.value)"></select>
     <select class="sel" id="openSel" title="Open an existing format" onchange="openFormat(this.value)"><option value="">Open…</option></select>
     <button class="btn ghost" onclick="newFormat()" title="Start a new blank format">+ New</button>
     <button class="btn ghost" onclick="openGallery()" title="Start from a ready-made design">▦ Templates</button>
@@ -300,6 +302,8 @@ const BASE_SAMPLE={name:"SAL-QTN-2026-00006",transaction_date:"25-06-2026",valid
     payment_schedule:[{idx:1,payment_term:"Advance",due_date:"25-06-2026",invoice_portion:"50.0",payment_amount:"BHD 926.750"},{idx:2,payment_term:"On Delivery",due_date:"25-07-2026",invoice_portion:"50.0",payment_amount:"BHD 926.750"}]
   }};
 let SAMPLE=JSON.parse(JSON.stringify(BASE_SAMPLE)); let FIELDVALS=null;
+// Report preview data (columns/rows), loaded from brandpdf.report.report_sample when a report is picked.
+let REPORTSAMPLE={name:"Report",columns:[],rows:[],filters:[],printed_on:"",note:""};
 const FIELDS=[{f:"name",l:"Quotation No",v:SAMPLE.name},{f:"customer_name",l:"Customer Name",v:SAMPLE.customer_name},{f:"transaction_date",l:"Date",v:SAMPLE.transaction_date},{f:"valid_till",l:"Valid Till",v:SAMPLE.valid_till},{f:"grand_total",l:"Grand Total",v:SAMPLE.grand_total},{f:"total",l:"Subtotal",v:SAMPLE.total},{f:"company",l:"Company",v:SAMPLE.company}];
 let DOCFIELDS=FIELDS.slice();  // replaced with the real doctype field list when embedded in ERPNext
 // child tables + their fields (replaced with the real doctype meta when embedded); used by the Data Table block
@@ -313,12 +317,14 @@ function fieldVal(f){let v;if(FIELDVALS&&FIELDVALS[f]!==undefined)v=FIELDVALS[f]
   if(d&&/Editor|HTML|Markdown/.test(d.t||""))return String(v==null?"":v).replace(/<[^>]*>/g," ").replace(/\s+/g," ").trim();  // rich fields: plain preview (PDF prints styled)
   return v;}
 const ICONS={heading:'<path d="M6 4v16M18 4v16M6 12h12"/>',text:'<line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="14" y2="17"/>',field:'<rect x="3" y="8" width="18" height="8" rx="2"/><line x1="7" y1="12" x2="11" y2="12"/>',image:'<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M21 17l-5-5-4 4-2-2-4 4"/>',divider:'<line x1="4" y1="12" x2="20" y2="12"/>',box:'<rect x="4" y="5" width="16" height="14" rx="2"/>',row:'<rect x="3" y="5" width="8" height="14" rx="1"/><rect x="13" y="5" width="8" height="14" rx="1"/>',table:'<rect x="3" y="4" width="18" height="16" rx="1"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="9" x2="9" y2="20"/>',header_banner:'<rect x="3" y="5" width="18" height="6" rx="1"/><line x1="3" y1="15" x2="14" y2="15"/>',footer_banner:'<line x1="10" y1="5" x2="21" y2="5"/><rect x="3" y="13" width="18" height="6" rx="1"/>',customer:'<circle cx="12" cy="8" r="3"/><path d="M5 20c0-3.3 3.1-6 7-6s7 2.7 7 6"/>',items:'<rect x="3" y="4" width="18" height="16" rx="1"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="9" x2="9" y2="20"/>',datatable:'<rect x="3" y="4" width="18" height="16" rx="1"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="4" x2="9" y2="20"/><line x1="15" y1="4" x2="15" y2="20"/>',totals:'<line x1="13" y1="6" x2="20" y2="6"/><rect x="13" y="15" width="7" height="4" rx="1"/><path d="M4 6h6l-6 7h6"/>',payment_schedule:'<rect x="3" y="5" width="18" height="16" rx="1"/><line x1="3" y1="9" x2="21" y2="9"/>',terms:'<line x1="5" y1="6" x2="19" y2="6"/><line x1="5" y1="10" x2="19" y2="10"/><line x1="5" y1="14" x2="15" y2="14"/>',signature:'<path d="M4 17c4 0 5-9 8-9s2 6 4 6 2-3 4-3"/><line x1="3" y1="21" x2="21" y2="21"/>',pagenum:'<path d="M9 4v16M15 4v16M4 9h16M4 15h16"/>',title:'<line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="13" y2="12"/>'};
-const META={heading:{l:"Heading"},text:{l:"Text"},field:{l:"Field"},image:{l:"Image"},divider:{l:"Line"},box:{l:"Box"},row:{l:"Row / Columns"},table:{l:"Table"},pagenum:{l:"Page No"},header_banner:{l:"Header"},customer:{l:"Customer"},items:{l:"Items"},datatable:{l:"Data Table"},totals:{l:"Totals"},payment_schedule:{l:"Payment"},terms:{l:"Terms"},signature:{l:"Signature"},footer_banner:{l:"Footer"},title:{l:"Title"}};
+const META={heading:{l:"Heading"},text:{l:"Text"},field:{l:"Field"},image:{l:"Image"},divider:{l:"Line"},box:{l:"Box"},row:{l:"Row / Columns"},table:{l:"Table"},pagenum:{l:"Page No"},header_banner:{l:"Header"},customer:{l:"Customer"},items:{l:"Items"},datatable:{l:"Data Table"},totals:{l:"Totals"},payment_schedule:{l:"Payment"},terms:{l:"Terms"},signature:{l:"Signature"},footer_banner:{l:"Footer"},title:{l:"Title"},report_title:{l:"Report Title"},report_filters:{l:"Filters"},report_table:{l:"Report Table"}};
+ICONS.report_title=ICONS.title;ICONS.report_filters=ICONS.terms;ICONS.report_table=ICONS.datatable;
 const ELEM=["heading","text","field","image","divider","box","row","table","pagenum"];
 const ROWCHILDTYPES=["heading","text","field","image","divider","box","customer","signature","table","datatable","totals"];
 const BLOCKS=["title","customer","items","datatable","totals","payment_schedule","terms","signature"];
+const REPORTBLOCKS=["report_title","report_filters","report_table"];  // shown when the target is a Report
 function base(){return{align:"",size:"",weight:"",italic:false,color:"",bg:"",pad:"",border:{on:false,w:1,color:"#cfe5f6",style:"solid",radius:0}};}
-const DSET={header_banner:()=>({}),footer_banner:()=>({}),title:()=>({text:"QUOTATION",showArabic:true,arabic:"عرض سعر",meta:{name:true,date:true,valid_till:true},align:"split"}),customer:()=>({heading:"Quotation To"}),items:()=>({cols:{desc:true,qty:true,rate:true,amount:true},widths:{num:8,item:null,qty:null,rate:null,amount:null},zebra:true,headerColor:"primary"}),datatable:()=>({table:"items",child_doctype:"",columns:[{field:"idx",label:"#",width:8,align:"right"},{field:"item_code",label:"Item Code",width:null,align:"left"},{field:"item_name",label:"Item",width:null,align:"left"},{field:"qty",label:"Qty",width:22,align:"right"},{field:"rate",label:"Rate",width:28,align:"right"},{field:"amount",label:"Amount",width:30,align:"right"}],headerColor:"primary",zebra:true}),totals:()=>({grandColor:"primary"}),payment_schedule:()=>({}),terms:()=>({heading:"Terms & Conditions"}),signature:()=>({label:"Authorized Signature"}),heading:()=>({text:"Section heading",level:"h2"}),text:()=>({text:"Add your text here."}),field:()=>({field:"customer_name",prefix:""}),image:()=>({src:"",width:100}),divider:()=>({thickness:1,color:"#cfe5f6",lstyle:"solid"}),box:()=>({html:"<b>Note</b><br>Bank: BSTC W.L.L &middot; IBAN BH00 XXXX"}),row:()=>({cols:2,gap:6,width:100,widths:[null,null],cells:[[],[]]}),table:()=>({cols:["Specification","Value"],rows:[["Warranty","1 Year"],["Lead time","2 weeks"]],headerBg:"primary"}),pagenum:()=>({format:"Page {p} of {n}"})};
+const DSET={header_banner:()=>({}),footer_banner:()=>({}),title:()=>({text:"QUOTATION",showArabic:true,arabic:"عرض سعر",meta:{name:true,date:true,valid_till:true},align:"split"}),customer:()=>({heading:"Quotation To"}),items:()=>({cols:{desc:true,qty:true,rate:true,amount:true},widths:{num:8,item:null,qty:null,rate:null,amount:null},zebra:true,headerColor:"primary"}),datatable:()=>({table:"items",child_doctype:"",columns:[{field:"idx",label:"#",width:8,align:"right"},{field:"item_code",label:"Item Code",width:null,align:"left"},{field:"item_name",label:"Item",width:null,align:"left"},{field:"qty",label:"Qty",width:22,align:"right"},{field:"rate",label:"Rate",width:28,align:"right"},{field:"amount",label:"Amount",width:30,align:"right"}],headerColor:"primary",zebra:true}),totals:()=>({grandColor:"primary"}),payment_schedule:()=>({}),terms:()=>({heading:"Terms & Conditions"}),signature:()=>({label:"Authorized Signature"}),heading:()=>({text:"Section heading",level:"h2"}),text:()=>({text:"Add your text here."}),field:()=>({field:"customer_name",prefix:""}),image:()=>({src:"",width:100}),divider:()=>({thickness:1,color:"#cfe5f6",lstyle:"solid"}),box:()=>({html:"<b>Note</b><br>Bank: BSTC W.L.L &middot; IBAN BH00 XXXX"}),row:()=>({cols:2,gap:6,width:100,widths:[null,null],cells:[[],[]]}),table:()=>({cols:["Specification","Value"],rows:[["Warranty","1 Year"],["Lead time","2 weeks"]],headerBg:"primary"}),pagenum:()=>({format:"Page {p} of {n}"}),report_title:()=>({text:"",showDate:true,align:"left"}),report_filters:()=>({heading:"Filters"}),report_table:()=>({columns:[],headerColor:"primary",zebra:true})};
 function dstyle(t){const s=base();if(t==="heading"){s.size=15;s.weight="700";}if(t==="text"||t==="field")s.size=9;if(t==="pagenum"){s.size=8;s.align="center";}if(t==="box"){s.pad=3;s.bg="#f4f8fc";s.size=8;s.border={on:true,w:1,color:"#cfe5f6",style:"solid",radius:6};}return s;}
 let idc=1;
 function _regionByY(pos){var Hh=30,Fh=32;try{if(state&&state.header)Hh=state.header.enabled?state.header.height:0;if(state&&state.footer)Fh=state.footer.enabled?state.footer.height:0;}catch(e){}var y=(pos&&pos.y)||0;return (Hh&&y<Hh)?"header":(Fh&&y>=PH()-Fh)?"footer":"body";}
@@ -404,11 +410,22 @@ const R={
       if(tok)return `<td data-td="1" data-r="${ri}" data-c="${ci}" style="${css}"><span style="border-bottom:1px dashed #7FA8FF" title="${esc(v)} — bound to the document field">${esc(fieldVal(tok[1]))}</span></td>`;
       return `<td data-td="1" data-r="${ri}" data-c="${ci}" contenteditable style="${css}">${esc(v)}</td>`;}).join("")+`</tr>`;}).join("");
     return h+`</tbody></table>`;},
-  pagenum:(s)=>{const pg=window._pg||{p:1,n:1};return esc((s.format||"Page {p} of {n}").replace("{p}",pg.p).replace("{n}",pg.n));}
+  pagenum:(s)=>{const pg=window._pg||{p:1,n:1};return esc((s.format||"Page {p} of {n}").replace("{p}",pg.p).replace("{n}",pg.n));},
+  report_title:(s,b)=>{const tc=HX.test(s.titleColor||'')?s.titleColor:b.navy;const tsz=parseFloat(s.titleSize);const tszc=(tsz&&!isNaN(tsz))?`font-size:${Math.min(72,Math.max(6,tsz))}pt;`:'';const t=esc(s.text||REPORTSAMPLE.name||"Report");let h=`<div class="bs-title" style="color:${tc};${tszc}">${t}</div>`;if(s.showDate!==false&&REPORTSAMPLE.printed_on)h+=`<div style="color:${b.primary};font-size:8pt;margin-top:1mm">${esc(REPORTSAMPLE.printed_on)}</div>`;if(s.align==="center")return `<div style="text-align:center">${h}</div>`;return h;},
+  report_filters:(s,b)=>{const fl=(REPORTSAMPLE.filters||[]).filter(f=>f&&f.value!==''&&f.value!=null);const lc=HX.test(s.labelColor||'')?s.labelColor:b.primary;const head=esc(s.heading||"Filters");if(!fl.length)return `<div style="border:1px dashed #b9c6e0;border-radius:4px;padding:6px;font-size:7.5pt;color:#9aa6c2">Filters summary — shows the filters the report is printed with.</div>`;const chips=fl.map(f=>`<span style="display:inline-block;margin:0 6px 4px 0;font-size:7.5pt"><b style="color:${lc}">${esc(f.label)}:</b> ${esc(f.value)}</span>`).join("");return `<div style="line-height:1.5"><span class="bs-sec-lbl" style="color:${b.primary}">${head}</span> ${chips}</div>`;},
+  report_table:(s,b)=>{const all=REPORTSAMPLE.columns||[];const sel=(s.columns||[]).filter(c=>c&&c.field);let cols;if(sel.length){const by={};all.forEach(c=>by[c.fieldname]=c);cols=sel.map(c=>{const src=by[c.field]||{};return{field:c.field,label:c.label||src.label||c.field,align:c.align||src.align||'left',width:c.width};});}else{cols=all.map(c=>({field:c.fieldname,label:c.label||c.fieldname,align:c.align||'left',width:null}));}
+    const rows=REPORTSAMPLE.rows||[];const zc=s.zebraColor||"#eef6fc";const hc=s.headerColor==="navy"?b.navy:b.primary;const sk=tblSkin(s,b,hc);const thPad=sk.pad||"padding:6px 8px;";const thFs=(s.headerStyle&&s.headerStyle.size)?"":"font-size:7.5pt;";
+    if(!cols.length)return `<div style="border:1px dashed #b9c6e0;border-radius:4px;padding:10px;font-size:8pt;color:#9aa6c2">Report table — pick a report to load its columns${REPORTSAMPLE.note?(' · '+esc(REPORTSAMPLE.note)):''}. Prints all report columns when none are chosen.</div>`;
+    const cg=`<colgroup>`+cols.map(c=>`<col style="width:${c.width&&!isNaN(c.width)?(+c.width)+'mm':'auto'}">`).join("")+`</colgroup>`;
+    const th=skinHeads(cols.map(c=>`<th style="${sk.th}${sk.th.indexOf('color:')<0?'color:#fff;':''}font-weight:600;${thFs}${thPad}${sk.tdBorder}text-align:${c.align||'left'};word-wrap:break-word">${esc(c.label||c.field)}</th>`).join(""),sk);
+    const dtPad=sk.pad||"padding:6px 8px;";const dtBor=sk.tdBorder||"border-bottom:1px solid #cfe5f6;";
+    let body;if(!rows.length){body=[0,1].map(i=>`<tr${s.zebra&&i%2?` style="background:${zc}"`:''}>`+cols.map(c=>`<td style="${dtPad}${dtBor}text-align:${c.align||'left'};color:#9aa6c2;word-wrap:break-word">«${esc(c.label||c.field)}»</td>`).join("")+`</tr>`).join("");}
+    else{body=rows.map((r,i)=>`<tr${s.zebra&&i%2?` style="background:${zc}"`:''}>`+cols.map(c=>`<td style="${dtPad}${dtBor}text-align:${c.align||'left'};${c.align==='right'?sk.num:''}word-wrap:break-word">${esc(r[c.field]!==undefined?r[c.field]:'')}</td>`).join("")+`</tr>`).join("");}
+    return `<table style="width:100%;border-collapse:collapse;font-size:8pt;table-layout:fixed;${sk.table}">${cg}<thead><tr>${th}</tr></thead><tbody>${body}</tbody></table>`;}
 };
 
 let selId=null,tab="block",scale=.8;
-var state={layout:"absolute",target:"Quotation",page:{orientation:"portrait"},header:{enabled:true,height:30,repeat:true,margin:4},footer:{enabled:true,height:32,repeat:true,margin:4},watermark:{text:"",color:"#0C1322",opacity:8,size:60},branding:{primary:"#1463FF",navy:"#0C1322",font:"Plus Jakarta Sans",header_image:"",footer_image:""},blocks:[
+var state={layout:"absolute",target:"Quotation",targetKind:"doctype",report:"",page:{orientation:"portrait"},header:{enabled:true,height:30,repeat:true,margin:4},footer:{enabled:true,height:32,repeat:true,margin:4},watermark:{text:"",color:"#0C1322",opacity:8,size:60},branding:{primary:"#1463FF",navy:"#0C1322",font:"Plus Jakarta Sans",header_image:"",footer_image:""},blocks:[
   mk("title",{x:14,y:38,w:182,h:null}),mk("customer",{x:14,y:62,w:120,h:null}),
   mk("items",{x:14,y:90,w:182,h:null}),mk("totals",{x:104,y:172,w:92,h:null}),mk("payment_schedule",{x:14,y:200,w:182,h:null}),
   mk("terms",{x:14,y:238,w:140,h:null})]};
@@ -925,9 +942,10 @@ function addBlock(t){
 function select(id){if(id===selId){renderProps();return;}selId=id;tab="block";setTab("block",true);render();renderProps();}
 function del(e,id){if(e)e.stopPropagation();if(state.blocks.some(x=>x.id===id)){state.blocks=state.blocks.filter(x=>x.id!==id);}else{for(var i=0;i<state.blocks.length;i++){var b=state.blocks[i];if(b.type==="row"&&b.settings&&b.settings.cells){var done=false;for(var j=0;j<b.settings.cells.length;j++){var k=b.settings.cells[j].findIndex(c=>c&&c.id===id);if(k>=0){b.settings.cells[j].splice(k,1);done=true;break;}}if(done)break;}}}if(selId===id)selId=null;render();renderProps();}
 function toFront(e,id){if(e)e.stopPropagation();const i=state.blocks.findIndex(x=>x.id===id);if(i>=0){const[m]=state.blocks.splice(i,1);state.blocks.push(m);render();}}
-function buildPalette(){const groups=[["Elements",ELEM],["Document blocks",BLOCKS.filter(t=>t!=="title")]];
+function buildPalette(){const isRep=state.targetKind==="report";
+  const groups=isRep?[["Elements",ELEM],["Report blocks",REPORTBLOCKS]]:[["Elements",ELEM],["Document blocks",BLOCKS.filter(t=>t!=="title")]];
   let h=groups.map(g=>`<div class="pgrp">${g[0]}</div><div class="prow">`+g[1].map(t=>`<div class="pblock" draggable="true" ondragstart="event.dataTransfer.setData('text/bpdf','${t}')" onclick="addBlock('${t}')" title="Add or drag ${META[t].l}"><svg viewBox="0 0 24 24">${ICONS[t]||ICONS.text}</svg><span>${META[t].l}</span></div>`).join("")+`</div>`).join("");
-  h+=`<div class="pgrp">Ready sections</div>`+SECTIONS.map(s=>`<div class="psec" onclick="addSection('${s.key}')" title="${esc(s.desc)}"><b>${esc(s.label)}</b><span>${esc(s.desc)}</span></div>`).join("");
+  if(!isRep)h+=`<div class="pgrp">Ready sections</div>`+SECTIONS.map(s=>`<div class="psec" onclick="addSection('${s.key}')" title="${esc(s.desc)}"><b>${esc(s.label)}</b><span>${esc(s.desc)}</span></div>`).join("");
   document.getElementById("palette").innerHTML=h;}
 /* drag a palette item onto the page */
 (function(){const paper=document.getElementById("paper");
@@ -998,6 +1016,11 @@ function setDT(k,v){const b=cur();if(!b)return;b.settings[k]=v;if(k==="table"){c
 function setDTCol(ci,k,v){const b=cur();if(!b||!b.settings.columns||!b.settings.columns[ci])return;if(k==="width"){const n=parseFloat(v);b.settings.columns[ci].width=(v===""||isNaN(n))?null:n;}else b.settings.columns[ci][k]=v;render();}
 function delDTCol(ci){const b=cur();if(!b||!b.settings.columns)return;b.settings.columns.splice(ci,1);render();renderProps();}
 function addDTCol(field){if(!field)return;const b=cur();if(!b)return;const tb=CTABLES.find(x=>x.fieldname===b.settings.table)||{fields:[]};const f=(tb.fields||[]).find(x=>x.fieldname===field);if(!b.settings.columns)b.settings.columns=[];b.settings.columns.push({field:field,label:f?f.label:field,width:null,align:"left"});render();renderProps();}
+// Report Table column helpers (columns come from REPORTSAMPLE.columns; empty = print all columns)
+function setRTCol(ci,k,v){const b=cur();if(!b||!b.settings.columns||!b.settings.columns[ci])return;if(k==="width"){const n=parseFloat(v);b.settings.columns[ci].width=(v===""||isNaN(n))?null:n;}else b.settings.columns[ci][k]=v;render();}
+function delRTCol(ci){const b=cur();if(!b||!b.settings.columns)return;b.settings.columns.splice(ci,1);render();renderProps();}
+function addRTCol(field){if(!field)return;const b=cur();if(!b)return;const c=(REPORTSAMPLE.columns||[]).find(x=>x.fieldname===field)||{};if(!b.settings.columns)b.settings.columns=[];b.settings.columns.push({field:field,label:c.label||field,width:null,align:c.align||"left"});render();renderProps();}
+function clearRTCols(){const b=cur();if(!b)return;b.settings.columns=[];render();renderProps();}
 // Row / Columns block helpers (nested children live in settings.cells[i])
 function rowControls(b){const s=b.settings;const cols=Math.max(1,Math.min(4,+s.cols||2));
   let h=`<div class="fld"><label>Columns</label><div class="seg">`+[2,3,4].map(n=>`<button class="${cols===n?'on':''}" onclick="setRowCols(${n})">${n}</button>`).join("")+`</div></div>`;
@@ -1137,6 +1160,23 @@ function renderProps(){const host=document.getElementById("propsBlock"),b=cur();
       +`<div class="fld"><label>Grand size (pt)</label><input type="text" value="${s.grandSize==null?'':s.grandSize}" placeholder="10" oninput="setSNum('grandSize',this.value)"></div></div>`;}
   else if(t==="terms"){h+=tx("Heading","heading",s.heading);}
   else if(t==="signature"){h+=tx("Label","label",s.label);}
+  else if(t==="report_title"){h+=tx("Title text (blank = report name)","text",s.text==null?'':s.text);h+=ck("Show print date","showDate",s.showDate!==false);h+=sg("Layout","align",s.align,[["left","Left"],["center","Centered"]]);
+    const cfl=(l,val,key,ph,fb)=>`<div class="fld"><label>${l}</label><div class="color"><input type="color" value="${HX.test(val||'')?val:fb}" oninput="setS('${key}',this.value)"><input type="text" value="${esc(val||'')}" placeholder="${ph}" oninput="setS('${key}',this.value)"></div></div>`;
+    h+=`<div class="row2">`+cfl("Title color",s.titleColor,"titleColor","theme navy","#0C1322")+`<div class="fld"><label>Title size (pt)</label><input type="text" value="${s.titleSize==null?'':s.titleSize}" placeholder="inherit" oninput="setSNum('titleSize',this.value)"></div></div>`;}
+  else if(t==="report_filters"){h+=tx("Heading","heading",s.heading);
+    const cfl=(l,val,key,ph,fb)=>`<div class="fld"><label>${l}</label><div class="color"><input type="color" value="${HX.test(val||'')?val:fb}" oninput="setS('${key}',this.value)"><input type="text" value="${esc(val||'')}" placeholder="${ph}" oninput="setS('${key}',this.value)"></div></div>`;
+    h+=cfl("Label color",s.labelColor,"labelColor","theme color","#1463FF");
+    h+=`<div class="hint" style="padding:6px 0 0">Prints one chip per active report filter at print time.</div>`;}
+  else if(t==="report_table"){const avail=REPORTSAMPLE.columns||[];
+    h+=`<div class="hint" style="padding:0 0 6px">${avail.length?('This report has <b>'+avail.length+'</b> columns.'):'Pick a report to load its columns.'} With none chosen below, <b>all</b> report columns print.</div>`;
+    h+=`<div class="styhead">Columns</div>`;
+    (s.columns||[]).forEach((c,ci)=>{h+=`<div style="margin-bottom:8px;border-bottom:1px solid var(--line);padding-bottom:6px"><div class="row2"><input type="text" value="${esc(c.label||'')}" placeholder="Header label" oninput="setRTCol(${ci},'label',this.value)"><input type="text" value="${c.width==null?'':c.width}" placeholder="W mm" oninput="setRTCol(${ci},'width',this.value)"></div><div class="row2"><select onchange="setRTCol(${ci},'align',this.value)">`+[["left","Left"],["center","Center"],["right","Right"]].map(a=>`<option value="${a[0]}" ${(c.align||'left')===a[0]?'selected':''}>${a[1]}</option>`).join("")+`</select><button class="btn ghost" title="Remove column" onclick="delRTCol(${ci})">✕ remove</button></div><div class="hint" style="padding:2px 0 0">field: <b>${esc(c.field)}</b></div></div>`;});
+    const remain=avail.filter(f=>!(s.columns||[]).some(c=>c.field===f.fieldname));
+    h+=`<div class="fld"><label>Add a report column</label><select onchange="addRTCol(this.value)"><option value="">+ Add column…</option>`+remain.map(f=>`<option value="${esc(f.fieldname)}">${esc(f.label||f.fieldname)}</option>`).join("")+`</select></div>`;
+    if((s.columns||[]).length)h+=`<button class="btn ghost" style="width:100%;margin-bottom:6px" onclick="clearRTCols()">Use all report columns</button>`;
+    h+=ck("Zebra rows","zebra",s.zebra);
+    if(s.zebra)h+=`<div class="fld"><label>Zebra color</label><div class="color"><input type="color" value="${s.zebraColor||'#eef6fc'}" oninput="setS('zebraColor',this.value)"><input type="text" value="${esc(s.zebraColor||'')}" placeholder="#eef6fc" oninput="setS('zebraColor',this.value)"></div></div>`;
+    h+=sg("Header color","headerColor",s.headerColor,[["primary","Primary"],["navy","Navy"]]);}
   else if(t==="row"){h+=rowControls(b);}
   else if(t==="header_banner"||t==="footer_banner"){h+=`<div class="noselect" style="padding:14px 0">Uses the banner image from the Branding tab.</div>`;}
   let tstyle="";
@@ -1144,6 +1184,7 @@ function renderProps(){const host=document.getElementById("propsBlock"),b=cur();
   else if(t==="payment_schedule"){h+=tx("Heading","heading",s.heading==null?"":s.heading);
     tstyle=sec("tstyle","Table style",tableSkinUI(s,{id:b.id,zebra:true,columns:[{k:"num",l:"#"},{k:"term",l:"Term"},{k:"due",l:"Due"},{k:"pct",l:"Portion"},{k:"amount",l:"Amount"}]}));}
   else if(t==="datatable")tstyle=sec("tstyle","Table style",tableSkinUI(s,{id:b.id,num:true,zebra:false}));
+  else if(t==="report_table")tstyle=sec("tstyle","Table style",tableSkinUI(s,{id:b.id,num:true,zebra:false}));
   const content=sec("content","Content",h,true);
   if(isNested(b)){  // a block living inside a Row column: only its own content + style, no placement
     let out=ptitle+content+tstyle;
@@ -1271,7 +1312,7 @@ function setLeft(c){leftCollapsed=c;applyCols();const ex=document.getElementById
 function setRight(c){rightCollapsed=c;applyCols();const ex=document.getElementById("rightExpand");if(ex)ex.style.display=c?"flex":"none";try{localStorage.setItem("brandpdf_rightcol",c?"1":"0");}catch(e){}}
 function toggleLeft(){setLeft(!leftCollapsed);}
 function toggleRight(){setRight(!rightCollapsed);}
-function definition(){return{name:document.getElementById("fmtName").value,layout:"absolute",target_doctype:state.target,page:state.page,header:state.header,footer:state.footer,watermark:state.watermark,branding:state.branding,blocks:state.blocks.map(function(b){var o={type:b.type,settings:b.settings,style:b.style,pos:b.pos,float:b.float||false,region:b.region||"body",cond:b.cond||null};if(b.type==="row"&&b.settings&&b.settings.cells){o.settings=Object.assign({},b.settings,{cells:b.settings.cells.map(function(cell){return (cell||[]).map(function(c){return{type:c.type,settings:c.settings,style:c.style};});})});}return o;})};}
+function definition(){return{name:document.getElementById("fmtName").value,layout:"absolute",target_doctype:state.target,target_kind:state.targetKind||"doctype",report_name:(state.targetKind==="report")?(state.report||""):"",page:state.page,header:state.header,footer:state.footer,watermark:state.watermark,branding:state.branding,blocks:state.blocks.map(function(b){var o={type:b.type,settings:b.settings,style:b.style,pos:b.pos,float:b.float||false,region:b.region||"body",cond:b.cond||null};if(b.type==="row"&&b.settings&&b.settings.cells){o.settings=Object.assign({},b.settings,{cells:b.settings.cells.map(function(cell){return (cell||[]).map(function(c){return{type:c.type,settings:c.settings,style:c.style};});})});}return o;})};}
 function exportJSON(){const blob=new Blob([JSON.stringify(definition(),null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=(document.getElementById("fmtName").value||"format")+".json";a.click();}
 function importJSON(){const inp=document.createElement("input");inp.type="file";inp.accept="application/json,.json";
   inp.onchange=function(){const f=inp.files&&inp.files[0];if(!f)return;const r=new FileReader();
@@ -1305,7 +1346,19 @@ function flashSaved(){const b=document.querySelector(".btn.primary");if(!b)retur
 function loadDefinition(def){try{userTouched=false;state.page=Object.assign({orientation:"portrait"},def.page||{});if(def.branding)state.branding=Object.assign({primary:"#1463FF",navy:"#0C1322",font:"Montserrat",header_image:"",footer_image:""},def.branding);
   if(def.header)state.header=Object.assign({enabled:true,height:30,repeat:true,margin:4},def.header);if(def.footer)state.footer=Object.assign({enabled:true,height:32,repeat:true,margin:4},def.footer);if(def.watermark)state.watermark=Object.assign({text:"",color:"#0C1322",opacity:8,size:60},def.watermark);
   if(Array.isArray(def.blocks))state.blocks=def.blocks.map(function(b,i){const pos=b.pos||{x:14,y:8+i*16,w:180,h:null};let settings=b.settings||(DSET[b.type]?DSET[b.type]():{});if(b.type==="row"){const st=b.settings||{};const cells=(st.cells||[]).map(function(cell){return (cell||[]).map(function(c){return{id:"b"+(idc++),type:c.type,settings:c.settings||(DSET[c.type]?DSET[c.type]():{}),style:Object.assign(base(),dstyle(c.type),c.style||{})};});});settings=Object.assign({cols:2,gap:6,width:100,widths:[null,null],cells:[[],[]]},st,{cells:cells});}return{id:"b"+(idc++),type:b.type,settings:settings,style:Object.assign(base(),dstyle(b.type),b.style||{}),pos:pos,float:b.float||false,region:b.region||_regionByY(pos),cond:b.cond||null};});
-  if(def.target_doctype){state.target=def.target_doctype;const ds=document.getElementById("doctypeSel");if(ds)ds.value=def.target_doctype;loadDoctypeMeta(state.target);}
+  if(def.target_kind==="report"){
+    state.targetKind="report";state.report=def.report_name||state.report||"";
+    var ksel=document.getElementById("targetKindSel");if(ksel)ksel.value="report";
+    document.getElementById("doctypeSel").style.display="none";document.getElementById("reportSel").style.display="";
+    buildPalette();
+    ensureReports(function(){var rs=document.getElementById("reportSel");if(rs&&state.report)rs.value=state.report;if(state.report)loadReportSample(state.report);});
+  } else {
+    state.targetKind="doctype";
+    var ksel2=document.getElementById("targetKindSel");if(ksel2)ksel2.value="doctype";
+    document.getElementById("doctypeSel").style.display="";document.getElementById("reportSel").style.display="none";
+    buildPalette();
+    if(def.target_doctype){state.target=def.target_doctype;const ds=document.getElementById("doctypeSel");if(ds)ds.value=def.target_doctype;loadDoctypeMeta(state.target);}
+  }
   if(def.name)document.getElementById("fmtName").value=def.name;ensureBanners();selId=null;renderNowSync();renderProps();renderBrand();}catch(e){console.error("BrandPDF load failed",e);}}
 /* ---- embedded RPC bridge to the desk page ---- */
 let _rpcId=0; const _rpcCbs={};
@@ -1314,6 +1367,36 @@ let _upId=0; const _upCbs={};
 function uploadImage(cb){if(!EMBED){alert("Image upload works inside ERPNext. (In this standalone demo, paste a /files path.)");return;}const id="u"+(_upId++);_upCbs[id]=cb;window.parent.postMessage({type:"brandpdf-upload",reqId:id},window.location.origin);}
 function setSelOptions(id,items,placeholder,current){const el=document.getElementById(id);if(!el)return;el.innerHTML=(placeholder?`<option value="">${esc(placeholder)}</option>`:"")+items.map(function(it){const v=it.value!==undefined?it.value:it;const l=it.label!==undefined?it.label:it;return `<option value="${esc(v)}" ${current===v?'selected':''}>${esc(l)}</option>`;}).join("");}
 function onDoctype(dt){state.target=dt;loadDoctypeMeta(dt);}
+/* ---- Report mode: target a Report instead of a DocType ---- */
+let _reports=null;
+function onTargetKind(kind){
+  state.targetKind=(kind==="report")?"report":"doctype";
+  const isRep=state.targetKind==="report";
+  document.getElementById("doctypeSel").style.display=isRep?"none":"";
+  document.getElementById("reportSel").style.display=isRep?"":"none";
+  buildPalette();
+  if(isRep){ensureReports(function(){const rs=document.getElementById("reportSel");const rep=(rs&&rs.value)||state.report;if(rep){onReport(rep);}else{newReportFormat();}});}
+  else{if(!state.target)state.target="Quotation";loadDoctypeMeta(state.target);newFormat();}
+}
+function ensureReports(cb){
+  if(_reports){if(cb)cb();return;}
+  rpc("brandpdf.api.builder_reports").then(function(rs){_reports=rs||[];
+    const el=document.getElementById("reportSel");
+    if(el)el.innerHTML=_reports.length?_reports.map(function(r){return `<option value="${esc(r.name)}">${esc(r.label)}</option>`;}).join(""):'<option value="">(no reports available)</option>';
+    if(_reports.length&&!state.report)state.report=_reports[0].name;
+    if(el&&state.report)el.value=state.report;
+    if(cb)cb();});
+}
+function onReport(rep){if(!rep)return;state.report=rep;const rs=document.getElementById("reportSel");if(rs)rs.value=rep;
+  loadReportSample(rep);
+  rpc("brandpdf.api.get_format",{report_name:rep}).then(function(r){if(r&&r.definition)loadDefinition(r.definition);else newReportFormat();});
+}
+function loadReportSample(rep){REPORTSAMPLE={name:rep,columns:[],rows:[],filters:[],printed_on:"",note:"Loading…"};render();
+  rpc("brandpdf.report.report_sample",{report_name:rep,limit:20}).then(function(d){REPORTSAMPLE=d||REPORTSAMPLE;render();if(cur())renderProps();});}
+function newReportFormat(){clearDraft();state.page=Object.assign({},state.page,{orientation:"landscape"});
+  const y0=(state.header&&state.header.enabled?(+state.header.height||0):0)+6;  // keep blocks in the BODY, clear of the header band
+  state.blocks=[mk("report_title",{x:12,y:y0,w:PW()-24,h:null}),mk("report_filters",{x:12,y:y0+14,w:PW()-24,h:null}),mk("report_table",{x:12,y:y0+26,w:PW()-24,h:null})];
+  selId=null;document.getElementById("fmtName").value=((state.report||"Report"))+" - Branded";renderNowSync();renderProps();renderBrand();}
 function loadDoctypeMeta(dt){
   rpc("brandpdf.api.doctype_fields",{doctype:dt}).then(function(fl){if(Array.isArray(fl)&&fl.length){DOCFIELDS=fl.map(function(x){return{f:x.fieldname,l:x.label,t:x.fieldtype||""};});if(cur()&&cur().type==="field")renderProps();}});
   rpc("brandpdf.api.child_tables",{doctype:dt}).then(function(ct){if(Array.isArray(ct)&&ct.length){CTABLES=ct;if(cur()&&cur().type==="datatable")renderProps();}});
@@ -1324,30 +1407,34 @@ function openFormat(name){if(!name)return;const el=document.getElementById("open
 /* ---- Formats manager: set the default (Print > PDF uses it), open, delete ---- */
 let _fmtCompany="";  // ""=global default; else a Company name (multi-company scoping)
 let _companies=null;
-function openFormatsMgr(){document.getElementById("fmtmgrTitle").textContent="Formats for "+state.target;document.getElementById("fmtmgrBody").innerHTML='<div class="hint" style="padding:12px 0">Loading…</div>';document.getElementById("fmtmgr").style.display="flex";
+function openFormatsMgr(){const isRep=state.targetKind==="report";document.getElementById("fmtmgrTitle").textContent="Formats for "+(isRep?(state.report||"report"):state.target);document.getElementById("fmtmgrBody").innerHTML='<div class="hint" style="padding:12px 0">Loading…</div>';document.getElementById("fmtmgr").style.display="flex";
   const go=function(){_renderFmtMgr();};
-  if(_companies===null&&EMBED)rpc("brandpdf.api.list_companies").then(function(cs){_companies=cs||[];go();});
+  if(_companies===null&&EMBED&&!isRep)rpc("brandpdf.api.list_companies").then(function(cs){_companies=cs||[];go();});
   else go();}
 function _renderFmtMgr(){
-  Promise.all([rpc("brandpdf.api.list_formats",{doctype:state.target,company:_fmtCompany}),rpc("brandpdf.api.gallery_list")]).then(function(res){
+  const isRep=state.targetKind==="report";
+  const listArgs=isRep?{report_name:state.report}:{doctype:state.target,company:_fmtCompany};
+  Promise.all([rpc("brandpdf.api.list_formats",listArgs),isRep?Promise.resolve([]):rpc("brandpdf.api.gallery_list")]).then(function(res){
     const fs=res[0]||[];const inGal={};(res[1]||[]).forEach(function(g){inGal[g.name]=true;});
     let head="";
-    if(_companies&&_companies.length>1){
+    if(!isRep&&_companies&&_companies.length>1){
       head=`<div class="fld" style="margin:0 0 10px"><label>Default for</label><select onchange="_fmtCompany=this.value;_renderFmtMgr()"><option value="">All companies (global default)</option>`+_companies.map(function(c){return `<option value="${esc(c)}" ${_fmtCompany===c?'selected':''}>${esc(c)}</option>`;}).join("")+`</select></div>`;
     }
     const body=fs.length?fs.map(function(f){
-      const acts=(f.is_default?'<span class="deftag">Default'+(_fmtCompany?' · '+esc(_fmtCompany):'')+'</span>':`<button class="btn ghost" onclick="setDefaultFmt('${esc(f.name)}')">Set default</button>`)
+      const setDef=isRep?`<button class="btn ghost" onclick="setDefaultReportFmt('${esc(f.name)}')">Make active</button>`:`<button class="btn ghost" onclick="setDefaultFmt('${esc(f.name)}')">Set default</button>`;
+      const acts=(f.is_default?'<span class="deftag">'+(isRep?'Active':('Default'+(_fmtCompany?' · '+esc(_fmtCompany):'')))+'</span>':setDef)
         +`<button class="btn ghost" onclick="openFmtFromMgr('${esc(f.name)}')">Open</button>`
         +`<button class="btn ghost" title="Make an editable copy of this format" onclick="dupFmt('${esc(f.name)}','${esc(f.label)}')">Duplicate</button>`
-        +(f.is_standard?'':`<button class="btn ghost" title="Show in the Templates gallery for everyone on this site" onclick="toggleGallery('${esc(f.name)}',${inGal[f.name]?0:1})">${inGal[f.name]?'▦ Remove':'▦ To gallery'}</button>`)
+        +((isRep||f.is_standard)?'':`<button class="btn ghost" title="Show in the Templates gallery for everyone on this site" onclick="toggleGallery('${esc(f.name)}',${inGal[f.name]?0:1})">${inGal[f.name]?'▦ Remove':'▦ To gallery'}</button>`)
         +(f.is_standard?'':`<button class="btn ghost" onclick="deleteFmt('${esc(f.name)}','${esc(f.label)}')">Delete</button>`);
       return `<div class="fmtrow"><div class="fmtname">${f.is_default?'<span class="star">★</span>':''}${esc(f.label)}${f.is_standard?'<span class="tagstd">standard</span>':''}</div><div class="fmtacts">${acts}</div></div>`;
-    }).join(""):'<div class="hint" style="padding:14px 0">'+(EMBED?('No saved formats for <b>'+esc(state.target)+'</b> yet — design one and Save.'):'Format management works inside ERPNext.')+'</div>';
+    }).join(""):'<div class="hint" style="padding:14px 0">'+(EMBED?('No saved formats for <b>'+esc(isRep?(state.report||'this report'):state.target)+'</b> yet — design one and Save.'):'Format management works inside ERPNext.')+'</div>';
     document.getElementById("fmtmgrBody").innerHTML=head+body;});}
 function toggleGallery(name,on){rpc("brandpdf.api.set_gallery",{name:name,on:on}).then(function(){toast(on?"Added to the Templates gallery — everyone on this site can start from it.":"Removed from the gallery.");_renderFmtMgr();});}
 function closeFmtMgr(){document.getElementById("fmtmgr").style.display="none";}
 function openFmtFromMgr(n){closeFmtMgr();openFormat(n);}
 function setDefaultFmt(n){rpc("brandpdf.api.set_default_format",{doctype:state.target,template:n,company:_fmtCompany}).then(function(){_renderFmtMgr();loadDoctypeMeta(state.target);});}
+function setDefaultReportFmt(n){rpc("brandpdf.api.set_default_report_format",{report_name:state.report,template:n}).then(function(){_renderFmtMgr();});}
 function deleteFmt(n,lbl){if(!confirm("Delete the format \""+lbl+"\"? This can't be undone."))return;rpc("brandpdf.api.delete_format",{name:n}).then(function(r){if(r&&r.deleted===false){alert("Could not delete that format.");}openFormatsMgr();loadDoctypeMeta(state.target);});}
 function dupFmt(n,lbl){const nm=prompt("Name for the copy:",lbl+" copy");if(nm===null)return;const nn=(nm||"").trim();rpc("brandpdf.api.duplicate_format",{name:n,new_name:nn}).then(function(r){if(r&&r.name){toast('Copied to "'+r.name+'".');_renderFmtMgr();loadDoctypeMeta(state.target);}else{alert("Could not duplicate that format.");}});}
 let _fs=false;

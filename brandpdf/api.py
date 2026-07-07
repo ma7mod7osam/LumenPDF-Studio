@@ -37,10 +37,25 @@ def request_pdf(doctype: str, name: str, template: str = None):
 
 
 @frappe.whitelist()
-def list_formats(doctype, company=None):
-    """Formats available for a doctype (for the download picker). `company` scopes which format
-    is marked default (falls back to the global default). Empty if the caller can't read the
-    doctype or the config DocType doesn't exist yet."""
+def list_formats(doctype, company=None, report_name=None):
+    """Formats available for a doctype (or, when report_name is given, for a report). `company`
+    scopes which doctype format is marked default. Empty if the caller can't read the target or
+    the config DocType doesn't exist yet."""
+    if report_name:
+        if not frappe.db.exists("DocType", "BrandPDF Template"):
+            return []
+        try:
+            rows = frappe.get_all("BrandPDF Template",
+                                  filters={"target_kind": "report", "report_name": report_name},
+                                  fields=["name", "template_name", "is_standard"],
+                                  order_by="is_standard asc, modified desc")
+        except Exception:
+            return []  # target_kind/report_name columns not migrated yet
+        default = _default_report_template(report_name)
+        out = [{"name": r["name"], "label": r.get("template_name") or r["name"],
+                "is_standard": bool(r.get("is_standard")), "is_default": (r["name"] == default)} for r in rows]
+        out.sort(key=lambda x: (not x["is_default"]))
+        return out
     if not doctype or not frappe.db.exists("DocType", "BrandPDF Template"):
         return []
     if not frappe.has_permission(doctype, "read"):
@@ -85,6 +100,17 @@ def _default_template(doctype, company=None):
         if not r.get("company"):  # NULL or "" -> global
             return r["template"]
     return None
+
+
+def _default_report_template(report_name):
+    """The active report template (from the enabled report mapping), or None."""
+    try:
+        rows = frappe.get_all("BrandPDF Mapping",
+                              filters={"target_kind": "report", "report_name": report_name, "enabled": 1},
+                              fields=["template"], order_by="priority asc, creation asc", limit=1)
+        return rows[0]["template"] if rows else None
+    except Exception:
+        return None
 
 
 @frappe.whitelist()
@@ -149,6 +175,38 @@ def set_default_format(doctype, template, company=None):
         pass
     frappe.db.commit()
     return {"default": template, "company": company or ""}
+
+
+@frappe.whitelist()
+def set_default_report_format(report_name, template):
+    """Make `template` the active branded format for a report (used by the 'Branded PDF' button
+    and, when replace_report_pdf is on, the native Report > PDF). System-Manager only."""
+    _require_manager()
+    if not (report_name and template and frappe.db.exists("BrandPDF Template", template)):
+        frappe.throw("Unknown format.")
+    ref = frappe.db.get_value("Report", report_name, "ref_doctype") or "Report"
+    try:
+        rows = frappe.get_all("BrandPDF Mapping", filters={"target_kind": "report", "report_name": report_name},
+                              fields=["name"], order_by="priority asc, creation asc")
+    except Exception:
+        rows = []
+    if rows:
+        m = frappe.get_doc("BrandPDF Mapping", rows[0]["name"])
+        m.template = template
+        m.enabled = 1
+        m.replace_report_pdf = 1
+        m.flags.ignore_permissions = True
+        m.save()
+        for r in rows[1:]:  # collapse any duplicate report rows onto the one we just wrote
+            frappe.delete_doc("BrandPDF Mapping", r["name"], ignore_permissions=True)
+    else:
+        m = frappe.get_doc({"doctype": "BrandPDF Mapping", "target_kind": "report", "report_name": report_name,
+                            "target_doctype": ref, "template": template, "enabled": 1, "priority": 0,
+                            "replace_report_pdf": 1})
+        m.flags.ignore_permissions = True
+        m.insert()
+    frappe.db.commit()
+    return {"default": template, "report_name": report_name}
 
 
 @frappe.whitelist()
@@ -339,7 +397,16 @@ def save_format(definition, name=None):
     tmpl_name = (name or definition.get("name") or "Custom Format").strip()
     if not tmpl_name:
         frappe.throw("Give the format a name.")
-    target = definition.get("target_doctype") or "Quotation"
+    kind = "report" if (definition.get("target_kind") == "report") else "doctype"
+    report_name = (definition.get("report_name") or "").strip() if kind == "report" else ""
+    if kind == "report":
+        if not report_name or not frappe.db.exists("Report", report_name):
+            frappe.throw("Choose a report for this report format.")
+        # target_doctype stays a real DocType (the field is a required Link) — use the report's
+        # reference doctype so the row validates; report resolution keys off report_name/target_kind.
+        target = frappe.db.get_value("Report", report_name, "ref_doctype") or "Report"
+    else:
+        target = definition.get("target_doctype") or "Quotation"
     _validate_image_srcs(definition)
     payload = json.dumps(definition)
 
@@ -353,6 +420,8 @@ def save_format(definition, name=None):
                 "Choose a different name so it isn't overwritten."
             )
         t.target_doctype = target
+        t.target_kind = kind
+        t.report_name = report_name or None
         t.source_type = "blocks"
         t.definition = payload
         t.flags.ignore_permissions = True
@@ -360,14 +429,19 @@ def save_format(definition, name=None):
     else:
         t = frappe.get_doc({
             "doctype": "BrandPDF Template", "template_name": tmpl_name, "target_doctype": target,
+            "target_kind": kind, "report_name": report_name or None,
             "source_type": "blocks", "is_standard": 0, "definition": payload,
         })
         t.flags.ignore_permissions = True
         t.insert()
 
-    _activate_mapping(target, tmpl_name)
+    if kind == "report":
+        _activate_report_mapping(report_name, tmpl_name, target)
+    else:
+        _activate_mapping(target, tmpl_name)
     frappe.db.commit()
-    return {"name": tmpl_name, "target_doctype": target, "activated": True}
+    return {"name": tmpl_name, "target_doctype": target, "target_kind": kind,
+            "report_name": report_name, "activated": True}
 
 
 @frappe.whitelist()
@@ -409,14 +483,27 @@ def gallery_list():
 
 
 @frappe.whitelist()
-def get_format(name=None, target_doctype="Quotation"):
-    """Return a saved design to load into the builder. With a name, that template; otherwise the
-    active design for the doctype (so the builder opens on what's currently live)."""
+def get_format(name=None, target_doctype="Quotation", report_name=None):
+    """Return a saved design to load into the builder. With a name, that template; else the active
+    design for the report (report_name) or the doctype — so the builder opens on what's live."""
     _require_manager()
     if name and frappe.db.exists("BrandPDF Template", name):
         t = frappe.get_doc("BrandPDF Template", name)
         if t.get("definition"):
             return {"name": t.name, "definition": json.loads(t.definition)}
+    if report_name:
+        try:
+            maps = frappe.get_all(
+                "BrandPDF Mapping", filters={"target_kind": "report", "report_name": report_name, "enabled": 1},
+                fields=["template"], order_by="priority asc", limit=1,
+            )
+        except Exception:
+            maps = []
+        if maps:
+            t = frappe.get_doc("BrandPDF Template", maps[0]["template"])
+            if t.get("definition"):
+                return {"name": t.name, "definition": json.loads(t.definition)}
+        return {"name": None, "definition": None}
     maps = frappe.get_all(
         "BrandPDF Mapping", filters={"target_doctype": target_doctype, "enabled": 1},
         fields=["template"], order_by="priority asc", limit=1,
@@ -426,6 +513,30 @@ def get_format(name=None, target_doctype="Quotation"):
         if t.get("definition"):
             return {"name": t.name, "definition": json.loads(t.definition)}
     return {"name": None, "definition": None}
+
+
+@frappe.whitelist()
+def builder_reports(limit=300):
+    """Reports the current user can build a branded format for (Query/Script/Report Builder)."""
+    _require_manager()
+    if not frappe.db.exists("DocType", "Report"):
+        return []
+    try:
+        rows = frappe.get_all("Report", filters={"disabled": 0},
+                              fields=["name", "report_name", "ref_doctype", "report_type"],
+                              order_by="modified desc", limit=int(limit))
+    except Exception:
+        return []
+    out = []
+    for r in rows:
+        try:
+            if not frappe.has_permission("Report", "read", doc=r["name"]):
+                continue
+        except Exception:
+            pass
+        out.append({"name": r["name"], "label": r.get("report_name") or r["name"],
+                    "ref_doctype": r.get("ref_doctype") or "", "report_type": r.get("report_type") or ""})
+    return out
 
 
 @frappe.whitelist()
@@ -620,6 +731,25 @@ def _activate_mapping(target, tmpl_name):
     if existing:
         return
     m = frappe.get_doc({"doctype": "BrandPDF Mapping", "target_doctype": target, "template": tmpl_name, "enabled": 1, "priority": 0})
+    m.flags.ignore_permissions = True
+    m.insert()
+
+
+def _activate_report_mapping(report_name, tmpl_name, ref_doctype="Report"):
+    """Bootstrap: if this report has no mapping yet, point it at the just-saved template so the
+    'Branded PDF' button uses it immediately. Never overwrites an existing report mapping."""
+    try:
+        existing = frappe.get_all(
+            "BrandPDF Mapping", filters={"target_kind": "report", "report_name": report_name},
+            pluck="name", limit=1,
+        )
+    except Exception:
+        existing = None  # old install: target_kind/report_name columns not migrated yet
+    if existing:
+        return
+    m = frappe.get_doc({"doctype": "BrandPDF Mapping", "target_kind": "report", "report_name": report_name,
+                        "target_doctype": ref_doctype, "template": tmpl_name, "enabled": 1, "priority": 0,
+                        "replace_report_pdf": 1})
     m.flags.ignore_permissions = True
     m.insert()
 
