@@ -996,6 +996,129 @@ def _e_pagenum(doc, b, s, ctx):
     return _esc(fmt).replace("{p}", str(ctx.get("page", 1))).replace("{n}", str(ctx.get("total", 1)))
 
 
+# --- Report blocks (data source = a query/script/report-builder run, not a document) --------
+# The synthetic report doc (brandpdf.report.ReportDoc) exposes doc.get("_bpdf_report") =
+# {name, columns:[{fieldname,label,align,width,fieldtype}], rows:[{fieldname: display_str}],
+#  filters:[{label,value}], printed_on, native_html}. Columns/rows are already normalized and
+# permission-scoped upstream, so these renderers stay presentation-only.
+
+def _report_ctx(doc):
+    r = doc.get("_bpdf_report") if hasattr(doc, "get") else None
+    return r if isinstance(r, dict) else {}
+
+
+def _d_report_title(doc, b, s, ctx):
+    navy = b.get("navy", "#1A1E2A")
+    primary = b.get("primary", "#1C75BC")
+    rep = _report_ctx(doc)
+    tc = s["titleColor"].strip() if _hexok(s.get("titleColor")) else navy
+    tsz = _num(s.get("titleSize"))
+    tszc = f"font-size:{_fmt_num(min(72, max(6, tsz)))}pt;" if tsz else ""
+    title = _esc(s.get("text") or rep.get("name") or "Report")
+    left = f'<div class="bs-title" style="color:{tc};{tszc}">{title}</div>'
+    if s.get("showDate", True) and rep.get("printed_on"):
+        left += (f'<div style="color:{primary};font-size:8pt;margin-top:1mm;">'
+                 f'{_esc(rep.get("printed_on"))}</div>')
+    if s.get("align") == "center":
+        return f'<div style="text-align:center">{left}</div>'
+    return left
+
+
+def _d_report_filters(doc, b, s, ctx):
+    """Compact 'Filters applied' summary — one chip per active filter."""
+    rep = _report_ctx(doc)
+    flt = [f for f in (rep.get("filters") or []) if isinstance(f, dict) and f.get("value") not in (None, "", [])]
+    if not flt:
+        return ""
+    primary = b.get("primary", "#1C75BC")
+    lc = s["labelColor"].strip() if _hexok(s.get("labelColor")) else primary
+    heading = _esc(s.get("heading") or "Filters")
+    chips = "".join(
+        f'<span style="display:inline-block;margin:0 6px 4px 0;font-size:7.5pt;">'
+        f'<b style="color:{lc};">{_esc(f.get("label"))}:</b> <bdi>{_esc(f.get("value"))}</bdi></span>'
+        for f in flt
+    )
+    return (f'<div style="line-height:1.5;"><span class="bs-sec-lbl">{heading}</span> {chips}</div>')
+
+
+def _d_report_native(doc, b, s, ctx):
+    """Mode A wrapper: drop the framework-rendered report table in as-is (branded pages around
+    it). ctx['report_html'] is server-produced HTML (query report print view); sanitize as a
+    belt-and-braces measure since it is embedded into our composed page."""
+    html = ctx.get("report_html") or _report_ctx(doc).get("native_html") or ""
+    if not html:
+        return ""
+    from frappe.utils.html_utils import sanitize_html
+    try:
+        html = sanitize_html(html)
+    except Exception:
+        pass
+    return f'<div class="bs-report-native" style="font-size:8pt;">{html}</div>'
+
+
+def _d_report_table(doc, b, s, ctx):
+    """Mode B: a fully styled table built from the report's columns/rows, with per-column
+    show/hide/reorder/width/align chosen in the builder (settings.columns). No selection ->
+    every report column, in order."""
+    rep = _report_ctx(doc)
+    all_cols = [c for c in (rep.get("columns") or []) if isinstance(c, dict) and c.get("fieldname")]
+    rows = rep.get("rows") or []
+    sel = [c for c in _list(s.get("columns")) if isinstance(c, dict) and c.get("field")]
+    if sel:
+        by = {c.get("fieldname"): c for c in all_cols}
+        cols = []
+        for c in sel:
+            src = by.get(c.get("field")) or {}
+            cols.append({
+                "fieldname": c.get("field"),
+                "label": c.get("label") or src.get("label") or c.get("field"),
+                "align": c.get("align") or src.get("align") or "left",
+                "width": c.get("width"),
+            })
+    else:
+        cols = [{"fieldname": c.get("fieldname"), "label": c.get("label") or c.get("fieldname"),
+                 "align": c.get("align") or "left", "width": None} for c in all_cols]
+    if not cols:
+        return ""
+    primary = b.get("primary", "#1C75BC")
+    navy = b.get("navy", "#1A1E2A")
+    hc = navy if s.get("headerColor") == "navy" else primary
+    sk = _tbl_skin(s, b, hc)
+    hs_size = _num((s.get("headerStyle") or {}).get("size")) if isinstance(s.get("headerStyle"), dict) else None
+    th_extra = ("" if hs_size else "font-size:7.5pt;") + (sk["pad"] or "padding:6px 8px;") + sk["td_border"]
+    colgroup = "<colgroup>" + "".join(
+        (f'<col style="width:{_fmt_num(c.get("width"))}mm">' if c.get("width") else "<col>") for c in cols
+    ) + "</colgroup>"
+    heads = "".join(
+        f'<th style="{sk["th"]}{"color:#fff !important;" if "color:" not in sk["th"] else ""}'
+        f'text-align:{(c.get("align") or "left")};font-weight:600;{th_extra}'
+        f'word-wrap:break-word;-webkit-print-color-adjust:exact;">'
+        f'{_esc(c.get("label") or c.get("fieldname"))}</th>'
+        for c in cols
+    )
+    if sk["th_first"]:
+        heads = heads.replace('style="', 'style="' + sk["th_first"], 1)
+        k = heads.rfind('style="')
+        heads = heads[:k] + 'style="' + sk["th_last"] + heads[k + 7:]
+    body = []
+    for row in rows:
+        tds = ""
+        for c in cols:
+            val = row.get(c.get("fieldname")) if hasattr(row, "get") else ""
+            val = "" if val is None else str(val)
+            align = c.get("align") or "left"
+            td_pad = sk["pad"] or "padding:6px 8px;"
+            td_bor = sk["td_border"] or "border-bottom:1px solid #cfe5f6;"
+            td_num = sk["num"] if align == "right" else ""
+            tds += (f'<td style="text-align:{align};{td_pad}{td_bor}{td_num}'
+                    f'word-wrap:break-word;"><bdi>{_esc(val)}</bdi></td>')
+        body.append(f"<tr>{tds}</tr>")
+    zcls, zbg = _zebra_parts(s)
+    if zbg:
+        body = [(f'<tr style="{zbg}">' + r[4:]) if (i % 2 == 1) else r for i, r in enumerate(body)]
+    return f'<table class="{zcls}" style="{sk["table"]}">{colgroup}<thead><tr>{heads}</tr></thead><tbody>{"".join(body)}</tbody></table>'
+
+
 def _render_child(doc, b, c, ctx):
     """Render one block nested inside a Row column. (Nested datatable/items children still enforce
     their own permlevel filtering via the DEF_RENDERERS dispatch below.)"""
@@ -1053,6 +1176,10 @@ DEF_RENDERERS = {
     "pagenum": _e_pagenum,
     "spacer": _e_spacer,
     "custom_html": _e_box,  # back-compat: old custom_html == box content
+    "report_title": _d_report_title,
+    "report_filters": _d_report_filters,
+    "report_table": _d_report_table,
+    "report_native": _d_report_native,
 }
 
 

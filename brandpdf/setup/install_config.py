@@ -26,6 +26,7 @@ SETTINGS_FIELDS = [
     {"fieldname": "font_family", "fieldtype": "Select", "label": "Font Family", "options": "Montserrat\nCairo\nArial\nTahoma", "default": "Montserrat"},
     {"fieldname": "page_sb", "fieldtype": "Section Break", "label": "Page"},
     {"fieldname": "page_size", "fieldtype": "Select", "label": "Page Size", "options": "A4\nLetter", "default": "A4"},
+    {"fieldname": "brand_reports", "fieldtype": "Check", "label": "Brand report PDFs (wrap Report > PDF in the branded header/footer)"},
     {"fieldname": "rtl", "fieldtype": "Check", "label": "Right-to-Left (Arabic)", "default": "1"},
     {"fieldname": "default_engine", "fieldtype": "Select", "label": "Default Engine", "options": "playwright\ngotenberg", "default": "playwright"},
     {"fieldname": "footer_registration_text", "fieldtype": "Small Text", "label": "Footer Registration Text (CR / VAT)"},
@@ -34,7 +35,9 @@ SETTINGS_FIELDS = [
 TEMPLATE_FIELDS = [
     # autoname makes template_name the primary key, so no separate unique flag (review #12).
     {"fieldname": "template_name", "fieldtype": "Data", "label": "Template Name", "reqd": 1, "in_list_view": 1},
+    {"fieldname": "target_kind", "fieldtype": "Select", "label": "Target Kind", "options": "doctype\nreport", "default": "doctype", "in_list_view": 1},
     {"fieldname": "target_doctype", "fieldtype": "Link", "label": "Target DocType", "options": "DocType", "reqd": 1, "in_list_view": 1},
+    {"fieldname": "report_name", "fieldtype": "Link", "label": "Report", "options": "Report", "depends_on": "eval:doc.target_kind=='report'"},
     {"fieldname": "language", "fieldtype": "Select", "label": "Language", "options": "en\nar\nbilingual", "default": "bilingual"},
     {"fieldname": "is_standard", "fieldtype": "Check", "label": "Is Standard (read-only)", "read_only": 1},
     {"fieldname": "in_gallery", "fieldtype": "Check", "label": "Show in Templates gallery", "in_list_view": 1},
@@ -48,7 +51,7 @@ TEMPLATE_FIELDS = [
 
 BLOCK_FIELDS = [
     {"fieldname": "block_type", "fieldtype": "Select", "label": "Block", "reqd": 1, "in_list_view": 1,
-     "options": "header_banner\ntitle\ncustomer\nitems\ntotals\npayment_schedule\nterms\nsignature\nspacer\ncustom_html\nfooter_banner"},
+     "options": "header_banner\ntitle\ncustomer\nitems\ntotals\npayment_schedule\nterms\nsignature\nspacer\ncustom_html\nreport_title\nreport_filters\nreport_table\nreport_native\nfooter_banner"},
     {"fieldname": "label", "fieldtype": "Data", "label": "Label / Title (optional)", "in_list_view": 1},
     {"fieldname": "content", "fieldtype": "Code", "label": "Custom HTML (for the custom_html block)", "options": "HTML"},
 ]
@@ -60,7 +63,9 @@ CONDITION_FIELDS = [
 ]
 
 MAPPING_FIELDS = [
+    {"fieldname": "target_kind", "fieldtype": "Select", "label": "Target Kind", "options": "doctype\nreport", "default": "doctype", "in_list_view": 1},
     {"fieldname": "target_doctype", "fieldtype": "Link", "label": "Target DocType", "options": "DocType", "reqd": 1, "in_list_view": 1},
+    {"fieldname": "report_name", "fieldtype": "Link", "label": "Report", "options": "Report", "depends_on": "eval:doc.target_kind=='report'"},
     {"fieldname": "template", "fieldtype": "Link", "label": "Template", "options": "BrandPDF Template", "reqd": 1, "in_list_view": 1},
     {"fieldname": "company", "fieldtype": "Link", "label": "Company (blank = all companies)", "options": "Company", "in_list_view": 1},
     {"fieldname": "enabled", "fieldtype": "Check", "label": "Enabled", "default": "1", "in_list_view": 1},
@@ -68,6 +73,7 @@ MAPPING_FIELDS = [
     {"fieldname": "behavior_sb", "fieldtype": "Section Break", "label": "Behavior"},
     {"fieldname": "auto_attach", "fieldtype": "Check", "label": "Auto-attach PDF on Submit"},
     {"fieldname": "replace_print_pdf", "fieldtype": "Check", "label": "Replace Print > PDF"},
+    {"fieldname": "replace_report_pdf", "fieldtype": "Check", "label": "Replace Report > PDF (report targets)"},
     {"fieldname": "replace_email_attach", "fieldtype": "Check", "label": "Replace Email Attachment"},
     {"fieldname": "cond_sb", "fieldtype": "Section Break", "label": "Conditions (all must match)"},
     {"fieldname": "conditions", "fieldtype": "Table", "label": "Conditions", "options": "BrandPDF Mapping Condition"},

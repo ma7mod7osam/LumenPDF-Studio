@@ -36,6 +36,38 @@ def compose_pdf(doc, template=None) -> bytes:
     return renderer.render(render_html(doc), default_options())
 
 
+def compose_report_pdf(report_doc, template=None, definition=None) -> bytes:
+    """Compose a branded PDF for a REPORT (report_doc is brandpdf.report.ReportDoc).
+    Precedence: an explicit `definition` dict > the named template's definition > caller's default.
+    Reuses the same band-overlay pipeline as documents (repeating header/footer, page numbers,
+    watermark, pagination). Falls back to a plain render of the native report HTML on any error."""
+    renderer = get_renderer()
+    try:
+        if definition is None and template and frappe.db.exists("BrandPDF Template", template):
+            d = frappe.get_doc("BrandPDF Template", template).get("definition")
+            if isinstance(d, str):
+                d = json.loads(d)
+            definition = d if isinstance(d, dict) else None
+        if isinstance(definition, dict) and definition.get("layout") == "absolute":
+            out = _compose(report_doc, definition, renderer)
+            if out:
+                return out
+        if isinstance(definition, dict):  # non-absolute definition: single-pass flow render
+            html = B.render_definition(report_doc, definition)
+            if html:
+                allowed = B.collect_image_srcs(definition)
+                html = assets.neutralize_remote(assets.inline_images(html, allowed=allowed))
+                return renderer.render(html, default_options())
+    except Exception:
+        frappe.log_error(title="BrandPDF report compose failed; native fallback", message=frappe.get_traceback())
+    native = ""
+    try:
+        native = (report_doc.get("_bpdf_report") or {}).get("native_html") or ""
+    except Exception:
+        pass
+    return renderer.render(f"<!DOCTYPE html><html><body>{native}</body></html>", default_options())
+
+
 def _resolve(doc, template):
     """Return (kind, value, definition). A valid chosen template (matching this doctype) wins;
     otherwise fall back to the resolver's mapped/default template."""

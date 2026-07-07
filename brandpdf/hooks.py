@@ -10,7 +10,10 @@ app_license = "MIT"
 # that has an enabled BrandPDF Mapping (Phase 2); with no mappings it falls back to
 # Quotation. See public/js/brandpdf_button.js.
 # ---------------------------------------------------------------------------
-app_include_js = "/assets/brandpdf/js/brandpdf_button.js"
+app_include_js = [
+    "/assets/brandpdf/js/brandpdf_button.js",
+    "/assets/brandpdf/js/brandpdf_report_button.js",  # "Branded PDF" button in the Query Report view
+]
 
 # Standard BrandPDF templates are read-only (duplicate to edit).
 # '*'.on_submit: auto-attach the branded PDF when the mapping's toggle is on (cheap no-op otherwise).
@@ -27,6 +30,8 @@ doc_events = {
 # has 'Replace Print > PDF' enabled; everything else falls through to the native renderer.
 override_whitelisted_methods = {
     "frappe.utils.print_format.download_pdf": "brandpdf.overrides.download_pdf",
+    # Wrap the native Report > PDF in the branded header/footer when Settings.brand_reports is on.
+    "frappe.utils.print_format.report_to_pdf": "brandpdf.report.report_to_pdf",
 }
 
 # Scheduler: clean up expired private render files.
