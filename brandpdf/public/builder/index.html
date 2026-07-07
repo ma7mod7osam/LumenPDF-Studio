@@ -187,11 +187,12 @@
   .chip.on{border-color:var(--accent);background:#1463FF14;color:var(--accent)}
   .psecb .fld input,.psecb .fld select{padding:6px 9px;font-size:12px}
   .psecb .fld{margin-bottom:7px}
-  #gallery .gcard-wrap,#fmtmgr .gcard-wrap{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px 22px;width:700px;max-width:92vw}
-  #gallery h3,#fmtmgr h3{margin:0;font-size:16px}
-  #gallery .ghint,#fmtmgr .ghint{font-size:12px;color:var(--mut);margin-top:4px}
-  #gallery .gclose,#fmtmgr .gclose{float:right;cursor:pointer;color:var(--ink)}
-  .gcards{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:16px}
+  #gallery .gcard-wrap,#fmtmgr .gcard-wrap{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px 22px;width:700px;max-width:92vw;max-height:90vh;display:flex;flex-direction:column}
+  #gallery h3,#fmtmgr h3{margin:0;font-size:16px;flex:0 0 auto}
+  #gallery .ghint,#fmtmgr .ghint{font-size:12px;color:var(--mut);margin-top:4px;flex:0 0 auto}
+  #gallery .gclose,#fmtmgr .gclose{float:right;cursor:pointer;color:var(--ink);font-weight:600}
+  .gscroll{flex:1 1 auto;min-height:0;overflow-y:auto;margin-top:6px}
+  .gcards{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:10px}
   .gcard{background:var(--panel2);border:1px solid var(--line2);border-radius:10px;padding:12px;cursor:pointer;transition:.12s}
   .gcard:hover{border-color:var(--accent);transform:translateY(-2px)}
   .gswatch{height:64px;border-radius:6px;margin-bottom:10px;background:#fff;border:1px solid var(--line2);overflow:hidden;display:flex;flex-direction:column}
@@ -202,7 +203,7 @@
 <body>
 <div class="app">
   <div class="top">
-    <div class="brand"><svg width="22" height="22" viewBox="0 0 48 48" fill="none" aria-label="LumenPDF Studio"><rect x="6" y="6" width="7.5" height="38" rx="3.75" fill="#1463FF"/><rect x="18" y="25" width="4.5" height="19" rx="2.25" fill="#7FA8FF"/><rect x="27" y="25" width="7.5" height="19" rx="3.75" fill="#1463FF"/><rect x="39" y="25" width="4.5" height="19" rx="2.25" fill="#1463FF"/></svg> LumenPDF <small>Studio · b46</small></div>
+    <div class="brand"><svg width="22" height="22" viewBox="0 0 48 48" fill="none" aria-label="LumenPDF Studio"><rect x="6" y="6" width="7.5" height="38" rx="3.75" fill="#1463FF"/><rect x="18" y="25" width="4.5" height="19" rx="2.25" fill="#7FA8FF"/><rect x="27" y="25" width="7.5" height="19" rx="3.75" fill="#1463FF"/><rect x="39" y="25" width="4.5" height="19" rx="2.25" fill="#1463FF"/></svg> LumenPDF <small>Studio · b47</small></div>
     <input class="fmt-name" id="fmtName" value="Quotation - Custom" title="Format name">
     <select class="sel" id="targetKindSel" title="Brand a document or a report" onchange="onTargetKind(this.value)"><option value="doctype">Document</option><option value="report">Report</option></select>
     <select class="sel" id="doctypeSel" title="Target DocType" onchange="onDoctype(this.value)"></select>
@@ -242,7 +243,7 @@
     </div>
   </div>
 </div>
-<div id="gallery"><div class="gcard-wrap"><h3>Start from a template</h3><div class="ghint">Pick a ready-made design, then customize it.<span class="gclose" onclick="closeGallery()">✕ Close</span></div><div class="gcards" id="gcards"></div><div id="gsite"></div></div></div>
+<div id="gallery"><div class="gcard-wrap"><h3>Start from a template</h3><div class="ghint">Pick a ready-made design, then customize it.<span class="gclose" onclick="closeGallery()">✕ Close</span></div><div class="gscroll"><div class="gcards" id="gcards"></div><div id="gsite"></div></div></div></div>
 <div id="fmtmgr"><div class="gcard-wrap" style="width:580px"><h3 id="fmtmgrTitle">Formats</h3><div class="ghint">The ★ default is what <b>Print → PDF</b> uses. Set the default, open, or delete a format.<span class="gclose" onclick="closeFmtMgr()">✕ Close</span></div><div id="fmtmgrBody" style="margin-top:14px;max-height:60vh;overflow:auto"></div></div></div>
 <script>
 const PXMM=96/25.4;
@@ -709,6 +710,10 @@ function openGallery(){document.getElementById("gcards").innerHTML=FORMATS.map(f
       host.innerHTML=`<h3 style="margin:18px 0 0">Your site's templates</h3><div class="gcards">`+rows.map(function(r){return `<div class="gcard" onclick="pickSiteTemplate('${esc(r.name)}')"><div class="gsw" style="background:linear-gradient(135deg,#1463FF22,#E4E8F0);display:flex;align-items:center;justify-content:center"><span style="font-size:22px">▦</span></div><div class="gt">${esc(r.label)}</div><div class="gd">${esc(r.target)} · saved on this site</div></div>`;}).join("")+`</div>`;});}}
 function pickSiteTemplate(name){clearDraft();rpc("brandpdf.api.get_format",{name:name}).then(function(r){if(r&&r.definition){loadDefinition(r.definition);document.getElementById("fmtName").value=(r.definition.name||name)+" copy";commitHistory();}closeGallery();});}
 function closeGallery(){document.getElementById("gallery").style.display="none";}
+/* Extra ways out of the modals: click the dark backdrop, or press Escape. */
+(function(){function bd(id,close){var el=document.getElementById(id);if(el)el.addEventListener("mousedown",function(e){if(e.target===el)close();});}
+  bd("gallery",closeGallery);bd("fmtmgr",function(){closeFmtMgr();});
+  document.addEventListener("keydown",function(e){if(e.key==="Escape"){var g=document.getElementById("gallery"),f=document.getElementById("fmtmgr");if(g&&g.style.display!=="none"&&g.style.display!=="")closeGallery();if(f&&f.style.display!=="none"&&f.style.display!=="")closeFmtMgr();}});})();
 function pickStarter(i){const f=FORMATS[i];if(!f)return;clearDraft();loadDefinition(f.make());closeGallery();}
 /* ---- READY SECTIONS: pre-composed block groups you insert into the current design ---- */
 const SECTIONS=[
