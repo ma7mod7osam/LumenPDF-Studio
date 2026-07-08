@@ -122,7 +122,15 @@ class FrappeChromeRenderer(BaseRenderer):
         """wkhtmltopdf honors --orientation Landscape; use it when chrome can't turn the page.
         Returns None on any failure so the caller keeps the chrome output (never worse)."""
         try:
+            import re
+
             from frappe.utils.pdf import get_pdf
+
+            # Render OFFLINE: the only remote refs left after neutralize_remote are the Google
+            # Fonts imports, and wkhtml can stall for minutes waiting on that fetch. Strip them —
+            # fonts fall back to system faces; the layout (the reason we're here) is unaffected.
+            html = re.sub(r"@import\s+url\([^)]*fonts\.googleapis[^)]*\)\s*;?", "", html)
+            html = re.sub(r"<link[^>]+fonts\.(?:googleapis|gstatic)[^>]*>", "", html)
 
             params = inspect.signature(get_pdf).parameters
             call = {}

@@ -306,8 +306,11 @@ def report_pdf(report_name, filters=None, template=None, orientation=None, defin
         merged = _guess_default_filters()
         merged.update(filters or {})
         filters = merged
+    # A preview needs to LOOK right, not be complete — 150 rows keeps the render fast (a first
+    # landscape render may run two engines back to back; 5000 GL rows made it hang for minutes).
+    row_cap = 150 if preview else REPORT_ROW_CAP
     try:
-        rdoc, land = _build_report_doc(report_name, filters, limit=REPORT_ROW_CAP)
+        rdoc, land = _build_report_doc(report_name, filters, limit=row_cap)
     except Exception:
         if not preview:
             raise

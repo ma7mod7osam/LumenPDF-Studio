@@ -112,13 +112,17 @@ frappe.pages['brandpdf-builder'].on_page_load = function (wrapper) {
 			}
 		} else if (d.type === 'brandpdf-preview-report') {
 			// Report preview: re-run the report server-side and render the UNSAVED design.
+			// Hard client timeout: the UI must never stay frozen on a slow/stuck render.
 			frappe.dom.freeze(__('Rendering report preview…'));
+			var ac = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+			var timer = setTimeout(function () { if (ac) ac.abort(); }, 120000);
 			fetch('/api/method/brandpdf.report.report_pdf', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json', 'X-Frappe-CSRF-Token': frappe.csrf_token },
 				body: JSON.stringify({ report_name: d.report_name, definition: JSON.stringify(d.definition), preview: 1 }),
+				signal: ac ? ac.signal : undefined,
 			}).then(function (r) {
-				frappe.dom.unfreeze();
+				clearTimeout(timer); frappe.dom.unfreeze();
 				if (!r.ok) {
 					return r.json().catch(function () { return {}; }).then(function (j) {
 						var msg = '';
@@ -127,7 +131,13 @@ frappe.pages['brandpdf-builder'].on_page_load = function (wrapper) {
 					});
 				}
 				return r.blob().then(function (b) { window.open(URL.createObjectURL(b), '_blank'); });
-			}).catch(function () { frappe.dom.unfreeze(); frappe.msgprint(__('Report preview failed.')); });
+			}).catch(function (err) {
+				clearTimeout(timer); frappe.dom.unfreeze();
+				var timedOut = err && (err.name === 'AbortError');
+				frappe.msgprint(__(timedOut
+					? 'The preview is taking too long. The first landscape render can be slow — try again in a minute (the engine remembers the fast path), or use the report\'s Branded PDF button.'
+					: 'Report preview failed.'));
+			});
 		} else if (d.type === 'brandpdf-preview') {
 			frappe.dom.freeze(__('Rendering preview…'));
 			frappe.call({
