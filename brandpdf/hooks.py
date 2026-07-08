@@ -12,7 +12,9 @@ app_license = "MIT"
 # ---------------------------------------------------------------------------
 app_include_js = [
     "/assets/brandpdf/js/brandpdf_button.js",
-    "/assets/brandpdf/js/brandpdf_report_button.js",  # "Branded PDF" button in the Query Report view
+    # "Branded PDF" button in the Query Report view. A .bundle.js: bench build gives it a
+    # content-hashed URL every deploy, so browsers can never serve a stale copy of it.
+    "brandpdf_report_button.bundle.js",
 ]
 
 # Standard BrandPDF templates are read-only (duplicate to edit).
