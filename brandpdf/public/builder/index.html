@@ -212,7 +212,7 @@
 <body>
 <div class="app">
   <div class="top">
-    <div class="brand"><svg width="22" height="22" viewBox="0 0 48 48" fill="none" aria-label="LumenPDF Studio"><rect x="6" y="6" width="7.5" height="38" rx="3.75" fill="#1463FF"/><rect x="18" y="25" width="4.5" height="19" rx="2.25" fill="#7FA8FF"/><rect x="27" y="25" width="7.5" height="19" rx="3.75" fill="#1463FF"/><rect x="39" y="25" width="4.5" height="19" rx="2.25" fill="#1463FF"/></svg> LumenPDF <small>Studio · b52</small></div>
+    <div class="brand"><svg width="22" height="22" viewBox="0 0 48 48" fill="none" aria-label="LumenPDF Studio"><rect x="6" y="6" width="7.5" height="38" rx="3.75" fill="#1463FF"/><rect x="18" y="25" width="4.5" height="19" rx="2.25" fill="#7FA8FF"/><rect x="27" y="25" width="7.5" height="19" rx="3.75" fill="#1463FF"/><rect x="39" y="25" width="4.5" height="19" rx="2.25" fill="#1463FF"/></svg> LumenPDF <small>Studio · b53</small></div>
     <div class="menuwrap"><button class="btn ghost" id="fileBtn" onclick="toggleFileMenu(event)" title="New, open, duplicate, import/export, manage">☰ File</button>
       <div class="menu" id="fileMenu">
         <button onclick="closeFileMenu();openNewFmt()">＋ New format…</button>
@@ -737,8 +737,9 @@ const FORMATS=[
    Operational reports use a left lockup + right filters; statements are centered. */
 function _rptDef(name,accent,orient,footer,blocks){return{name:name,layout:"absolute",target_kind:"report",report_name:state.report||"",target_doctype:state.target||"Report",page:{orientation:orient},header:{enabled:false,height:0,repeat:false,margin:0},footer:footer,watermark:{text:"",color:"#0C1322",opacity:8,size:60},branding:{primary:accent,navy:"#1a2436",font:"Manrope",header_image:"",footer_image:""},blocks:blocks};}
 function _rptFooterL(W,y){return [
+ // Just a hairline + page number. (No "Prepared by ..." placeholder text — sample content in a
+ // footer reads as a bug, not a starting point; add your own firm line if you want one.)
  {type:"divider",region:"footer",settings:{thickness:1,color:"#e7eaef",lstyle:"solid"},pos:{x:16,y:y,w:W,h:null}},
- {type:"text",region:"footer",settings:{text:"Prepared by Your Firm · Chartered Accountants"},style:{size:7,color:"#98a2b3"},pos:{x:16,y:y+3,w:150,h:null}},
  {type:"pagenum",region:"footer",settings:{format:"Page {p} of {n}"},style:{size:7,align:"right",color:"#98a2b3"},pos:{x:W-44,y:y+3,w:60,h:null}}];}
 function _rptTable(accent,zebra,x,y,W){return {type:"report_table",region:"body",settings:{columns:[],headerColor:"primary",zebra:zebra,zebraColor:"#fafbfc",headerStyle:{bg:"#ffffff",color:"#98a2b3",weight:"600",size:8},borders:{preset:"rows",w:1,color:"#eef1f5",style:"solid"},cellPad:{y:7,x:10}},pos:{x:x,y:y,w:W,h:null}};}
 /* operational (landscape): left eyebrow + entity + report title, right filters, 2px rule, table */
