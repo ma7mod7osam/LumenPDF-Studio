@@ -32,13 +32,21 @@
 		try {
 			if (!frappe.get_route || frappe.get_route()[0] !== 'query-report') return;
 			var qr = frappe.query_report;
-			if (!qr || !qr.page || !qr.report_name) return;
-			var tb = qr.page.inner_toolbar;
-			if (tb && tb.find && tb.find('[data-bpdf-btn]').length) return; // still there
+			if (!qr || !qr.page || !qr.page.wrapper || !qr.report_name) return;
+			var wrap = qr.page.wrapper;
+			// VISIBILITY check, not presence: the report view sometimes hides the custom-actions
+			// container without emptying it — and frappe's add_inner_button dedupes by label and
+			// returns the existing (hidden) button WITHOUT unhiding, so a presence check deadlocks
+			// into "exists but invisible forever".
+			if (wrap.find('[data-bpdf-btn]:visible').length) return;
+			wrap.find('[data-bpdf-btn]').remove(); // stale/hidden copies, so add really re-adds
 			var $btn = qr.page.add_inner_button(__('Branded PDF'), function () {
 				openBrandedPdf(frappe.query_report);
 			});
-			if ($btn && $btn.attr) $btn.attr('data-bpdf-btn', '1');
+			if ($btn && $btn.attr) {
+				$btn.attr('data-bpdf-btn', '1');
+				$btn.closest('.custom-actions').removeClass('hide'); // force the container visible
+			}
 		} catch (e) { /* never break the report view */ }
 	}
 
