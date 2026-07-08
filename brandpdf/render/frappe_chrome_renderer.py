@@ -95,10 +95,17 @@ class FrappeChromeRenderer(BaseRenderer):
                 call["options"]["page-height"] = _mm(ph)
                 call["options"]["orientation"] = "Landscape"
 
+        # Landscape hint INSIDE the html too: frappe's read_options_from_html extracts
+        # orientation/page-width/page-height from .print-format styles, and some patched chrome
+        # generators reuse that parser. Harmless where ignored.
+        if want_landscape:
+            html = ('<style>.print-format{orientation: landscape; '
+                    f'page-width: {_mm(pw)}; page-height: {_mm(ph)};}}</style>') + html
+
         # Known-broken chrome landscape on this host -> go straight to wkhtml (no wasted render).
         if want_landscape and _land_state() == "broken":
             wk = self._wkhtml_landscape(html, m, _mm)
-            if wk is not None:
+            if wk is not None and _is_landscape_pdf(wk):
                 return wk
 
         pdf = get_pdf(html, **call)
@@ -116,15 +123,22 @@ class FrappeChromeRenderer(BaseRenderer):
                 wk = self._wkhtml_landscape(html, m, _mm)
                 if wk is not None and _is_landscape_pdf(wk):
                     return wk
+                try:
+                    frappe.log_error(title="BrandPDF: landscape not produced by any engine",
+                                     message="chrome ignored the page dims and the wkhtml fallback "
+                                             "returned portrait/empty — landscape formats will clip.")
+                except Exception:
+                    pass
         return pdf
 
     def _wkhtml_landscape(self, html, m, _mm):
-        """wkhtmltopdf honors --orientation Landscape; use it when chrome can't turn the page.
+        """Render via wkhtmltopdf DIRECTLY (pdfkit), bypassing frappe.utils.pdf.get_pdf entirely:
+        on hosts where a patched get_pdf routes every call to the site's configured 'chrome'
+        generator, asking get_pdf for wkhtmltopdf just loops back to chrome (observed live —
+        portrait again, no error). pdfkit.from_string cannot be redirected.
         Returns None on any failure so the caller keeps the chrome output (never worse)."""
         try:
             import re
-
-            from frappe.utils.pdf import get_pdf
 
             # Render OFFLINE: the only remote refs left after neutralize_remote are the Google
             # Fonts imports, and wkhtml can stall for minutes waiting on that fetch. Strip them —
@@ -132,20 +146,25 @@ class FrappeChromeRenderer(BaseRenderer):
             html = re.sub(r"@import\s+url\([^)]*fonts\.googleapis[^)]*\)\s*;?", "", html)
             html = re.sub(r"<link[^>]+fonts\.(?:googleapis|gstatic)[^>]*>", "", html)
 
-            params = inspect.signature(get_pdf).parameters
-            call = {}
-            if "pdf_generator" in params:
-                call["pdf_generator"] = "wkhtmltopdf"
-            call["options"] = {
+            options = {
                 "page-size": "A4",
                 "orientation": "Landscape",
                 "margin-top": _mm(m.get("top")),
                 "margin-bottom": _mm(m.get("bottom")),
                 "margin-left": _mm(m.get("left")),
                 "margin-right": _mm(m.get("right")),
-                "print-media-type": True,
+                "print-media-type": None,
+                "background": None,
+                "encoding": "UTF-8",
+                "quiet": None,
+                # frappe's own safety flags; our html is self-contained (data: URIs, no scripts)
+                "disable-javascript": "",
+                "disable-local-file-access": "",
+                "disable-smart-shrinking": "",  # exact mm: the body is laid out at true page width
             }
-            pdf = get_pdf(html, **call)
+            import pdfkit
+
+            pdf = pdfkit.from_string(html, False, options=options)
             if isinstance(pdf, str):
                 pdf = pdf.encode("latin-1", errors="ignore")
             return pdf or None
