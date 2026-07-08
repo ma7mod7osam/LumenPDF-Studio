@@ -2,6 +2,11 @@
 // (brandpdf.report.report_pdf) with the current filters and streams back a branded PDF — a fully
 // styled dynamic table (or a mapped BrandPDF report template when one exists). This is separate
 // from the native Print > PDF, which Mode A (report_to_pdf override) wraps automatically.
+//
+// Attach strategy: the query-report PAGE is a single instance reused for every report, and its
+// inner toolbar is CLEARED whenever a report loads/refreshes — so a one-shot add_inner_button
+// (with an "already added" flag) loses the button forever. Instead we ENSURE the button exists:
+// re-check on route changes and on a slow interval, re-adding whenever the toolbar was wiped.
 (function () {
 	function currentFilters(qr) {
 		try {
@@ -23,18 +28,21 @@
 		window.open(url, '_blank');
 	}
 
-	function addButton(tries) {
-		if (frappe.get_route && frappe.get_route()[0] !== 'query-report') return;
-		var qr = frappe.query_report;
-		if (!qr || !qr.page) {
-			if ((tries || 0) < 20) setTimeout(function () { addButton((tries || 0) + 1); }, 300);
-			return;
-		}
-		if (qr.__bpdf_report_btn) return; // qr is rebuilt per report, so this de-dupes within a report
-		qr.__bpdf_report_btn = true;
-		qr.page.add_inner_button(__('Branded PDF'), function () { openBrandedPdf(qr); });
+	function ensureButton() {
+		try {
+			if (!frappe.get_route || frappe.get_route()[0] !== 'query-report') return;
+			var qr = frappe.query_report;
+			if (!qr || !qr.page || !qr.report_name) return;
+			var tb = qr.page.inner_toolbar;
+			if (tb && tb.find && tb.find('[data-bpdf-btn]').length) return; // still there
+			var $btn = qr.page.add_inner_button(__('Branded PDF'), function () {
+				openBrandedPdf(frappe.query_report);
+			});
+			if ($btn && $btn.attr) $btn.attr('data-bpdf-btn', '1');
+		} catch (e) { /* never break the report view */ }
 	}
 
-	$(document).on('page-change', function () { addButton(0); });
-	$(document).ready(function () { addButton(0); });
+	$(document).on('page-change', function () { setTimeout(ensureButton, 600); });
+	$(document).ready(function () { setTimeout(ensureButton, 600); });
+	setInterval(ensureButton, 1500); // survives toolbar clears on refresh/filter changes
 })();
