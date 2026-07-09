@@ -1244,10 +1244,12 @@ def _branding_from_def(definition, doc):
         b["primary"] = dbr["primary"].strip()
     if _hexok(dbr.get("navy")):
         b["navy"] = dbr["navy"].strip()
-    if dbr.get("header_image"):
-        b["header_image"] = dbr["header_image"]
-    if dbr.get("footer_image"):
-        b["footer_image"] = dbr["footer_image"]
+    for k in ("header_image", "footer_image"):
+        v = dbr.get(k)
+        if v == "none":  # explicit per-format opt-out of the company (Settings) banner
+            b[k] = ""
+        elif v:
+            b[k] = v
     if dbr.get("font") in _FONTS:  # allow-list: font is interpolated into a <style> block
         b["font"] = dbr["font"]
     return b
@@ -1266,7 +1268,7 @@ def collect_image_srcs(definition):
     srcs = set()
     dbr = definition.get("branding") or {}
     for k in ("header_image", "footer_image"):
-        if dbr.get(k):
+        if dbr.get(k) and dbr[k] != "none":  # "none" = banner opt-out sentinel, not a path
             srcs.add(dbr[k])
     for bl in definition.get("blocks") or []:
         if bl.get("type") == "image":

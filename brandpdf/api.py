@@ -765,6 +765,8 @@ def _validate_image_srcs(definition):
                 srcs.append(s)
     for s in srcs:
         s = str(s).strip()
+        if s == "none":
+            continue  # banner opt-out sentinel ("suppress the company banner"), not a path
         if s and not (s.startswith("/files/") or s.startswith("/private/files/")):
             frappe.throw(f"Images must be uploaded files (path starting /files/). Got: {s[:80]}")
 
