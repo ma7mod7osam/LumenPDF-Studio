@@ -37,10 +37,10 @@ def request_pdf(doctype: str, name: str, template: str = None):
 
 
 @frappe.whitelist()
-def list_formats(doctype, company=None, report_name=None):
-    """Formats available for a doctype (or, when report_name is given, for a report). `company`
-    scopes which doctype format is marked default. Empty if the caller can't read the target or
-    the config DocType doesn't exist yet."""
+def list_formats(doctype=None, company=None, report_name=None):
+    """Formats available for a doctype (or, when report_name is given, for a report — the builder
+    then sends NO doctype). `company` scopes which doctype format is marked default. Empty if the
+    caller can't read the target or the config DocType doesn't exist yet."""
     if report_name:
         if not frappe.db.exists("DocType", "BrandPDF Template"):
             return []
