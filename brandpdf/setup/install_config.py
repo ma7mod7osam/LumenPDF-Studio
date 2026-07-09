@@ -188,36 +188,13 @@ def _perms():
 
 
 def _seed():
-    """Wire the BSTC Quotation out of the box: a standard (read-only) template + a mapping.
-    Insert is_new() so the read-only guard returns early — no special flag needed."""
-    tname = "Quotation - BSTC"
-    if not frappe.db.exists("BrandPDF Template", tname):
-        t = frappe.get_doc(
-            {
-                "doctype": "BrandPDF Template",
-                "template_name": tname,
-                "target_doctype": "Quotation",
-                "language": "bilingual",
-                "is_standard": 1,
-                "source_type": "jinja_file",
-                "jinja_path": "templates/brandpdf/quotation_bstc.html",
-            }
-        )
-        t.flags.ignore_permissions = True
-        t.insert()
-        print("  seeded template:", tname)
-    if not frappe.db.exists("BrandPDF Mapping", {"target_doctype": "Quotation"}):
-        m = frappe.get_doc(
-            {"doctype": "BrandPDF Mapping", "target_doctype": "Quotation", "template": tname, "enabled": 1, "priority": 0}
-        )
-        m.flags.ignore_permissions = True
-        m.insert()
-        print("  seeded mapping: Quotation ->", tname)
-
-    # Editable BLOCK-based starter so anyone can compose a format by adding/reordering blocks.
-    # Not mapped by default (the working jinja format stays active); point the Quotation
-    # mapping's Template at this when you're ready to use the maker.
-    bname = "Quotation - Editable"
+    """Starter content for FRESH installs: one editable block-based Quotation format + a mapping,
+    so 'Download Branded PDF' works out of the box. Nothing client-branded; guarded so a plain
+    Frappe site (no ERPNext / no Quotation doctype) skips it. Existing sites are untouched — every
+    insert is exists-guarded, and the mapping guard never overrides a site's chosen default."""
+    if not frappe.db.exists("DocType", "Quotation"):
+        return
+    bname = "Quotation - Starter"
     if not frappe.db.exists("BrandPDF Template", bname):
         from brandpdf.blocks import default_blocks
         bt = frappe.get_doc(
@@ -225,7 +202,7 @@ def _seed():
                 "doctype": "BrandPDF Template",
                 "template_name": bname,
                 "target_doctype": "Quotation",
-                "language": "bilingual",
+                "language": "en",
                 "is_standard": 0,
                 "source_type": "blocks",
                 "blocks": [{"block_type": blk["block_type"]} for blk in default_blocks()],
@@ -233,4 +210,11 @@ def _seed():
         )
         bt.flags.ignore_permissions = True
         bt.insert()
-        print("  seeded editable block template:", bname)
+        print("  seeded starter template:", bname)
+    if not frappe.db.exists("BrandPDF Mapping", {"target_doctype": "Quotation"}):
+        m = frappe.get_doc(
+            {"doctype": "BrandPDF Mapping", "target_doctype": "Quotation", "template": bname, "enabled": 1, "priority": 0}
+        )
+        m.flags.ignore_permissions = True
+        m.insert()
+        print("  seeded mapping: Quotation ->", bname)

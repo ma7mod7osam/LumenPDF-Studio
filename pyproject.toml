@@ -3,17 +3,19 @@ name = "brandpdf"
 authors = [
     { name = "BSTC", email = "support@bstc-bh.com" },
 ]
-description = "Pixel-perfect, branded PDFs for ERPNext rendered through a real Chromium engine (bypasses the Frappe PDF wrapper)."
+description = "LumenPDF Studio — a visual print-format builder for Frappe/ERPNext: pixel-perfect branded PDFs for documents and reports, with ready-made templates."
 requires-python = ">=3.10"
 readme = "README.md"
 license = { file = "license.txt" }
 dynamic = ["version"]
-dependencies = [
-    # Primary engine. Chromium itself is installed separately: `playwright install chromium`.
-    "playwright>=1.40.0",
-    # Used only by the Gotenberg fallback engine.
-    "requests>=2.28.0",
-]
+# No hard dependencies: the default engine (frappe_chrome) reuses the host's own PDF pipeline,
+# and the wkhtmltopdf landscape fallback uses pdfkit/pypdf, which frappe itself ships.
+dependencies = []
+
+[project.optional-dependencies]
+# Alternative engines, opt-in via site_config "brandpdf_engine".
+playwright = ["playwright>=1.40.0"]
+gotenberg = ["requests>=2.28.0"]
 
 [build-system]
 requires = ["flit_core >=3.4,<4"]

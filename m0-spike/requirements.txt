@@ -1,3 +1,0 @@
-# M0 spike dependencies (spike-only; the app declares its own deps in ../pyproject.toml).
-playwright>=1.40.0
-pymupdf>=1.24.0

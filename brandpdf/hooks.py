@@ -1,9 +1,12 @@
 app_name = "brandpdf"  # internal module id — DO NOT rename (breaks imports/hooks/DocType module)
 app_title = "LumenPDF Studio"
 app_publisher = "BSTC"
-app_description = "Pixel-perfect branded PDFs for ERPNext via a real Chromium engine."
+app_description = ("Visual print-format builder for Frappe/ERPNext: design pixel-perfect branded "
+                   "PDFs for documents AND reports with drag-and-drop blocks, ready-made templates, "
+                   "multi-company branding and bilingual (EN/AR) support.")
 app_email = "support@bstc-bh.com"
 app_license = "MIT"
+app_logo_url = "/assets/brandpdf/images/lumenpdf-logo.svg"
 
 # ---------------------------------------------------------------------------
 # Client: a global script adds the "Download Branded PDF" button to every DocType
