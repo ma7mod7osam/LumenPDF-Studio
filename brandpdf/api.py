@@ -47,13 +47,14 @@ def list_formats(doctype=None, company=None, report_name=None):
         try:
             rows = frappe.get_all("BrandPDF Template",
                                   filters={"target_kind": "report", "report_name": report_name},
-                                  fields=["name", "template_name", "is_standard"],
+                                  fields=["name", "template_name", "is_standard", "source_type"],
                                   order_by="is_standard asc, modified desc")
         except Exception:
             return []  # target_kind/report_name columns not migrated yet
         default = _default_report_template(report_name)
         out = [{"name": r["name"], "label": r.get("template_name") or r["name"],
-                "is_standard": bool(r.get("is_standard")), "is_default": (r["name"] == default)} for r in rows]
+                "is_standard": bool(r.get("is_standard")), "is_default": (r["name"] == default),
+                "is_visual": (r.get("source_type") or "blocks") == "blocks"} for r in rows]
         out.sort(key=lambda x: (not x["is_default"]))
         return out
     if not doctype or not frappe.db.exists("DocType", "BrandPDF Template"):
@@ -63,13 +64,14 @@ def list_formats(doctype=None, company=None, report_name=None):
     rows = frappe.get_all(
         "BrandPDF Template",
         filters={"target_doctype": doctype},
-        fields=["name", "template_name", "is_standard"],
+        fields=["name", "template_name", "is_standard", "source_type"],
         order_by="is_standard asc, modified desc",
     )
     default = _default_template(doctype, company)
     out = [{
         "name": r["name"], "label": r.get("template_name") or r["name"],
         "is_standard": bool(r.get("is_standard")), "is_default": (r["name"] == default),
+        "is_visual": (r.get("source_type") or "blocks") == "blocks",  # jinja/body can't open on the canvas
     } for r in rows]
     out.sort(key=lambda x: (not x["is_default"]))  # the default format first (for the picker preselect)
     return out
@@ -498,10 +500,16 @@ def get_format(name=None, target_doctype="Quotation", report_name=None):
     """Return a saved design to load into the builder. With a name, that template; else the active
     design for the report (report_name) or the doctype — so the builder opens on what's live."""
     _require_manager()
-    if name and frappe.db.exists("BrandPDF Template", name):
+    if name:
+        # An explicit name NEVER falls through to some other format: silently loading the
+        # doctype's default instead made "Open" look like it did nothing / didn't switch.
+        if not frappe.db.exists("BrandPDF Template", name):
+            return {"name": None, "definition": None, "reason": "missing"}
         t = frappe.get_doc("BrandPDF Template", name)
         if t.get("definition"):
             return {"name": t.name, "definition": json.loads(t.definition)}
+        return {"name": t.name, "definition": None,
+                "reason": "not_visual" if (t.get("source_type") or "blocks") != "blocks" else "empty"}
     if report_name:
         try:
             maps = frappe.get_all(

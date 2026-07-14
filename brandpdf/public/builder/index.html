@@ -212,7 +212,7 @@
 <body>
 <div class="app">
   <div class="top">
-    <div class="brand"><svg width="22" height="22" viewBox="0 0 48 48" fill="none" aria-label="LumenPDF Studio"><rect x="6" y="6" width="7.5" height="38" rx="3.75" fill="#1463FF"/><rect x="18" y="25" width="4.5" height="19" rx="2.25" fill="#7FA8FF"/><rect x="27" y="25" width="7.5" height="19" rx="3.75" fill="#1463FF"/><rect x="39" y="25" width="4.5" height="19" rx="2.25" fill="#1463FF"/></svg> LumenPDF <small>Studio · b55</small></div>
+    <div class="brand"><svg width="22" height="22" viewBox="0 0 48 48" fill="none" aria-label="LumenPDF Studio"><rect x="6" y="6" width="7.5" height="38" rx="3.75" fill="#1463FF"/><rect x="18" y="25" width="4.5" height="19" rx="2.25" fill="#7FA8FF"/><rect x="27" y="25" width="7.5" height="19" rx="3.75" fill="#1463FF"/><rect x="39" y="25" width="4.5" height="19" rx="2.25" fill="#1463FF"/></svg> LumenPDF <small>Studio · b56</small></div>
     <div class="menuwrap"><button class="btn ghost" id="fileBtn" onclick="toggleFileMenu(event)" title="New, open, duplicate, import/export, manage">☰ File</button>
       <div class="menu" id="fileMenu">
         <button onclick="closeFileMenu();openNewFmt()">＋ New format…</button>
@@ -810,7 +810,7 @@ function openGallery(){const isRep=state.targetKind==="report";_galSet=isRep?REP
   const host=document.getElementById("gsite");if(host){host.innerHTML="";
     rpc("brandpdf.api.gallery_list").then(function(rows){rows=rows||[];if(!rows.length){host.innerHTML=EMBED?'<div class="hint" style="padding:6px 0 0">No site templates yet — open <b>⚙ Formats</b> and click “▦ To gallery” on a format you like.</div>':"";return;}
       host.innerHTML=`<h3 style="margin:18px 0 0">Your site's templates</h3><div class="gcards">`+rows.map(function(r){return `<div class="gcard" onclick="pickSiteTemplate('${esc(r.name)}')"><div class="gsw" style="background:linear-gradient(135deg,#1463FF22,#E4E8F0);display:flex;align-items:center;justify-content:center"><span style="font-size:22px">▦</span></div><div class="gt">${esc(r.label)}</div><div class="gd">${esc(r.target)} · saved on this site</div></div>`;}).join("")+`</div>`;});}}
-function pickSiteTemplate(name){clearDraft();rpc("brandpdf.api.get_format",{name:name}).then(function(r){if(r&&r.definition){loadDefinition(r.definition);document.getElementById("fmtName").value=(r.definition.name||name)+" copy";commitHistory();}closeGallery();});}
+function pickSiteTemplate(name){clearDraft();rpc("brandpdf.api.get_format",{name:name}).then(function(r){if(r&&r.definition){loadDefinition(r.definition);document.getElementById("fmtName").value=(r.definition.name||name)+" copy";commitHistory();}else{toast("Could not load \""+name+"\".",true);}closeGallery();});}
 function closeGallery(){document.getElementById("gallery").style.display="none";}
 /* ---- File menu ---- */
 function toggleFileMenu(e){if(e)e.stopPropagation();const m=document.getElementById("fileMenu");m.style.display=(m.style.display==="block")?"none":"block";}
@@ -1720,7 +1720,12 @@ function loadDoctypeMeta(dt){
   rpc("brandpdf.api.list_formats",{doctype:dt}).then(function(fs){fs=fs||[];const opts=fs.map(function(f){return{value:f.name,label:(f.is_default?"★ ":"")+f.label};});setSelOptions("openSel",opts,"Open…","");});
   rpc("brandpdf.api.builder_docs",{doctype:dt,limit:25}).then(function(ds){FIELDVALS=null;SAMPLE=JSON.parse(JSON.stringify(BASE_SAMPLE));setSelOptions("dataSel",(ds||[]).map(function(n){return{value:n,label:n};}),"Sample data","");render();});
 }
-function openFormat(name){if(!name)return;const el=document.getElementById("openSel");if(name==="__manage__"){if(el)el.value="";openFormatsMgr();return;}clearDraft();rpc("brandpdf.api.get_format",{name:name}).then(function(r){if(r&&r.definition)loadDefinition(r.definition);if(el)el.value="";});}
+function openFormat(name){if(!name)return;const el=document.getElementById("openSel");if(name==="__manage__"){if(el)el.value="";openFormatsMgr();return;}clearDraft();rpc("brandpdf.api.get_format",{name:name}).then(function(r){
+  if(r&&r.definition){loadDefinition(r.definition);toast('Opened "'+(r.name||name)+'".');}
+  else if(r&&r.reason==="not_visual")toast("\""+name+"\" is an HTML/Jinja template — it has no visual design to open on the canvas.",true);
+  else if(r&&r.reason==="empty")toast("\""+name+"\" has no saved design yet.",true);
+  else toast("Could not load \""+name+"\" — the server didn't return a design (check your connection / Error Log).",true);
+  if(el)el.value="";});}
 /* ---- Formats manager: set the default (Print > PDF uses it), open, delete ---- */
 let _fmtCompany="";  // ""=global default; else a Company name (multi-company scoping)
 let _companies=null;
@@ -1740,7 +1745,7 @@ function _renderFmtMgr(){
     const body=fs.length?fs.map(function(f){
       const setDef=isRep?`<button class="btn ghost" onclick="setDefaultReportFmt('${esc(f.name)}')">Make active</button>`:`<button class="btn ghost" onclick="setDefaultFmt('${esc(f.name)}')">Set default</button>`;
       const acts=(f.is_default?'<span class="deftag">'+(isRep?'Active':('Default'+(_fmtCompany?' · '+esc(_fmtCompany):'')))+'</span>':setDef)
-        +`<button class="btn ghost" onclick="openFmtFromMgr('${esc(f.name)}')">Open</button>`
+        +(f.is_visual===false?'<span class="tagstd" title="HTML/Jinja template — no visual design to open on the canvas">HTML</span>':`<button class="btn ghost" onclick="openFmtFromMgr('${esc(f.name)}')">Open</button>`)
         +`<button class="btn ghost" title="Make an editable copy of this format" onclick="dupFmt('${esc(f.name)}','${esc(f.label)}')">Duplicate</button>`
         +((isRep||f.is_standard)?'':`<button class="btn ghost" title="Show in the Templates gallery for everyone on this site" onclick="toggleGallery('${esc(f.name)}',${inGal[f.name]?0:1})">${inGal[f.name]?'▦ Remove':'▦ To gallery'}</button>`)
         +(f.is_standard?'':`<button class="btn ghost" onclick="deleteFmt('${esc(f.name)}','${esc(f.label)}')">Delete</button>`);
