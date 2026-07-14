@@ -92,6 +92,16 @@
   .blk .tag{position:absolute;top:-1px;left:-1px;display:none;background:var(--accent);color:#fff;font-size:9px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;padding:1px 6px;border-radius:4px;z-index:6;transform:translateY(-100%)}
   .blk:hover .tag,.blk.sel .tag{display:block}
   .blk [contenteditable]:focus{outline:2px solid var(--accent);outline-offset:-2px}
+  /* continuation-page (page 2+) blocks: selectable clones — click to edit in the panel */
+  .sblk{cursor:pointer}
+  .sblk:hover{outline:1px dashed #1463FF88;outline-offset:1px}
+  .sblk.sel{outline:2px solid var(--accent);outline-offset:1px}
+  .sblk .tools{position:absolute;top:-1px;right:-1px;display:none;gap:3px;z-index:6;transform:translateY(-100%)}
+  .sblk:hover .tools,.sblk.sel .tools{display:flex}
+  .sblk .tools button{width:22px;height:22px;border-radius:5px;border:0;background:#0C1322ee;color:#fff;cursor:pointer;font-size:11px}
+  .sblk .tools button:hover{background:var(--accent)}
+  .sblk .tag{position:absolute;top:-1px;left:-1px;display:none;background:var(--accent);color:#fff;font-size:9px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;padding:1px 6px;border-radius:4px;z-index:6;transform:translateY(-100%)}
+  .sblk:hover .tag,.sblk.sel .tag{display:block}
   .rh{position:absolute;width:11px;height:11px;background:#fff;border:2px solid var(--accent);border-radius:2px;z-index:7}
   .rh.e{right:-6px;top:calc(50% - 5px);cursor:ew-resize}
   .rh.s{bottom:-6px;left:calc(50% - 5px);cursor:ns-resize}
@@ -212,7 +222,7 @@
 <body>
 <div class="app">
   <div class="top">
-    <div class="brand"><svg width="22" height="22" viewBox="0 0 48 48" fill="none" aria-label="LumenPDF Studio"><rect x="6" y="6" width="7.5" height="38" rx="3.75" fill="#1463FF"/><rect x="18" y="25" width="4.5" height="19" rx="2.25" fill="#7FA8FF"/><rect x="27" y="25" width="7.5" height="19" rx="3.75" fill="#1463FF"/><rect x="39" y="25" width="4.5" height="19" rx="2.25" fill="#1463FF"/></svg> LumenPDF <small>Studio · b58</small></div>
+    <div class="brand"><svg width="22" height="22" viewBox="0 0 48 48" fill="none" aria-label="LumenPDF Studio"><rect x="6" y="6" width="7.5" height="38" rx="3.75" fill="#1463FF"/><rect x="18" y="25" width="4.5" height="19" rx="2.25" fill="#7FA8FF"/><rect x="27" y="25" width="7.5" height="19" rx="3.75" fill="#1463FF"/><rect x="39" y="25" width="4.5" height="19" rx="2.25" fill="#1463FF"/></svg> LumenPDF <small>Studio · b59</small></div>
     <div class="menuwrap"><button class="btn ghost" id="fileBtn" onclick="toggleFileMenu(event)" title="New, open, duplicate, import/export, manage">☰ File</button>
       <div class="menu" id="fileMenu">
         <button onclick="closeFileMenu();openNewFmt()">＋ New format…</button>
@@ -927,7 +937,12 @@ function flowBlk(bl,b){
   const inner=(R[bl.type]||(()=>""))(bl.settings,b,bl);const sel=bl.id===selId;
   return `<div class="blk flow ${sel?'sel':''}" data-id="${bl.id}" style="position:relative;margin-bottom:4mm;${styleCss(bl.style)}"><span class="tag">${META[bl.type].l}</span><div class="tools"><button title="Move up" onclick="moveBody(event,'${bl.id}',-1)">↑</button><button title="Move down" onclick="moveBody(event,'${bl.id}',1)">↓</button><button title="Duplicate" onclick="duplicate('${bl.id}')">⧉</button><button title="Delete" onclick="del(event,'${bl.id}')">🗑</button></div>${inner}</div>`;
 }
-function flowBlkStatic(bl,b){const inner=(R[bl.type]||(()=>""))(bl.settings,b,bl);return `<div style="position:relative;margin-bottom:4mm;${styleCss(bl.style)}">${inner}</div>`;}
+function flowBlkStatic(bl,b){const inner=(R[bl.type]||(()=>""))(bl.settings,b,bl);const sel=bl.id===selId;
+  // Selectable clone for continuation pages: click selects the real block (edit via the panel);
+  // the ↑↓⧉🗑 tools operate on state by id, so they work from any page. Chrome is display:none
+  // by default and absolutely positioned, so measurement (computeBreaks) is unaffected.
+  const chrome=`<span class="tag">${META[bl.type].l}</span><div class="tools"><button title="Move up" onclick="moveBody(event,'${bl.id}',-1)">↑</button><button title="Move down" onclick="moveBody(event,'${bl.id}',1)">↓</button><button title="Duplicate" onclick="duplicate('${bl.id}')">⧉</button><button title="Delete" onclick="del(event,'${bl.id}')">🗑</button></div>`;
+  return `<div class="sblk${sel?' sel':''}" data-sid="${bl.id}" style="position:relative;margin-bottom:4mm;${styleCss(bl.style)}">${chrome}${inner}</div>`;}
 function rowChildBlk(c,b){const inner=(R[c.type]||(()=>""))(c.settings,b,c);const sel=c.id===selId;return `<div class="blk flow ${sel?'sel':''}" data-id="${c.id}" style="position:relative;margin-bottom:2mm;${styleCss(c.style)}"><div class="tools"><button title="Delete" onclick="del(event,'${c.id}')">🗑</button></div>${inner}</div>`;}
 function absBlkStatic(bl,b){const inner=(R[bl.type]||(()=>""))(bl.settings,b,bl);const p=bl.pos||{x:0,y:0,w:180,h:null};const box=`position:absolute;left:${p.x}mm;top:${p.y}mm;width:${p.w}mm;`+(p.h?`height:${p.h}mm;overflow:hidden;`:'')+`pointer-events:none;`;return `<div style="${box}${styleCss(bl.style)}">${inner}</div>`;}
 let _measCache={key:null,mm:0};
@@ -1012,7 +1027,7 @@ function _renderNow(){
     +`<div style="position:absolute;bottom:1px;left:3px;font-size:7px;letter-spacing:1px;color:#1463FF;text-transform:uppercase;pointer-events:none">Footer${state.footer.repeat?' · repeats':''}${(live&&fa)?' — editing':''}</div>`
     +foot.map(bl=>live?absBlk(bl,b,!fa):absBlkStatic(bl,b)).join("")+`</div>`;
   window._pg={p:1,n:1};
-  const bodyHtmlStatic=body.map(bl=>flowBlkStatic(bl,b)).join("");  // built once; reused for measure + continuation slices
+  const bodyHtmlStatic=body.map(bl=>flowBlkStatic(bl,b)).join("").replace(/ contenteditable/g,"");  // built once; reused for measure + continuation slices (clones must not be text-editable)
   // Row-aware page breaks: cut only at block/row boundaries (never through a line) — mirrors the
   // PDF's page-break-inside:avoid. `breaks` is [0, c1, c2, ..., total]; page i shows [breaks[i],breaks[i+1]).
   const breaks=computeBreaks(bodyHtmlStatic,b,bodyAreaMm);
@@ -1042,7 +1057,7 @@ function _renderNow(){
     window._pg={p:i+1,n:N};
     let s=wmHtml();
     const segMm=(breaks[i+1]-breaks[i]);
-    s+=`<div style="position:absolute;left:0;top:${bodyTop}mm;width:${PWm}mm;height:${segMm.toFixed(2)}mm;overflow:hidden;z-index:2;pointer-events:none;user-select:none"><div style="padding:4mm 14mm 0;margin-top:-${breaks[i].toFixed(2)}mm">`+bodyHtmlStatic+`</div></div>`;
+    s+=`<div data-contpage="1" style="position:absolute;left:0;top:${bodyTop}mm;width:${PWm}mm;height:${segMm.toFixed(2)}mm;overflow:hidden;z-index:2;user-select:none"><div style="padding:4mm 14mm 0;margin-top:-${breaks[i].toFixed(2)}mm">`+bodyHtmlStatic+`</div></div>`;
     s+=headerBand(false)+footerBand(false);
     html+=wrap(i,s);
   }
@@ -1080,6 +1095,11 @@ document.getElementById("paper").addEventListener("mousedown",function(e){
     const w0=cellEl?cellEl.getBoundingClientRect().width/(scale*PXMM):40;
     cd.classList.add('on');colDrag={rowid:cd.dataset.rowid,idx:idx,sx:e.clientX,w0:w0};return;}
   if(colDrag)return;  // never arm a block drag while a divider drag is live (mutual exclusion)
+  // Continuation pages (2+): clones select the real block for panel editing. Not .blk on
+  // purpose — the drag/reorder machinery must never engage on a slice. Tools handle their own clicks.
+  const sb=e.target.closest(".sblk");
+  if(sb){if(e.target.closest(".tools"))return;e.preventDefault();
+    if(sb.dataset.sid!==selId)select(sb.dataset.sid);else renderProps();return;}
   const blk=e.target.closest(".blk");if(!blk)return;
   if(e.target.closest(".tools"))return;
   if(e.target.isContentEditable){if(blk.dataset.id!==selId)select(blk.dataset.id);return;}
