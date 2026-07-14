@@ -715,6 +715,7 @@ def builder_sample(doctype, name):
             "r": it.get_formatted("rate") if it.get("rate") is not None else "",
             "a": it.get_formatted("amount") if it.get("amount") is not None else "",
             "d": strip_html_tags(it.get("description") or "").strip(),
+            "i": it.get("image") or "",  # product photo (items block showImage preview)
         })
     for tx in (doc.get("taxes") or []):
         if tx.get("tax_amount"):

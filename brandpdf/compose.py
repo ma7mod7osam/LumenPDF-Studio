@@ -206,6 +206,7 @@ def _compose(doc, definition, renderer):
 
     allowed = {branding.get("header_image"), branding.get("footer_image")}
     allowed |= B.collect_image_srcs(definition)
+    allowed |= B.collect_doc_image_srcs(doc, definition)  # per-item product photos (showImage)
     allowed = {a for a in allowed if a}
 
     head, body, foot = [], [], []

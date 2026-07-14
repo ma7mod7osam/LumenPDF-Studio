@@ -873,7 +873,19 @@ def _d_items(doc, b, s, ctx):
         dcss = (f'color:{ds["color"].strip()} !important;' if _hexok(ds.get("color")) else "") +                (f"font-size:{_fmt_num(min(72, max(4, _num(ds.get('size')))))}pt;" if _num(ds.get("size")) else "")
         if dh and dcss:
             dh = dh.replace('class="it-desc"', f'class="it-desc" style="{dcss}"')
-        tds = f'<td class="num" style="{c_num}">{i}</td><td style="{c_item}"><div class="it-name">{nm}</div>{dh}</td>'
+        # Optional product photo above the name (settings.showImage): the item row's own `image`
+        # attach. Rows without an image (services, section lines) get no box — matching how a
+        # product-catalog quotation reads.
+        ih = ""
+        if s.get("showImage"):
+            src = it.get("image") or ""
+            if src and (str(src).startswith("/files/") or str(src).startswith("/private/files/")):
+                iw = _fmt_num(min(120, max(15, _num(s.get("imgW"), 58))))
+                iht = _fmt_num(min(90, max(10, _num(s.get("imgH"), 40))))
+                ih = (f'<div style="margin:1mm 0 1.5mm;"><img src="{_esc(src)}" '
+                      f'style="width:{iw}mm;height:{iht}mm;object-fit:contain;background:#fff;'
+                      f'border:1px solid #e8ebee;border-radius:8px;display:block;"></div>')
+        tds = f'<td class="num" style="{c_num}">{i}</td><td style="{c_item}">{ih}<div class="it-name">{nm}</div>{dh}</td>'
         if cols_cfg.get("qty"):
             tds += f'<td class="num" style="{c_qty}"><bdi>{_esc(it.get_formatted("qty"))} {_esc(it.get("uom") or "")}</bdi></td>'
         if cols_cfg.get("rate"):
@@ -1275,6 +1287,43 @@ def collect_image_srcs(definition):
             src = (bl.get("settings") or {}).get("src")
             if src:
                 srcs.add(src)
+    return srcs
+
+
+def collect_doc_image_srcs(doc, definition):
+    """DOC-derived image srcs the render will emit (unknown at definition time): the items rows'
+    own `image` attachments, when an items block has showImage on. These join the inline_images
+    allow-list; path-traversal is still blocked downstream by assets._safe_local_path."""
+    if isinstance(definition, str):
+        try:
+            definition = json.loads(definition)
+        except Exception:
+            return set()
+    if not isinstance(definition, dict):
+        return set()
+
+    def _wants_images(blocks_list):
+        for bl in blocks_list or []:
+            if not isinstance(bl, dict):
+                continue
+            if bl.get("type") == "items" and (bl.get("settings") or {}).get("showImage"):
+                return True
+            if bl.get("type") == "row":
+                for cell in (bl.get("settings") or {}).get("cells") or []:
+                    if isinstance(cell, list) and _wants_images(cell):
+                        return True
+        return False
+
+    if not _wants_images(definition.get("blocks")):
+        return set()
+    srcs = set()
+    try:
+        for it in (doc.get("items") or []):
+            src = it.get("image")
+            if src and (str(src).startswith("/files/") or str(src).startswith("/private/files/")):
+                srcs.add(src)
+    except Exception:
+        pass
     return srcs
 
 

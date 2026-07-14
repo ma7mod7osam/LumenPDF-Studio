@@ -32,6 +32,7 @@ def render_html(doc, kind=None, value=None) -> str:
             # The visual builder's saved design — render it exactly as previewed.
             html = blocks_mod.render_definition(doc, definition, terms_html)
             allowed |= blocks_mod.collect_image_srcs(definition)
+            allowed |= blocks_mod.collect_doc_image_srcs(doc, definition)  # per-item photos
         else:
             html = blocks_mod.render_blocks(doc, branding, tmpl.get("blocks"), terms_html)
     else:
