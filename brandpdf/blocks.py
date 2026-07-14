@@ -735,7 +735,12 @@ def _d_customer(doc, b, s, ctx):
     addr = doc.get("address_display")
     if addr:
         from frappe.utils.html_utils import sanitize_html
-        out.append(f'<div class="addr">{sanitize_html(addr)}</div>')
+        clean = sanitize_html(addr)
+        # address_display often ends in empty <br> lines (blank phone/email slots) — they print
+        # as a mystery gap under the address, especially inside a padded/bordered card.
+        clean = re.sub(r"(?:\s|&nbsp;|<br\s*/?>)+$", "", clean, flags=re.I)
+        if clean:
+            out.append(f'<div class="addr">{clean}</div>')
     out.append("</div>")
     return "".join(out)
 
@@ -880,8 +885,8 @@ def _d_items(doc, b, s, ctx):
         if s.get("showImage"):
             src = it.get("image") or ""
             if src and (str(src).startswith("/files/") or str(src).startswith("/private/files/")):
-                iw = _fmt_num(min(120, max(15, _num(s.get("imgW"), 58))))
-                iht = _fmt_num(min(90, max(10, _num(s.get("imgH"), 40))))
+                iw = _fmt_num(min(180, max(15, _num(s.get("imgW"), 58))))   # up to full column width
+                iht = _fmt_num(min(150, max(10, _num(s.get("imgH"), 40))))
                 ih = (f'<div style="margin:1mm 0 1.5mm;"><img src="{_esc(src)}" '
                       f'style="width:{iw}mm;height:{iht}mm;object-fit:contain;background:#fff;'
                       f'border:1px solid #e8ebee;border-radius:8px;display:block;"></div>')
