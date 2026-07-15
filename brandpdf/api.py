@@ -457,6 +457,77 @@ def save_format(definition, name=None):
             "report_name": report_name, "activated": True}
 
 
+# --- reusable block snippets ("My blocks") ---------------------------------
+
+@frappe.whitelist()
+def list_snippets():
+    """Saved reusable blocks, newest first. Each carries the full block JSON so the builder can
+    insert without a second round-trip."""
+    _require_manager()
+    if not frappe.db.exists("DocType", "BrandPDF Snippet"):
+        return []
+    out = []
+    for r in frappe.get_all("BrandPDF Snippet", fields=["name", "snippet_name", "block"],
+                            order_by="modified desc", limit=200):
+        try:
+            blk = json.loads(r["block"]) if r.get("block") else None
+        except Exception:
+            blk = None
+        if isinstance(blk, dict) and blk.get("type"):
+            out.append({"name": r["name"], "label": r.get("snippet_name") or r["name"], "block": blk})
+    return out
+
+
+@frappe.whitelist()
+def save_snippet(name, block):
+    """Save ONE configured block (settings+style; rows include their children) for reuse across
+    formats. Same-name saves overwrite. System-Manager only; image paths keep the /files rule."""
+    _require_manager()
+    if isinstance(block, str):
+        block = json.loads(block)
+    if not isinstance(block, dict) or not block.get("type"):
+        frappe.throw("Invalid block.")
+    _validate_block_images(block)
+    nm = (name or "").strip() or "Block"
+    payload = json.dumps(block)
+    if frappe.db.exists("BrandPDF Snippet", nm):
+        d = frappe.get_doc("BrandPDF Snippet", nm)
+        d.block = payload
+        d.flags.ignore_permissions = True
+        d.save()
+    else:
+        d = frappe.get_doc({"doctype": "BrandPDF Snippet", "snippet_name": nm, "block": payload})
+        d.flags.ignore_permissions = True
+        d.insert()
+    frappe.db.commit()
+    return {"name": nm}
+
+
+@frappe.whitelist()
+def delete_snippet(name):
+    _require_manager()
+    if frappe.db.exists("BrandPDF Snippet", name):
+        frappe.delete_doc("BrandPDF Snippet", name, ignore_permissions=True)
+        frappe.db.commit()
+    return {"deleted": True}
+
+
+def _validate_block_images(block):
+    """Image srcs inside a snippet obey the same uploaded-files-only rule as formats (SSRF)."""
+    def walk(bl):
+        if not isinstance(bl, dict):
+            return
+        if bl.get("type") == "image":
+            s = (bl.get("settings") or {}).get("src")
+            if s and not (str(s).startswith("/files/") or str(s).startswith("/private/files/")):
+                frappe.throw(f"Images must be uploaded files (path starting /files/). Got: {str(s)[:80]}")
+        for cell in ((bl.get("settings") or {}).get("cells") or []):
+            if isinstance(cell, list):
+                for c in cell:
+                    walk(c)
+    walk(block)
+
+
 @frappe.whitelist()
 def set_gallery(name, on):
     """Publish/unpublish a saved format to this site's Templates gallery (visible to every

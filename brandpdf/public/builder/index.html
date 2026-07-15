@@ -222,7 +222,7 @@
 <body>
 <div class="app">
   <div class="top">
-    <div class="brand"><svg width="22" height="22" viewBox="0 0 48 48" fill="none" aria-label="LumenPDF Studio"><rect x="6" y="6" width="7.5" height="38" rx="3.75" fill="#1463FF"/><rect x="18" y="25" width="4.5" height="19" rx="2.25" fill="#7FA8FF"/><rect x="27" y="25" width="7.5" height="19" rx="3.75" fill="#1463FF"/><rect x="39" y="25" width="4.5" height="19" rx="2.25" fill="#1463FF"/></svg> LumenPDF <small>Studio · b60</small></div>
+    <div class="brand"><svg width="22" height="22" viewBox="0 0 48 48" fill="none" aria-label="LumenPDF Studio"><rect x="6" y="6" width="7.5" height="38" rx="3.75" fill="#1463FF"/><rect x="18" y="25" width="4.5" height="19" rx="2.25" fill="#7FA8FF"/><rect x="27" y="25" width="7.5" height="19" rx="3.75" fill="#1463FF"/><rect x="39" y="25" width="4.5" height="19" rx="2.25" fill="#1463FF"/></svg> LumenPDF <small>Studio · b61</small></div>
     <div class="menuwrap"><button class="btn ghost" id="fileBtn" onclick="toggleFileMenu(event)" title="New, open, duplicate, import/export, manage">☰ File</button>
       <div class="menu" id="fileMenu">
         <button onclick="closeFileMenu();openNewFmt()">＋ New format…</button>
@@ -901,6 +901,25 @@ const SECTIONS=[
    {type:"heading",region:"header",dy:6,settings:{text:"YOUR COMPANY",level:"h2"},style:{size:13,weight:"800",color:"#1463FF"},pos:{x:14,y:0,w:120,h:null}},
    {type:"field",region:"header",dy:8,settings:{field:"company",prefix:""},style:{size:8,align:"right"},pos:{x:140,y:0,w:56,h:null}}];}},
 ];
+/* ---- reusable block snippets ("My blocks"): save a configured block once, insert anywhere ---- */
+let SNIPPETS=[];
+function loadSnippets(){rpc("brandpdf.api.list_snippets").then(function(r){SNIPPETS=Array.isArray(r)?r:[];buildPalette();});}
+function saveSnippet(){const b=cur();if(!b)return;
+  const nm=prompt("Name this reusable block:",(META[b.type]?META[b.type].l:b.type)+" block");if(nm===null)return;const nn=(nm||"").trim();if(!nn)return;
+  let o={type:b.type,settings:b.settings,style:b.style,pos:{w:(b.pos&&b.pos.w)||182}};
+  if(b.type==="row"&&b.settings&&b.settings.cells)o=Object.assign({},o,{settings:Object.assign({},b.settings,{cells:b.settings.cells.map(function(cell){return (cell||[]).map(function(c){return{type:c.type,settings:c.settings,style:c.style};});})})});
+  const payload=JSON.parse(JSON.stringify(o));  // ids stripped above; deep copy detaches from state
+  rpc("brandpdf.api.save_snippet",{name:nn,block:JSON.stringify(payload)}).then(function(r){
+    if(r&&r.name){toast('Saved "'+r.name+'" — find it in the Insert panel under "My blocks".');loadSnippets();}
+    else toast("Could not save the block"+(EMBED?" — see the Error Log.":" (works inside ERPNext)."),true);});}
+function addSnippet(i){const sn=SNIPPETS[i];if(!sn)return;const bl=JSON.parse(JSON.stringify(sn.block));
+  const Hh=state.header.enabled?state.header.height:0;
+  let maxY=Hh+2;state.blocks.forEach(function(b){if(regionOf(b)==="body"&&!b.float){const y=(b.pos&&b.pos.y)||0;if(y>maxY)maxY=y;}});
+  const nb={id:"b"+(idc++),type:bl.type,settings:bl.settings||{},style:Object.assign(base(),dstyle(bl.type),bl.style||{}),pos:{x:14,y:Math.min(maxY+8,PH()-10),w:(bl.pos&&bl.pos.w)||182,h:null},float:false,region:"body",cond:bl.cond||null};
+  if(nb.type==="row"&&nb.settings.cells)nb.settings.cells=nb.settings.cells.map(function(cell){return (cell||[]).map(function(c){return{id:"b"+(idc++),type:c.type,settings:c.settings||{},style:Object.assign(base(),dstyle(c.type),c.style||{})};});});
+  state.blocks.push(nb);selId=nb.id;render();renderProps();}
+function delSnippet(i){const sn=SNIPPETS[i];if(!sn)return;if(!confirm('Delete the saved block "'+sn.label+'"? (Formats that used it keep their copies.)'))return;
+  rpc("brandpdf.api.delete_snippet",{name:sn.name}).then(function(){loadSnippets();});}
 function addSection(key){const sdef=SECTIONS.find(function(x){return x.key===key;});if(!sdef)return;
   const blocks=JSON.parse(JSON.stringify(sdef.make()));
   const Hh=state.header.enabled?state.header.height:0;
@@ -1261,6 +1280,7 @@ function buildPalette(){const isRep=state.targetKind==="report";
   const groups=isRep?[["Elements",ELEM],["Report blocks",REPORTBLOCKS]]:[["Elements",ELEM],["Document blocks",BLOCKS.filter(t=>t!=="title")]];
   let h=groups.map(g=>`<div class="pgrp">${g[0]}</div><div class="prow">`+g[1].map(t=>`<div class="pblock" draggable="true" ondragstart="event.dataTransfer.setData('text/bpdf','${t}')" onclick="addBlock('${t}')" title="Add or drag ${META[t].l}"><svg viewBox="0 0 24 24">${ICONS[t]||ICONS.text}</svg><span>${META[t].l}</span></div>`).join("")+`</div>`).join("");
   if(!isRep)h+=`<div class="pgrp">Ready sections</div>`+SECTIONS.map(s=>`<div class="psec" onclick="addSection('${s.key}')" title="${esc(s.desc)}"><b>${esc(s.label)}</b><span>${esc(s.desc)}</span></div>`).join("");
+  if(SNIPPETS.length)h+=`<div class="pgrp">My blocks</div>`+SNIPPETS.map((sn,i)=>`<div class="psec" onclick="addSnippet(${i})" title="Insert this saved block"><b>${esc(sn.label)} <span style="float:right;font-weight:400;cursor:pointer;color:var(--mut2)" title="Delete this saved block" onclick="event.stopPropagation();delSnippet(${i})">✕</span></b><span>${esc(META[sn.block.type]?META[sn.block.type].l:sn.block.type)} · saved block — click to insert</span></div>`).join("");
   document.getElementById("palette").innerHTML=h;}
 /* drag a palette item onto the page */
 (function(){const paper=document.getElementById("paper");
@@ -1557,6 +1577,7 @@ function renderProps(){const host=document.getElementById("propsBlock"),b=cur();
   if(t!=="header_banner"&&t!=="footer_banner"&&t!=="row")out+=styleControls(b.style,t);
   out+=condControl(b);
   out+=`<div class="prow" style="margin-top:16px"><button class="dupblk" onclick="duplicate('${b.id}')" title="Duplicate (Ctrl+D)">⧉ Duplicate</button><button class="delblk" onclick="del(null,'${b.id}')" style="margin-top:0">🗑 Delete</button></div>`;
+  if(t!=="header_banner"&&t!=="footer_banner")out+=`<button class="btn ghost" style="width:100%;margin-top:8px" onclick="saveSnippet()" title="Save this configured block to reuse in ANY format (Insert panel → My blocks)">☆ Save block for reuse</button>`;
   host.innerHTML=out;}
 function regionControl(b,reg){
   if(reg==="body"){
@@ -1828,6 +1849,7 @@ try{setLeft(localStorage.getItem("brandpdf_leftcol")==="1");setRight(localStorag
 try{if(localStorage.getItem("brandpdf_draft")){const r=document.getElementById("restoreBtn");if(r)r.style.display="";showDraftBar();}}catch(e){}
 if(EMBED){
   rpc("brandpdf.api.builder_doctypes").then(function(dts){dts=(dts&&dts.length)?dts:["Quotation"];if(dts.indexOf(state.target)<0)state.target=dts[0];setSelOptions("doctypeSel",dts.map(function(x){return{value:x,label:x};}),null,state.target);loadDoctypeMeta(state.target);});
+  loadSnippets();
 } else {
   setSelOptions("doctypeSel",[{value:"Quotation",label:"Quotation"}],null,"Quotation");
 }

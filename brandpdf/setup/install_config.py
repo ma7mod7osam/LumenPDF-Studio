@@ -56,6 +56,13 @@ BLOCK_FIELDS = [
     {"fieldname": "content", "fieldtype": "Code", "label": "Custom HTML (for the custom_html block)", "options": "HTML"},
 ]
 
+SNIPPET_FIELDS = [
+    # Reusable single blocks ("My blocks" in the builder's Insert panel): one configured block —
+    # settings + style, rows including their nested children — insertable into any format.
+    {"fieldname": "snippet_name", "fieldtype": "Data", "label": "Snippet Name", "reqd": 1, "in_list_view": 1},
+    {"fieldname": "block", "fieldtype": "Code", "label": "Block (builder JSON)", "options": "JSON"},
+]
+
 CONDITION_FIELDS = [
     {"fieldname": "fieldname", "fieldtype": "Data", "label": "Field Name", "reqd": 1, "in_list_view": 1},
     {"fieldname": "operator", "fieldtype": "Select", "label": "Operator", "options": "=\n!=\n>\n<\n>=\n<=\nin\nlike", "default": "=", "in_list_view": 1},
@@ -97,6 +104,7 @@ def run(as_custom=False):
         ("BrandPDF Settings", lambda: _ensure("BrandPDF Settings", SETTINGS_FIELDS, as_custom)),
         ("BrandPDF Block", lambda: _ensure("BrandPDF Block", BLOCK_FIELDS, as_custom, istable=1)),
         ("BrandPDF Template", lambda: _ensure("BrandPDF Template", TEMPLATE_FIELDS, as_custom, autoname="field:template_name")),
+        ("BrandPDF Snippet", lambda: _ensure("BrandPDF Snippet", SNIPPET_FIELDS, as_custom, autoname="field:snippet_name")),
         ("BrandPDF Mapping Condition", lambda: _ensure("BrandPDF Mapping Condition", CONDITION_FIELDS, as_custom, istable=1)),
         ("BrandPDF Mapping", lambda: _ensure("BrandPDF Mapping", MAPPING_FIELDS, as_custom)),
         ("seed", _seed),
