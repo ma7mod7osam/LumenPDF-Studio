@@ -222,7 +222,7 @@
 <body>
 <div class="app">
   <div class="top">
-    <div class="brand"><svg width="22" height="22" viewBox="0 0 48 48" fill="none" aria-label="LumenPDF Studio"><rect x="6" y="6" width="7.5" height="38" rx="3.75" fill="#1463FF"/><rect x="18" y="25" width="4.5" height="19" rx="2.25" fill="#7FA8FF"/><rect x="27" y="25" width="7.5" height="19" rx="3.75" fill="#1463FF"/><rect x="39" y="25" width="4.5" height="19" rx="2.25" fill="#1463FF"/></svg> LumenPDF <small>Studio · b59</small></div>
+    <div class="brand"><svg width="22" height="22" viewBox="0 0 48 48" fill="none" aria-label="LumenPDF Studio"><rect x="6" y="6" width="7.5" height="38" rx="3.75" fill="#1463FF"/><rect x="18" y="25" width="4.5" height="19" rx="2.25" fill="#7FA8FF"/><rect x="27" y="25" width="7.5" height="19" rx="3.75" fill="#1463FF"/><rect x="39" y="25" width="4.5" height="19" rx="2.25" fill="#1463FF"/></svg> LumenPDF <small>Studio · b60</small></div>
     <div class="menuwrap"><button class="btn ghost" id="fileBtn" onclick="toggleFileMenu(event)" title="New, open, duplicate, import/export, manage">☰ File</button>
       <div class="menu" id="fileMenu">
         <button onclick="closeFileMenu();openNewFmt()">＋ New format…</button>
@@ -377,7 +377,7 @@ function BIMG(v){return (v&&v!=="none")?v:"";}
 const R={
   header_banner:(s,b)=>BIMG(b.header_image)?`<img class="bs-banner" src="${esc(BIMG(b.header_image))}">`:`<div class="ph-banner" style="background:${b.primary}">Header banner</div>`,
   footer_banner:(s,b)=>BIMG(b.footer_image)?`<img class="bs-banner" src="${esc(BIMG(b.footer_image))}">`:`<div class="ph-banner" style="background:${b.navy}">Footer banner</div>`,
-  title:(s,b)=>{const m=[];if(s.meta.name)m.push(["Quotation No",SAMPLE.name]);if(s.meta.date)m.push(["Date",SAMPLE.transaction_date]);if(s.meta.valid_till)m.push(["Valid Till",SAMPLE.valid_till]);
+  title:(s,b)=>{const ml=s.metaLabels||{};const m=[];if(s.meta.name)m.push([ml.name||"Quotation No",SAMPLE.name]);if(s.meta.date)m.push([ml.date||"Date",SAMPLE.transaction_date]);if(s.meta.valid_till)m.push([ml.valid_till||"Valid Till",SAMPLE.valid_till]);
     const mlc=HX.test(s.metaLabelColor||'')?`color:${s.metaLabelColor};`:'';const mvc=HX.test(s.metaValueColor||'')?`color:${s.metaValueColor};`:'';const mbc=HX.test(s.metaBorderColor||'')?`border-color:${s.metaBorderColor};`:'';
     const rows=m.map(([k,v])=>`<tr><td class="k" style="${mlc}${mbc}">${esc(k)}</td><td style="${mvc}${mbc}">${esc(v)}</td></tr>`).join("");
     const tc=HX.test(s.titleColor||'')?s.titleColor:b.navy;const tsz=parseFloat(s.titleSize);const tszc=(tsz&&!isNaN(tsz))?`font-size:${Math.min(72,Math.max(6,tsz))}pt;`:'';
@@ -385,8 +385,9 @@ const R={
     const left=`<div class="bs-title" style="color:${tc};${tszc}">${esc(s.text)}</div>`+(s.showArabic?`<div class="bs-title-ar" style="color:${ac}">${esc(s.arabic)}</div>`:"");if(s.align==="center")return `<div style="text-align:center">${left}</div>`;return `<table class="bs-head"><tr><td style="text-align:left">${left}</td><td style="text-align:right"><table class="bs-meta">${rows}</table></td></tr></table>`;},
   customer:(s,b)=>{const hc=HX.test(s.headingColor||'')?s.headingColor:b.primary;const nc=HX.test(s.nameColor||'')?`color:${s.nameColor};`:'';const nsz=parseFloat(s.nameSize);const nszc=(nsz&&!isNaN(nsz))?`font-size:${Math.min(72,Math.max(4,nsz))}pt;`:'';
     const addr=String(SAMPLE.address_display||'').replace(/(?:\s|&nbsp;|<br\s*\/?>)+$/i,'');
-    return `<div class="bs-billto"><div class="lbl" style="color:${hc}">${esc(s.heading)}</div><div class="name" style="${nc}${nszc}">${esc(SAMPLE.customer_name)}</div>${addr?`<div class="addr">${addr}</div>`:''}</div>`;},
-  items:(s,b)=>{const w=s.widths||{};const cols=[["#","num",w.num],["Item &amp; Description","",w.item]];if(s.cols.qty)cols.push(["Qty","num",w.qty]);if(s.cols.rate)cols.push(["Rate","num",w.rate]);if(s.cols.amount)cols.push(["Amount","num",w.amount]);const hc=s.headerColor==="navy"?b.navy:b.primary;const sk=tblSkin(s,b,hc);const cg=`<colgroup>`+cols.map(c=>`<col style="width:${c[2]&&!isNaN(c[2])?(+c[2])+'mm':'auto'}">`).join("")+`</colgroup>`;const th=skinHeads(cols.map(c=>`<th class="${c[1]}" style="${sk.th}${sk.pad}${sk.tdBorder}">${c[0]}</th>`).join(""),sk);const zc=s.zebraColor||"#eef6fc";const bt=sk.pad+sk.tdBorder;const cN=bt+colCss(s,"num",true),cI=bt+colCss(s,"item",false),cQ=bt+colCss(s,"qty",true),cR=bt+colCss(s,"rate",true),cA=bt+colCss(s,"amount",true);
+    const ac2=HX.test(s.addrColor||'')?`color:${s.addrColor};`:'';const asz=parseFloat(s.addrSize);const aszc=(asz&&!isNaN(asz))?`font-size:${Math.min(72,Math.max(4,asz))}pt;`:'';
+    return `<div class="bs-billto"><div class="lbl" style="color:${hc}">${esc(s.heading)}</div><div class="name" style="${nc}${nszc}">${esc(SAMPLE.customer_name)}</div>${addr?`<div class="addr" style="${ac2}${aszc}">${addr}</div>`:''}</div>`;},
+  items:(s,b)=>{const w=s.widths||{};const lb=s.labels||{};const cols=[[esc(lb.num||"#"),"num",w.num],[esc(lb.item||"Item & Description"),"",w.item]];if(s.cols.qty)cols.push([esc(lb.qty||"Qty"),"num",w.qty]);if(s.cols.rate)cols.push([esc(lb.rate||"Rate"),"num",w.rate]);if(s.cols.amount)cols.push([esc(lb.amount||"Amount"),"num",w.amount]);const hc=s.headerColor==="navy"?b.navy:b.primary;const sk=tblSkin(s,b,hc);const cg=`<colgroup>`+cols.map(c=>`<col style="width:${c[2]&&!isNaN(c[2])?(+c[2])+'mm':'auto'}">`).join("")+`</colgroup>`;const th=skinHeads(cols.map(c=>`<th class="${c[1]}" style="${sk.th}${sk.pad}${sk.tdBorder}">${c[0]}</th>`).join(""),sk);const zc=s.zebraColor||"#eef6fc";const bt=sk.pad+sk.tdBorder;const cN=bt+colCss(s,"num",true),cI=bt+colCss(s,"item",false),cQ=bt+colCss(s,"qty",true),cR=bt+colCss(s,"rate",true),cA=bt+colCss(s,"amount",true);
     const ds=s.descStyle||{};let dcss="";if(HX.test(ds.color||''))dcss+="color:"+ds.color+" !important;";const dn=parseFloat(ds.size);if(dn&&!isNaN(dn))dcss+="font-size:"+Math.min(72,Math.max(4,dn))+"pt;";
     const iw=Math.min(180,Math.max(15,parseFloat(s.imgW)||58)),iht=Math.min(150,Math.max(10,parseFloat(s.imgH)||40));
     const imgBox=(it)=>!s.showImage?"":(it.i?`<div style="margin:1mm 0 1.5mm"><img src="${esc(it.i)}" style="width:${iw}mm;height:${iht}mm;object-fit:contain;background:#fff;border:1px solid #e8ebee;border-radius:8px;display:block"></div>`:`<div style="margin:1mm 0 1.5mm;width:${iw}mm;height:${iht}mm;background:#f5f7f9;border:1px solid #e8ebee;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#9aa6c2;font-size:7pt">item photo</div>`);
@@ -396,7 +397,7 @@ const R={
     const gsz=parseFloat(s.grandSize);const gszc=(gsz&&!isNaN(gsz))?`font-size:${Math.min(72,Math.max(4,gsz))}pt;`:'font-size:10pt;';
     const lc=HX.test(s.labelColor||'')?`color:${s.labelColor};`:'';const vc=HX.test(s.valueColor||'')?`color:${s.valueColor};`:'';
     const vsz=parseFloat(s.valueSize);const vszc=(vsz&&!isNaN(vsz))?`font-size:${Math.min(72,Math.max(4,vsz))}pt;`:'';
-    let ln=`<tr><td class="lbl" style="${lc}${vszc}">Subtotal</td><td class="val" style="${vc}${vszc}">${esc(SAMPLE.total)}</td></tr>`;SAMPLE.taxes.forEach(t=>ln+=`<tr><td class="lbl" style="${lc}${vszc}">${esc(t.desc)}</td><td class="val" style="${vc}${vszc}">${esc(t.amt)}</td></tr>`);
+    let ln=`<tr><td class="lbl" style="${lc}${vszc}">${esc(s.subtotalLabel||"Subtotal")}</td><td class="val" style="${vc}${vszc}">${esc(SAMPLE.total)}</td></tr>`;SAMPLE.taxes.forEach(t=>ln+=`<tr><td class="lbl" style="${lc}${vszc}">${esc(t.desc)}</td><td class="val" style="${vc}${vszc}">${esc(t.amt)}</td></tr>`);
     ln+=`<tr><td style="background:${gc};color:${gtc};font-weight:700;${gszc}text-align:right;padding:6px 8px">${esc(s.grandLabel||'Grand Total')}</td><td style="background:${gc};color:${gtc};font-weight:700;${gszc}text-align:right;padding:6px 8px">${esc(SAMPLE.grand_total)}</td></tr>`;return `<table class="bs-tot">${ln}</table>`;},
   payment_schedule:(s,b)=>{const hc=s.headerColor==="navy"?b.navy:b.primary;const sk=tblSkin(s,b,hc);const bt=sk.pad+sk.tdBorder;
     const cN=bt+colCss(s,"num",true),cT=bt+colCss(s,"term",false),cD=bt+colCss(s,"due",true),cP=bt+colCss(s,"pct",true),cA=bt+colCss(s,"amount",true);
@@ -405,10 +406,12 @@ const R={
     const hcol=HX.test(s.headingColor||'')?s.headingColor:b.primary;
     const th=skinHeads([["#","num"],["Payment Term",""],["Due Date","num"],["Portion %","num"],["Amount","num"]].map(x=>`<th class="${x[1]}" style="${sk.th}${sk.pad}${sk.tdBorder}">${x[0]}</th>`).join(""),sk);
     return `<div class="bs-sec-lbl" style="color:${hcol}">${esc(s.heading||'Payment Schedule')}</div><table class="bs-items" style="${sk.table}"><thead><tr>${th}</tr></thead><tbody>${rows}</tbody></table>`;},
-  terms:(s,b)=>SAMPLE.terms
-    ?`<div style="font-size:7.5pt;color:#6b6b6e;line-height:1.5"><div class="bs-sec-lbl" style="color:${b.primary}">${esc(s.heading)}</div>${esc(SAMPLE.terms)}</div>`
-    :`<div style="border:1px dashed #b9c6e0;border-radius:4px;padding:8px;font-size:7.5pt;color:#9aa6c2"><b>${esc(s.heading)}</b> — this document has no Terms, so this block prints EMPTY. Set the Terms (or pick a Terms &amp; Conditions template) on the document itself.</div>`,
-  signature:(s,b)=>`<div class="bs-sign-box">${esc(s.label)}</div>`,
+  terms:(s,b)=>{const bc=HX.test(s.bodyColor||'')?s.bodyColor:'#6b6b6e';const bs=parseFloat(s.bodySize);const bsz=(bs&&!isNaN(bs))?Math.min(72,Math.max(4,bs)):7.5;const hc2=HX.test(s.headingColor||'')?s.headingColor:b.primary;
+    return SAMPLE.terms
+    ?`<div style="font-size:${bsz}pt;color:${bc};line-height:1.5"><div class="bs-sec-lbl" style="color:${hc2}">${esc(s.heading)}</div>${esc(SAMPLE.terms)}</div>`
+    :`<div style="border:1px dashed #b9c6e0;border-radius:4px;padding:8px;font-size:7.5pt;color:#9aa6c2"><b>${esc(s.heading)}</b> — this document has no Terms, so this block prints EMPTY. Set the Terms (or pick a Terms &amp; Conditions template) on the document itself.</div>`;},
+  signature:(s,b)=>{const bw=Math.min(160,Math.max(25,parseFloat(s.boxW)||60));const lw=Math.min(6,Math.max(0.5,parseFloat(s.lineW)||1.5));const lc2=HX.test(s.lineColor||'')?s.lineColor:'#0C1322';const tc2=HX.test(s.labelColor||'')?`color:${s.labelColor};`:'';const ts2=parseFloat(s.labelSize);const tsc=(ts2&&!isNaN(ts2))?`font-size:${Math.min(72,Math.max(4,ts2))}pt;`:'';
+    return `<div class="bs-sign-box" style="width:${bw}mm;margin-left:auto;border-top:${lw}px solid ${lc2};${tc2}${tsc}">${esc(s.label)}</div>`;},
   heading:(s)=>`<div class="inl">${esc(s.text)}</div>`,text:(s)=>`<div class="inl">${esc(s.text)}</div>`,field:(s)=>esc((s.prefix||"")+fieldVal(s.field)),
   image:(s)=>s.src?`<img src="${esc(s.src)}" style="width:${(+s.width||100)}%">`:`<div style="border:1px dashed #b9c6e0;color:#9aa6c2;padding:14px;text-align:center;font-size:8pt">Image — set a URL</div>`,
   divider:(s)=>`<div style="border-top:${(+s.thickness||1)}px ${s.lstyle||'solid'} ${s.color||'#cfe5f6'}"></div>`,
@@ -1452,6 +1455,8 @@ function renderProps(){const host=document.getElementById("propsBlock"),b=cur();
       +`<div class="row2">`+colorFld("Background",st.bg,`tblRow(${ri},'bg',this.value)`,"none (hex)","#ffffff")+fld("Min height (mm)",`<input type="text" value="${st.h==null?'':st.h}" placeholder="auto" oninput="tblRow(${ri},'h',this.value)">`)+`</div>`
       +`</div>`;}}
   else if(t==="title"){h+=tx("Title text","text",s.text);h+=ck("Show Arabic subtitle","showArabic",s.showArabic);if(s.showArabic)h+=tx("Arabic","arabic",s.arabic);h+=sg("Layout","align",s.align,[["split","Title + Info"],["center","Centered"]]);h+=`<div class="fld"><label>Info box fields</label>`+ck("Quotation No","meta.name",s.meta.name)+ck("Date","meta.date",s.meta.date)+ck("Valid Till","meta.valid_till",s.meta.valid_till)+`</div>`;
+    const mlb=s.metaLabels||{};
+    h+=`<div class="styhead">Info box labels</div>${s.meta.name?tx("Document no. label","metaLabels.name",mlb.name==null?"":mlb.name):""}${s.meta.date?tx("Date label","metaLabels.date",mlb.date==null?"":mlb.date):""}${s.meta.valid_till?tx("Valid-till label","metaLabels.valid_till",mlb.valid_till==null?"":mlb.valid_till):""}<div class="hint" style="padding:0 0 6px">Blank = the defaults (Quotation No / Date / Valid Till) — e.g. rename to "Invoice No" on an invoice.</div>`;
     const cfl=(l,val,key,ph,fb)=>`<div class="fld"><label>${l}</label><div class="color"><input type="color" value="${HX.test(val||'')?val:fb}" oninput="setS('${key}',this.value)"><input type="text" value="${esc(val||'')}" placeholder="${ph}" oninput="setS('${key}',this.value)"></div></div>`;
     h+=`<div class="stycard"><div class="stycardlbl">Colors &amp; sizes</div>`
       +`<div class="row2">`+cfl("Title color",s.titleColor,"titleColor","theme navy","#0C1322")+`<div class="fld"><label>Title size (pt)</label><input type="text" value="${s.titleSize==null?'':s.titleSize}" placeholder="23" oninput="setSNum('titleSize',this.value)"></div></div>`
@@ -1462,7 +1467,8 @@ function renderProps(){const host=document.getElementById("propsBlock"),b=cur();
     const cfl=(l,val,key,ph,fb)=>`<div class="fld"><label>${l}</label><div class="color"><input type="color" value="${HX.test(val||'')?val:fb}" oninput="setS('${key}',this.value)"><input type="text" value="${esc(val||'')}" placeholder="${ph}" oninput="setS('${key}',this.value)"></div></div>`;
     h+=`<div class="stycard"><div class="stycardlbl">Colors &amp; sizes</div>`
       +`<div class="row2">`+cfl("Heading color",s.headingColor,"headingColor","theme color","#1463FF")+cfl("Name color",s.nameColor,"nameColor","inherit","#0C1322")+`</div>`
-      +`<div class="fld"><label>Name size (pt)</label><input type="text" value="${s.nameSize==null?'':s.nameSize}" placeholder="10" oninput="setSNum('nameSize',this.value)"></div></div>`;}
+      +`<div class="fld"><label>Name size (pt)</label><input type="text" value="${s.nameSize==null?'':s.nameSize}" placeholder="10" oninput="setSNum('nameSize',this.value)"></div>`
+      +`<div class="row2">`+cfl("Address color",s.addrColor,"addrColor","inherit","#3A4456")+`<div class="fld"><label>Address size (pt)</label><input type="text" value="${s.addrSize==null?'':s.addrSize}" placeholder="inherit" oninput="setSNum('addrSize',this.value)"></div></div></div>`;}
   else if(t==="items"){const w=s.widths||(s.widths={});const wnum=(l,k,v)=>`<div class="fld"><label>${l}</label><input type="text" value="${v==null?'':v}" placeholder="auto" oninput="setS('${k}',this.value===''?null:(parseFloat(this.value)||null))"></div>`;
     h+=`<div class="fld"><label>Columns</label>`+ck("Description","cols.desc",s.cols.desc)+ck("Qty","cols.qty",s.cols.qty)+ck("Rate","cols.rate",s.cols.rate)+ck("Amount","cols.amount",s.cols.amount)+`</div>`;
     h+=ck("Product photo per item","showImage",s.showImage);
@@ -1470,6 +1476,8 @@ function renderProps(){const host=document.getElementById("propsBlock"),b=cur();
     h+=ck("Zebra rows","zebra",s.zebra);
     if(s.zebra)h+=`<div class="fld"><label>Zebra color</label><div class="color"><input type="color" value="${s.zebraColor||'#eef6fc'}" oninput="setS('zebraColor',this.value)"><input type="text" value="${esc(s.zebraColor||'')}" placeholder="#eef6fc" oninput="setS('zebraColor',this.value)"></div></div>`;
     h+=sg("Header color","headerColor",s.headerColor,[["primary","Primary"],["navy","Navy"]]);
+    const ilb=s.labels||{};
+    h+=`<div class="styhead">Column titles (blank = default)</div><div class="row2">${tx("# column","labels.num",ilb.num==null?"":ilb.num)}${tx("Item column","labels.item",ilb.item==null?"":ilb.item)}</div><div class="row2">${s.cols.qty?tx("Qty column","labels.qty",ilb.qty==null?"":ilb.qty):'<div class="fld"></div>'}${s.cols.rate?tx("Rate column","labels.rate",ilb.rate==null?"":ilb.rate):'<div class="fld"></div>'}</div>${s.cols.amount?`<div class="row2">${tx("Amount column","labels.amount",ilb.amount==null?"":ilb.amount)}<div class="fld"></div></div>`:""}`;
     h+=`<div class="styhead">Column widths (mm · blank = auto)</div><div class="row2">${wnum("#","widths.num",w.num)}${wnum("Item","widths.item",w.item)}</div><div class="row2">${s.cols.qty?wnum("Qty","widths.qty",w.qty):'<div class="fld"></div>'}${s.cols.rate?wnum("Rate","widths.rate",w.rate):'<div class="fld"></div>'}</div>${s.cols.amount?`<div class="row2">${wnum("Amount","widths.amount",w.amount)}<div class="fld"></div></div>`:""}`;}
   else if(t==="datatable"){const tbl=CTABLES.find(x=>x.fieldname===s.table)||{fields:[]};
     h+=`<div class="fld"><label>Data source (child table)</label><select onchange="setDT('table',this.value)">`+(CTABLES.length?CTABLES.map(x=>`<option value="${esc(x.fieldname)}" ${s.table===x.fieldname?'selected':''}>${esc(x.label)} (${esc(x.fieldname)})</option>`).join(""):`<option selected>${esc(s.table||'items')}</option>`)+`</select></div>`;
@@ -1482,6 +1490,7 @@ function renderProps(){const host=document.getElementById("propsBlock"),b=cur();
     h+=sg("Header color","headerColor",s.headerColor,[["primary","Primary"],["navy","Navy"]]);}
   else if(t==="totals"){h+=sg("Grand-total color","grandColor",s.grandColor,[["primary","Primary"],["navy","Navy"]]);
     h+=tx("Grand-total label","grandLabel",s.grandLabel==null?"":s.grandLabel);
+    h+=`<div class="row2">${tx("Subtotal label","subtotalLabel",s.subtotalLabel==null?"":s.subtotalLabel)}${tx("Discount label","discountLabel",s.discountLabel==null?"":s.discountLabel)}</div>`;
     h+=`<div class="fld"><label>Box width (mm)</label><input type="text" value="${s.width==null?'':s.width}" placeholder="82" oninput="setSNum('width',this.value)"></div>`;
     const cfl=(l,val,key,ph,fb)=>`<div class="fld"><label>${l}</label><div class="color"><input type="color" value="${HX.test(val||'')?val:fb}" oninput="setS('${key}',this.value)"><input type="text" value="${esc(val||'')}" placeholder="${ph}" oninput="setS('${key}',this.value)"></div></div>`;
     h+=`<div class="stycard"><div class="stycardlbl">Colors &amp; sizes</div>`
@@ -1489,8 +1498,17 @@ function renderProps(){const host=document.getElementById("propsBlock"),b=cur();
       +`<div class="fld"><label>Lines size (pt)</label><input type="text" value="${s.valueSize==null?'':s.valueSize}" placeholder="inherit" oninput="setSNum('valueSize',this.value)"></div>`
       +`<div class="row2">`+cfl("Grand bg",s.grandBg,"grandBg","theme color","#1463FF")+cfl("Grand text",s.grandTextColor,"grandTextColor","#ffffff","#ffffff")+`</div>`
       +`<div class="fld"><label>Grand size (pt)</label><input type="text" value="${s.grandSize==null?'':s.grandSize}" placeholder="10" oninput="setSNum('grandSize',this.value)"></div></div>`;}
-  else if(t==="terms"){h+=tx("Heading","heading",s.heading);}
-  else if(t==="signature"){h+=tx("Label","label",s.label);}
+  else if(t==="terms"){h+=tx("Heading","heading",s.heading);
+    const cfl=(l,val,key,ph,fb)=>`<div class="fld"><label>${l}</label><div class="color"><input type="color" value="${HX.test(val||'')?val:fb}" oninput="setS('${key}',this.value)"><input type="text" value="${esc(val||'')}" placeholder="${ph}" oninput="setS('${key}',this.value)"></div></div>`;
+    h+=`<div class="stycard"><div class="stycardlbl">Colors &amp; sizes</div>`
+      +`<div class="row2">`+cfl("Heading color",s.headingColor,"headingColor","theme color","#1463FF")+cfl("Body color",s.bodyColor,"bodyColor","#6b6b6e","#6b6b6e")+`</div>`
+      +`<div class="fld"><label>Body size (pt)</label><input type="text" value="${s.bodySize==null?'':s.bodySize}" placeholder="7.5" oninput="setSNum('bodySize',this.value)"></div></div>`;}
+  else if(t==="signature"){h+=tx("Label","label",s.label);
+    const cfl=(l,val,key,ph,fb)=>`<div class="fld"><label>${l}</label><div class="color"><input type="color" value="${HX.test(val||'')?val:fb}" oninput="setS('${key}',this.value)"><input type="text" value="${esc(val||'')}" placeholder="${ph}" oninput="setS('${key}',this.value)"></div></div>`;
+    h+=`<div class="stycard"><div class="stycardlbl">Signature line &amp; label</div>`
+      +`<div class="row2">`+cfl("Line color",s.lineColor,"lineColor","#0C1322","#0C1322")+`<div class="fld"><label>Line width (px)</label><input type="text" value="${s.lineW==null?'':s.lineW}" placeholder="1.5" oninput="setSNum('lineW',this.value)"></div></div>`
+      +`<div class="row2"><div class="fld"><label>Box width (mm)</label><input type="text" value="${s.boxW==null?'':s.boxW}" placeholder="60" oninput="setSNum('boxW',this.value)"></div><div class="fld"><label>Label size (pt)</label><input type="text" value="${s.labelSize==null?'':s.labelSize}" placeholder="8.5" oninput="setSNum('labelSize',this.value)"></div></div>`
+      +cfl("Label color",s.labelColor,"labelColor","inherit","#0C1322")+`</div>`;}
   else if(t==="report_title"){h+=tx("Title text (blank = report name)","text",s.text==null?'':s.text);h+=ck("Show print date","showDate",s.showDate!==false);h+=sg("Layout","align",s.align,[["left","Left"],["center","Centered"]]);
     const cfl=(l,val,key,ph,fb)=>`<div class="fld"><label>${l}</label><div class="color"><input type="color" value="${HX.test(val||'')?val:fb}" oninput="setS('${key}',this.value)"><input type="text" value="${esc(val||'')}" placeholder="${ph}" oninput="setS('${key}',this.value)"></div></div>`;
     h+=`<div class="row2">`+cfl("Title color",s.titleColor,"titleColor","theme navy","#0C1322")+`<div class="fld"><label>Title size (pt)</label><input type="text" value="${s.titleSize==null?'':s.titleSize}" placeholder="inherit" oninput="setSNum('titleSize',this.value)"></div></div>`;}

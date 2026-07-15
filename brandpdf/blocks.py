@@ -702,13 +702,14 @@ def _d_title(doc, b, s, ctx):
     if s.get("showArabic", True):
         left += f'<div class="bs-title-ar" style="color:{ac}">{_esc(s.get("arabic") or "عرض سعر")}</div>'
     meta_cfg = s.get("meta") or {"name": True, "date": True, "valid_till": True}
+    ml = s.get("metaLabels") if isinstance(s.get("metaLabels"), dict) else {}
     m = []
     if meta_cfg.get("name"):
-        m.append(("Quotation No", doc.name))
+        m.append((ml.get("name") or "Quotation No", doc.name))
     if meta_cfg.get("date"):
-        m.append(("Date", doc.get_formatted("transaction_date")))
+        m.append((ml.get("date") or "Date", doc.get_formatted("transaction_date")))
     if meta_cfg.get("valid_till") and doc.get("valid_till"):
-        m.append(("Valid Till", doc.get_formatted("valid_till")))
+        m.append((ml.get("valid_till") or "Valid Till", doc.get_formatted("valid_till")))
     mlc = f'color:{s["metaLabelColor"].strip()};' if _hexok(s.get("metaLabelColor")) else ""
     mvc = f'color:{s["metaValueColor"].strip()};' if _hexok(s.get("metaValueColor")) else ""
     mbc = f'border-color:{s["metaBorderColor"].strip()};' if _hexok(s.get("metaBorderColor")) else ""
@@ -740,7 +741,10 @@ def _d_customer(doc, b, s, ctx):
         # as a mystery gap under the address, especially inside a padded/bordered card.
         clean = re.sub(r"(?:\s|&nbsp;|<br\s*/?>)+$", "", clean, flags=re.I)
         if clean:
-            out.append(f'<div class="addr">{clean}</div>')
+            acol = f'color:{s["addrColor"].strip()};' if _hexok(s.get("addrColor")) else ""
+            asz = _num(s.get("addrSize"))
+            aszc = f"font-size:{_fmt_num(min(72, max(4, asz)))}pt;" if asz else ""
+            out.append(f'<div class="addr" style="{acol}{aszc}">{clean}</div>')
     out.append("</div>")
     return "".join(out)
 
@@ -847,14 +851,19 @@ def _d_items(doc, b, s, ctx):
                 f'-webkit-print-color-adjust:exact;">{txt}</th>')
 
     # column widths: explicit mm (from the builder) overrides the sensible % default
+    lb = s.get("labels") if isinstance(s.get("labels"), dict) else {}
+
+    def L(k, d):  # editable column titles (settings.labels), defaulting to the classics
+        return _esc(lb.get(k) or d)
+
     coldefs = [("num", "6%"), ("item", "40%")]
-    heads = th("#") + th("Item &amp; Description", "")
+    heads = th(L("num", "#")) + th(L("item", "Item & Description"), "")
     if cols_cfg.get("qty"):
-        coldefs.append(("qty", "12%")); heads += th("Qty", "num")
+        coldefs.append(("qty", "12%")); heads += th(L("qty", "Qty"), "num")
     if cols_cfg.get("rate"):
-        coldefs.append(("rate", "20%")); heads += th("Rate", "num")
+        coldefs.append(("rate", "20%")); heads += th(L("rate", "Rate"), "num")
     if cols_cfg.get("amount"):
-        coldefs.append(("amount", "22%")); heads += th("Amount", "num")
+        coldefs.append(("amount", "22%")); heads += th(L("amount", "Amount"), "num")
     colgroup = "<colgroup>" + "".join(
         (f'<col style="width:{_fmt_num(w[k])}mm">' if w.get(k) else f'<col style="width:{pct}">')
         for k, pct in coldefs
@@ -985,9 +994,9 @@ def _d_totals(doc, b, s, ctx):
     vszc = f"font-size:{_fmt_num(min(72, max(4, vsz)))}pt;" if vsz else ""
     wmm = _num(s.get("width"), 82) or 82
     wmm = _fmt_num(min(200, max(40, wmm)))
-    lines = [f'<tr><td class="lbl" style="{lc}{vszc}">Subtotal</td><td class="val" style="{vc}{vszc}"><bdi>{_esc(doc.get_formatted("total"))}</bdi></td></tr>']
+    lines = [f'<tr><td class="lbl" style="{lc}{vszc}">{_esc(s.get("subtotalLabel") or "Subtotal")}</td><td class="val" style="{vc}{vszc}"><bdi>{_esc(doc.get_formatted("total"))}</bdi></td></tr>']
     if doc.get("discount_amount"):
-        lines.append(f'<tr><td class="lbl" style="{lc}{vszc}">Discount</td><td class="val" style="{vc}{vszc}"><bdi>- {_esc(doc.get_formatted("discount_amount"))}</bdi></td></tr>')
+        lines.append(f'<tr><td class="lbl" style="{lc}{vszc}">{_esc(s.get("discountLabel") or "Discount")}</td><td class="val" style="{vc}{vszc}"><bdi>- {_esc(doc.get_formatted("discount_amount"))}</bdi></td></tr>')
     for tax in (doc.get("taxes") or []):
         if tax.tax_amount:
             d = _esc(frappe.utils.strip_html_tags(tax.description or ""))
@@ -1049,14 +1058,25 @@ def _d_terms(doc, b, s, ctx):
     if not terms_html:
         return ""
     heading = _esc(s.get("heading") or "Terms & Conditions")
-    return f'<div style="font-size:7.5pt;color:#6b6b6e;line-height:1.5;"><div class="bs-sec-lbl">{heading}</div>{terms_html}</div>'
+    hcol = f' style="color:{s["headingColor"].strip()};"' if _hexok(s.get("headingColor")) else ""
+    bcol = s["bodyColor"].strip() if _hexok(s.get("bodyColor")) else "#6b6b6e"
+    bsz = _num(s.get("bodySize"))
+    bsz = _fmt_num(min(72, max(4, bsz))) if bsz else "7.5"
+    return f'<div style="font-size:{bsz}pt;color:{bcol};line-height:1.5;"><div class="bs-sec-lbl"{hcol}>{heading}</div>{terms_html}</div>'
 
 
 def _d_signature(doc, b, s, ctx):
     label = _esc(s.get("label") or "Authorized Signature")
+    bw = _fmt_num(min(160, max(25, _num(s.get("boxW"), 60) or 60)))
+    lw = _fmt_num(min(6, max(0.5, _num(s.get("lineW"), 1.5) or 1.5)))
+    lcol = s["lineColor"].strip() if _hexok(s.get("lineColor")) else "#0C1322"
+    tcol = f'color:{s["labelColor"].strip()};' if _hexok(s.get("labelColor")) else ""
+    tsz = _num(s.get("labelSize"))
+    tszc = f"font-size:{_fmt_num(min(72, max(4, tsz)))}pt;" if tsz else ""
     return (
         '<table style="width:100%;border-collapse:collapse;"><tr><td style="border:0;"></td>'
-        f'<td style="border:0;width:60mm;text-align:center;"><div class="bs-sign-box">{label}</div></td></tr></table>'
+        f'<td style="border:0;width:{bw}mm;text-align:center;"><div class="bs-sign-box" '
+        f'style="border-top:{lw}px solid {lcol};{tcol}{tszc}">{label}</div></td></tr></table>'
     )
 
 
