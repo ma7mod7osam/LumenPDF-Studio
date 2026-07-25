@@ -2,11 +2,11 @@
 
 ## Already done in this repo (v1.1.0)
 
-- [x] Semantic version `1.1.0` (`brandpdf/__init__.py`), git tags `v1.0.0` / `v1.1.0`.
+- [x] Semantic version `1.1.0` (`lumenpdf/__init__.py`), git tags `v1.0.0` / `v1.1.0`.
 - [x] MIT `license.txt`; `pyproject.toml` metadata; no hard pip dependencies
       (playwright/gotenberg are optional extras).
 - [x] Marketplace-grade `README.md` (the marketplace listing imports it as the description).
-- [x] Product logo — the "Page Blocks" mark (`brandpdf/public/images/lumenpdf-logo.svg`, wired
+- [x] Product logo — the "Page Blocks" mark (`lumenpdf/public/images/lumenpdf-logo.svg`, wired
       via `app_logo_url`; marketplace PNGs = `lumenpdf-logo-300.png` / `-512.png` from the
       logo kit, in Downloads).
 - [x] No client-specific content on fresh installs: neutral `DEFAULT_BRANDING` (no hardcoded
@@ -33,7 +33,7 @@
 5. **Pricing**: free, or set plans (Marketplace supports paid apps with revenue share).
 6. **Submit for review.** Frappe's team checks that it installs cleanly on a fresh bench and
    that the listing is honest. The `after_migrate` self-configuration means a plain
-   `install-app brandpdf` works with zero manual steps — that's the main functional check.
+   `install-app lumenpdf` works with zero manual steps — that's the main functional check.
 7. After approval, each release = push to `master` + a new git tag; the marketplace builds from
    the branch you registered.
 
@@ -44,9 +44,9 @@
   remember the *git history* still contains the old internal docs — that's fine, just be aware.
 - **Your own site after this release**: `DEFAULT_BRANDING` no longer hardcodes
   `/files/2Header.png` / `2Footer.png`. If any of your documents relied on that implicit
-  fallback, set the banners properly in **BrandPDF Settings** (one row for your company) —
+  fallback, set the banners properly in **LumenPDF Settings** (one row for your company) —
   that's the supported mechanism and survives upgrades.
 - **Naming**: the marketplace lists the app by `app_title` ("LumenPDF Studio"); the internal
-  `app_name` stays `brandpdf` and must never change (installed sites depend on it).
+  `app_name` stays `lumenpdf` and must never change (installed sites depend on it).
 - **Screenshots tip**: take them on a clean demo site (fresh bench + demo data), not the
   TemTemTech test site, so no real business data appears in the listing.

@@ -14,7 +14,7 @@ what prints.
 
 ## Highlights
 
-- **Visual builder** (`/app/brandpdf-builder`): drag blocks onto an A4 canvas — headings, text,
+- **Visual builder** (`/app/lumenpdf-builder`): drag blocks onto an A4 canvas — headings, text,
   bound document fields, images, dividers, boxes, multi-column rows, custom tables, page
   numbers — plus smart blocks for items, totals, taxes, payment schedule, customer, terms and
   signature. Undo/redo, autosave drafts, inline editing, zoom, full-screen, dark mode.
@@ -27,7 +27,7 @@ what prints.
   library** ("My blocks") you can insert into any format.
 - **Product-catalog documents**: per-item **product photos** in the items table, pulled from
   each row's Image attachment, sized how you want — rows without a photo (services) get no box.
-- **Branding that scales**: per-company colors, fonts and banner images (BrandPDF Settings), with
+- **Branding that scales**: per-company colors, fonts and banner images (LumenPDF Settings), with
   per-format overrides and opt-outs. Bilingual EN/AR out of the box — curated Latin + Arabic
   Google fonts, RTL-aware blocks.
 - **Deep data binding**: any field of the document (including custom fields), one-hop linked
@@ -51,8 +51,8 @@ what prints.
 ## Install
 
 ```bash
-bench get-app https://github.com/ma7mod7osam/LumenPDF-Studio
-bench --site <your-site> install-app brandpdf
+bench get-app https://github.com/ma7mod7osam/LumenPDF-Studio --branch lumenpdf
+bench --site <your-site> install-app lumenpdf
 bench --site <your-site> migrate
 ```
 
@@ -62,14 +62,14 @@ deploy.
 
 ## Quick start
 
-1. Open **LumenPDF Studio** (`/app/brandpdf-builder`) as a System Manager.
+1. Open **LumenPDF Studio** (`/app/lumenpdf-builder`) as a System Manager.
 2. Pick a target: a **Document** type (Quotation, Sales Invoice, …) or a **Report**.
 3. Start from **▦ Templates** or a blank canvas; drag blocks, bind fields, style everything.
 4. **✓ Save** — then print: the document's **Download Branded PDF** button, the report's
    **Branded PDF** button, or (if enabled per mapping) the native **Print → PDF** itself.
 5. Manage defaults per doctype/company in **File → Open / manage formats**.
 
-Company-wide branding (colors, fonts, header/footer banner images) lives in **BrandPDF
+Company-wide branding (colors, fonts, header/footer banner images) lives in **LumenPDF
 Settings** — one row per company. Formats inherit it and can override or suppress it.
 
 ## PDF engines
@@ -78,9 +78,9 @@ Settings** — one row per company. Formats inherit it and can override or suppr
 |---|---|---|
 | `frappe_chrome` (default) | Always available | Reuses the host's own Chromium PDF generator; zero setup. |
 | wkhtmltopdf fallback | Automatic | Used when the host's chrome generator can't produce landscape pages — detected and cached automatically. |
-| `playwright` / `gotenberg` | Opt-in | Set `brandpdf_engine` in site_config; install the matching optional dependency (`pip install brandpdf[playwright]`). |
+| `playwright` / `gotenberg` | Opt-in | Set `lumenpdf_engine` in site_config; install the matching optional dependency (`pip install lumenpdf[playwright]`). |
 
-Diagnostics: `/api/method/brandpdf.api.engine_diag` (System Manager) reports how the active
+Diagnostics: `/api/method/lumenpdf.api.engine_diag` (System Manager) reports how the active
 engine treats margins, full-bleed and landscape.
 
 ## Security posture

@@ -1,5 +1,5 @@
 [project]
-name = "brandpdf"
+name = "lumenpdf"
 authors = [
     { name = "BSTC", email = "support@bstc-bh.com" },
 ]
@@ -13,7 +13,7 @@ dynamic = ["version"]
 dependencies = []
 
 [project.optional-dependencies]
-# Alternative engines, opt-in via site_config "brandpdf_engine".
+# Alternative engines, opt-in via site_config "lumenpdf_engine".
 playwright = ["playwright>=1.40.0"]
 gotenberg = ["requests>=2.28.0"]
 
@@ -22,7 +22,7 @@ requires = ["flit_core >=3.4,<4"]
 build-backend = "flit_core.buildapi"
 
 [tool.flit.module]
-name = "brandpdf"
+name = "lumenpdf"
 
 [tool.bench.frappe-dependencies]
 frappe = ">=15.0.0,<16.0.0"
