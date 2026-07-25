@@ -166,7 +166,7 @@
   .paper .bs-sign-box{display:block;text-align:center;border-top:1.5px solid #0C1322;padding-top:4px;font-size:8.5pt;font-weight:600}
   .ph-banner{width:100%;height:30mm;display:flex;align-items:center;justify-content:center;color:#ffffffcc;font-size:9pt;letter-spacing:2px;text-transform:uppercase}
   .paper .cellempty,.sheet .cellempty{border:1px dashed #b9c6e0;color:#9aa6c2;padding:10px;text-align:center;font-size:8pt;border-radius:4px}
-  #gallery,#fmtmgr,#newfmt{position:fixed;inset:0;background:#000a;display:none;align-items:center;justify-content:center;z-index:200}
+  #gallery,#fmtmgr,#newfmt,#feedback{position:fixed;inset:0;background:#000a;display:none;align-items:center;justify-content:center;z-index:200}
   .menuwrap{position:relative}
   .menu{position:absolute;top:calc(100% + 6px);left:0;background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);z-index:300;min-width:196px;padding:5px;display:none}
   .menu button{display:block;width:100%;text-align:left;background:none;border:0;border-radius:7px;padding:8px 11px;font-size:12.5px;color:var(--ink);cursor:pointer}
@@ -203,13 +203,14 @@
   .chip.on{border-color:var(--accent);background:#1463FF14;color:var(--accent)}
   .psecb .fld input,.psecb .fld select{padding:6px 9px;font-size:12px}
   .psecb .fld{margin-bottom:7px}
-  #gallery .gcard-wrap,#fmtmgr .gcard-wrap,#newfmt .gcard-wrap{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px 22px;width:700px;max-width:92vw;max-height:90vh;display:flex;flex-direction:column}
-  #gallery h3,#fmtmgr h3,#newfmt h3{margin:0;font-size:16px;flex:0 0 auto}
-  #gallery .ghint,#fmtmgr .ghint,#newfmt .ghint{font-size:12px;color:var(--mut);margin-top:4px;flex:0 0 auto}
-  #gallery .gclose,#fmtmgr .gclose,#newfmt .gclose{float:right;cursor:pointer;color:var(--ink);font-weight:600}
-  #newfmt .fld{margin-bottom:11px}
-  #newfmt .fld label{display:block;font-size:11px;color:var(--mut);margin-bottom:4px}
-  #newfmt input[type=text],#newfmt select{width:100%;background:var(--panel2);color:var(--ink);border:1px solid var(--line2);border-radius:8px;padding:8px 10px;font-size:13px}
+  #gallery .gcard-wrap,#fmtmgr .gcard-wrap,#newfmt .gcard-wrap,#feedback .gcard-wrap{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px 22px;width:700px;max-width:92vw;max-height:90vh;display:flex;flex-direction:column}
+  #gallery h3,#fmtmgr h3,#newfmt h3,#feedback h3{margin:0;font-size:16px;flex:0 0 auto}
+  #gallery .ghint,#fmtmgr .ghint,#newfmt .ghint,#feedback .ghint{font-size:12px;color:var(--mut);margin-top:4px;flex:0 0 auto}
+  #gallery .gclose,#fmtmgr .gclose,#newfmt .gclose,#feedback .gclose{float:right;cursor:pointer;color:var(--ink);font-weight:600}
+  #newfmt .fld,#feedback .fld{margin-bottom:11px}
+  #newfmt .fld label,#feedback .fld label{display:block;font-size:11px;color:var(--mut);margin-bottom:4px}
+  #newfmt input[type=text],#newfmt select,#feedback input[type=text],#feedback textarea{width:100%;background:var(--panel2);color:var(--ink);border:1px solid var(--line2);border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit}
+  #feedback textarea{min-height:120px;resize:vertical}
   .gscroll{flex:1 1 auto;min-height:0;overflow-y:auto;margin-top:6px}
   .gcards{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:10px}
   .gcard{background:var(--panel2);border:1px solid var(--line2);border-radius:10px;padding:12px;cursor:pointer;transition:.12s}
@@ -222,7 +223,7 @@
 <body>
 <div class="app">
   <div class="top">
-    <div class="brand"><svg width="22" height="22" viewBox="0 0 48 48" fill="none" aria-label="LumenPDF Studio"><rect x="6" y="6" width="7.5" height="38" rx="3.75" fill="#1463FF"/><rect x="18" y="25" width="4.5" height="19" rx="2.25" fill="#7FA8FF"/><rect x="27" y="25" width="7.5" height="19" rx="3.75" fill="#1463FF"/><rect x="39" y="25" width="4.5" height="19" rx="2.25" fill="#1463FF"/></svg> LumenPDF <small>Studio · b61</small></div>
+    <div class="brand"><svg width="22" height="22" viewBox="0 0 48 48" fill="none" aria-label="LumenPDF Studio"><rect x="6" y="6" width="7.5" height="38" rx="3.75" fill="#1463FF"/><rect x="18" y="25" width="4.5" height="19" rx="2.25" fill="#7FA8FF"/><rect x="27" y="25" width="7.5" height="19" rx="3.75" fill="#1463FF"/><rect x="39" y="25" width="4.5" height="19" rx="2.25" fill="#1463FF"/></svg> LumenPDF <small>Studio · b62</small></div>
     <div class="menuwrap"><button class="btn ghost" id="fileBtn" onclick="toggleFileMenu(event)" title="New, open, duplicate, import/export, manage">☰ File</button>
       <div class="menu" id="fileMenu">
         <button onclick="closeFileMenu();openNewFmt()">＋ New format…</button>
@@ -241,6 +242,7 @@
     <div class="spacer"></div>
     <button class="btn ghost" id="undoBtn" onclick="undo()" title="Undo (Ctrl+Z)">↶</button>
     <button class="btn ghost" id="redoBtn" onclick="redo()" title="Redo (Ctrl+Y)">↷</button>
+    <button class="btn ghost" onclick="openFeedback()" title="Send feedback to the makers of LumenPDF Studio">💬</button>
     <button class="btn ghost" id="fsBtn" onclick="toggleFullscreen()" title="Full screen (F)">⛶</button>
     <div class="zoom"><button onclick="zoom(-.1)">−</button><span id="zoomv">80%</span><button onclick="zoom(.1)">+</button></div>
     <select class="sel" id="dataSel" title="Preview with a real document" onchange="loadData(this.value)"><option value="">Sample data</option></select>
@@ -275,6 +277,12 @@
     <div class="fld" id="nfDocWrap"><label>Document type</label><select id="nfDoc"></select></div>
     <div class="fld" id="nfRepWrap" style="display:none"><label>Report</label><select id="nfRep"></select></div>
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px"><button class="btn ghost" onclick="closeNewFmt()">Cancel</button><button class="btn primary" onclick="confirmNewFmt()">Create</button></div>
+  </div></div></div>
+<div id="feedback"><div class="gcard-wrap" style="width:460px"><h3>💬 Send feedback</h3><div class="ghint">Goes straight to the LumenPDF Studio team. Bugs, ideas, anything.<span class="gclose" onclick="closeFeedback()">✕ Close</span></div>
+  <div style="margin-top:14px">
+    <div class="fld"><label>Your message</label><textarea id="fbMsg" placeholder="What's working? What's broken? What's missing?"></textarea></div>
+    <div class="fld"><label>Your email (optional — only if you'd like a reply)</label><input type="text" id="fbEmail" placeholder="you@company.com"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px"><button class="btn ghost" onclick="closeFeedback()">Cancel</button><button class="btn primary" id="fbSend" onclick="sendFeedback()">Send</button></div>
   </div></div></div>
 <script>
 const PXMM=96/25.4;
@@ -875,10 +883,20 @@ function confirmNewFmt(){
   document.getElementById("fmtName").value=name;
   commitHistory();closeNewFmt();
 }
+/* ---- feedback: straight to the app makers via the site's email ---- */
+function openFeedback(){document.getElementById("feedback").style.display="flex";setTimeout(function(){document.getElementById("fbMsg").focus();},50);}
+function closeFeedback(){document.getElementById("feedback").style.display="none";}
+function sendFeedback(){const msg=(document.getElementById("fbMsg").value||"").trim();
+  if(!msg){document.getElementById("fbMsg").focus();return;}
+  const btn=document.getElementById("fbSend");btn.disabled=true;btn.textContent="Sending…";
+  rpc("brandpdf.api.submit_feedback",{message:msg,reply_to:(document.getElementById("fbEmail").value||"").trim()}).then(function(r){
+    btn.disabled=false;btn.textContent="Send";
+    if(r&&r.ok){document.getElementById("fbMsg").value="";closeFeedback();toast("Sent — thank you! We read every message.");}
+    else toast("Could not send"+(EMBED?" — check the site's outgoing email settings.":" (works inside ERPNext)."),true);});}
 /* Extra ways out of the modals: click the dark backdrop, or press Escape. */
 (function(){function bd(id,close){var el=document.getElementById(id);if(el)el.addEventListener("mousedown",function(e){if(e.target===el)close();});}
-  bd("gallery",closeGallery);bd("fmtmgr",function(){closeFmtMgr();});bd("newfmt",closeNewFmt);
-  document.addEventListener("keydown",function(e){if(e.key==="Escape"){["gallery","fmtmgr","newfmt"].forEach(function(id){var el=document.getElementById(id);if(el&&el.style.display==="flex"){if(id==="gallery")closeGallery();else if(id==="fmtmgr")closeFmtMgr();else closeNewFmt();}});}});})();
+  bd("gallery",closeGallery);bd("fmtmgr",function(){closeFmtMgr();});bd("newfmt",closeNewFmt);bd("feedback",closeFeedback);
+  document.addEventListener("keydown",function(e){if(e.key==="Escape"){["gallery","fmtmgr","newfmt","feedback"].forEach(function(id){var el=document.getElementById(id);if(el&&el.style.display==="flex"){if(id==="gallery")closeGallery();else if(id==="fmtmgr")closeFmtMgr();else if(id==="newfmt")closeNewFmt();else closeFeedback();}});}});})();
 function pickStarter(i){const f=(_galSet||FORMATS)[i];if(!f)return;clearDraft();loadDefinition(f.make());closeGallery();}
 /* ---- READY SECTIONS: pre-composed block groups you insert into the current design ---- */
 const SECTIONS=[

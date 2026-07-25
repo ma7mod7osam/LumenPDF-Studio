@@ -457,6 +457,44 @@ def save_format(definition, name=None):
             "report_name": report_name, "activated": True}
 
 
+# --- feedback ---------------------------------------------------------------
+
+@frappe.whitelist()
+def submit_feedback(message, reply_to=None):
+    """Send builder feedback to the app maintainers by email (site_config
+    `brandpdf_feedback_email` overrides the default). Queued through the site's own outgoing
+    email; context (site, user, version) is attached so reports are actionable."""
+    _require_manager()
+    msg = (message or "").strip()
+    if not msg:
+        frappe.throw("Write something first.")
+    msg = msg[:5000]
+    reply_to = (reply_to or "").strip() or None
+    if reply_to and not frappe.utils.validate_email_address(reply_to):
+        reply_to = None
+    to = frappe.conf.get("brandpdf_feedback_email") or "support@bstc-bh.com"
+    try:
+        from brandpdf import __version__ as _v
+    except Exception:
+        _v = "?"
+    ctx = (f"Site: {getattr(frappe.local, 'site', '?')}\n"
+           f"User: {frappe.session.user}\n"
+           f"App: brandpdf v{_v}\n"
+           f"Reply-to: {reply_to or '-'}")
+    try:
+        frappe.sendmail(
+            recipients=[to],
+            subject=f"LumenPDF Studio feedback — {getattr(frappe.local, 'site', '?')}",
+            message=f"<pre style='font-family:inherit;white-space:pre-wrap'>{frappe.utils.escape_html(msg)}</pre>"
+                    f"<hr><pre style='color:#666'>{frappe.utils.escape_html(ctx)}</pre>",
+            reply_to=reply_to,
+        )
+    except Exception:
+        frappe.log_error(title="BrandPDF feedback send failed", message=frappe.get_traceback())
+        frappe.throw("Could not queue the email — check this site's outgoing email settings.")
+    return {"ok": True}
+
+
 # --- reusable block snippets ("My blocks") ---------------------------------
 
 @frappe.whitelist()
