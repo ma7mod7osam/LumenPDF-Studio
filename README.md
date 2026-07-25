@@ -23,7 +23,10 @@ what prints.
   columns you choose or inherit from the report.
 - **Ready-made templates**: 10 invoice/quotation designs and 8 financial report formats, each a
   complete starting point you can restyle freely. Publish your own formats to a site-wide
-  gallery, or export/import them as JSON.
+  gallery, export/import them as JSON, and save any configured block to a reusable **block
+  library** ("My blocks") you can insert into any format.
+- **Product-catalog documents**: per-item **product photos** in the items table, pulled from
+  each row's Image attachment, sized how you want — rows without a photo (services) get no box.
 - **Branding that scales**: per-company colors, fonts and banner images (BrandPDF Settings), with
   per-format overrides and opt-outs. Bilingual EN/AR out of the box — curated Latin + Arabic
   Google fonts, RTL-aware blocks.
@@ -36,6 +39,8 @@ what prints.
   button on every report, and optional branding of native report PDFs.
 - **Multi-page correctness**: repeating header/footer bands with real page numbers, row-aware
   pagination, and a compose pipeline that keeps flowing content clear of the bands on every page.
+- **In-app feedback**: a 💬 button in the builder emails feedback (with site/user/version
+  context) straight to the maintainers via the site's own outgoing email.
 
 ## Requirements
 

@@ -10,7 +10,8 @@
   /* Dark mode: darken only the CHROME neutrals. --paper/--accent/--ok stay light so the document
      preview stays white paper (the PDF is white) and the brand blue is unchanged. Follows the
      user's Frappe theme (desk posts it in); standalone falls back to the OS setting. */
-  :root[data-theme="dark"]{--bg:#0E141F;--panel:#161B26;--panel2:#1E2431;--line:#2A3140;--line2:#3A4150;--ink:#E7EBF3;--mut:#9BA6B8;--mut2:#6D7688;--shadow:0 24px 60px rgba(0,0,0,.55),0 8px 18px rgba(0,0,0,.35)}
+  :root{--logoA:#1463FF;--logoB:#7FA8FF}
+  :root[data-theme="dark"]{--bg:#0E141F;--panel:#161B26;--panel2:#1E2431;--line:#2A3140;--line2:#3A4150;--ink:#E7EBF3;--mut:#9BA6B8;--mut2:#6D7688;--shadow:0 24px 60px rgba(0,0,0,.55),0 8px 18px rgba(0,0,0,.35);--logoA:#2F7BFF;--logoB:#6BA4FF}
   :root[data-theme="dark"] .stage{background:radial-gradient(circle at 1px 1px,#2A3140 1px,transparent 0) 0 0/22px 22px,var(--bg)}
   :root[data-theme="dark"] .props input[type=text],:root[data-theme="dark"] .props textarea,:root[data-theme="dark"] .props select,:root[data-theme="dark"] .top select,:root[data-theme="dark"] .fmt-name{background:var(--panel2);color:var(--ink);border-color:var(--line2)}
   :root[data-theme="dark"] .color input[type=color]{background:var(--panel2);border-color:var(--line2)}
@@ -223,7 +224,7 @@
 <body>
 <div class="app">
   <div class="top">
-    <div class="brand"><svg width="22" height="22" viewBox="0 0 48 48" fill="none" aria-label="LumenPDF Studio"><rect x="6" y="6" width="7.5" height="38" rx="3.75" fill="#1463FF"/><rect x="18" y="25" width="4.5" height="19" rx="2.25" fill="#7FA8FF"/><rect x="27" y="25" width="7.5" height="19" rx="3.75" fill="#1463FF"/><rect x="39" y="25" width="4.5" height="19" rx="2.25" fill="#1463FF"/></svg> LumenPDF <small>Studio · b62</small></div>
+    <div class="brand"><svg width="24" height="24" viewBox="0 0 48 48" fill="none" aria-label="LumenPDF Studio"><rect x="9" y="4" width="30" height="40" rx="4" style="stroke:var(--logoA)" stroke-width="3"/><rect x="14.5" y="10" width="19" height="3.6" rx="1.8" style="fill:var(--logoB)"/><rect x="14.5" y="18" width="19" height="9" rx="2.4" style="fill:var(--logoA)"/><rect x="14.5" y="31.5" width="12" height="3.6" rx="1.8" style="fill:var(--logoB)"/></svg> LumenPDF <small>Studio · b63</small></div>
     <div class="menuwrap"><button class="btn ghost" id="fileBtn" onclick="toggleFileMenu(event)" title="New, open, duplicate, import/export, manage">☰ File</button>
       <div class="menu" id="fileMenu">
         <button onclick="closeFileMenu();openNewFmt()">＋ New format…</button>

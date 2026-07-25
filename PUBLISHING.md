@@ -1,12 +1,14 @@
 # Publishing LumenPDF Studio to the Frappe Cloud Marketplace
 
-## Already done in this repo (v1.0.0)
+## Already done in this repo (v1.1.0)
 
-- [x] Semantic version `1.0.0` (`brandpdf/__init__.py`), git tag `v1.0.0`.
+- [x] Semantic version `1.1.0` (`brandpdf/__init__.py`), git tags `v1.0.0` / `v1.1.0`.
 - [x] MIT `license.txt`; `pyproject.toml` metadata; no hard pip dependencies
       (playwright/gotenberg are optional extras).
 - [x] Marketplace-grade `README.md` (the marketplace listing imports it as the description).
-- [x] App logo (`brandpdf/public/images/lumenpdf-logo.svg`, wired via `app_logo_url`).
+- [x] Product logo — the "Page Blocks" mark (`brandpdf/public/images/lumenpdf-logo.svg`, wired
+      via `app_logo_url`; marketplace PNGs = `lumenpdf-logo-300.png` / `-512.png` from the
+      logo kit, in Downloads).
 - [x] No client-specific content on fresh installs: neutral `DEFAULT_BRANDING` (no hardcoded
       banner files, RTL off), generic starter seed ("Quotation - Starter", guarded for
       non-ERPNext sites), generic sample text in the builder.
