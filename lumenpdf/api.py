@@ -129,6 +129,7 @@ def set_default_format(doctype, template, company=None):
     """Make `template` the default format for `doctype` — globally (company empty) or for ONE
     company in a multi-company setup. System-Manager only."""
     _require_manager()
+    _ensure_config_ready()
     company = (company or "").strip() or None
     if not (doctype and template and frappe.db.exists("LumenPDF Template", template)):
         frappe.throw("Unknown format.")
@@ -184,6 +185,7 @@ def set_default_report_format(report_name, template):
     """Make `template` the active branded format for a report (used by the 'Branded PDF' button
     and, when replace_report_pdf is on, the native Report > PDF). System-Manager only."""
     _require_manager()
+    _ensure_config_ready()
     if not (report_name and template and frappe.db.exists("LumenPDF Template", template)):
         frappe.throw("Unknown format.")
     ref = frappe.db.get_value("Report", report_name, "ref_doctype") or "Report"
@@ -403,6 +405,7 @@ def save_format(definition, name=None):
     """Persist a builder design as a LumenPDF Template (source_type=blocks) and make it the
     active format for its target doctype. System Manager only (templates affect all printing)."""
     _require_manager()
+    _ensure_config_ready()
     if isinstance(definition, str):
         definition = json.loads(definition)
     if not isinstance(definition, dict):
@@ -523,6 +526,7 @@ def save_snippet(name, block):
     """Save ONE configured block (settings+style; rows include their children) for reuse across
     formats. Same-name saves overwrite. System-Manager only; image paths keep the /files rule."""
     _require_manager()
+    _ensure_config_ready()
     if isinstance(block, str):
         block = json.loads(block)
     if not isinstance(block, dict) or not block.get("type"):
@@ -633,6 +637,8 @@ def get_format(name=None, target_doctype="Quotation", report_name=None):
             t = frappe.get_doc("LumenPDF Template", maps[0]["template"])
             if t.get("definition"):
                 return {"name": t.name, "definition": json.loads(t.definition)}
+        return {"name": None, "definition": None}
+    if not _ensure_config_ready():
         return {"name": None, "definition": None}
     maps = frappe.get_all(
         "LumenPDF Mapping", filters={"target_doctype": target_doctype, "enabled": 1},
@@ -863,6 +869,23 @@ def builder_sample(doctype, name):
         tables[df.fieldname] = rows
     out["tables"] = tables
     return out
+
+
+def _ensure_config_ready():
+    """Config DocTypes must exist before any query touches them. They are created by
+    ensure_config (after_install + after_migrate), but a site can still arrive here without them:
+    an interrupted install, a restored backup, or an app added to a bench that never migrated.
+    Self-heal once instead of throwing a raw TableMissingError at the user."""
+    if frappe.db.exists("DocType", "LumenPDF Mapping"):
+        return True
+    try:
+        from lumenpdf.setup.install_config import ensure_config
+        ensure_config()
+        frappe.clear_cache()
+        return frappe.db.exists("DocType", "LumenPDF Mapping")
+    except Exception:
+        frappe.log_error(title="LumenPDF: config self-heal failed", message=frappe.get_traceback())
+        return False
 
 
 def _require_manager():

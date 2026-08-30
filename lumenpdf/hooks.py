@@ -53,6 +53,11 @@ scheduler_events = {
 # After every deploy/migrate: (1) create/upgrade the LumenPDF config DocTypes (the format
 # builder screens) as Custom DocTypes — no command needed; (2) make sure a Chromium is
 # available for the Playwright engine. Both idempotent + non-fatal.
+# Fresh install: after_migrate does NOT fire on `install-app`, so the config DocTypes would
+# never be created and the builder would 500 with TableMissingError. ensure_config is idempotent,
+# so running it here AND on every migrate is safe.
+after_install = "lumenpdf.setup.install_config.ensure_config"
+
 after_migrate = [
     "lumenpdf.setup.install_config.ensure_config",
     "lumenpdf.setup.install_browser.ensure_chromium",

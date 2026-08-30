@@ -148,7 +148,18 @@ def ensure_config():
     a failure here must never abort a site migration."""
     try:
         if not frappe.db.exists("Module Def", "LumenPDF"):
-            return
+            # On a fresh install this normally exists already (created from modules.txt while the
+            # app syncs). Create it rather than bailing, so the config never depends on install
+            # ordering — bailing here is what leaves a site with no config DocTypes at all.
+            try:
+                md = frappe.get_doc({"doctype": "Module Def", "module_name": "LumenPDF",
+                                     "app_name": "lumenpdf"})
+                md.flags.ignore_permissions = True
+                md.insert(ignore_if_duplicate=True)
+            except Exception:
+                frappe.log_error(title="LumenPDF: could not create Module Def",
+                                 message=frappe.get_traceback())
+                return
         run(as_custom=True)
     except Exception:
         frappe.log_error(title="LumenPDF: ensure_config failed", message=frappe.get_traceback())

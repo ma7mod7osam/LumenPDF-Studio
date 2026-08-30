@@ -32,7 +32,7 @@
 4. **Support links**: website / support email (support@bstc-bh.com) / docs link (the README).
 5. **Pricing**: free, or set plans (Marketplace supports paid apps with revenue share).
 6. **Submit for review.** Frappe's team checks that it installs cleanly on a fresh bench and
-   that the listing is honest. The `after_migrate` self-configuration means a plain
+   that the listing is honest. The `after_install` + `after_migrate` self-configuration means a plain
    `install-app lumenpdf` works with zero manual steps — that's the main functional check.
 7. After approval, each release = push to `master` + a new git tag; the marketplace builds from
    the branch you registered.

@@ -56,7 +56,7 @@ bench --site <your-site> install-app lumenpdf
 bench --site <your-site> migrate
 ```
 
-The app configures itself on migrate (its config DocTypes are created automatically; a starter
+The app configures itself on install and on every migrate (its config DocTypes are created automatically; a starter
 Quotation format is seeded on ERPNext sites). On Frappe Cloud, add the app to your bench and
 deploy.
 
