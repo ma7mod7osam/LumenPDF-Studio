@@ -194,7 +194,7 @@
   .paper .bs-sign-box{display:block;text-align:center;border-top:1.5px solid #0C1322;padding-top:4px;font-size:8.5pt;font-weight:600}
   .ph-banner{width:100%;height:30mm;display:flex;align-items:center;justify-content:center;color:#ffffffcc;font-size:9pt;letter-spacing:2px;text-transform:uppercase}
   .paper .cellempty,.sheet .cellempty{border:1px dashed #b9c6e0;color:#9aa6c2;padding:10px;text-align:center;font-size:8pt;border-radius:4px}
-  #gallery,#fmtmgr,#newfmt,#feedback{position:fixed;inset:0;background:#000a;display:none;align-items:center;justify-content:center;z-index:200}
+  #gallery,#fmtmgr,#newfmt,#feedback,#savefmt{position:fixed;inset:0;background:#000a;display:none;align-items:center;justify-content:center;z-index:200}
   .menuwrap{position:relative}
   .menu{position:absolute;top:calc(100% + 6px);left:0;background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);z-index:300;min-width:196px;padding:5px;display:none}
   .menu button{display:block;width:100%;text-align:left;background:none;border:0;border-radius:7px;padding:8px 11px;font-size:12.5px;color:var(--ink);cursor:pointer}
@@ -231,13 +231,22 @@
   .chip.on{border-color:var(--accent);background:#1463FF14;color:var(--accent)}
   .psecb .fld input,.psecb .fld select{padding:6px 9px;font-size:12px}
   .psecb .fld{margin-bottom:7px}
-  #gallery .gcard-wrap,#fmtmgr .gcard-wrap,#newfmt .gcard-wrap,#feedback .gcard-wrap{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px 22px;width:700px;max-width:92vw;max-height:90vh;display:flex;flex-direction:column}
-  #gallery h3,#fmtmgr h3,#newfmt h3,#feedback h3{margin:0;font-size:16px;flex:0 0 auto}
-  #gallery .ghint,#fmtmgr .ghint,#newfmt .ghint,#feedback .ghint{font-size:12px;color:var(--mut);margin-top:4px;flex:0 0 auto}
-  #gallery .gclose,#fmtmgr .gclose,#newfmt .gclose,#feedback .gclose{float:right;cursor:pointer;color:var(--ink);font-weight:600}
-  #newfmt .fld,#feedback .fld{margin-bottom:11px}
-  #newfmt .fld label,#feedback .fld label{display:block;font-size:11px;color:var(--mut);margin-bottom:4px}
-  #newfmt input[type=text],#newfmt select,#feedback input[type=text],#feedback textarea{width:100%;background:var(--panel2);color:var(--ink);border:1px solid var(--line2);border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit}
+  #gallery .gcard-wrap,#fmtmgr .gcard-wrap,#newfmt .gcard-wrap,#feedback .gcard-wrap,#savefmt .gcard-wrap{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px 22px;width:700px;max-width:92vw;max-height:90vh;display:flex;flex-direction:column}
+  #gallery h3,#fmtmgr h3,#newfmt h3,#feedback h3,#savefmt h3{margin:0;font-size:16px;flex:0 0 auto}
+  #gallery .ghint,#fmtmgr .ghint,#newfmt .ghint,#feedback .ghint,#savefmt .ghint{font-size:12px;color:var(--mut);margin-top:4px;flex:0 0 auto}
+  #gallery .gclose,#fmtmgr .gclose,#newfmt .gclose,#feedback .gclose,#savefmt .gclose{float:right;cursor:pointer;color:var(--ink);font-weight:600}
+  #newfmt .fld,#feedback .fld,#savefmt .fld{margin-bottom:11px}
+  #newfmt .fld label,#feedback .fld label,#savefmt .fld label{display:block;font-size:11px;color:var(--mut);margin-bottom:4px}
+  #newfmt input[type=text],#newfmt select,#feedback input[type=text],#feedback textarea,#savefmt input[type=text],#savefmt select{width:100%;background:var(--panel2);color:var(--ink);border:1px solid var(--line2);border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit}
+  #fmtStatus{display:inline-flex;align-items:center;gap:6px}
+  .fmtchip{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;border-radius:999px;padding:3px 9px;white-space:nowrap}
+  .fmtchip .dot{width:6px;height:6px;border-radius:50%;background:currentColor;flex:0 0 auto}
+  .fmtchip.dirty{background:#FFF4E5;color:#B45309}
+  .fmtchip.saved{background:#E2F6EF;color:var(--ok)}
+  .fmtchip.default{background:#FFF4E5;color:#B45309}
+  :root[data-theme="dark"] .fmtchip.dirty{background:#2A2410;color:#F0D98A}
+  :root[data-theme="dark"] .fmtchip.saved{background:#123128;color:var(--ok)}
+  :root[data-theme="dark"] .fmtchip.default{background:#2A2410;color:#F0D98A}
   #feedback textarea{min-height:120px;resize:vertical}
   .gscroll{flex:1 1 auto;min-height:0;overflow-y:auto;margin-top:6px}
   .gcards{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:10px}
@@ -251,7 +260,7 @@
 <body>
 <div class="app">
   <div class="top">
-    <div class="brand"><svg width="24" height="24" viewBox="0 0 48 48" fill="none" aria-label="LumenPDF Studio"><rect x="9" y="4" width="30" height="40" rx="4" style="stroke:var(--logoA)" stroke-width="3"/><rect x="14.5" y="10" width="19" height="3.6" rx="1.8" style="fill:var(--logoB)"/><rect x="14.5" y="18" width="19" height="9" rx="2.4" style="fill:var(--logoA)"/><rect x="14.5" y="31.5" width="12" height="3.6" rx="1.8" style="fill:var(--logoB)"/></svg> LumenPDF <small>Studio · b64</small></div>
+    <div class="brand"><svg width="24" height="24" viewBox="0 0 48 48" fill="none" aria-label="LumenPDF Studio"><rect x="9" y="4" width="30" height="40" rx="4" style="stroke:var(--logoA)" stroke-width="3"/><rect x="14.5" y="10" width="19" height="3.6" rx="1.8" style="fill:var(--logoB)"/><rect x="14.5" y="18" width="19" height="9" rx="2.4" style="fill:var(--logoA)"/><rect x="14.5" y="31.5" width="12" height="3.6" rx="1.8" style="fill:var(--logoB)"/></svg> LumenPDF <small>Studio · b65</small></div>
     <div class="menuwrap"><button class="btn ghost" id="fileBtn" onclick="toggleFileMenu(event)" title="New, open, duplicate, import/export, manage"><svg class="icn" viewBox="0 0 24 24"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg> File</button>
       <div class="menu" id="fileMenu">
         <button onclick="closeFileMenu();openNewFmt()"><svg class="icn" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> New format…</button>
@@ -262,6 +271,7 @@
         <button onclick="closeFileMenu();exportJSON()"><svg class="icn" viewBox="0 0 24 24"><path d="M12 4v12"/><path d="M7 11l5 5 5-5"/><path d="M4 20h16"/></svg> Export as .json</button>
       </div></div>
     <input class="fmt-name" id="fmtName" value="Quotation - Custom" title="Format name">
+    <span id="fmtStatus"></span>
     <select class="sel" id="targetKindSel" title="Brand a document or a report" onchange="onTargetKind(this.value)"><option value="doctype">Document</option><option value="report">Report</option></select>
     <select class="sel" id="doctypeSel" title="Target DocType" onchange="onDoctype(this.value)"></select>
     <select class="sel" id="reportSel" title="Target Report" style="display:none" onchange="onReport(this.value)"></select>
@@ -305,6 +315,14 @@
     <div class="fld" id="nfDocWrap"><label>Document type</label><select id="nfDoc"></select></div>
     <div class="fld" id="nfRepWrap" style="display:none"><label>Report</label><select id="nfRep"></select></div>
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px"><button class="btn ghost" onclick="closeNewFmt()">Cancel</button><button class="btn primary" onclick="confirmNewFmt()">Create</button></div>
+  </div></div></div>
+<div id="savefmt"><div class="gcard-wrap" style="width:420px"><h3>Save format</h3><div class="ghint">Name it, and choose whether it becomes the default.<span class="gclose" onclick="closeSaveFmt()"><svg class="icn" viewBox="0 0 24 24"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg> Close</span></div>
+  <div style="margin-top:14px">
+    <div class="fld"><label>Format name</label><input type="text" id="sfName" placeholder="e.g. Sales Invoice - Branded" onkeydown="if(event.key==='Enter'){event.preventDefault();confirmSaveFmt();}"></div>
+    <div class="fld" id="sfCompanyWrap"><label>Company</label><select id="sfCompany"><option value="">All companies</option></select></div>
+    <div class="chk"><input type="checkbox" id="sfDefault" checked><label for="sfDefault" id="sfDefLbl" style="margin:0">Make this the default</label></div>
+    <div class="hint" style="padding:2px 0 0">The default is what Print → PDF uses.</div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px"><button class="btn ghost" onclick="closeSaveFmt()">Cancel</button><button class="btn primary" onclick="confirmSaveFmt()">Save format</button></div>
   </div></div></div>
 <div id="feedback"><div class="gcard-wrap" style="width:460px"><h3><svg class="icn" viewBox="0 0 24 24" style="width:17px;height:17px"><path d="M20 4H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h4v4l5-4h7a1 1 0 0 0 1-1V5a1 1 0 0 0-1-1z"/></svg> Send feedback</h3><div class="ghint">Goes straight to the LumenPDF Studio team. Bugs, ideas, anything.<span class="gclose" onclick="closeFeedback()"><svg class="icn" viewBox="0 0 24 24"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg> Close</span></div>
   <div style="margin-top:14px">
@@ -534,6 +552,17 @@ var state={layout:"absolute",target:"Quotation",targetKind:"doctype",report:"",p
   mk("title",{x:14,y:38,w:182,h:null}),mk("customer",{x:14,y:62,w:120,h:null}),
   mk("items",{x:14,y:90,w:182,h:null}),mk("totals",{x:104,y:172,w:92,h:null}),mk("payment_schedule",{x:14,y:200,w:182,h:null}),
   mk("terms",{x:14,y:238,w:140,h:null})]};
+/* ---- save-state tracking: is the current design saved, dirty, and/or the default? ---- */
+let fmtSaved=false, fmtDirty=false, fmtIsDefault=false, fmtDefaultCompany="", fmtLoaded=false;
+function renderStatus(){const el=document.getElementById("fmtStatus");if(!el)return;let h="";
+  if(fmtDirty)h+='<span class="fmtchip dirty"><span class="dot"></span>Unsaved changes</span>';
+  else if(fmtSaved)h+='<span class="fmtchip saved"><span class="dot"></span>Saved</span>';
+  if(fmtIsDefault)h+='<span class="fmtchip default"><svg class="icn" style="width:9px;height:9px" viewBox="0 0 24 24"><path d="M12 3.6l2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8L3.5 9.8l5.9-.9z" fill="currentColor" stroke="none"/></svg>Default</span>';
+  el.innerHTML=h;}
+function refreshDefaultFlag(){const name=(document.getElementById("fmtName")||{}).value||"";const isRep=state.targetKind==="report";
+  const args=isRep?{report_name:state.report}:{doctype:state.target};
+  rpc("brandpdf.api.list_formats",args).then(function(rows){rows=rows||[];const row=rows.find(function(r){return r&&r.name===name;});
+    fmtIsDefault=!!(row&&row.is_default);fmtDefaultCompany=(row&&row.company)||"";renderStatus();});}
 function childMk(t){return{id:"b"+(idc++),type:t,settings:DSET[t]?DSET[t]():{},style:dstyle(t)};}
 function cur(){return blockById(selId);}
 function blockById(id){for(var i=0;i<state.blocks.length;i++){var b=state.blocks[i];if(b.id===id)return b;if(b.type==="row"&&b.settings&&b.settings.cells){for(var j=0;j<b.settings.cells.length;j++){var cell=b.settings.cells[j]||[];for(var k=0;k<cell.length;k++)if(cell[k]&&cell[k].id===id)return cell[k];}}}return undefined;}
@@ -550,6 +579,7 @@ function _continuousEdit(){
   return !!(a&&(a.isContentEditable||a.tagName==="TEXTAREA"||(a.tagName==="INPUT"&&["text","color","range","number"].indexOf(a.type)>=0)));
 }
 function recordHistory(){if(restoring)return;clearTimeout(_histT);
+  if(fmtLoaded){fmtDirty=true;renderStatus();}  // guard: only once a format is actually loaded
   if(_continuousEdit())_histT=setTimeout(_recordHistoryNow,450);  // typing/dragging -> one step
   else _recordHistoryNow();  // discrete action (button/select/checkbox/drop) -> its own step
 }
@@ -943,8 +973,8 @@ function sendFeedback(){const msg=(document.getElementById("fbMsg").value||"").t
     else toast("Could not send"+(EMBED?" — check the site's outgoing email settings.":" (works inside ERPNext)."),true);});}
 /* Extra ways out of the modals: click the dark backdrop, or press Escape. */
 (function(){function bd(id,close){var el=document.getElementById(id);if(el)el.addEventListener("mousedown",function(e){if(e.target===el)close();});}
-  bd("gallery",closeGallery);bd("fmtmgr",function(){closeFmtMgr();});bd("newfmt",closeNewFmt);bd("feedback",closeFeedback);
-  document.addEventListener("keydown",function(e){if(e.key==="Escape"){["gallery","fmtmgr","newfmt","feedback"].forEach(function(id){var el=document.getElementById(id);if(el&&el.style.display==="flex"){if(id==="gallery")closeGallery();else if(id==="fmtmgr")closeFmtMgr();else if(id==="newfmt")closeNewFmt();else closeFeedback();}});}});})();
+  bd("gallery",closeGallery);bd("fmtmgr",function(){closeFmtMgr();});bd("newfmt",closeNewFmt);bd("feedback",closeFeedback);bd("savefmt",closeSaveFmt);
+  document.addEventListener("keydown",function(e){if(e.key==="Escape"){["gallery","fmtmgr","newfmt","feedback","savefmt"].forEach(function(id){var el=document.getElementById(id);if(el&&el.style.display==="flex"){if(id==="gallery")closeGallery();else if(id==="fmtmgr")closeFmtMgr();else if(id==="newfmt")closeNewFmt();else if(id==="feedback")closeFeedback();else closeSaveFmt();}});}});})();
 function pickStarter(i){const f=(_galSet||FORMATS)[i];if(!f)return;clearDraft();loadDefinition(f.make());closeGallery();}
 /* ---- READY SECTIONS: pre-composed block groups you insert into the current design ---- */
 const SECTIONS=[
@@ -1824,9 +1854,30 @@ function setTheme(mode){document.documentElement.setAttribute("data-theme",(mode
   }catch(e){/* cross-origin/no parent -> fall through to OS (desk host may still post the theme) */}}
   try{const mq=window.matchMedia("(prefers-color-scheme: dark)");setTheme(mq.matches?"dark":"light");mq.addEventListener("change",e=>setTheme(e.matches?"dark":"light"));}catch(e){}
 })();
-function save(){const def=definition();if(EMBED){window.parent.postMessage({type:"brandpdf-save",definition:def},window.location.origin);flashSaved();clearDraft();return;}if(window.frappe&&frappe.call){frappe.call({method:"brandpdf.api.save_format",args:{definition:JSON.stringify(def)},callback:()=>frappe.show_alert({message:"Format saved",indicator:"green"})});return;}console.log("DEFINITION",def);alert("Saved (demo) - logged to console.");}
+function save(){if(!fmtSaved){openSaveFmt();return;}_doSave();}
+function _doSave(){fmtLoaded=true;  // a save means the user is editing THIS format: edits after it must re-dirty
+const def=definition();if(EMBED){window.parent.postMessage({type:"brandpdf-save",definition:def},window.location.origin);flashSaved();clearDraft();return;}if(window.frappe&&frappe.call){frappe.call({method:"brandpdf.api.save_format",args:{definition:JSON.stringify(def)},callback:()=>{frappe.show_alert({message:"Format saved",indicator:"green"});fmtSaved=true;fmtDirty=false;renderStatus();}});return;}console.log("DEFINITION",def);alert("Saved (demo) - logged to console.");fmtSaved=true;fmtDirty=false;renderStatus();}
+/* ---- first-save dialog: name it, optionally set as default, then run the save above ---- */
+let _pendingSetDefault=null;
+function openSaveFmt(){const isRep=state.targetKind==="report";
+  document.getElementById("sfName").value=document.getElementById("fmtName").value||"";
+  document.getElementById("sfDefLbl").textContent="Make this the default for "+(isRep?(state.report||"this report"):(state.target||"this document"));
+  document.getElementById("sfCompanyWrap").style.display=isRep?"none":"";
+  document.getElementById("sfDefault").checked=true;
+  const csel=document.getElementById("sfCompany");csel.innerHTML='<option value="">All companies</option>';
+  if(EMBED&&!isRep)rpc("brandpdf.api.list_companies").then(function(cs){(cs||[]).forEach(function(c){csel.innerHTML+=`<option value="${esc(c)}">${esc(c)}</option>`;});});
+  document.getElementById("savefmt").style.display="flex";
+  setTimeout(function(){const n=document.getElementById("sfName");n.focus();n.select();},50);}
+function closeSaveFmt(){document.getElementById("savefmt").style.display="none";}
+function confirmSaveFmt(){const name=(document.getElementById("sfName").value||"").trim();
+  if(!name){document.getElementById("sfName").focus();return;}
+  document.getElementById("fmtName").value=name;
+  const isRep=state.targetKind==="report";
+  const wantDefault=document.getElementById("sfDefault").checked;
+  _pendingSetDefault=wantDefault?(isRep?{kind:"report",report:state.report}:{kind:"doctype",doctype:state.target,company:document.getElementById("sfCompany").value||""}):null;
+  closeSaveFmt();_doSave();}
 function flashSaved(){const b=document.querySelector(".btn.primary");if(!b)return;const t=b.innerHTML;b.innerHTML=UI.check+" Saved";setTimeout(function(){b.innerHTML=t;},1400);}  // innerHTML, not textContent — the label carries an inline SVG icon
-function loadDefinition(def){try{userTouched=false;state.page=Object.assign({orientation:"portrait"},def.page||{});if(def.branding)state.branding=Object.assign({primary:"#1463FF",navy:"#0C1322",font:"Montserrat",header_image:"",footer_image:""},def.branding);
+function loadDefinition(def){try{userTouched=false;fmtSaved=false;fmtIsDefault=false;fmtLoaded=true;state.page=Object.assign({orientation:"portrait"},def.page||{});if(def.branding)state.branding=Object.assign({primary:"#1463FF",navy:"#0C1322",font:"Montserrat",header_image:"",footer_image:""},def.branding);
   if(def.header)state.header=Object.assign({enabled:true,height:30,repeat:true,margin:4},def.header);if(def.footer)state.footer=Object.assign({enabled:true,height:32,repeat:true,margin:4},def.footer);if(def.watermark)state.watermark=Object.assign({text:"",color:"#0C1322",opacity:8,size:60},def.watermark);
   if(Array.isArray(def.blocks))state.blocks=def.blocks.map(function(b,i){const pos=b.pos||{x:14,y:8+i*16,w:180,h:null};let settings=b.settings||(DSET[b.type]?DSET[b.type]():{});if(b.type==="row"){const st=b.settings||{};const cells=(st.cells||[]).map(function(cell){return (cell||[]).map(function(c){return{id:"b"+(idc++),type:c.type,settings:c.settings||(DSET[c.type]?DSET[c.type]():{}),style:Object.assign(base(),dstyle(c.type),c.style||{})};});});settings=Object.assign({cols:2,gap:6,width:100,widths:[null,null],cells:[[],[]]},st,{cells:cells});}return{id:"b"+(idc++),type:b.type,settings:settings,style:Object.assign(base(),dstyle(b.type),b.style||{}),pos:pos,float:b.float||false,region:b.region||_regionByY(pos),cond:b.cond||null};});
   if(def.target_kind==="report"){
@@ -1842,7 +1893,7 @@ function loadDefinition(def){try{userTouched=false;state.page=Object.assign({ori
     buildPalette();
     if(def.target_doctype){state.target=def.target_doctype;const ds=document.getElementById("doctypeSel");if(ds)ds.value=def.target_doctype;loadDoctypeMeta(state.target);}
   }
-  if(def.name)document.getElementById("fmtName").value=def.name;ensureBanners();selId=null;renderNowSync();renderProps();renderBrand();}catch(e){console.error("BrandPDF load failed",e);}}
+  if(def.name)document.getElementById("fmtName").value=def.name;ensureBanners();selId=null;renderNowSync();renderProps();renderBrand();renderStatus();}catch(e){console.error("BrandPDF load failed",e);}}
 /* ---- embedded RPC bridge to the desk page ---- */
 let _rpcId=0; const _rpcCbs={};
 function rpc(method,args){return new Promise(function(res){if(!EMBED){res(null);return;}const id="r"+(_rpcId++);_rpcCbs[id]=res;window.parent.postMessage({type:"brandpdf-rpc",reqId:id,method:method,args:args||{}},window.location.origin);setTimeout(function(){if(_rpcCbs[id]){delete _rpcCbs[id];res(null);}},15000);});}
@@ -1876,7 +1927,7 @@ function onReport(rep){if(!rep)return;state.report=rep;const rs=document.getElem
 }
 function loadReportSample(rep){REPORTSAMPLE={name:rep,columns:[],rows:[],filters:[],printed_on:"",note:"Loading…"};render();
   rpc("brandpdf.report.report_sample",{report_name:rep,limit:20}).then(function(d){REPORTSAMPLE=d||REPORTSAMPLE;render();if(cur())renderProps();});}
-function newReportFormat(){clearDraft();state.page=Object.assign({},state.page,{orientation:"landscape"});
+function newReportFormat(){clearDraft();fmtSaved=false;fmtIsDefault=false;fmtLoaded=true;renderStatus();state.page=Object.assign({},state.page,{orientation:"landscape"});
   const y0=(state.header&&state.header.enabled?(+state.header.height||0):0)+6;  // keep blocks in the BODY, clear of the header band
   state.blocks=[mk("report_title",{x:12,y:y0,w:PW()-24,h:null}),mk("report_filters",{x:12,y:y0+14,w:PW()-24,h:null}),mk("report_table",{x:12,y:y0+26,w:PW()-24,h:null})];
   selId=null;document.getElementById("fmtName").value=((state.report||"Report"))+" - Branded";renderNowSync();renderProps();renderBrand();}
@@ -1888,7 +1939,7 @@ function loadDoctypeMeta(dt){
   rpc("brandpdf.api.builder_docs",{doctype:dt,limit:25}).then(function(ds){FIELDVALS=null;SAMPLE=JSON.parse(JSON.stringify(BASE_SAMPLE));setSelOptions("dataSel",(ds||[]).map(function(n){return{value:n,label:n};}),"Sample data","");render();});
 }
 function openFormat(name){if(!name)return;const el=document.getElementById("openSel");if(name==="__manage__"){if(el)el.value="";openFormatsMgr();return;}clearDraft();rpc("brandpdf.api.get_format",{name:name}).then(function(r){
-  if(r&&r.definition){loadDefinition(r.definition);toast('Opened "'+(r.name||name)+'".');}
+  if(r&&r.definition){loadDefinition(r.definition);fmtSaved=true;fmtDirty=false;renderStatus();refreshDefaultFlag();toast('Opened "'+(r.name||name)+'".');}
   else if(r&&r.reason==="not_visual")toast("\""+name+"\" is an HTML/Jinja template — it has no visual design to open on the canvas.",true);
   else if(r&&r.reason==="empty")toast("\""+name+"\" has no saved design yet.",true);
   else toast("Could not load \""+name+"\" — the server didn't return a design (check your connection / Error Log).",true);
@@ -1933,7 +1984,7 @@ function toggleFullscreen(){_fs=!_fs;
   const btn=document.getElementById("fsBtn");if(btn){btn.classList.toggle("on",_fs);btn.title=_fs?"Exit full screen (F)":"Full screen (F)";}  // icon is the same either way; only the tooltip flips
 }
 if(!EMBED)document.addEventListener("fullscreenchange",function(){_fs=!!document.fullscreenElement;const btn=document.getElementById("fsBtn");if(btn)btn.classList.toggle("on",_fs);});
-function newFormat(){clearDraft();state.blocks=[];selId=null;FIELDVALS=null;SAMPLE=JSON.parse(JSON.stringify(BASE_SAMPLE));state.branding.header_image="";state.branding.footer_image="";document.getElementById("fmtName").value="New Format";const ds=document.getElementById("dataSel");if(ds)ds.value="";renderNowSync();renderProps();renderBrand();}
+function newFormat(){clearDraft();fmtSaved=false;fmtIsDefault=false;fmtLoaded=true;renderStatus();state.blocks=[];selId=null;FIELDVALS=null;SAMPLE=JSON.parse(JSON.stringify(BASE_SAMPLE));state.branding.header_image="";state.branding.footer_image="";document.getElementById("fmtName").value="New Format";const ds=document.getElementById("dataSel");if(ds)ds.value="";renderNowSync();renderProps();renderBrand();}
 function loadData(name){if(!name){FIELDVALS=null;SAMPLE=JSON.parse(JSON.stringify(BASE_SAMPLE));render();return;}rpc("brandpdf.api.builder_sample",{doctype:state.target,name:name}).then(applyData);}
 function applyData(d){if(!d||!d.name){FIELDVALS=null;SAMPLE=JSON.parse(JSON.stringify(BASE_SAMPLE));render();return;}SAMPLE=Object.assign(JSON.parse(JSON.stringify(BASE_SAMPLE)),{name:d.name,transaction_date:d.transaction_date||"",valid_till:d.valid_till||"",customer_name:d.customer_name||"",address_display:d.address_display||"",total:d.total||"",grand_total:d.grand_total||"",items:(d.items&&d.items.length)?d.items:[],taxes:d.taxes||[],payment_schedule:d.payment_schedule||[],tables:(d.tables&&typeof d.tables==="object")?d.tables:{},terms:String((d.fields&&d.fields.terms)||"").replace(/<[^>]*>/g," ").replace(/\s+/g," ").trim()});FIELDVALS=d.fields||null;render();}
 
@@ -1943,7 +1994,11 @@ window.addEventListener("message",function(e){if(e.origin!==window.location.orig
   if(d.type==="brandpdf-theme")setTheme(d.theme);
   if(d.type==="brandpdf-load"&&d.definition)loadDefinition(d.definition);
   if(d.type==="brandpdf-fields"&&Array.isArray(d.fields)){DOCFIELDS=d.fields.map(function(x){return{f:x.fieldname,l:x.label,t:x.fieldtype||""};});render();if(cur()&&cur().type==="field")renderProps();}
-  if(d.type==="brandpdf-saved")flashSaved();});
+  if(d.type==="brandpdf-saved"){flashSaved();
+    if(!d.error){fmtSaved=true;fmtDirty=false;renderStatus();refreshDefaultFlag();
+      if(_pendingSetDefault){const p=_pendingSetDefault;_pendingSetDefault=null;const nm=document.getElementById("fmtName").value;
+        const call=(p.kind==="report")?rpc("brandpdf.api.set_default_report_format",{report_name:p.report,template:nm}):rpc("brandpdf.api.set_default_format",{doctype:p.doctype,template:nm,company:p.company||null});
+        call.then(function(){fmtIsDefault=true;renderStatus();toast("Saved and set as the default.");});}}}});
 
 buildPalette();render();renderProps();renderBrand();zoom(0);
 try{setLeft(localStorage.getItem("brandpdf_leftcol")==="1");setRight(localStorage.getItem("brandpdf_rightcol")==="1");}catch(e){}
