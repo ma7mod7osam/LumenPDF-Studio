@@ -6,12 +6,12 @@
 <title>LumenPDF Studio</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&family=Montserrat:wght@300;400;500;600;700;800&family=Roboto:wght@400;500;700&family=Open+Sans:wght@400;600;700;800&family=Lato:wght@400;700;900&family=Poppins:wght@400;500;600;700;800&family=Cairo:wght@400;600;700;800&family=Almarai:wght@400;700;800&family=Tajawal:wght@400;500;700;800&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Noto+Kufi+Arabic:wght@400;600;700&family=Amiri:wght@400;700&display=swap');
-  :root{--bg:#F4F6FA;--panel:#FFFFFF;--panel2:#F0F3F8;--line:#E4E8F0;--line2:#D4DAE5;--ink:#0C1322;--mut:#687386;--mut2:#98A1B2;--accent:#1463FF;--ok:#0F9D7A;--paper:#fff;--shadow:0 24px 60px rgba(16,24,40,.14),0 8px 18px rgba(16,24,40,.06)}
+  :root{--bg:#F4F6FA;--panel:#FFFFFF;--panel2:#F0F3F8;--line:#E4E8F0;--line2:#D4DAE5;--ink:#0C1322;--mut:#687386;--mut2:#98A1B2;--accent:#1463FF;--accentSoft:#EAF1FF;--danger:#C4384A;--ok:#0F9D7A;--paper:#fff;--shadow:0 24px 60px rgba(16,24,40,.14),0 8px 18px rgba(16,24,40,.06)}
   /* Dark mode: darken only the CHROME neutrals. --paper/--accent/--ok stay light so the document
      preview stays white paper (the PDF is white) and the brand blue is unchanged. Follows the
      user's Frappe theme (desk posts it in); standalone falls back to the OS setting. */
   :root{--logoA:#1463FF;--logoB:#7FA8FF}
-  :root[data-theme="dark"]{--bg:#0E141F;--panel:#161B26;--panel2:#1E2431;--line:#2A3140;--line2:#3A4150;--ink:#E7EBF3;--mut:#9BA6B8;--mut2:#6D7688;--shadow:0 24px 60px rgba(0,0,0,.55),0 8px 18px rgba(0,0,0,.35);--logoA:#2F7BFF;--logoB:#6BA4FF}
+  :root[data-theme="dark"]{--bg:#0E141F;--panel:#161B26;--panel2:#1E2431;--line:#2A3140;--line2:#3A4150;--ink:#E7EBF3;--mut:#9BA6B8;--mut2:#6D7688;--accentSoft:#17263F;--danger:#FF8C9B;--shadow:0 24px 60px rgba(0,0,0,.55),0 8px 18px rgba(0,0,0,.35);--logoA:#2F7BFF;--logoB:#6BA4FF}
   :root[data-theme="dark"] .stage{background:radial-gradient(circle at 1px 1px,#2A3140 1px,transparent 0) 0 0/22px 22px,var(--bg)}
   :root[data-theme="dark"] .props input[type=text],:root[data-theme="dark"] .props textarea,:root[data-theme="dark"] .props select,:root[data-theme="dark"] .top select,:root[data-theme="dark"] .fmt-name{background:var(--panel2);color:var(--ink);border-color:var(--line2)}
   :root[data-theme="dark"] .color input[type=color]{background:var(--panel2);border-color:var(--line2)}
@@ -110,6 +110,33 @@
   .tabs{display:flex;gap:4px;padding:10px 12px 0}
   .tab{flex:1;text-align:center;padding:8px;border-radius:8px 8px 0 0;cursor:pointer;color:var(--mut);font-weight:600;font-size:12px;border:1px solid transparent;border-bottom:0}
   .tab.on{background:var(--panel);color:var(--ink);border-color:var(--line)}
+  /* inline stroke icons — one class everywhere, colour follows the button's own text colour */
+  .icn{width:14px;height:14px;flex:0 0 auto;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;vertical-align:-2.5px}
+  .icn.fill{fill:currentColor;stroke:none}
+  .btn{display:inline-flex;align-items:center;gap:6px;justify-content:center}
+  .btn .icn{vertical-align:0}
+  /* NOT #leftExpand/#rightExpand — those are display:none until JS shows them as flex */
+  .collapse,.zoom button,.gclose{display:inline-flex;align-items:center;justify-content:center}
+  #leftExpand .icn,#rightExpand .icn{width:15px;height:15px;vertical-align:0}
+  .collapse .icn{width:13px;height:13px}
+  .blk .tools button,.sblk .tools button{display:grid;place-items:center;padding:0}
+  .tools button svg,.blk .tools button svg,.sblk .tools button svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;display:block}
+  /* Block panel: sticky identity header + Content/Design/Layout sub-tabs */
+  .bhead{position:sticky;top:0;z-index:8;display:flex;align-items:center;gap:9px;margin:0 -16px;padding:10px 16px 9px;background:var(--panel);border-bottom:1px solid var(--line)}
+  .bhead .bicon{width:28px;height:28px;flex:0 0 28px;border-radius:8px;background:var(--accentSoft);color:var(--accent);display:grid;place-items:center}
+  .bhead .bicon svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+  .bhead .bmeta{flex:1;min-width:0}
+  .bhead .bname{font-size:13px;font-weight:700;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .bhead .bsub{font-size:10.5px;color:var(--mut2);line-height:1.3;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .bhead .bacts{display:flex;gap:5px;flex:0 0 auto}
+  .bhead .bacts button{width:28px;height:28px;border-radius:7px;border:1px solid var(--line2);background:var(--panel2);color:var(--mut);cursor:pointer;display:grid;place-items:center;padding:0}
+  .bhead .bacts button .icn{width:15px;height:15px;vertical-align:0}
+  .bhead .bacts button:hover{color:var(--accent);border-color:var(--accent)}
+  .bhead .bacts button.danger:hover{color:var(--danger);border-color:var(--danger)}
+  .subtabs{display:flex;gap:2px;margin:0 -16px 4px;padding:0 16px;border-bottom:1px solid var(--line);position:sticky;top:48px;z-index:7;background:var(--panel)}
+  .subtab{flex:1;text-align:center;padding:9px 4px;cursor:pointer;color:var(--mut);font-weight:600;font-size:11.5px;border-bottom:2px solid transparent;margin-bottom:-1px;user-select:none}
+  .subtab:hover{color:var(--ink)}
+  .subtab.on{color:var(--accent);border-bottom-color:var(--accent)}
   .props{padding:6px 16px 50px}
   .ptitle{font-weight:700;margin:12px 2px 2px;font-size:13px}
   .fld{margin:10px 0}
@@ -224,44 +251,44 @@
 <body>
 <div class="app">
   <div class="top">
-    <div class="brand"><svg width="24" height="24" viewBox="0 0 48 48" fill="none" aria-label="LumenPDF Studio"><rect x="9" y="4" width="30" height="40" rx="4" style="stroke:var(--logoA)" stroke-width="3"/><rect x="14.5" y="10" width="19" height="3.6" rx="1.8" style="fill:var(--logoB)"/><rect x="14.5" y="18" width="19" height="9" rx="2.4" style="fill:var(--logoA)"/><rect x="14.5" y="31.5" width="12" height="3.6" rx="1.8" style="fill:var(--logoB)"/></svg> LumenPDF <small>Studio · b63</small></div>
-    <div class="menuwrap"><button class="btn ghost" id="fileBtn" onclick="toggleFileMenu(event)" title="New, open, duplicate, import/export, manage">☰ File</button>
+    <div class="brand"><svg width="24" height="24" viewBox="0 0 48 48" fill="none" aria-label="LumenPDF Studio"><rect x="9" y="4" width="30" height="40" rx="4" style="stroke:var(--logoA)" stroke-width="3"/><rect x="14.5" y="10" width="19" height="3.6" rx="1.8" style="fill:var(--logoB)"/><rect x="14.5" y="18" width="19" height="9" rx="2.4" style="fill:var(--logoA)"/><rect x="14.5" y="31.5" width="12" height="3.6" rx="1.8" style="fill:var(--logoB)"/></svg> LumenPDF <small>Studio · b64</small></div>
+    <div class="menuwrap"><button class="btn ghost" id="fileBtn" onclick="toggleFileMenu(event)" title="New, open, duplicate, import/export, manage"><svg class="icn" viewBox="0 0 24 24"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg> File</button>
       <div class="menu" id="fileMenu">
-        <button onclick="closeFileMenu();openNewFmt()">＋ New format…</button>
-        <button onclick="closeFileMenu();openFormatsMgr()">📂 Open / manage formats…</button>
-        <button onclick="closeFileMenu();dupCurrentFmt()">⧉ Duplicate this format…</button>
+        <button onclick="closeFileMenu();openNewFmt()"><svg class="icn" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> New format…</button>
+        <button onclick="closeFileMenu();openFormatsMgr()"><svg class="icn" viewBox="0 0 24 24"><path d="M3 7a1 1 0 0 1 1-1h5l2 2h9a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/></svg> Open / manage formats…</button>
+        <button onclick="closeFileMenu();dupCurrentFmt()"><svg class="icn" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/></svg> Duplicate this format…</button>
         <div class="msep"></div>
-        <button onclick="closeFileMenu();importJSON()">⇧ Import from .json</button>
-        <button onclick="closeFileMenu();exportJSON()">⇩ Export as .json</button>
+        <button onclick="closeFileMenu();importJSON()"><svg class="icn" viewBox="0 0 24 24"><path d="M12 16V4"/><path d="M7 9l5-5 5 5"/><path d="M4 20h16"/></svg> Import from .json</button>
+        <button onclick="closeFileMenu();exportJSON()"><svg class="icn" viewBox="0 0 24 24"><path d="M12 4v12"/><path d="M7 11l5 5 5-5"/><path d="M4 20h16"/></svg> Export as .json</button>
       </div></div>
     <input class="fmt-name" id="fmtName" value="Quotation - Custom" title="Format name">
     <select class="sel" id="targetKindSel" title="Brand a document or a report" onchange="onTargetKind(this.value)"><option value="doctype">Document</option><option value="report">Report</option></select>
     <select class="sel" id="doctypeSel" title="Target DocType" onchange="onDoctype(this.value)"></select>
     <select class="sel" id="reportSel" title="Target Report" style="display:none" onchange="onReport(this.value)"></select>
-    <button class="btn ghost" onclick="openGallery()" title="Start from a ready-made design">▦ Templates</button>
-    <button class="btn ghost" id="restoreBtn" onclick="restoreDraft()" style="display:none" title="Restore your last unsaved draft">↺ Restore</button>
+    <button class="btn ghost" onclick="openGallery()" title="Start from a ready-made design"><svg class="icn" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="9" x2="9" y2="21"/></svg> Templates</button>
+    <button class="btn ghost" id="restoreBtn" onclick="restoreDraft()" style="display:none" title="Restore your last unsaved draft"><svg class="icn" viewBox="0 0 24 24"><path d="M3.5 12a8.5 8.5 0 1 0 2.6-6.1"/><path d="M3.5 4.5V10H9"/></svg> Restore</button>
     <div class="spacer"></div>
-    <button class="btn ghost" id="undoBtn" onclick="undo()" title="Undo (Ctrl+Z)">↶</button>
-    <button class="btn ghost" id="redoBtn" onclick="redo()" title="Redo (Ctrl+Y)">↷</button>
-    <button class="btn ghost" onclick="openFeedback()" title="Send feedback to the makers of LumenPDF Studio">💬</button>
-    <button class="btn ghost" id="fsBtn" onclick="toggleFullscreen()" title="Full screen (F)">⛶</button>
+    <button class="btn ghost" id="undoBtn" onclick="undo()" title="Undo (Ctrl+Z)"><svg class="icn" viewBox="0 0 24 24"><path d="M4 8h9a5 5 0 0 1 0 10H8"/><path d="M8 4L4 8l4 4"/></svg></button>
+    <button class="btn ghost" id="redoBtn" onclick="redo()" title="Redo (Ctrl+Y)"><svg class="icn" viewBox="0 0 24 24"><path d="M20 8h-9a5 5 0 0 0 0 10h5"/><path d="M16 4l4 4-4 4"/></svg></button>
+    <button class="btn ghost" onclick="openFeedback()" title="Send feedback to the makers of LumenPDF Studio"><svg class="icn" viewBox="0 0 24 24"><path d="M20 4H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h4v4l5-4h7a1 1 0 0 0 1-1V5a1 1 0 0 0-1-1z"/></svg></button>
+    <button class="btn ghost" id="fsBtn" onclick="toggleFullscreen()" title="Full screen (F)"><svg class="icn" viewBox="0 0 24 24"><path d="M4 9V5a1 1 0 0 1 1-1h4"/><path d="M20 9V5a1 1 0 0 0-1-1h-4"/><path d="M4 15v4a1 1 0 0 0 1 1h4"/><path d="M20 15v4a1 1 0 0 1-1 1h-4"/></svg></button>
     <div class="zoom"><button onclick="zoom(-.1)">−</button><span id="zoomv">80%</span><button onclick="zoom(.1)">+</button></div>
     <select class="sel" id="dataSel" title="Preview with a real document" onchange="loadData(this.value)"><option value="">Sample data</option></select>
-    <button class="btn ghost" onclick="previewPDF()" title="Render the real PDF with this document">👁 Preview PDF</button>
-    <button class="btn primary" onclick="save()">✓ Save</button>
+    <button class="btn ghost" onclick="previewPDF()" title="Render the real PDF with this document"><svg class="icn" viewBox="0 0 24 24"><path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6-10-6-10-6z"/><circle cx="12" cy="12" r="2.6"/></svg> Preview PDF</button>
+    <button class="btn primary" onclick="save()"><svg class="icn" viewBox="0 0 24 24"><path d="M4 12.5l5 5L20 6.5"/></svg> Save</button>
   </div>
-  <div id="draftBar"><span>↺ You have <b>unsaved changes</b> from your last session.</span><button class="pri" onclick="restoreDraft()">Restore my work</button><button onclick="dismissDraft()">Discard</button></div>
+  <div id="draftBar"><span><svg class="icn" viewBox="0 0 24 24"><path d="M3.5 12a8.5 8.5 0 1 0 2.6-6.1"/><path d="M3.5 4.5V10H9"/></svg> You have <b>unsaved changes</b> from your last session.</span><button class="pri" onclick="restoreDraft()">Restore my work</button><button onclick="dismissDraft()">Discard</button></div>
   <div class="body">
     <div id="rgrip" title="Drag to resize · double-click to reset" onpointerdown="startRgrip(event)" ondblclick="resetRight()"></div>
-    <button id="leftExpand" onclick="toggleLeft()" title="Show insert panel">»</button>
-    <div class="rail" id="leftRail"><div class="railhead"><h4>Insert</h4><button class="collapse" onclick="toggleLeft()" title="Collapse panel">«</button></div>
+    <button id="leftExpand" onclick="toggleLeft()" title="Show insert panel"><svg class="icn" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
+    <div class="rail" id="leftRail"><div class="railhead"><h4>Insert</h4><button class="collapse" onclick="toggleLeft()" title="Collapse panel"><svg class="icn" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button></div>
       <div style="padding:2px 12px 6px"><div class="seg" id="scopeSeg" title="Where new blocks go"><button class="on" onclick="setScope('body')">Body</button><button onclick="setScope('header')">Header</button><button onclick="setScope('footer')">Footer</button></div></div>
       <div id="palette"></div>
       <div class="hint" id="scopeHint">Adding to the <b>body</b> — sections flow in order. Click a block to add it.</div></div>
     <div class="stage" id="stage"><div class="paperwrap" id="paperwrap"><div id="paper"></div></div></div>
-    <button id="rightExpand" onclick="toggleRight()" title="Show properties panel">«</button>
+    <button id="rightExpand" onclick="toggleRight()" title="Show properties panel"><svg class="icn" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
     <div class="rail right" id="rightRail">
-      <div class="railhead rcolhead"><button class="collapse" onclick="toggleRight()" title="Collapse panel">»</button></div>
+      <div class="railhead rcolhead"><button class="collapse" onclick="toggleRight()" title="Collapse panel"><svg class="icn" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button></div>
       <div class="tabs"><div class="tab on" data-tab="block" onclick="setTab('block')">Block</div><div class="tab" data-tab="page" onclick="setTab('page')">Page</div><div class="tab" data-tab="brand" onclick="setTab('brand')">Branding</div></div>
       <div class="props" id="propsBlock"></div>
       <div class="props" id="propsPage" style="display:none"></div>
@@ -269,9 +296,9 @@
     </div>
   </div>
 </div>
-<div id="gallery"><div class="gcard-wrap"><h3>Start from a template</h3><div class="ghint">Pick a ready-made design, then customize it.<span class="gclose" onclick="closeGallery()">✕ Close</span></div><div class="gscroll"><div class="gcards" id="gcards"></div><div id="gsite"></div></div></div></div>
-<div id="fmtmgr"><div class="gcard-wrap" style="width:580px"><h3 id="fmtmgrTitle">Formats</h3><div class="ghint">The ★ default is what <b>Print → PDF</b> uses. Set the default, open, or delete a format.<span class="gclose" onclick="closeFmtMgr()">✕ Close</span></div><div id="fmtmgrBody" style="margin-top:14px;max-height:60vh;overflow:auto"></div></div></div>
-<div id="newfmt"><div class="gcard-wrap" style="width:420px"><h3>New format</h3><div class="ghint">Name it and choose what it prints.<span class="gclose" onclick="closeNewFmt()">✕ Close</span></div>
+<div id="gallery"><div class="gcard-wrap"><h3>Start from a template</h3><div class="ghint">Pick a ready-made design, then customize it.<span class="gclose" onclick="closeGallery()"><svg class="icn" viewBox="0 0 24 24"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg> Close</span></div><div class="gscroll"><div class="gcards" id="gcards"></div><div id="gsite"></div></div></div></div>
+<div id="fmtmgr"><div class="gcard-wrap" style="width:580px"><h3 id="fmtmgrTitle">Formats</h3><div class="ghint">The starred default is what <b>Print → PDF</b> uses. Set the default, open, or delete a format.<span class="gclose" onclick="closeFmtMgr()"><svg class="icn" viewBox="0 0 24 24"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg> Close</span></div><div id="fmtmgrBody" style="margin-top:14px;max-height:60vh;overflow:auto"></div></div></div>
+<div id="newfmt"><div class="gcard-wrap" style="width:420px"><h3>New format</h3><div class="ghint">Name it and choose what it prints.<span class="gclose" onclick="closeNewFmt()"><svg class="icn" viewBox="0 0 24 24"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg> Close</span></div>
   <div style="margin-top:14px">
     <div class="fld"><label>Format name</label><input type="text" id="nfName" placeholder="e.g. Sales Invoice - Branded" onkeydown="if(event.key==='Enter'){event.preventDefault();confirmNewFmt();}"></div>
     <div class="fld"><label>Format type</label><div class="seg" id="nfKindSeg"><button class="on" onclick="nfKind('doctype')">Document</button><button onclick="nfKind('report')">Report</button></div></div>
@@ -279,7 +306,7 @@
     <div class="fld" id="nfRepWrap" style="display:none"><label>Report</label><select id="nfRep"></select></div>
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px"><button class="btn ghost" onclick="closeNewFmt()">Cancel</button><button class="btn primary" onclick="confirmNewFmt()">Create</button></div>
   </div></div></div>
-<div id="feedback"><div class="gcard-wrap" style="width:460px"><h3>💬 Send feedback</h3><div class="ghint">Goes straight to the LumenPDF Studio team. Bugs, ideas, anything.<span class="gclose" onclick="closeFeedback()">✕ Close</span></div>
+<div id="feedback"><div class="gcard-wrap" style="width:460px"><h3><svg class="icn" viewBox="0 0 24 24" style="width:17px;height:17px"><path d="M20 4H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h4v4l5-4h7a1 1 0 0 0 1-1V5a1 1 0 0 0-1-1z"/></svg> Send feedback</h3><div class="ghint">Goes straight to the LumenPDF Studio team. Bugs, ideas, anything.<span class="gclose" onclick="closeFeedback()"><svg class="icn" viewBox="0 0 24 24"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg> Close</span></div>
   <div style="margin-top:14px">
     <div class="fld"><label>Your message</label><textarea id="fbMsg" placeholder="What's working? What's broken? What's missing?"></textarea></div>
     <div class="fld"><label>Your email (optional — only if you'd like a reply)</label><input type="text" id="fbEmail" placeholder="you@company.com"></div>
@@ -366,6 +393,26 @@ function fieldVal(f){
   if(d&&/Editor|HTML|Markdown/.test(d.t||""))return String(v==null?"":v).replace(/<[^>]*>/g," ").replace(/\s+/g," ").trim();  // rich fields: plain preview (PDF prints styled)
   return v;}
 const ICONS={heading:'<path d="M6 4v16M18 4v16M6 12h12"/>',text:'<line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="14" y2="17"/>',field:'<rect x="3" y="8" width="18" height="8" rx="2"/><line x1="7" y1="12" x2="11" y2="12"/>',image:'<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M21 17l-5-5-4 4-2-2-4 4"/>',divider:'<line x1="4" y1="12" x2="20" y2="12"/>',box:'<rect x="4" y="5" width="16" height="14" rx="2"/>',row:'<rect x="3" y="5" width="8" height="14" rx="1"/><rect x="13" y="5" width="8" height="14" rx="1"/>',table:'<rect x="3" y="4" width="18" height="16" rx="1"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="9" x2="9" y2="20"/>',header_banner:'<rect x="3" y="5" width="18" height="6" rx="1"/><line x1="3" y1="15" x2="14" y2="15"/>',footer_banner:'<line x1="10" y1="5" x2="21" y2="5"/><rect x="3" y="13" width="18" height="6" rx="1"/>',customer:'<circle cx="12" cy="8" r="3"/><path d="M5 20c0-3.3 3.1-6 7-6s7 2.7 7 6"/>',items:'<rect x="3" y="4" width="18" height="16" rx="1"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="9" x2="9" y2="20"/>',datatable:'<rect x="3" y="4" width="18" height="16" rx="1"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="4" x2="9" y2="20"/><line x1="15" y1="4" x2="15" y2="20"/>',totals:'<line x1="13" y1="6" x2="20" y2="6"/><rect x="13" y="15" width="7" height="4" rx="1"/><path d="M4 6h6l-6 7h6"/>',payment_schedule:'<rect x="3" y="5" width="18" height="16" rx="1"/><line x1="3" y1="9" x2="21" y2="9"/>',terms:'<line x1="5" y1="6" x2="19" y2="6"/><line x1="5" y1="10" x2="19" y2="10"/><line x1="5" y1="14" x2="15" y2="14"/>',signature:'<path d="M4 17c4 0 5-9 8-9s2 6 4 6 2-3 4-3"/><line x1="3" y1="21" x2="21" y2="21"/>',pagenum:'<path d="M9 4v16M15 4v16M4 9h16M4 15h16"/>',title:'<line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="13" y2="12"/>'};
+/* UI chrome icons — full <svg> strings so any button can drop one in. No emoji anywhere in the UI:
+   stroke:currentColor means every icon inherits its button's colour, so dark mode needs no extra rule. */
+const _ic=(p,cls)=>`<svg class="icn${cls?" "+cls:""}" viewBox="0 0 24 24">${p}</svg>`;
+const UI={
+  copy:_ic('<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/>'),
+  trash:_ic('<path d="M4 7h16"/><path d="M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/><path d="M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13"/>'),
+  up:_ic('<path d="M12 19V5"/><path d="M6 11l6-6 6 6"/>'),
+  down:_ic('<path d="M12 5v14"/><path d="M6 13l6 6 6-6"/>'),
+  close:_ic('<line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/>'),
+  star:_ic('<path d="M12 3.6l2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8L3.5 9.8l5.9-.9z"/>'),
+  starFill:_ic('<path d="M12 3.6l2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8L3.5 9.8l5.9-.9z"/>',"fill"),
+  grid:_ic('<rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="9" x2="9" y2="21"/>'),
+  upload:_ic('<path d="M12 16V4"/><path d="M7 9l5-5 5 5"/><path d="M4 20h16"/>'),
+  cols:_ic('<rect x="3" y="5" width="8" height="14" rx="1"/><rect x="13" y="5" width="8" height="14" rx="1"/>'),
+  check:_ic('<path d="M4 12.5l5 5L20 6.5"/>')};
+/* the canvas .tools chrome uses bare 12px svgs (sized by .tools button svg) */
+const TOOLI={up:'<svg viewBox="0 0 24 24"><path d="M12 19V5"/><path d="M6 11l6-6 6 6"/></svg>',
+  down:'<svg viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M6 13l6 6 6-6"/></svg>',
+  copy:'<svg viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/></svg>',
+  trash:'<svg viewBox="0 0 24 24"><path d="M4 7h16"/><path d="M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/><path d="M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13"/></svg>'};
 const META={heading:{l:"Heading"},text:{l:"Text"},field:{l:"Field"},image:{l:"Image"},divider:{l:"Line"},box:{l:"Box"},row:{l:"Row / Columns"},table:{l:"Table"},pagenum:{l:"Page No"},header_banner:{l:"Header"},customer:{l:"Customer"},items:{l:"Items"},datatable:{l:"Data Table"},totals:{l:"Totals"},payment_schedule:{l:"Payment"},terms:{l:"Terms"},signature:{l:"Signature"},footer_banner:{l:"Footer"},title:{l:"Title"},report_title:{l:"Report Title"},report_filters:{l:"Filters"},report_table:{l:"Report Table"}};
 ICONS.report_title=ICONS.title;ICONS.report_filters=ICONS.terms;ICONS.report_table=ICONS.datatable;
 const ELEM=["heading","text","field","image","divider","box","row","table","pagenum"];
@@ -833,8 +880,8 @@ function openGallery(){const isRep=state.targetKind==="report";_galSet=isRep?REP
   if(isRep){const gs=document.getElementById("gsite");if(gs)gs.innerHTML="";return;}  // site-templates list is document-oriented
   // site templates: formats published to the gallery (visible to every builder user on this site)
   const host=document.getElementById("gsite");if(host){host.innerHTML="";
-    rpc("brandpdf.api.gallery_list").then(function(rows){rows=rows||[];if(!rows.length){host.innerHTML=EMBED?'<div class="hint" style="padding:6px 0 0">No site templates yet — open <b>⚙ Formats</b> and click “▦ To gallery” on a format you like.</div>':"";return;}
-      host.innerHTML=`<h3 style="margin:18px 0 0">Your site's templates</h3><div class="gcards">`+rows.map(function(r){return `<div class="gcard" onclick="pickSiteTemplate('${esc(r.name)}')"><div class="gsw" style="background:linear-gradient(135deg,#1463FF22,#E4E8F0);display:flex;align-items:center;justify-content:center"><span style="font-size:22px">▦</span></div><div class="gt">${esc(r.label)}</div><div class="gd">${esc(r.target)} · saved on this site</div></div>`;}).join("")+`</div>`;});}}
+    rpc("brandpdf.api.gallery_list").then(function(rows){rows=rows||[];if(!rows.length){host.innerHTML=EMBED?'<div class="hint" style="padding:6px 0 0">No site templates yet — open <b>File → Open / manage formats</b> and click <b>To gallery</b> on a format you like.</div>':"";return;}
+      host.innerHTML=`<h3 style="margin:18px 0 0">Your site's templates</h3><div class="gcards">`+rows.map(function(r){return `<div class="gcard" onclick="pickSiteTemplate('${esc(r.name)}')"><div class="gsw" style="background:linear-gradient(135deg,#1463FF22,#E4E8F0);display:flex;align-items:center;justify-content:center"><span style="color:var(--accent)">${UI.grid}</span></div><div class="gt">${esc(r.label)}</div><div class="gd">${esc(r.target)} · saved on this site</div></div>`;}).join("")+`</div>`;});}}
 function pickSiteTemplate(name){clearDraft();rpc("brandpdf.api.get_format",{name:name}).then(function(r){if(r&&r.definition){loadDefinition(r.definition);document.getElementById("fmtName").value=(r.definition.name||name)+" copy";commitHistory();}else{toast("Could not load \""+name+"\".",true);}closeGallery();});}
 function closeGallery(){document.getElementById("gallery").style.display="none";}
 /* ---- File menu ---- */
@@ -972,19 +1019,19 @@ function absBlk(bl,b,locked){
   if(locked) return `<div class="blk" data-id="${bl.id}" style="${box}${styleCss(bl.style)}">${inner}</div>`;  // inert: not selectable/movable
   const sel=bl.id===selId;
   const handles=sel?'<div class="rh e" data-rh="e"></div><div class="rh s" data-rh="s"></div><div class="rh se" data-rh="se"></div>':'';
-  return `<div class="blk ${sel?'sel':''}" data-id="${bl.id}" style="${box}${styleCss(bl.style)}"><span class="tag">${META[bl.type].l}</span><div class="tools"><button title="Duplicate" onclick="duplicate('${bl.id}')">⧉</button><button title="Delete" onclick="del(event,'${bl.id}')">🗑</button></div>${inner}${handles}</div>`;
+  return `<div class="blk ${sel?'sel':''}" data-id="${bl.id}" style="${box}${styleCss(bl.style)}"><span class="tag">${META[bl.type].l}</span><div class="tools"><button title="Duplicate" onclick="duplicate('${bl.id}')">${TOOLI.copy}</button><button title="Delete" onclick="del(event,'${bl.id}')">${TOOLI.trash}</button></div>${inner}${handles}</div>`;
 }
 function flowBlk(bl,b){
   const inner=(R[bl.type]||(()=>""))(bl.settings,b,bl);const sel=bl.id===selId;
-  return `<div class="blk flow ${sel?'sel':''}" data-id="${bl.id}" style="position:relative;margin-bottom:4mm;${styleCss(bl.style)}"><span class="tag">${META[bl.type].l}</span><div class="tools"><button title="Move up" onclick="moveBody(event,'${bl.id}',-1)">↑</button><button title="Move down" onclick="moveBody(event,'${bl.id}',1)">↓</button><button title="Duplicate" onclick="duplicate('${bl.id}')">⧉</button><button title="Delete" onclick="del(event,'${bl.id}')">🗑</button></div>${inner}</div>`;
+  return `<div class="blk flow ${sel?'sel':''}" data-id="${bl.id}" style="position:relative;margin-bottom:4mm;${styleCss(bl.style)}"><span class="tag">${META[bl.type].l}</span><div class="tools"><button title="Move up" onclick="moveBody(event,'${bl.id}',-1)">${TOOLI.up}</button><button title="Move down" onclick="moveBody(event,'${bl.id}',1)">${TOOLI.down}</button><button title="Duplicate" onclick="duplicate('${bl.id}')">${TOOLI.copy}</button><button title="Delete" onclick="del(event,'${bl.id}')">${TOOLI.trash}</button></div>${inner}</div>`;
 }
 function flowBlkStatic(bl,b){const inner=(R[bl.type]||(()=>""))(bl.settings,b,bl);const sel=bl.id===selId;
   // Selectable clone for continuation pages: click selects the real block (edit via the panel);
-  // the ↑↓⧉🗑 tools operate on state by id, so they work from any page. Chrome is display:none
+  // the move/duplicate/delete tools operate on state by id, so they work from any page. Chrome is display:none
   // by default and absolutely positioned, so measurement (computeBreaks) is unaffected.
-  const chrome=`<span class="tag">${META[bl.type].l}</span><div class="tools"><button title="Move up" onclick="moveBody(event,'${bl.id}',-1)">↑</button><button title="Move down" onclick="moveBody(event,'${bl.id}',1)">↓</button><button title="Duplicate" onclick="duplicate('${bl.id}')">⧉</button><button title="Delete" onclick="del(event,'${bl.id}')">🗑</button></div>`;
+  const chrome=`<span class="tag">${META[bl.type].l}</span><div class="tools"><button title="Move up" onclick="moveBody(event,'${bl.id}',-1)">${TOOLI.up}</button><button title="Move down" onclick="moveBody(event,'${bl.id}',1)">${TOOLI.down}</button><button title="Duplicate" onclick="duplicate('${bl.id}')">${TOOLI.copy}</button><button title="Delete" onclick="del(event,'${bl.id}')">${TOOLI.trash}</button></div>`;
   return `<div class="sblk${sel?' sel':''}" data-sid="${bl.id}" style="position:relative;margin-bottom:4mm;${styleCss(bl.style)}">${chrome}${inner}</div>`;}
-function rowChildBlk(c,b){const inner=(R[c.type]||(()=>""))(c.settings,b,c);const sel=c.id===selId;return `<div class="blk flow ${sel?'sel':''}" data-id="${c.id}" style="position:relative;margin-bottom:2mm;${styleCss(c.style)}"><div class="tools"><button title="Delete" onclick="del(event,'${c.id}')">🗑</button></div>${inner}</div>`;}
+function rowChildBlk(c,b){const inner=(R[c.type]||(()=>""))(c.settings,b,c);const sel=c.id===selId;return `<div class="blk flow ${sel?'sel':''}" data-id="${c.id}" style="position:relative;margin-bottom:2mm;${styleCss(c.style)}"><div class="tools"><button title="Delete" onclick="del(event,'${c.id}')">${TOOLI.trash}</button></div>${inner}</div>`;}
 function absBlkStatic(bl,b){const inner=(R[bl.type]||(()=>""))(bl.settings,b,bl);const p=bl.pos||{x:0,y:0,w:180,h:null};const box=`position:absolute;left:${p.x}mm;top:${p.y}mm;width:${p.w}mm;`+(p.h?`height:${p.h}mm;overflow:hidden;`:'')+`pointer-events:none;`;return `<div style="${box}${styleCss(bl.style)}">${inner}</div>`;}
 let _measCache={key:null,mm:0};
 function measureReel(bodyHtml,b){if(!bodyHtml)return 0;const key=PW()+"|"+(b.font||"")+"|"+bodyHtml;if(_measCache.key===key)return _measCache.mm;  // skip the forced reflow when the body didn't change
@@ -1090,8 +1137,8 @@ function _renderNow(){
   if(hm)p1+=`<div style="position:absolute;left:0;top:${Hh}mm;width:${PWm}mm;height:${hm}mm;background:#fff;z-index:3;pointer-events:none"></div>`;
   if(fm)p1+=`<div style="position:absolute;left:0;top:${(PHm-Fh-fm).toFixed(2)}mm;width:${PWm}mm;height:${fm}mm;background:#fff;z-index:3;pointer-events:none"></div>`;
   p1+=headerBand(true)+footerBand(true);
-  if(Hh)p1+=`<div class="bandgrip" data-band="header" title="Drag to resize the header height" style="top:${Hh}mm">⇕ Header ${Math.round(Hh)}mm</div>`;
-  if(Fh)p1+=`<div class="bandgrip" data-band="footer" title="Drag to resize the footer height" style="top:${cut(Fh)}mm">⇕ Footer ${Math.round(Fh)}mm</div>`;
+  if(Hh)p1+=`<div class="bandgrip" data-band="header" title="Drag to resize the header height" style="top:${Hh}mm"><svg class="icn" viewBox="0 0 24 24" style="width:9px;height:9px;vertical-align:0"><path d="M12 3v18"/><path d="M8 7l4-4 4 4"/><path d="M8 17l4 4 4-4"/></svg> Header ${Math.round(Hh)}mm</div>`;
+  if(Fh)p1+=`<div class="bandgrip" data-band="footer" title="Drag to resize the footer height" style="top:${cut(Fh)}mm"><svg class="icn" viewBox="0 0 24 24" style="width:9px;height:9px;vertical-align:0"><path d="M12 3v18"/><path d="M8 7l4-4 4 4"/><path d="M8 17l4 4 4-4"/></svg> Footer ${Math.round(Fh)}mm</div>`;
   html+=wrap(0,p1);
   // Pages 2..N — read-only continuation previews: slice on the row boundaries, repeat header/footer.
   for(let i=1;i<N;i++){
@@ -1299,7 +1346,7 @@ function buildPalette(){const isRep=state.targetKind==="report";
   const groups=isRep?[["Elements",ELEM],["Report blocks",REPORTBLOCKS]]:[["Elements",ELEM],["Document blocks",BLOCKS.filter(t=>t!=="title")]];
   let h=groups.map(g=>`<div class="pgrp">${g[0]}</div><div class="prow">`+g[1].map(t=>`<div class="pblock" draggable="true" ondragstart="event.dataTransfer.setData('text/bpdf','${t}')" onclick="addBlock('${t}')" title="Add or drag ${META[t].l}"><svg viewBox="0 0 24 24">${ICONS[t]||ICONS.text}</svg><span>${META[t].l}</span></div>`).join("")+`</div>`).join("");
   if(!isRep)h+=`<div class="pgrp">Ready sections</div>`+SECTIONS.map(s=>`<div class="psec" onclick="addSection('${s.key}')" title="${esc(s.desc)}"><b>${esc(s.label)}</b><span>${esc(s.desc)}</span></div>`).join("");
-  if(SNIPPETS.length)h+=`<div class="pgrp">My blocks</div>`+SNIPPETS.map((sn,i)=>`<div class="psec" onclick="addSnippet(${i})" title="Insert this saved block"><b>${esc(sn.label)} <span style="float:right;font-weight:400;cursor:pointer;color:var(--mut2)" title="Delete this saved block" onclick="event.stopPropagation();delSnippet(${i})">✕</span></b><span>${esc(META[sn.block.type]?META[sn.block.type].l:sn.block.type)} · saved block — click to insert</span></div>`).join("");
+  if(SNIPPETS.length)h+=`<div class="pgrp">My blocks</div>`+SNIPPETS.map((sn,i)=>`<div class="psec" onclick="addSnippet(${i})" title="Insert this saved block"><b>${esc(sn.label)} <span style="float:right;font-weight:400;cursor:pointer;color:var(--mut2)" title="Delete this saved block" onclick="event.stopPropagation();delSnippet(${i})">${UI.close}</span></b><span>${esc(META[sn.block.type]?META[sn.block.type].l:sn.block.type)} · saved block — click to insert</span></div>`).join("");
   document.getElementById("palette").innerHTML=h;}
 /* drag a palette item onto the page */
 (function(){const paper=document.getElementById("paper");
@@ -1331,6 +1378,24 @@ function secToggle(el,id){_secOpen[id]=el.open;
   if(!el.open||!el.parentElement)return;
   // accordion: opening one section closes its siblings (less to scan at once)
   el.parentElement.querySelectorAll(":scope > details.psec[open]").forEach(function(d){if(d!==el){d.open=false;}});}
+/* Inside the Block panel's sub-tabs the sections are flat always-open groups — one accordion
+   level (Block/Page/Brand > Content/Design/Layout) is enough to scan. */
+function grp(title,inner){return `<div class="stygrp"><div class="styhead">${title}</div>${inner}</div>`;}
+/* Which Block sub-tab is showing. Module-level so it survives renderProps() re-renders. */
+let blockTab="content";
+function setBlockTab(t){blockTab=t;renderProps();}
+function subTabs(){return `<div class="subtabs">`+[["content","Content"],["design","Design"],["layout","Layout"]].map(x=>`<div class="subtab ${blockTab===x[0]?'on':''}" data-subtab="${x[0]}" onclick="setBlockTab('${x[0]}')">${x[1]}</div>`).join("")+`</div>`;}
+/* Sticky identity header: what this block is, where it sits, and the two actions on it. */
+function blockHead(b){const t=b.type;
+  const sub=isNested(b)?"In a Row column · flows with content"
+    :(regionOf(b)==="body")?("Body · "+(b.float?"pinned (free position)":"flows with content"))
+    :((regionOf(b)==="header"?"Header":"Footer")+" band · pinned, repeats");
+  return `<div class="bhead"><div class="bicon"><svg viewBox="0 0 24 24">${ICONS[t]||ICONS.text}</svg></div>`
+    +`<div class="bmeta"><div class="bname">${esc(META[t]?META[t].l:t)}</div><div class="bsub">${esc(sub)}</div></div>`
+    +`<div class="bacts"><button title="Duplicate (Ctrl+D)" onclick="duplicate('${b.id}')">${UI.copy}</button>`
+    +`<button class="danger" title="Delete this block" onclick="del(null,'${b.id}')">${UI.trash}</button></div></div>`;}
+/* Panel twin of the canvas move tools — same moveBody call, reachable without hunting the block. */
+function moveControls(b){return grp("Order",`<div class="prow"><button class="btn ghost" onclick="moveBody(null,'${b.id}',-1)" title="Move this block up">${UI.up} Move up</button><button class="btn ghost" onclick="moveBody(null,'${b.id}',1)" title="Move this block down">${UI.down} Move down</button></div>`);}
 /* Shared "Table style" UI for the ready tables (Items / Payment / Data Table): header skin,
    line presets, cell padding, number styling — mirrors engine _tbl_skin. */
 function tableSkinUI(sett,o){o=o||{};const hs=sett.headerStyle||{},bo=sett.borders||{},pd=sett.cellPad||{},ns=sett.numStyle||{};
@@ -1348,7 +1413,7 @@ function tableSkinUI(sett,o){o=o||{};const hs=sett.headerStyle||{},bo=sett.borde
     +`<div class="row2">`+N("Line width (px)",bo.w,"borders.w","1")+`<div class="fld"><label>Line style</label><select onchange="setS('borders.style',this.value)">`+["solid","dashed","dotted","double"].map(x=>`<option ${(bo.style||'solid')===x?'selected':''}>${x}</option>`).join("")+`</select></div></div>`
     +C("Line color",bo.color,"borders.color","#cfe5f6","#cfe5f6")+`</div>`;
   h+=`<div class="stycard"><div class="stycardlbl">Cells</div>`
-    +`<div class="row2">`+N("Padding ↕ (px)",pd.y,"cellPad.y","6")+N("Padding ↔ (px)",pd.x,"cellPad.x","8")+`</div>`;
+    +`<div class="row2">`+N("Padding — vertical (px)",pd.y,"cellPad.y","6")+N("Padding — horizontal (px)",pd.x,"cellPad.x","8")+`</div>`;
   if(o.zebra){h+=ck("Zebra rows","zebra",sett.zebra);
     if(sett.zebra)h+=C("Zebra color",sett.zebraColor,"zebraColor","#eef6fc","#eef6fc");}
   h+=`</div>`;
@@ -1393,7 +1458,7 @@ function rowControls(b){const s=b.settings;const cols=Math.max(1,Math.min(4,+s.c
   h+=`<div class="hint" style="padding:0 0 6px">Tip: drag the divider between columns on the page to resize them.</div>`;
   for(let i=0;i<cols;i++){const w=(s.widths||[])[i];const ch=(s.cells||[])[i]||[];
     h+=`<div class="styhead">Column ${i+1}</div><div class="fld"><label>Width (mm · blank = auto)</label><input type="text" value="${w==null?'':w}" placeholder="auto" oninput="setRowWidth(${i},this.value)"></div>`;
-    ch.forEach(c=>{h+=`<div class="hint" style="display:flex;justify-content:space-between;align-items:center;padding:3px 0"><span>${META[c.type]?META[c.type].l:c.type}</span><span><button class="btn ghost" style="padding:3px 8px" onclick="select('${c.id}')">edit</button> <button class="btn ghost" style="padding:3px 8px" onclick="del(null,'${c.id}')">✕</button></span></div>`;});
+    ch.forEach(c=>{h+=`<div class="hint" style="display:flex;justify-content:space-between;align-items:center;padding:3px 0"><span>${META[c.type]?META[c.type].l:c.type}</span><span><button class="btn ghost" style="padding:3px 8px" onclick="select('${c.id}')">edit</button> <button class="btn ghost" style="padding:3px 8px" onclick="del(null,'${c.id}')">${UI.close}</button></span></div>`;});
     h+=`<div class="fld"><select onchange="addRowChild('${b.id}',${i},this.value)"><option value="">+ Add block to column ${i+1}…</option>`+ROWCHILDTYPES.map(t=>`<option value="${t}">${META[t].l}</option>`).join("")+`</select></div>`;
   }
   return h;}
@@ -1418,10 +1483,14 @@ function sg(l,k,v,o){return `<div class="fld"><label>${l}</label><div class="seg
 
 function posControls(p){const n=(l,k,v)=>`<div class="fld"><label>${l}</label><input type="text" value="${v===null||v===undefined||v===''?'':v}" oninput="setPos('${k}',this.value)"></div>`;
   return `<div class="stygrp"><div class="styhead">Position &amp; size (mm)</div><div class="row2">${n('X','x',p.x)}${n('Y','y',p.y)}</div><div class="row2">${n('Width','w',p.w)}${n('Height','h',p.h)}</div><label class="chk"><input type="checkbox" ${p.h===null?'checked':''} onchange="setAutoH(this.checked)"> Auto height (fit content)</label></div>`;}
-function styleControls(st,type){const seg=(l,k,v,o)=>`<div class="fld"><label>${l}</label><div class="seg">`+o.map(x=>`<button class="${v===x[0]?'on':''}" onclick="setStyle('${k}','${x[0]}');renderProps()">${x[1]}</button>`).join("")+`</div></div>`;
-  const num=(l,k,v)=>`<div class="fld"><label>${l}</label><input type="text" value="${v===undefined||v===null?'':v}" oninput="setStyle('${k}',this.value)"></div>`;
-  const col=(l,k,v)=>`<div class="fld"><label>${l}</label><div class="color"><input type="color" value="${v||'#000000'}" oninput="setStyle('${k}',this.value)"><input type="text" value="${esc(v||'')}" placeholder="none" oninput="setStyle('${k}',this.value)"></div></div>`;
-  const ckk=(l,k,o)=>`<label class="chk"><input type="checkbox" ${o?'checked':''} onchange="setStyle('${k}',this.checked);renderProps()"> ${l}</label>`;
+/* styleControls was one blob; it is now split so the Block panel's Design tab gets the look
+   (typography, colours, background, border) and the Layout tab gets the spacing (padding).
+   Both halves keep the ORIGINAL bindings — setStyle on the same keys. */
+const _styH={seg:(l,k,v,o)=>`<div class="fld"><label>${l}</label><div class="seg">`+o.map(x=>`<button class="${v===x[0]?'on':''}" onclick="setStyle('${k}','${x[0]}');renderProps()">${x[1]}</button>`).join("")+`</div></div>`,
+  num:(l,k,v)=>`<div class="fld"><label>${l}</label><input type="text" value="${v===undefined||v===null?'':v}" oninput="setStyle('${k}',this.value)"></div>`,
+  col:(l,k,v)=>`<div class="fld"><label>${l}</label><div class="color"><input type="color" value="${v||'#000000'}" oninput="setStyle('${k}',this.value)"><input type="text" value="${esc(v||'')}" placeholder="none" oninput="setStyle('${k}',this.value)"></div></div>`,
+  ckk:(l,k,o)=>`<label class="chk"><input type="checkbox" ${o?'checked':''} onchange="setStyle('${k}',this.checked);renderProps()"> ${l}</label>`};
+function styleControlsDesign(st,type){const seg=_styH.seg,num=_styH.num,col=_styH.col,ckk=_styH.ckk;
   let typo=seg("Alignment","align",st.align,[["left","Left"],["center","Center"],["right","Right"]]);
   typo+=`<div class="row2">${num("Font size (pt)","size",st.size)}${segW(st.weight)}</div>`;
   typo+=col("Text color","color",st.color);
@@ -1429,16 +1498,18 @@ function styleControls(st,type){const seg=(l,k,v,o)=>`<div class="fld"><label>${
   typo+=`<div class="row2">${num("Line height","lineHeight",st.lineHeight)}${num("Letter spacing (px)","letterSpacing",st.letterSpacing)}</div>`;
   typo+=ckk("Italic","italic",st.italic)+ckk("Underline","underline",st.underline)+ckk("RTL (right-to-left)","rtl",st.rtl);
   const bd=st.border||{on:false,w:1,color:"#cfe5f6",style:"solid",radius:0};
-  let box=col("Background","bg",st.bg)+num("Padding (mm)","pad",st.pad)+ckk("Border","border.on",bd.on);
+  let box=col("Background","bg",st.bg)+ckk("Border","border.on",bd.on);
   if(bd.on){const sd=bd.sides||{};const sideOn=k=>sd[k]!==false;
     box+=`<div class="fld"><label>Sides (e.g. Left only = accent bar)</label><div class="seg">`+[["t","Top"],["r","Right"],["b","Bottom"],["l","Left"]].map(([k,l])=>`<button class="${sideOn(k)?'on':''}" onclick="toggleBorderSide('${k}')">${l}</button>`).join("")+`</div></div>`;
     box+=`<div class="row2">${num("Border width","border.w",bd.w)}${num("Radius","border.radius",bd.radius)}</div>`;box+=col("Border color","border.color",bd.color);box+=seg("Border style","border.style",bd.style,[["solid","Solid"],["dashed","Dashed"],["dotted","Dotted"]]);}
-  return sec("typo","Typography",typo)+sec("box","Background & Border",box);}
+  return grp("Typography",typo)+grp("Background &amp; Border",box);}
+function styleControlsLayout(st,type){
+  return grp("Spacing",_styH.num("Padding (mm)","pad",st.pad)+`<div class="hint" style="padding:2px 0 0">Inner padding between this block's border and its content.</div>`);}
 function segW(v){return `<div class="fld"><label>Weight</label><div class="seg">`+[["","Reg"],["600","Semi"],["700","Bold"],["800","Black"]].map(o=>`<button class="${v===o[0]?'on':''}" onclick="setStyle('weight','${o[0]}');renderProps()">${o[1]}</button>`).join("")+`</div></div>`;}
 
 function renderProps(){const host=document.getElementById("propsBlock"),b=cur();
   if(!b){host.innerHTML=`<div class="noselect">Click a block on the page to edit it,<br>or insert one from the left.</div>`;return;}
-  const s=b.settings,t=b.type;const ptitle=`<div class="ptitle">${META[t].l}</div>`;let h="";
+  const s=b.settings,t=b.type;let h="";
   if(t==="heading"){h+=tx("Text","text",s.text);h+=`<div class="fld"><label>Level</label><div class="seg">`+["h1","h2","h3","h4"].map(l=>`<button class="${s.level===l?'on':''}" onclick="setHeadingLevel('${l}')">${l.toUpperCase()}</button>`).join("")+`</div></div>`;}
   else if(t==="text"){h+=ta("Text","text",s.text);}
   else if(t==="field"){
@@ -1455,7 +1526,7 @@ function renderProps(){const host=document.getElementById("propsBlock"),b=cur();
     const tgt=(_lastCell&&_lastCell.id===b.id)?_lastCell:null;
     h+=`<div class="styhead">Field in a cell</div><div class="hint" style="padding:0 0 4px">Target: <b id="tblTarget">${tgt?(tgt.r<0?("header col "+(tgt.c+1)):("row "+(tgt.r+1)+", col "+(tgt.c+1))):"click a cell on the page first"}</b></div>`;
     h+=`<div class="fld"><select onchange="tblInsertField(this.value)"><option value="">Insert document field into that cell…</option>`+DOCFIELDS.map(f=>`<option value="${esc(f.f)}">${esc(f.l)} (${esc(f.f)})</option>`).join("")+`</select></div>`;
-    if(tgt&&tgt.r>=0&&/^\{[A-Za-z0-9_.]+\}$/.test(String((s.rows[tgt.r]||[])[tgt.c]||"").trim()))h+=`<button class="btn ghost" style="width:100%" onclick="tblClearField()">✕ Unbind field (back to text)</button>`;
+    if(tgt&&tgt.r>=0&&/^\{[A-Za-z0-9_.]+\}$/.test(String((s.rows[tgt.r]||[])[tgt.c]||"").trim()))h+=`<button class="btn ghost" style="width:100%" onclick="tblClearField()">${UI.close} Unbind field (back to text)</button>`;
     const cs=s.colStyle||(s.colStyle=[]);
     const wsel=(cur,on)=>`<select onchange="${on}">`+[["","Regular"],["600","Semi"],["700","Bold"]].map(a=>`<option value="${a[0]}" ${(cur||'')===a[0]?'selected':''}>${a[1]}</option>`).join("")+`</select>`;
     const asel=(cur,on)=>`<select onchange="${on}">`+[["left","Left"],["center","Center"],["right","Right"]].map(a=>`<option value="${a[0]}" ${(cur||'left')===a[0]?'selected':''}>${a[1]}</option>`).join("")+`</select>`;
@@ -1473,7 +1544,7 @@ function renderProps(){const host=document.getElementById("propsBlock"),b=cur();
       +colorFld("Line color",bo.color,"tblBorders('color',this.value)","#cfe5f6","#cfe5f6")+`</div>`;
     const pd=s.cellPad||{};
     h+=`<div class="stycard"><div class="stycardlbl">Cells &amp; zebra</div>`
-      +`<div class="row2">`+fld("Cell padding ↕ (px)",`<input type="text" value="${pd.y==null?'':pd.y}" placeholder="5" oninput="tblPad('y',this.value)">`)+fld("Cell padding ↔ (px)",`<input type="text" value="${pd.x==null?'':pd.x}" placeholder="8" oninput="tblPad('x',this.value)">`)+`</div>`
+      +`<div class="row2">`+fld("Cell padding — vertical (px)",`<input type="text" value="${pd.y==null?'':pd.y}" placeholder="5" oninput="tblPad('y',this.value)">`)+fld("Cell padding — horizontal (px)",`<input type="text" value="${pd.x==null?'':pd.x}" placeholder="8" oninput="tblPad('x',this.value)">`)+`</div>`
       +ck("Zebra rows (alternate background)","zebra",s.zebra);
     if(s.zebra)h+=colorFld("Zebra color",s.zebraColor,"setS('zebraColor',this.value)","#eef6fc","#eef6fc");
     h+=`</div>`;
@@ -1521,7 +1592,7 @@ function renderProps(){const host=document.getElementById("propsBlock"),b=cur();
   else if(t==="datatable"){const tbl=CTABLES.find(x=>x.fieldname===s.table)||{fields:[]};
     h+=`<div class="fld"><label>Data source (child table)</label><select onchange="setDT('table',this.value)">`+(CTABLES.length?CTABLES.map(x=>`<option value="${esc(x.fieldname)}" ${s.table===x.fieldname?'selected':''}>${esc(x.label)} (${esc(x.fieldname)})</option>`).join(""):`<option selected>${esc(s.table||'items')}</option>`)+`</select></div>`;
     h+=`<div class="styhead">Columns</div>`;
-    (s.columns||[]).forEach((c,ci)=>{h+=`<div style="margin-bottom:8px;border-bottom:1px solid var(--line);padding-bottom:6px"><div class="row2"><input type="text" value="${esc(c.label||'')}" placeholder="Header label" oninput="setDTCol(${ci},'label',this.value)"><input type="text" value="${c.width==null?'':c.width}" placeholder="W mm" oninput="setDTCol(${ci},'width',this.value)"></div><div class="row2"><select onchange="setDTCol(${ci},'align',this.value)">`+[["left","Left"],["center","Center"],["right","Right"]].map(a=>`<option value="${a[0]}" ${(c.align||'left')===a[0]?'selected':''}>${a[1]}</option>`).join("")+`</select><button class="btn ghost" title="Remove column" onclick="delDTCol(${ci})">✕ remove</button></div><div class="hint" style="padding:2px 0 0">field: <b>${esc(c.field)}</b></div></div>`;});
+    (s.columns||[]).forEach((c,ci)=>{h+=`<div style="margin-bottom:8px;border-bottom:1px solid var(--line);padding-bottom:6px"><div class="row2"><input type="text" value="${esc(c.label||'')}" placeholder="Header label" oninput="setDTCol(${ci},'label',this.value)"><input type="text" value="${c.width==null?'':c.width}" placeholder="W mm" oninput="setDTCol(${ci},'width',this.value)"></div><div class="row2"><select onchange="setDTCol(${ci},'align',this.value)">`+[["left","Left"],["center","Center"],["right","Right"]].map(a=>`<option value="${a[0]}" ${(c.align||'left')===a[0]?'selected':''}>${a[1]}</option>`).join("")+`</select><button class="btn ghost" title="Remove column" onclick="delDTCol(${ci})">${UI.close} remove</button></div><div class="hint" style="padding:2px 0 0">field: <b>${esc(c.field)}</b></div></div>`;});
     const avail=(tbl.fields||[]).filter(f=>!(s.columns||[]).some(c=>c.field===f.fieldname));
     h+=`<div class="fld"><label>Add a field as a column</label><select onchange="addDTCol(this.value)"><option value="">+ Add column…</option>`+avail.map(f=>`<option value="${esc(f.fieldname)}">${esc(f.label)} (${esc(f.fieldname)})</option>`).join("")+`</select></div>`;
     h+=ck("Zebra rows","zebra",s.zebra);
@@ -1560,10 +1631,10 @@ function renderProps(){const host=document.getElementById("propsBlock"),b=cur();
     h+=`<div class="styhead">Columns</div>`;
     if(!(s.columns||[]).length&&avail.length){
       h+=`<div class="hint" style="padding:0 0 4px">Printing all columns — hide any to start customizing:</div>`;
-      avail.forEach(function(c){h+=`<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:4px 2px;border-bottom:1px solid var(--line)"><span style="font-size:11.5px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(c.label||c.fieldname)}</span><button class="btn ghost" style="padding:3px 8px;font-size:10.5px;flex:0 0 auto" onclick="hideRTCol('${esc(c.fieldname)}')">✕ hide</button></div>`;});
+      avail.forEach(function(c){h+=`<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:4px 2px;border-bottom:1px solid var(--line)"><span style="font-size:11.5px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(c.label||c.fieldname)}</span><button class="btn ghost" style="padding:3px 8px;font-size:10.5px;flex:0 0 auto" onclick="hideRTCol('${esc(c.fieldname)}')">${UI.close} hide</button></div>`;});
       h+=`<div style="height:8px"></div>`;
     }
-    (s.columns||[]).forEach((c,ci)=>{h+=`<div style="margin-bottom:8px;border-bottom:1px solid var(--line);padding-bottom:6px"><div class="row2"><input type="text" value="${esc(c.label||'')}" placeholder="Header label" oninput="setRTCol(${ci},'label',this.value)"><input type="text" value="${c.width==null?'':c.width}" placeholder="W mm" oninput="setRTCol(${ci},'width',this.value)"></div><div class="row2"><select onchange="setRTCol(${ci},'align',this.value)">`+[["left","Left"],["center","Center"],["right","Right"]].map(a=>`<option value="${a[0]}" ${(c.align||'left')===a[0]?'selected':''}>${a[1]}</option>`).join("")+`</select><button class="btn ghost" title="Remove column" onclick="delRTCol(${ci})">✕ remove</button></div><div class="hint" style="padding:2px 0 0">field: <b>${esc(c.field)}</b></div></div>`;});
+    (s.columns||[]).forEach((c,ci)=>{h+=`<div style="margin-bottom:8px;border-bottom:1px solid var(--line);padding-bottom:6px"><div class="row2"><input type="text" value="${esc(c.label||'')}" placeholder="Header label" oninput="setRTCol(${ci},'label',this.value)"><input type="text" value="${c.width==null?'':c.width}" placeholder="W mm" oninput="setRTCol(${ci},'width',this.value)"></div><div class="row2"><select onchange="setRTCol(${ci},'align',this.value)">`+[["left","Left"],["center","Center"],["right","Right"]].map(a=>`<option value="${a[0]}" ${(c.align||'left')===a[0]?'selected':''}>${a[1]}</option>`).join("")+`</select><button class="btn ghost" title="Remove column" onclick="delRTCol(${ci})">${UI.close} remove</button></div><div class="hint" style="padding:2px 0 0">field: <b>${esc(c.field)}</b></div></div>`;});
     const remain=avail.filter(f=>!(s.columns||[]).some(c=>c.field===f.fieldname));
     if(remain.length)h+=`<div class="fld"><label>Add a report column</label><select onchange="addRTCol(this.value)"><option value="">+ Add column…</option>`+remain.map(f=>`<option value="${esc(f.fieldname)}">${esc(f.label||f.fieldname)}</option>`).join("")+`</select></div>`;
     h+=`<div class="fld"><label>…or add a column by fieldname</label><div style="display:flex;gap:6px"><input type="text" id="rtManualCol" placeholder="e.g. account, debit, credit, balance" style="flex:1" onkeydown="if(event.key==='Enter'){event.preventDefault();addRTColManual();}"><button class="btn ghost" onclick="addRTColManual()">Add</button></div></div>`;
@@ -1575,28 +1646,39 @@ function renderProps(){const host=document.getElementById("propsBlock"),b=cur();
   else if(t==="row"){h+=rowControls(b);}
   else if(t==="header_banner"||t==="footer_banner"){h+=`<div class="noselect" style="padding:14px 0">Uses the banner image from the Branding tab.</div>`;}
   let tstyle="";
-  if(t==="items")tstyle=sec("tstyle","Table style",tableSkinUI(s,{id:b.id,zebra:false,desc:true,columns:[{k:"num",l:"#"},{k:"item",l:"Item"},{k:"qty",l:"Qty"},{k:"rate",l:"Rate"},{k:"amount",l:"Amount"}]}));
+  if(t==="items")tstyle=grp("Table style",tableSkinUI(s,{id:b.id,zebra:false,desc:true,columns:[{k:"num",l:"#"},{k:"item",l:"Item"},{k:"qty",l:"Qty"},{k:"rate",l:"Rate"},{k:"amount",l:"Amount"}]}));
   else if(t==="payment_schedule"){h+=tx("Heading","heading",s.heading==null?"":s.heading);
-    h+=`<div class="fld"><label>Text size (pt) — whole table</label><input type="text" value="${(b.style&&b.style.size!=="")?b.style.size:""}" placeholder="inherit" oninput="setStyle('size',this.value)"></div><div class="hint" style="padding:0 0 6px">Same as Typography → Size. Header scales with it; per-column sizes (Table style → Columns) override it.</div>`;
-    tstyle=sec("tstyle","Table style",tableSkinUI(s,{id:b.id,zebra:true,columns:[{k:"num",l:"#"},{k:"term",l:"Term"},{k:"due",l:"Due"},{k:"pct",l:"Portion"},{k:"amount",l:"Amount"}]}));}
-  else if(t==="datatable")tstyle=sec("tstyle","Table style",tableSkinUI(s,{id:b.id,num:true,zebra:false}));
-  else if(t==="report_table")tstyle=sec("tstyle","Table style",tableSkinUI(s,{id:b.id,num:true,zebra:false}));
-  const content=sec("content","Content",h,true);
-  if(isNested(b)){  // a block living inside a Row column: only its own content + style, no placement
-    let out=ptitle+content+tstyle;
-    out+=`<div class="stygrp"><div class="styhead">Placement</div><div class="hint" style="padding:4px 0 0">Inside a <b>Row</b> column — it flows within its column.</div></div>`;
-    out+=styleControls(b.style,t);
-    out+=`<div class="prow" style="margin-top:16px"><button class="dupblk" onclick="duplicate('${b.id}')" title="Duplicate (Ctrl+D)">⧉ Duplicate</button><button class="delblk" onclick="del(null,'${b.id}')" style="margin-top:0">Remove</button></div>`;
+    h+=`<div class="fld"><label>Text size (pt) — whole table</label><input type="text" value="${(b.style&&b.style.size!=="")?b.style.size:""}" placeholder="inherit" oninput="setStyle('size',this.value)"></div><div class="hint" style="padding:0 0 6px">Same as Design → Typography → Size. Header scales with it; per-column sizes (Design → Table style → Columns) override it.</div>`;
+    tstyle=grp("Table style",tableSkinUI(s,{id:b.id,zebra:true,columns:[{k:"num",l:"#"},{k:"term",l:"Term"},{k:"due",l:"Due"},{k:"pct",l:"Portion"},{k:"amount",l:"Amount"}]}));}
+  else if(t==="datatable")tstyle=grp("Table style",tableSkinUI(s,{id:b.id,num:true,zebra:false}));
+  else if(t==="report_table")tstyle=grp("Table style",tableSkinUI(s,{id:b.id,num:true,zebra:false}));
+  const banner=(t==="header_banner"||t==="footer_banner");
+  const head=blockHead(b)+subTabs();
+  const snip=banner?"":`<button class="btn ghost" style="width:100%;margin-top:16px" onclick="saveSnippet()" title="Save this configured block to reuse in ANY format (Insert panel → My blocks)">${UI.star} Save block for reuse</button>`;
+  const noneHint=m=>`<div class="noselect" style="padding:26px 8px">${m}</div>`;
+  if(isNested(b)){  // a block living inside a Row column: content + look + its own spacing, no placement
+    let out=head;
+    if(blockTab==="content")out+=h||noneHint("This block has no content settings.");
+    else if(blockTab==="design")out+=tstyle+styleControlsDesign(b.style,t);
+    else out+=`<div class="stygrp"><div class="styhead">Placement</div><div class="hint" style="padding:4px 0 0">Inside a <b>Row</b> column — it flows within its column. Reorder it from the Row block's panel.</div></div>`
+      +styleControlsLayout(b.style,t)
+      +`<button class="delblk" onclick="del(null,'${b.id}')">Remove from this column</button>`;
     host.innerHTML=out;return;
   }
   const reg=regionOf(b);
-  let out=ptitle+content+tstyle;
-  out+=regionControl(b,reg);
-  if(reg!=="body"||b.float)out+=posControls(b.pos);  // bands + floating elements are positioned; flowing body is not
-  if(t!=="header_banner"&&t!=="footer_banner"&&t!=="row")out+=styleControls(b.style,t);
-  out+=condControl(b);
-  out+=`<div class="prow" style="margin-top:16px"><button class="dupblk" onclick="duplicate('${b.id}')" title="Duplicate (Ctrl+D)">⧉ Duplicate</button><button class="delblk" onclick="del(null,'${b.id}')" style="margin-top:0">🗑 Delete</button></div>`;
-  if(t!=="header_banner"&&t!=="footer_banner")out+=`<button class="btn ghost" style="width:100%;margin-top:8px" onclick="saveSnippet()" title="Save this configured block to reuse in ANY format (Insert panel → My blocks)">☆ Save block for reuse</button>`;
+  let out=head;
+  if(blockTab==="content"){out+=h||noneHint("This block has no content settings — style it on <b>Design</b>, place it on <b>Layout</b>.");out+=snip;}
+  else if(blockTab==="design"){
+    let dsn=tstyle+((t!=="header_banner"&&t!=="footer_banner"&&t!=="row")?styleControlsDesign(b.style,t):"");
+    out+=dsn||noneHint(banner?"The band's look comes from the banner image on the <b>Branding</b> tab.":"Columns carry no styling of their own — style the blocks inside them.");
+  }
+  else {
+    out+=regionControl(b,reg);
+    if(reg==="body"&&!b.float)out+=moveControls(b);  // flow order, mirroring the canvas tools
+    if(reg!=="body"||b.float)out+=posControls(b.pos);  // bands + floating elements are positioned; flowing body is not
+    if(t!=="header_banner"&&t!=="footer_banner"&&t!=="row")out+=styleControlsLayout(b.style,t);
+    out+=condControl(b);
+  }
   host.innerHTML=out;}
 function regionControl(b,reg){
   if(reg==="body"){
@@ -1604,10 +1686,10 @@ function regionControl(b,reg){
     h+=`<label class="chk"><input type="checkbox" ${b.float?'checked':''} onchange="setFloat('${b.id}',this.checked)"> Free position (place anywhere in body)</label>`;
     if(b.float)h+=`<div class="fld" style="margin-top:6px"><label>Quick columns (side by side)</label><div class="seg"><button onclick="colPreset('${b.id}','left')">Left ½</button><button onclick="colPreset('${b.id}','right')">Right ½</button><button onclick="colPreset('${b.id}','full')">Full</button></div></div>`;
     if(!b.float&&b.type!=="row"&&ROWCHILDTYPES.indexOf(b.type)>=0)
-      h+=`<button class="btn ghost" style="width:100%;margin-top:8px" onclick="wrapInRow('${b.id}')" title="Wrap this block in a 2-column row — then add blocks beside it">⫴ Put this block in columns</button>`;
+      h+=`<button class="btn ghost" style="width:100%;margin-top:8px" onclick="wrapInRow('${b.id}')" title="Wrap this block in a 2-column row — then add blocks beside it">${UI.cols} Put this block in columns</button>`;
     h+= b.float
       ? `<div class="hint" style="padding:4px 0 0">Floating — drag it freely, snap to guides, or use the presets above (e.g. Customer = Left ½, your company = Right ½).</div>`
-      : `<div class="hint" style="padding:4px 0 0">Flows top-to-bottom — use ↑ ↓ to reorder. Drag onto the page to reorder, or use <b>columns</b> to put blocks side by side.</div>`;
+      : `<div class="hint" style="padding:4px 0 0">Flows top-to-bottom — use <b>Move up / Move down</b> above to reorder. Drag onto the page to reorder, or use <b>columns</b> to put blocks side by side.</div>`;
     return h+`</div>`;
   }
   return `<div class="stygrp"><div class="styhead">Placement</div><div class="hint" style="padding:4px 0 0">In the <b>${reg}</b> band — repeats on every page. Drag to position; height is on the <b>Page</b> tab.</div></div>`;
@@ -1646,11 +1728,11 @@ function tblClearField(){const b=cur();if(!b||!_lastCell||_lastCell.id!==b.id)re
   else b.settings.rows[_lastCell.r][_lastCell.c]="";
   render();renderProps();}
 function setHF(z,k,v){if(k==="height"||k==="margin"){const n=parseFloat(v);if(isNaN(n))return;state[z][k]=n;}else state[z][k]=v;render();}
-function renderPage(){const mk=(name,key,z)=>{const bk=key+"_image",bv=state.branding[bk];return `<div class="styhead">${name}</div><label class="chk"><input type="checkbox" ${z.enabled?'checked':''} onchange="setHF('${key}','enabled',this.checked);renderPage()"> Show ${name.toLowerCase()}</label>`+(z.enabled?`<div class="row2"><div class="fld"><label>${name} height (mm)</label><input type="text" value="${z.height}" oninput="setHF('${key}','height',this.value)"></div><div class="fld"><label>${key==="header"?"Space below":"Space above"} (mm)</label><input type="text" value="${z.margin==null?'':z.margin}" placeholder="4" oninput="setHF('${key}','margin',this.value)"></div></div><label class="chk"><input type="checkbox" ${z.repeat?'checked':''} onchange="setHF('${key}','repeat',this.checked)"> Repeat on every page</label><div class="fld" style="margin-top:8px"><label>${name} banner image</label><div style="display:flex;gap:6px"><button class="btn ghost" style="flex:1" onclick="uploadImage(function(u){setB('${bk}',u);renderPage();})">⬆ Attach image</button>${BIMG(bv)?`<button class="btn ghost" title="Remove banner" onclick="setB('${bk}','');renderPage()">✕</button>`:''}</div><div class="hint" style="padding:4px 0 0;word-break:break-all">${BIMG(bv)?esc(bv):(bv==="none"?'Company banner suppressed for this format.':'No banner — or build the band from blocks (logo + text).')}</div>${BIMG(bv)?'':`<label class="chk"><input type="checkbox" ${bv==="none"?'':'checked'} onchange="setB('${bk}',this.checked?'':'none');renderPage()"> Use the company banner (BrandPDF Settings) if one is set</label>`}</div>`:"");};
+function renderPage(){const mk=(name,key,z)=>{const bk=key+"_image",bv=state.branding[bk];return `<div class="styhead">${name}</div><label class="chk"><input type="checkbox" ${z.enabled?'checked':''} onchange="setHF('${key}','enabled',this.checked);renderPage()"> Show ${name.toLowerCase()}</label>`+(z.enabled?`<div class="row2"><div class="fld"><label>${name} height (mm)</label><input type="text" value="${z.height}" oninput="setHF('${key}','height',this.value)"></div><div class="fld"><label>${key==="header"?"Space below":"Space above"} (mm)</label><input type="text" value="${z.margin==null?'':z.margin}" placeholder="4" oninput="setHF('${key}','margin',this.value)"></div></div><label class="chk"><input type="checkbox" ${z.repeat?'checked':''} onchange="setHF('${key}','repeat',this.checked)"> Repeat on every page</label><div class="fld" style="margin-top:8px"><label>${name} banner image</label><div style="display:flex;gap:6px"><button class="btn ghost" style="flex:1" onclick="uploadImage(function(u){setB('${bk}',u);renderPage();})">${UI.upload} Attach image</button>${BIMG(bv)?`<button class="btn ghost" title="Remove banner" onclick="setB('${bk}','');renderPage()">${UI.close}</button>`:''}</div><div class="hint" style="padding:4px 0 0;word-break:break-all">${BIMG(bv)?esc(bv):(bv==="none"?'Company banner suppressed for this format.':'No banner — or build the band from blocks (logo + text).')}</div>${BIMG(bv)?'':`<label class="chk"><input type="checkbox" ${bv==="none"?'':'checked'} onchange="setB('${bk}',this.checked?'':'none');renderPage()"> Use the company banner (BrandPDF Settings) if one is set</label>`}</div>`:"");};
   const w=state.watermark||{};
   const wm=`<div class="styhead" style="margin-top:16px">Watermark</div><div class="fld"><label>Text (blank = none)</label><input type="text" value="${esc(w.text||'')}" placeholder="e.g. DRAFT / PAID" oninput="setWM('text',this.value)"></div><div class="row2"><div class="fld"><label>Opacity %</label><input type="text" value="${w.opacity}" oninput="setWM('opacity',this.value)"></div><div class="fld"><label>Size (pt)</label><input type="text" value="${w.size}" oninput="setWM('size',this.value)"></div></div><div class="fld"><label>Color</label><div class="color"><input type="color" value="${w.color||'#0C1322'}" oninput="setWM('color',this.value)"><input type="text" value="${esc(w.color||'#0C1322')}" oninput="setWM('color',this.value)"></div></div>`
   +`<div class="styhead" style="margin-top:10px">Conditional watermark</div><div class="hint" style="padding:0 0 6px">First matching rule wins (e.g. status = Paid → "PAID"); otherwise the text above is used.</div>`
-  +(Array.isArray(w.rules)?w.rules.map(function(r,i){return `<div style="border-bottom:1px solid var(--line);padding:6px 0;margin-bottom:4px"><div class="row2"><select onchange="setWMRule(${i},'field',this.value)">`+DOCFIELDS.map(f=>`<option value="${esc(f.f)}" ${r.field===f.f?'selected':''}>${esc(f.l)}</option>`).join("")+`</select><select onchange="setWMRule(${i},'op',this.value)">`+["=","!=","like",">","<",">=","<="].map(o=>`<option ${r.op===o?'selected':''}>${o}</option>`).join("")+`</select></div><div class="row2"><input type="text" value="${esc(r.value||'')}" placeholder="value (e.g. Paid)" oninput="setWMRule(${i},'value',this.value)"><input type="text" value="${esc(r.text||'')}" placeholder="watermark text" oninput="setWMRule(${i},'text',this.value)"></div><button class="btn ghost" style="width:100%;margin-top:4px" onclick="delWMRule(${i})">✕ Remove rule</button></div>`;}).join(""):"")
+  +(Array.isArray(w.rules)?w.rules.map(function(r,i){return `<div style="border-bottom:1px solid var(--line);padding:6px 0;margin-bottom:4px"><div class="row2"><select onchange="setWMRule(${i},'field',this.value)">`+DOCFIELDS.map(f=>`<option value="${esc(f.f)}" ${r.field===f.f?'selected':''}>${esc(f.l)}</option>`).join("")+`</select><select onchange="setWMRule(${i},'op',this.value)">`+["=","!=","like",">","<",">=","<="].map(o=>`<option ${r.op===o?'selected':''}>${o}</option>`).join("")+`</select></div><div class="row2"><input type="text" value="${esc(r.value||'')}" placeholder="value (e.g. Paid)" oninput="setWMRule(${i},'value',this.value)"><input type="text" value="${esc(r.text||'')}" placeholder="watermark text" oninput="setWMRule(${i},'text',this.value)"></div><button class="btn ghost" style="width:100%;margin-top:4px" onclick="delWMRule(${i})">${UI.close} Remove rule</button></div>`;}).join(""):"")
   +`<button class="btn ghost" style="width:100%;margin-top:6px" onclick="addWMRule()">+ Add condition rule</button>`;
   const orient=(state.page&&state.page.orientation)||"portrait";
   const orientUI=`<div class="ptitle">Page setup</div><div class="fld"><label>Orientation</label><div class="segrow">`
@@ -1687,7 +1769,7 @@ function autoSizeBand(isH,url){
 }
 function ensureBanners(){state.blocks=state.blocks.filter(bl=>bl.type!=="header_banner"&&bl.type!=="footer_banner");if(BIMG(state.branding.header_image))state.header.enabled=true;if(BIMG(state.branding.footer_image))state.footer.enabled=true;}
 function imgAttach(lbl,key,val,setter){const after=(setter==="setB")?"renderBrand":"renderProps";
-  return `<div class="fld"><label>${lbl}</label><div style="display:flex;gap:6px"><button class="btn ghost" style="flex:1" onclick="uploadImage(function(u){${setter}('${key}',u);${after}();})">⬆ Attach image</button>${val?`<button class="btn ghost" title="Remove" onclick="${setter}('${key}','');${after}()">✕</button>`:''}</div><div class="hint" style="padding:4px 0 0;word-break:break-all">${val?esc(val):'No image — or build the band from blocks.'}</div></div>`;}
+  return `<div class="fld"><label>${lbl}</label><div style="display:flex;gap:6px"><button class="btn ghost" style="flex:1" onclick="uploadImage(function(u){${setter}('${key}',u);${after}();})">${UI.upload} Attach image</button>${val?`<button class="btn ghost" title="Remove" onclick="${setter}('${key}','');${after}()">${UI.close}</button>`:''}</div><div class="hint" style="padding:4px 0 0;word-break:break-all">${val?esc(val):'No image — or build the band from blocks.'}</div></div>`;}
 function renderBrand(){const b=state.branding;document.getElementById("propsBrand").innerHTML=`<div class="ptitle">Branding</div><div class="fld"><label>Primary color</label><div class="color"><input type="color" value="${b.primary}" oninput="setB('primary',this.value)"><input type="text" value="${esc(b.primary)}" oninput="setB('primary',this.value)"></div></div><div class="fld"><label>Secondary / navy</label><div class="color"><input type="color" value="${b.navy}" oninput="setB('navy',this.value)"><input type="text" value="${esc(b.navy)}" oninput="setB('navy',this.value)"></div></div><div class="fld"><label>Font</label><select onchange="setB('font',this.value)">`+fontOptions(b.font)+`</select></div><div class="hint" style="padding:10px 0 0">Header &amp; footer banner images are now in the <b>Page</b> tab, next to the band height.</div>`;}
 
 function zoom(d){scale=Math.min(1.6,Math.max(.35,scale+d));document.getElementById("paperwrap").style.transform=`scale(${scale})`;document.getElementById("zoomv").textContent=Math.round(scale*100)+"%";}
@@ -1716,7 +1798,7 @@ function importJSON(){const inp=document.createElement("input");inp.type="file";
     r.onload=function(){let def;try{def=JSON.parse(r.result);}catch(e){toast("Could not read that file — is it a valid format .json?",true);return;}
       if(!def||typeof def!=="object"||!Array.isArray(def.blocks)){toast("That doesn't look like a BrandPDF format export.",true);return;}
       clearDraft();loadDefinition(def);commitHistory();
-      toast("Format imported — click ✓ Save to store it"+(EMBED?"":" (demo)")+".");};
+      toast("Format imported — click Save to store it"+(EMBED?"":" (demo)")+".");};
     r.readAsText(f);};
   inp.click();}
 function toast(msg,err){let t=document.getElementById("bpToast");if(!t){t=document.createElement("div");t.id="bpToast";document.body.appendChild(t);}
@@ -1743,7 +1825,7 @@ function setTheme(mode){document.documentElement.setAttribute("data-theme",(mode
   try{const mq=window.matchMedia("(prefers-color-scheme: dark)");setTheme(mq.matches?"dark":"light");mq.addEventListener("change",e=>setTheme(e.matches?"dark":"light"));}catch(e){}
 })();
 function save(){const def=definition();if(EMBED){window.parent.postMessage({type:"brandpdf-save",definition:def},window.location.origin);flashSaved();clearDraft();return;}if(window.frappe&&frappe.call){frappe.call({method:"brandpdf.api.save_format",args:{definition:JSON.stringify(def)},callback:()=>frappe.show_alert({message:"Format saved",indicator:"green"})});return;}console.log("DEFINITION",def);alert("Saved (demo) - logged to console.");}
-function flashSaved(){const b=document.querySelector(".btn.primary");if(!b)return;const t=b.textContent;b.textContent="✓ Saved";setTimeout(function(){b.textContent=t;},1400);}
+function flashSaved(){const b=document.querySelector(".btn.primary");if(!b)return;const t=b.innerHTML;b.innerHTML=UI.check+" Saved";setTimeout(function(){b.innerHTML=t;},1400);}  // innerHTML, not textContent — the label carries an inline SVG icon
 function loadDefinition(def){try{userTouched=false;state.page=Object.assign({orientation:"portrait"},def.page||{});if(def.branding)state.branding=Object.assign({primary:"#1463FF",navy:"#0C1322",font:"Montserrat",header_image:"",footer_image:""},def.branding);
   if(def.header)state.header=Object.assign({enabled:true,height:30,repeat:true,margin:4},def.header);if(def.footer)state.footer=Object.assign({enabled:true,height:32,repeat:true,margin:4},def.footer);if(def.watermark)state.watermark=Object.assign({text:"",color:"#0C1322",opacity:8,size:60},def.watermark);
   if(Array.isArray(def.blocks))state.blocks=def.blocks.map(function(b,i){const pos=b.pos||{x:14,y:8+i*16,w:180,h:null};let settings=b.settings||(DSET[b.type]?DSET[b.type]():{});if(b.type==="row"){const st=b.settings||{};const cells=(st.cells||[]).map(function(cell){return (cell||[]).map(function(c){return{id:"b"+(idc++),type:c.type,settings:c.settings||(DSET[c.type]?DSET[c.type]():{}),style:Object.assign(base(),dstyle(c.type),c.style||{})};});});settings=Object.assign({cols:2,gap:6,width:100,widths:[null,null],cells:[[],[]]},st,{cells:cells});}return{id:"b"+(idc++),type:b.type,settings:settings,style:Object.assign(base(),dstyle(b.type),b.style||{}),pos:pos,float:b.float||false,region:b.region||_regionByY(pos),cond:b.cond||null};});
@@ -1802,7 +1884,7 @@ function loadDoctypeMeta(dt){
   rpc("brandpdf.api.doctype_fields",{doctype:dt}).then(function(fl){if(Array.isArray(fl)&&fl.length){DOCFIELDS=fl.map(function(x){return{f:x.fieldname,l:x.label,t:x.fieldtype||""};});if(cur()&&cur().type==="field")renderProps();}});
   rpc("brandpdf.api.doctype_link_fields",{doctype:dt}).then(function(lf){LINKFIELDS=Array.isArray(lf)?lf:[];if(cur()&&cur().type==="field")renderProps();});
   rpc("brandpdf.api.child_tables",{doctype:dt}).then(function(ct){if(Array.isArray(ct)&&ct.length){CTABLES=ct;if(cur()&&cur().type==="datatable")renderProps();}});
-  rpc("brandpdf.api.list_formats",{doctype:dt}).then(function(fs){fs=fs||[];const opts=fs.map(function(f){return{value:f.name,label:(f.is_default?"★ ":"")+f.label};});setSelOptions("openSel",opts,"Open…","");});
+  rpc("brandpdf.api.list_formats",{doctype:dt}).then(function(fs){fs=fs||[];const opts=fs.map(function(f){return{value:f.name,label:(f.is_default?"Default · ":"")+f.label};});setSelOptions("openSel",opts,"Open…","");});
   rpc("brandpdf.api.builder_docs",{doctype:dt,limit:25}).then(function(ds){FIELDVALS=null;SAMPLE=JSON.parse(JSON.stringify(BASE_SAMPLE));setSelOptions("dataSel",(ds||[]).map(function(n){return{value:n,label:n};}),"Sample data","");render();});
 }
 function openFormat(name){if(!name)return;const el=document.getElementById("openSel");if(name==="__manage__"){if(el)el.value="";openFormatsMgr();return;}clearDraft();rpc("brandpdf.api.get_format",{name:name}).then(function(r){
@@ -1832,9 +1914,9 @@ function _renderFmtMgr(){
       const acts=(f.is_default?'<span class="deftag">'+(isRep?'Active':('Default'+(_fmtCompany?' · '+esc(_fmtCompany):'')))+'</span>':setDef)
         +(f.is_visual===false?'<span class="tagstd" title="HTML/Jinja template — no visual design to open on the canvas">HTML</span>':`<button class="btn ghost" onclick="openFmtFromMgr('${esc(f.name)}')">Open</button>`)
         +`<button class="btn ghost" title="Make an editable copy of this format" onclick="dupFmt('${esc(f.name)}','${esc(f.label)}')">Duplicate</button>`
-        +((isRep||f.is_standard)?'':`<button class="btn ghost" title="Show in the Templates gallery for everyone on this site" onclick="toggleGallery('${esc(f.name)}',${inGal[f.name]?0:1})">${inGal[f.name]?'▦ Remove':'▦ To gallery'}</button>`)
+        +((isRep||f.is_standard)?'':`<button class="btn ghost" title="Show in the Templates gallery for everyone on this site" onclick="toggleGallery('${esc(f.name)}',${inGal[f.name]?0:1})">${inGal[f.name]?UI.grid+' Remove':UI.grid+' To gallery'}</button>`)
         +(f.is_standard?'':`<button class="btn ghost" onclick="deleteFmt('${esc(f.name)}','${esc(f.label)}')">Delete</button>`);
-      return `<div class="fmtrow"><div class="fmtname">${f.is_default?'<span class="star">★</span>':''}${esc(f.label)}${f.is_standard?'<span class="tagstd">standard</span>':''}</div><div class="fmtacts">${acts}</div></div>`;
+      return `<div class="fmtrow"><div class="fmtname">${f.is_default?'<span class="star">'+UI.starFill+'</span>':''}${esc(f.label)}${f.is_standard?'<span class="tagstd">standard</span>':''}</div><div class="fmtacts">${acts}</div></div>`;
     }).join(""):'<div class="hint" style="padding:14px 0">'+(EMBED?('No saved formats for <b>'+esc(isRep?(state.report||'this report'):state.target)+'</b> yet — design one and Save.'):'Format management works inside ERPNext.')+'</div>';
     document.getElementById("fmtmgrBody").innerHTML=head+body;});}
 function toggleGallery(name,on){rpc("brandpdf.api.set_gallery",{name:name,on:on}).then(function(){toast(on?"Added to the Templates gallery — everyone on this site can start from it.":"Removed from the gallery.");_renderFmtMgr();});}
@@ -1848,7 +1930,7 @@ let _fs=false;
 function toggleFullscreen(){_fs=!_fs;
   if(EMBED){window.parent.postMessage({type:"brandpdf-fullscreen",on:_fs},window.location.origin);}
   else{try{if(_fs){(document.documentElement.requestFullscreen||function(){})();}else if(document.fullscreenElement)document.exitFullscreen();}catch(e){}}
-  const btn=document.getElementById("fsBtn");if(btn){btn.classList.toggle("on",_fs);btn.textContent=_fs?"⛶":"⛶";btn.title=_fs?"Exit full screen (F)":"Full screen (F)";}
+  const btn=document.getElementById("fsBtn");if(btn){btn.classList.toggle("on",_fs);btn.title=_fs?"Exit full screen (F)":"Full screen (F)";}  // icon is the same either way; only the tooltip flips
 }
 if(!EMBED)document.addEventListener("fullscreenchange",function(){_fs=!!document.fullscreenElement;const btn=document.getElementById("fsBtn");if(btn)btn.classList.toggle("on",_fs);});
 function newFormat(){clearDraft();state.blocks=[];selId=null;FIELDVALS=null;SAMPLE=JSON.parse(JSON.stringify(BASE_SAMPLE));state.branding.header_image="";state.branding.footer_image="";document.getElementById("fmtName").value="New Format";const ds=document.getElementById("dataSel");if(ds)ds.value="";renderNowSync();renderProps();renderBrand();}
