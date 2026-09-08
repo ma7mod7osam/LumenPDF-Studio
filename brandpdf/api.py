@@ -116,6 +116,88 @@ def _default_report_template(report_name):
 
 
 @frappe.whitelist()
+def home_formats(limit=200):
+    """Every visual format on the site, newest first — one row per card on the Studio home screen.
+    Definitions are parsed here (never shipped to the browser) only for the two things a card
+    draws: the branding colour and the page orientation. A bad row never breaks the screen."""
+    _require_manager()
+    if not frappe.db.exists("DocType", "BrandPDF Template"):
+        return []
+    try:
+        rows = frappe.get_all(
+            "BrandPDF Template",
+            filters={"source_type": "blocks"},
+            fields=["name", "template_name", "target_kind", "target_doctype", "report_name",
+                    "modified", "is_standard", "definition"],
+            order_by="modified desc",
+            limit=int(limit or 200),
+        )
+    except Exception:
+        return []  # target_kind/report_name columns not migrated yet
+
+    # Which formats are SOME default? Resolve once per target (not per row) with the same helpers
+    # the pickers use, so home agrees with the Formats manager. Value = the company that scopes it.
+    defaults = {}
+    doctypes, reports = [], []
+    for r in rows:
+        kind = "report" if (r.get("target_kind") == "report") else "doctype"
+        if kind == "report":
+            if r.get("report_name") and r["report_name"] not in reports:
+                reports.append(r["report_name"])
+        elif r.get("target_doctype") and r["target_doctype"] not in doctypes:
+            doctypes.append(r["target_doctype"])
+    companies = []
+    if doctypes and frappe.db.exists("DocType", "Company"):
+        try:
+            companies = frappe.get_all("Company", pluck="name", order_by="name asc")
+        except Exception:
+            companies = []
+    for dt in doctypes:
+        try:
+            g = _default_template(dt)
+            if g:
+                defaults.setdefault(g, "")
+            for c in companies:  # a company-scoped mapping is a default too — say which company
+                t = _default_template(dt, c)
+                if t:
+                    defaults.setdefault(t, c)
+        except Exception:
+            continue
+    for rn in reports:
+        try:
+            t = _default_report_template(rn)
+            if t:
+                defaults.setdefault(t, "")
+        except Exception:
+            continue
+
+    out = []
+    for r in rows:
+        primary, orientation = "#1463FF", "portrait"
+        try:
+            d = json.loads(r.get("definition") or "{}")
+            if isinstance(d, dict):
+                p = ((d.get("branding") or {}) if isinstance(d.get("branding"), dict) else {}).get("primary")
+                if isinstance(p, str) and p.strip():
+                    primary = p.strip()
+                o = ((d.get("page") or {}) if isinstance(d.get("page"), dict) else {}).get("orientation")
+                if o == "landscape":
+                    orientation = "landscape"
+        except Exception:
+            pass
+        kind = "report" if (r.get("target_kind") == "report") else "doctype"
+        out.append({
+            "name": r["name"], "label": r.get("template_name") or r["name"],
+            "target_kind": kind, "target_doctype": r.get("target_doctype") or "",
+            "report_name": r.get("report_name") or "",
+            "modified": str(r.get("modified") or ""), "is_standard": bool(r.get("is_standard")),
+            "primary": primary, "orientation": orientation,
+            "is_default": r["name"] in defaults, "default_company": defaults.get(r["name"], ""),
+        })
+    return out
+
+
+@frappe.whitelist()
 def list_companies():
     """Companies for the Formats manager's scope picker (empty on non-ERPNext sites)."""
     _require_manager()

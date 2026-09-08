@@ -74,7 +74,7 @@ frappe.pages['brandpdf-builder'].on_page_load = function (wrapper) {
 		'brandpdf.api.builder_doctypes': 1, 'brandpdf.api.builder_docs': 1, 'brandpdf.api.builder_sample': 1,
 		'brandpdf.api.doctype_fields': 1, 'brandpdf.api.doctype_link_fields': 1, 'brandpdf.api.child_tables': 1, 'brandpdf.api.list_formats': 1, 'brandpdf.api.get_format': 1,
 		'brandpdf.api.save_format': 1, 'brandpdf.api.set_default_format': 1, 'brandpdf.api.delete_format': 1, 'brandpdf.api.duplicate_format': 1,
-		'brandpdf.api.list_companies': 1, 'brandpdf.api.set_gallery': 1, 'brandpdf.api.gallery_list': 1,
+		'brandpdf.api.list_companies': 1, 'brandpdf.api.set_gallery': 1, 'brandpdf.api.gallery_list': 1, 'brandpdf.api.home_formats': 1,
 		'brandpdf.api.builder_reports': 1, 'brandpdf.report.report_sample': 1, 'brandpdf.api.set_default_report_format': 1,
 		'brandpdf.api.list_snippets': 1, 'brandpdf.api.save_snippet': 1, 'brandpdf.api.delete_snippet': 1,
 		'brandpdf.api.submit_feedback': 1,

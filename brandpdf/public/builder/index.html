@@ -255,14 +255,93 @@
   .gswatch{height:64px;border-radius:6px;margin-bottom:10px;background:#fff;border:1px solid var(--line2);overflow:hidden;display:flex;flex-direction:column}
   .gcard .gt{font-weight:700;margin-bottom:4px;font-size:13px}
   .gcard .gd{font-size:11px;color:var(--mut);line-height:1.5}
+  /* ===== Home screen — a full-viewport overlay ABOVE the editor chrome, BELOW the modals (z 200).
+     The editor keeps its state underneath: hideHome() simply uncovers it again. ===== */
+  #home{position:fixed;inset:0;z-index:150;background:var(--bg);display:none;flex-direction:column}
+  #home .htop{display:flex;align-items:center;gap:12px;padding:10px 20px;min-height:56px;background:var(--panel);border-bottom:1px solid var(--line);flex:0 0 auto}
+  #home .htop .spacer{flex:1}
+  .hsearch{background:var(--panel2);border:1px solid var(--line2);color:var(--ink);border-radius:9px;padding:8px 12px;font-size:12.5px;font-family:inherit;width:280px;max-width:38vw}
+  .hsearch:focus{outline:2px solid #ADC8FF;outline-offset:-1px;border-color:var(--accent)}
+  #home .hbar{display:flex;align-items:center;gap:10px;padding:14px 20px 4px;flex:0 0 auto}
+  #home .hbar .chips{margin:0}
+  #home .hbar .spacer{flex:1}
+  .hmanage{color:var(--mut);font-size:12px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:5px;background:none;border:0;font-family:inherit;padding:5px 2px}
+  .hmanage:hover{color:var(--accent)}
+  #home .hscroll{flex:1 1 auto;min-height:0;overflow-y:auto;padding:12px 20px 40px}
+  .hgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:18px}
+  .hcard{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px;cursor:pointer;transition:.12s;text-align:left}
+  .hcard:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:0 10px 26px rgba(16,24,40,.10)}
+  .hcard.new{border:1.5px dashed var(--line2);background:transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;min-height:190px;color:var(--mut)}
+  .hcard.new:hover{border-color:var(--accent);color:var(--accent)}
+  .hcard.new .icn{width:22px;height:22px}
+  .hcard.new b{font-size:13px}
+  .hcard.new span{font-size:11px;color:var(--mut2);text-align:center;line-height:1.5}
+  .hthumb{height:120px;border-radius:9px;background:var(--panel2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;overflow:hidden;margin-bottom:10px}
+  .hpage{background:#fff;box-shadow:0 2px 8px rgba(16,24,40,.16);border-radius:2px;overflow:hidden;display:flex;flex-direction:column}
+  .hpage .hband{height:14px;flex:0 0 auto}
+  .hpage .hlines{flex:1;padding:7px 8px;display:flex;flex-direction:column;gap:4px;justify-content:flex-start}
+  .hpage .hlines i{display:block;height:3px;border-radius:2px;background:#E4E8F0}
+  .hcard .hname{font-weight:700;font-size:13px;line-height:1.35;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .hcard .hchips{display:flex;flex-wrap:wrap;gap:5px;margin:7px 0 6px}
+  .hchip{font-size:10px;font-weight:700;border-radius:20px;padding:3px 8px;background:var(--panel2);color:var(--mut);border:1px solid var(--line);display:inline-flex;align-items:center;gap:4px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .hchip.star{background:#FFF4E5;color:#B45309;border-color:#F0D98A}
+  :root[data-theme="dark"] .hchip.star{background:#2A2410;color:#F0D98A;border-color:#5A4A18}
+  .hchip .icn{width:10px;height:10px;vertical-align:0}
+  .hcard .hdate{font-size:11px;color:var(--mut2)}
+  .hempty{text-align:center;color:var(--mut);font-size:12.5px;line-height:1.7;padding:34px 16px 8px;max-width:460px;margin:0 auto}
+  .hempty b{color:var(--ink);display:block;font-size:14px;margin-bottom:5px}
+  /* ===== New-format wizard (inside #newfmt) ===== */
+  .wzsteps{display:flex;align-items:center;gap:0;margin:16px 0 4px;flex:0 0 auto}
+  .wzstep{display:flex;align-items:center;gap:8px;flex:0 0 auto}
+  .wzstep .wznum{width:24px;height:24px;border-radius:50%;border:1.5px solid var(--line2);color:var(--mut2);display:grid;place-items:center;font-size:11px;font-weight:800;flex:0 0 auto}
+  .wzstep .wzlbl{font-size:11.5px;font-weight:700;color:var(--mut2);white-space:nowrap}
+  .wzstep.on .wznum{border-color:var(--accent);background:var(--accent);color:#fff}
+  .wzstep.on .wzlbl{color:var(--ink)}
+  .wzstep.done .wznum{border-color:var(--ok);color:var(--ok)}
+  .wzstep.done .wzlbl{color:var(--mut)}
+  .wzstep .wznum .icn{width:12px;height:12px;vertical-align:0}
+  .wzline{flex:1 1 auto;height:1.5px;background:var(--line2);margin:0 10px;min-width:14px}
+  .wzline.done{background:var(--ok)}
+  .wzpick{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:4px 0 14px}
+  .wzopt{border:1.5px solid var(--line2);border-radius:11px;padding:14px 12px;background:var(--panel);cursor:pointer;display:flex;align-items:center;gap:11px;text-align:left;font-family:inherit;color:var(--ink)}
+  .wzopt:hover{border-color:var(--accent)}
+  .wzopt.on{border-color:var(--accent);background:#1463FF10;box-shadow:0 0 0 2px var(--accentSoft)}
+  .wzopt .wzico{width:34px;height:34px;flex:0 0 34px;border-radius:9px;background:var(--accentSoft);color:var(--accent);display:grid;place-items:center}
+  .wzopt .wzico .icn{width:18px;height:18px;vertical-align:0}
+  .wzopt b{display:block;font-size:13px}
+  .wzopt small{display:block;font-size:10.5px;color:var(--mut);margin-top:2px;line-height:1.4}
+  .wztabs{display:flex;flex-wrap:wrap;gap:6px;margin:2px 0 12px;flex:0 0 auto}
+  .wztab{padding:6px 13px;border:1px solid var(--line2);border-radius:20px;background:var(--panel);color:var(--mut);font-size:11.5px;font-weight:700;cursor:pointer;font-family:inherit}
+  .wztab:hover{border-color:var(--accent);color:var(--accent)}
+  .wztab.on{border-color:var(--accent);background:#1463FF14;color:var(--accent)}
+  .wzcards{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;padding:2px}
+  .wzcard{position:relative;background:var(--panel2);border:1px solid var(--line2);border-radius:10px;padding:12px;cursor:pointer;transition:.12s;text-align:left}
+  .wzcard:hover{border-color:var(--accent)}
+  .wzcard.on{border-color:var(--accent);box-shadow:0 0 0 2px var(--accentSoft)}
+  .wzcard.dash{border-style:dashed;background:transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;min-height:132px;color:var(--mut)}
+  .wzcard.dash:hover{color:var(--accent)}
+  .wzcard.dash .icn{width:20px;height:20px}
+  .wzcard .gt{font-weight:700;margin-bottom:3px;font-size:12.5px}
+  .wzcard .gd{font-size:10.5px;color:var(--mut);line-height:1.45}
+  .wzcard .wzchk{position:absolute;top:7px;right:7px;width:19px;height:19px;border-radius:50%;background:var(--accent);color:#fff;display:none;place-items:center}
+  .wzcard .wzchk .icn{width:11px;height:11px;vertical-align:0;stroke-width:2.6}
+  .wzcard.on .wzchk{display:grid}
+  .wzfoot{display:flex;align-items:center;gap:8px;margin-top:14px;flex:0 0 auto}
+  .wzfoot .spacer{flex:1}
+  .btn[disabled]{opacity:.45;cursor:not-allowed}
+  .btn[disabled]:hover{border-color:var(--line2)}
+  .btn.primary[disabled]:hover{background:#1463FF}
 </style>
 </head>
 <body>
 <div class="app">
   <div class="top">
-    <div class="brand"><svg width="24" height="24" viewBox="0 0 48 48" fill="none" aria-label="LumenPDF Studio"><rect x="9" y="4" width="30" height="40" rx="4" style="stroke:var(--logoA)" stroke-width="3"/><rect x="14.5" y="10" width="19" height="3.6" rx="1.8" style="fill:var(--logoB)"/><rect x="14.5" y="18" width="19" height="9" rx="2.4" style="fill:var(--logoA)"/><rect x="14.5" y="31.5" width="12" height="3.6" rx="1.8" style="fill:var(--logoB)"/></svg> LumenPDF <small>Studio · b65</small></div>
+    <div class="brand"><svg width="24" height="24" viewBox="0 0 48 48" fill="none" aria-label="LumenPDF Studio"><rect x="9" y="4" width="30" height="40" rx="4" style="stroke:var(--logoA)" stroke-width="3"/><rect x="14.5" y="10" width="19" height="3.6" rx="1.8" style="fill:var(--logoB)"/><rect x="14.5" y="18" width="19" height="9" rx="2.4" style="fill:var(--logoA)"/><rect x="14.5" y="31.5" width="12" height="3.6" rx="1.8" style="fill:var(--logoB)"/></svg> LumenPDF <small>Studio · b66</small></div>
+    <button class="btn ghost" id="homeBtn" onclick="goHome()" title="All formats (Home)"><svg class="icn" viewBox="0 0 24 24"><path d="M4 11l8-6.5 8 6.5"/><path d="M6 10v9a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-9"/></svg> Home</button>
     <div class="menuwrap"><button class="btn ghost" id="fileBtn" onclick="toggleFileMenu(event)" title="New, open, duplicate, import/export, manage"><svg class="icn" viewBox="0 0 24 24"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg> File</button>
       <div class="menu" id="fileMenu">
+        <button onclick="closeFileMenu();goHome()"><svg class="icn" viewBox="0 0 24 24"><path d="M4 11l8-6.5 8 6.5"/><path d="M6 10v9a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-9"/></svg> Home</button>
+        <div class="msep"></div>
         <button onclick="closeFileMenu();openNewFmt()"><svg class="icn" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> New format…</button>
         <button onclick="closeFileMenu();openFormatsMgr()"><svg class="icn" viewBox="0 0 24 24"><path d="M3 7a1 1 0 0 1 1-1h5l2 2h9a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/></svg> Open / manage formats…</button>
         <button onclick="closeFileMenu();dupCurrentFmt()"><svg class="icn" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/></svg> Duplicate this format…</button>
@@ -306,15 +385,31 @@
     </div>
   </div>
 </div>
+<div id="home">
+  <div class="htop">
+    <div class="brand"><svg width="24" height="24" viewBox="0 0 48 48" fill="none" aria-label="LumenPDF Studio"><rect x="9" y="4" width="30" height="40" rx="4" style="stroke:var(--logoA)" stroke-width="3"/><rect x="14.5" y="10" width="19" height="3.6" rx="1.8" style="fill:var(--logoB)"/><rect x="14.5" y="18" width="19" height="9" rx="2.4" style="fill:var(--logoA)"/><rect x="14.5" y="31.5" width="12" height="3.6" rx="1.8" style="fill:var(--logoB)"/></svg> LumenPDF <small>Studio</small></div>
+    <input class="hsearch" id="homeSearch" type="text" placeholder="Search formats…" oninput="renderHomeCards()">
+    <div class="spacer"></div>
+    <button class="btn ghost" onclick="hideHome()" title="Back to the design you have open">Back to editor</button>
+    <button class="btn primary" onclick="openWizard()"><svg class="icn" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> New format</button>
+  </div>
+  <div class="hbar">
+    <div class="chips" id="homeChips"><span class="chip on" onclick="homeFilter('all')">All</span><span class="chip" onclick="homeFilter('doctype')">Documents</span><span class="chip" onclick="homeFilter('report')">Reports</span></div>
+    <div class="spacer"></div>
+    <button class="hmanage" onclick="openFormatsMgr()"><svg class="icn" viewBox="0 0 24 24"><path d="M12 3.6l2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8L3.5 9.8l5.9-.9z"/></svg> Manage defaults</button>
+  </div>
+  <div class="hscroll"><div class="hgrid" id="homeGrid"></div><div id="homeEmpty"></div></div>
+</div>
 <div id="gallery"><div class="gcard-wrap"><h3>Start from a template</h3><div class="ghint">Pick a ready-made design, then customize it.<span class="gclose" onclick="closeGallery()"><svg class="icn" viewBox="0 0 24 24"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg> Close</span></div><div class="gscroll"><div class="gcards" id="gcards"></div><div id="gsite"></div></div></div></div>
 <div id="fmtmgr"><div class="gcard-wrap" style="width:580px"><h3 id="fmtmgrTitle">Formats</h3><div class="ghint">The starred default is what <b>Print → PDF</b> uses. Set the default, open, or delete a format.<span class="gclose" onclick="closeFmtMgr()"><svg class="icn" viewBox="0 0 24 24"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg> Close</span></div><div id="fmtmgrBody" style="margin-top:14px;max-height:60vh;overflow:auto"></div></div></div>
-<div id="newfmt"><div class="gcard-wrap" style="width:420px"><h3>New format</h3><div class="ghint">Name it and choose what it prints.<span class="gclose" onclick="closeNewFmt()"><svg class="icn" viewBox="0 0 24 24"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg> Close</span></div>
-  <div style="margin-top:14px">
-    <div class="fld"><label>Format name</label><input type="text" id="nfName" placeholder="e.g. Sales Invoice - Branded" onkeydown="if(event.key==='Enter'){event.preventDefault();confirmNewFmt();}"></div>
-    <div class="fld"><label>Format type</label><div class="seg" id="nfKindSeg"><button class="on" onclick="nfKind('doctype')">Document</button><button onclick="nfKind('report')">Report</button></div></div>
-    <div class="fld" id="nfDocWrap"><label>Document type</label><select id="nfDoc"></select></div>
-    <div class="fld" id="nfRepWrap" style="display:none"><label>Report</label><select id="nfRep"></select></div>
-    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px"><button class="btn ghost" onclick="closeNewFmt()">Cancel</button><button class="btn primary" onclick="confirmNewFmt()">Create</button></div>
+<div id="newfmt"><div class="gcard-wrap" style="width:760px"><h3 id="wzTitle">New format</h3><div class="ghint" id="wzHint">Three quick steps: what it prints, where it starts, what it is called.<span class="gclose" onclick="closeNewFmt()"><svg class="icn" viewBox="0 0 24 24"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg> Close</span></div>
+  <div class="wzsteps" id="wzSteps"></div>
+  <div class="gscroll" id="wzBody"></div>
+  <div class="wzfoot">
+    <button class="btn ghost" id="wzBack" onclick="wzBack()">Back</button>
+    <div class="spacer"></div>
+    <button class="btn ghost" onclick="closeNewFmt()">Cancel</button>
+    <button class="btn primary" id="wzNext" onclick="wzNext()">Continue</button>
   </div></div></div>
 <div id="savefmt"><div class="gcard-wrap" style="width:420px"><h3>Save format</h3><div class="ghint">Name it, and choose whether it becomes the default.<span class="gclose" onclick="closeSaveFmt()"><svg class="icn" viewBox="0 0 24 24"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg> Close</span></div>
   <div style="margin-top:14px">
@@ -425,7 +520,12 @@ const UI={
   grid:_ic('<rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="9" x2="9" y2="21"/>'),
   upload:_ic('<path d="M12 16V4"/><path d="M7 9l5-5 5 5"/><path d="M4 20h16"/>'),
   cols:_ic('<rect x="3" y="5" width="8" height="14" rx="1"/><rect x="13" y="5" width="8" height="14" rx="1"/>'),
-  check:_ic('<path d="M4 12.5l5 5L20 6.5"/>')};
+  check:_ic('<path d="M4 12.5l5 5L20 6.5"/>'),
+  plus:_ic('<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>'),
+  home:_ic('<path d="M4 11l8-6.5 8 6.5"/><path d="M6 10v9a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-9"/>'),
+  doc:_ic('<path d="M6 3h7l5 5v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M13 3v5h5"/><line x1="8.5" y1="13" x2="15.5" y2="13"/><line x1="8.5" y1="17" x2="13" y2="17"/>'),
+  tbl:_ic('<rect x="3" y="4" width="18" height="16" rx="1.5"/><line x1="3" y1="9.5" x2="21" y2="9.5"/><line x1="9" y1="9.5" x2="9" y2="20"/><line x1="15" y1="9.5" x2="15" y2="20"/>'),
+  file:_ic('<path d="M12 16V4"/><path d="M7 9l5-5 5 5"/><path d="M4 20h16"/>')};
 /* the canvas .tools chrome uses bare 12px svgs (sized by .tools button svg) */
 const TOOLI={up:'<svg viewBox="0 0 24 24"><path d="M12 19V5"/><path d="M6 11l6-6 6 6"/></svg>',
   down:'<svg viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M6 13l6 6 6-6"/></svg>',
@@ -904,7 +1004,10 @@ const REPORTFORMATS=[
 ];
 function _swatch(s){return `<div class="gswatch"><div style="height:${s.sw.hdrH}px;background:${s.sw.hdr}"></div><div style="flex:1;padding:6px 9px;display:flex;flex-direction:column;gap:3px;justify-content:center">`+[75,92,58,84].map(function(w){return `<div style="height:3px;width:${w}%;background:#E4E8F0;border-radius:2px"></div>`;}).join("")+`</div><div style="height:5px;background:${s.sw.foot}"></div></div>`;}
 let _galSet=null;  // which set the open gallery is showing (FORMATS or REPORTFORMATS)
-function openGallery(){const isRep=state.targetKind==="report";_galSet=isRep?REPORTFORMATS:FORMATS;
+/* The top-bar Templates button now opens the wizard at step 2 (the target is already chosen).
+   openGalleryDialog() is the pre-wizard #gallery dialog — kept whole, just no longer wired up. */
+function openGallery(){openWizard(state.targetKind,true);}
+function openGalleryDialog(){const isRep=state.targetKind==="report";_galSet=isRep?REPORTFORMATS:FORMATS;
   const h3=document.querySelector("#gallery h3");if(h3)h3.textContent=isRep?"Start from a report format":"Start from a template";
   document.getElementById("gcards").innerHTML=_galSet.map(function(s,i){return `<div class="gcard" onclick="pickStarter(${i})">`+_swatch(s)+`<div class="gt">${esc(s.name)}</div><div class="gd">${esc(s.desc)}</div></div>`;}).join("");document.getElementById("gallery").style.display="flex";
   if(isRep){const gs=document.getElementById("gsite");if(gs)gs.innerHTML="";return;}  // site-templates list is document-oriented
@@ -920,46 +1023,258 @@ function closeFileMenu(){document.getElementById("fileMenu").style.display="none
 document.addEventListener("mousedown",function(e){const w=e.target.closest?e.target.closest(".menuwrap"):null;if(!w)closeFileMenu();});
 /* ---- Duplicate the format being edited: save the current design under a new name ---- */
 function dupCurrentFmt(){const curName=document.getElementById("fmtName").value||"Format";const nm=prompt("Name for the copy:",curName+" copy");if(nm===null)return;const nn=(nm||"").trim();if(!nn)return;document.getElementById("fmtName").value=nn;save();toast('Now editing the copy "'+nn+'".');}
-/* ---- New format dialog: name + type (document/report) + target ---- */
-let _nfKind="doctype";
-function openNewFmt(){
-  _nfKind=(state.targetKind==="report")?"report":"doctype";nfKind(_nfKind,true);
-  const nd=document.getElementById("nfDoc");const src=document.getElementById("doctypeSel");
-  nd.innerHTML=(src&&src.options.length)?src.innerHTML:`<option>${esc(state.target||"Quotation")}</option>`;
-  if(state.target)nd.value=state.target;
-  ensureReports(function(){const nr=document.getElementById("nfRep");nr.innerHTML=(_reports||[]).length?_reports.map(function(r){return `<option value="${esc(r.name)}">${esc(r.label)}</option>`;}).join(""):'<option value="">(no reports available)</option>';if(state.report)nr.value=state.report;});
-  document.getElementById("nfName").value="";
+/* ================= New-format wizard: 1 Target · 2 Starting point · 3 Name =================
+   Replaces the old one-shot "New format" popup (same #newfmt dialog, same openNewFmt entry).
+   nfKind/confirmNewFmt survive as thin shims so nothing that still calls them breaks. */
+const WZSTEPS=["Target","Starting point","Name"];
+let _wz={step:1,kind:"doctype",target:"",report:"",tab:"studio",pick:null,name:"",mine:null,site:null};
+function openNewFmt(){openWizard();}
+/* prefKind preselects the kind; jump=true skips straight to step 2 with the CURRENT target
+   (that's what the top-bar Templates button wants — the target is already chosen). */
+function openWizard(prefKind,jump){
+  const kind=(prefKind==="report"||(!prefKind&&state.targetKind==="report"))?"report":"doctype";
+  _wz={step:1,kind:kind,target:state.target||"",report:state.report||"",tab:"studio",pick:null,name:"",mine:null,site:null};
+  if(jump&&(kind==="report"?!!_wz.report:!!_wz.target))_wz.step=2;
   document.getElementById("newfmt").style.display="flex";
-  setTimeout(function(){document.getElementById("nfName").focus();},50);
-}
-function nfKind(k,skipState){_nfKind=(k==="report")?"report":"doctype";
-  document.querySelectorAll("#nfKindSeg button").forEach(function(b){b.classList.toggle("on",(b.textContent==="Report")===(_nfKind==="report"));});
-  document.getElementById("nfDocWrap").style.display=_nfKind==="doctype"?"":"none";
-  document.getElementById("nfRepWrap").style.display=_nfKind==="report"?"":"none";
-  const n=document.getElementById("nfName");
-  if(!skipState&&n&&!n.value)n.placeholder=_nfKind==="report"?"e.g. General Ledger - Branded":"e.g. Sales Invoice - Branded";
+  wzRender();
 }
 function closeNewFmt(){document.getElementById("newfmt").style.display="none";}
-function confirmNewFmt(){
-  const name=(document.getElementById("nfName").value||"").trim();
-  if(!name){document.getElementById("nfName").focus();return;}
-  const ksel=document.getElementById("targetKindSel");
-  if(_nfKind==="report"){
-    const rep=document.getElementById("nfRep").value;
-    if(!rep){alert("Pick a report.");return;}
-    state.targetKind="report";state.report=rep;if(ksel)ksel.value="report";
-    document.getElementById("doctypeSel").style.display="none";
-    const rs=document.getElementById("reportSel");rs.style.display="";ensureReports(function(){rs.value=rep;});
-    buildPalette();loadReportSample(rep);newReportFormat();
+function wzSetKind(k){const nk=(k==="report")?"report":"doctype";if(nk===_wz.kind)return;
+  _wz.kind=nk;_wz.pick=null;_wz.mine=null;_wz.site=null;
+  if(nk==="report"&&!_wz.report&&_reports&&_reports.length)_wz.report=_reports[0].name;
+  wzRender();}
+function nfKind(k){wzSetKind(k);}            // kept alive: the old dialog's kind switch
+function confirmNewFmt(){wzNext();}          // kept alive: the old dialog's confirm button
+function wzTarget(){return (_wz.kind==="report")?(_wz.report||"Report"):(_wz.target||"Document");}
+function wzPickLabel(){const p=_wz.pick;if(!p)return "";
+  if(p.src==="blank")return "Blank page";
+  if(p.src==="studio"){const s=((_wz.kind==="report")?REPORTFORMATS:FORMATS)[p.i];return s?s.name+" (studio template)":"studio template";}
+  if(p.src==="mine"){const r=(_wz.mine||[])[p.i];return r?"copy of "+r.label:"a copy";}
+  if(p.src==="site"){const r=(_wz.site||[])[p.i];return r?"copy of "+r.label+" (site gallery)":"a site template";}
+  return "";}
+function wzRender(){
+  const st=_wz.step;
+  document.getElementById("wzSteps").innerHTML=WZSTEPS.map(function(l,i){const n=i+1;
+    const cls=(n<st)?"done":(n===st?"on":"");
+    return (i?'<div class="wzline'+((st>i)?" done":"")+'"></div>':"")
+      +'<div class="wzstep '+cls+'"><span class="wznum">'+((n<st)?UI.check:n)+'</span><span class="wzlbl">'+esc(l)+'</span></div>';
+  }).join("");
+  const b=document.getElementById("wzBody");
+  if(st===1)wzStep1(b);
+  else if(st===2)wzStep2(b);
+  else wzStep3(b);
+  wzButtons();
+}
+function _wzOpt(kind,title,sub,icon){return '<button type="button" class="wzopt'+(_wz.kind===kind?" on":"")+'" onclick="wzSetKind(\''+kind+'\')"><span class="wzico">'+icon+'</span><span><b>'+esc(title)+'</b><small>'+esc(sub)+'</small></span></button>';}
+function wzStep1(b){
+  b.innerHTML='<div class="wzpick">'
+    +_wzOpt("doctype","Document","Quotation, Sales Invoice, Delivery Note — anything you print from a record.",UI.doc)
+    +_wzOpt("report","Report","General Ledger, Trial Balance — any ERPNext report.",UI.tbl)
+    +'</div>'
+    +(_wz.kind==="report"
+      ?'<div class="fld"><label>Report</label><select id="wzRep" onchange="_wz.report=this.value;_wz.mine=null;wzButtons()"></select></div>'
+      :'<div class="fld"><label>Document type</label><select id="wzDoc" onchange="_wz.target=this.value;_wz.mine=null;wzButtons()"></select></div>');
+  if(_wz.kind==="doctype"){
+    const el=document.getElementById("wzDoc"),src=document.getElementById("doctypeSel");
+    el.innerHTML=(src&&src.options.length)?src.innerHTML:'<option>'+esc(state.target||"Quotation")+'</option>';
+    if(!_wz.target)_wz.target=el.value||state.target||"Quotation";
+    el.value=_wz.target;wzButtons();
   } else {
-    const dt=document.getElementById("nfDoc").value||state.target||"Quotation";
-    state.targetKind="doctype";state.target=dt;if(ksel)ksel.value="doctype";
-    document.getElementById("reportSel").style.display="none";
-    const ds=document.getElementById("doctypeSel");ds.style.display="";ds.value=dt;
-    buildPalette();loadDoctypeMeta(dt);newFormat();
+    const fill=function(){const el=document.getElementById("wzRep");if(!el)return;
+      el.innerHTML=(_reports||[]).length?_reports.map(function(r){return '<option value="'+esc(r.name)+'">'+esc(r.label)+'</option>';}).join(""):'<option value="">(no reports available)</option>';
+      if(!_wz.report&&_reports&&_reports.length)_wz.report=_reports[0].name;
+      if(_wz.report)el.value=_wz.report;wzButtons();};
+    if(_reports)fill();else{document.getElementById("wzRep").innerHTML='<option value="">Loading…</option>';ensureReports(function(){if(_wz.step===1)fill();});}
   }
-  document.getElementById("fmtName").value=name;
-  commitHistory();closeNewFmt();
+}
+const WZTABS=[["studio","Studio templates"],["mine","My formats"],["site","Site gallery"],["import","Import file"]];
+function wzStep2(b){
+  b.innerHTML='<div class="wztabs">'+WZTABS.map(function(t){return '<button type="button" class="wztab'+(_wz.tab===t[0]?" on":"")+'" onclick="wzTab(\''+t[0]+'\')">'+esc(t[1])+'</button>';}).join("")+'</div><div id="wzGrid"></div>';
+  wzTabBody();
+}
+function wzTab(t){_wz.tab=t;wzStep2(document.getElementById("wzBody"));}
+function _wzChk(){return '<span class="wzchk">'+UI.check+'</span>';}
+function wzPick(p){_wz.pick=p;wzTabBody();wzButtons();}
+function wzTabBody(){
+  const g=document.getElementById("wzGrid");if(!g)return;const p=_wz.pick;
+  if(_wz.tab==="studio"){
+    const set=(_wz.kind==="report")?REPORTFORMATS:FORMATS;
+    g.innerHTML='<div class="wzcards">'
+      +'<div class="wzcard dash'+((p&&p.src==="blank")?" on":"")+'" onclick="wzPick({src:\'blank\'})">'+_wzChk()+UI.plus+'<b style="font-size:12.5px">Blank</b><span style="font-size:10.5px;color:var(--mut2);text-align:center;line-height:1.45">An empty page.<br>Build it from scratch.</span></div>'
+      +set.map(function(s,i){return '<div class="wzcard'+((p&&p.src==="studio"&&p.i===i)?" on":"")+'" onclick="wzPick({src:\'studio\',i:'+i+'})">'+_wzChk()+_swatch(s)+'<div class="gt">'+esc(s.name)+'</div><div class="gd">'+esc(s.desc)+'</div></div>';}).join("")
+      +'</div>';
+    return;}
+  if(_wz.tab==="import"){
+    g.innerHTML='<div class="wzcards"><div class="wzcard dash" onclick="closeNewFmt();importJSON()">'+UI.file+'<b style="font-size:12.5px">Choose a .json file</b><span style="font-size:10.5px;color:var(--mut2);text-align:center;line-height:1.45">Opens a format exported from Studio.</span></div></div>';
+    return;}
+  const isMine=(_wz.tab==="mine");
+  const rows=isMine?_wz.mine:_wz.site;
+  if(rows===null||rows===undefined){
+    g.innerHTML='<div class="hint" style="padding:14px 2px">Loading…</div>';
+    const req=isMine
+      ?rpc("brandpdf.api.list_formats",(_wz.kind==="report")?{report_name:_wz.report}:{doctype:_wz.target})
+      :rpc("brandpdf.api.gallery_list");
+    req.then(function(rs){rs=(rs||[]).filter(function(r){return r&&r.is_visual!==false;});
+      if(isMine)_wz.mine=rs;else _wz.site=rs;
+      if(_wz.step===2&&_wz.tab===(isMine?"mine":"site"))wzTabBody();});
+    return;}
+  if(!rows.length){
+    g.innerHTML='<div class="hint" style="padding:14px 2px">'+(EMBED
+      ?(isMine?('No saved formats for <b>'+esc(wzTarget())+'</b> yet — start from a studio template.')
+             :'No site templates yet — open <b>File → Open / manage formats</b> and click <b>To gallery</b> on a format you like.')
+      :'This list comes from your ERPNext site.')+'</div>';
+    return;}
+  const src=isMine?"mine":"site";
+  g.innerHTML='<div class="wzcards">'+rows.map(function(r,i){
+    const sub=isMine?((r.is_default?"Current default · ":"")+(r.is_standard?"standard":"saved format")):((r.target||"")+" · saved on this site");
+    return '<div class="wzcard'+((p&&p.src===src&&p.i===i)?" on":"")+'" onclick="wzPick({src:\''+src+'\',i:'+i+'})">'+_wzChk()
+      +'<div class="gswatch" style="align-items:center;justify-content:center"><span style="color:var(--accent)">'+UI.grid+'</span></div>'
+      +'<div class="gt">'+esc(r.label)+'</div><div class="gd">'+esc(sub)+'</div></div>';}).join("")+'</div>';
+}
+function wzStep3(b){
+  const tgt=wzTarget();
+  b.innerHTML='<div class="fld" style="margin-top:4px"><label>Format name</label><input type="text" id="wzName" value="'+esc(_wz.name)+'" oninput="_wz.name=this.value;wzButtons()" onkeydown="if(event.key===\'Enter\'){event.preventDefault();wzNext();}"></div>'
+    +'<div class="hint" style="padding:0">When you save it, Studio offers to make it the default for <b>'+esc(tgt)+'</b> — the one Print → PDF uses.</div>'
+    +(_wz.pick?'<div class="hint" style="padding:10px 0 0">Starting point: <b>'+esc(wzPickLabel())+'</b></div>':"");
+  setTimeout(function(){const n=document.getElementById("wzName");if(n){n.focus();n.select();}},50);
+}
+function wzButtons(){
+  const st=_wz.step,back=document.getElementById("wzBack"),next=document.getElementById("wzNext");
+  if(!back||!next)return;
+  back.style.display=(st>1)?"":"none";
+  next.innerHTML=(st===3)?(UI.check+" Create format"):"Continue";
+  let ok=true;
+  if(st===1)ok=(_wz.kind==="report")?!!_wz.report:!!_wz.target;
+  else if(st===2)ok=!!_wz.pick;
+  else ok=!!((_wz.name||"").trim());
+  next.disabled=!ok;
+}
+function wzBack(){if(_wz.step>1){_wz.step--;wzRender();}}
+function wzNext(){
+  const st=_wz.step;
+  if(st===1){if(_wz.kind==="report"?!_wz.report:!_wz.target)return;_wz.step=2;wzRender();return;}
+  if(st===2){if(!_wz.pick)return;
+    const p=_wz.pick;   // a copy of an existing format keeps its own name plus " copy"
+    if(p.src==="mine"||p.src==="site"){const r=((p.src==="mine")?_wz.mine:_wz.site)[p.i];_wz.name=(r?r.label:wzTarget())+" copy";}
+    else _wz.name=wzTarget()+" - Custom";
+    _wz.step=3;wzRender();return;}
+  wzFinish();
+}
+/* switch the editor's target exactly the way the top-bar selects do */
+function applyTargetSwitch(kind,target,report){
+  const ksel=document.getElementById("targetKindSel");
+  if(kind==="report"){
+    state.targetKind="report";if(report)state.report=report;
+    if(ksel)ksel.value="report";
+    document.getElementById("doctypeSel").style.display="none";
+    const rs=document.getElementById("reportSel");rs.style.display="";
+    buildPalette();
+    ensureReports(function(){if(rs&&state.report)rs.value=state.report;});
+    if(state.report)loadReportSample(state.report);
+  } else {
+    state.targetKind="doctype";if(target)state.target=target;
+    if(ksel)ksel.value="doctype";
+    document.getElementById("reportSel").style.display="none";
+    const ds=document.getElementById("doctypeSel");ds.style.display="";if(state.target)ds.value=state.target;
+    buildPalette();loadDoctypeMeta(state.target);
+  }
+}
+function wzFinish(){
+  const name=(_wz.name||"").trim();if(!name)return;
+  const p=_wz.pick||{src:"blank"};
+  const land=function(){document.getElementById("fmtName").value=name;
+    fmtSaved=false;fmtDirty=false;fmtIsDefault=false;fmtLoaded=true;renderStatus();
+    commitHistory();hideHome();closeNewFmt();};
+  applyTargetSwitch(_wz.kind,_wz.target,_wz.report);
+  if(p.src==="studio"){
+    const f=((_wz.kind==="report")?REPORTFORMATS:FORMATS)[p.i];
+    clearDraft();if(f)loadDefinition(f.make());else if(_wz.kind==="report")newReportFormat();else newFormat();
+    land();return;}
+  if(p.src==="mine"||p.src==="site"){
+    const r=((p.src==="mine")?_wz.mine:_wz.site)[p.i];
+    if(!r){if(_wz.kind==="report")newReportFormat();else newFormat();land();return;}
+    clearDraft();
+    rpc("brandpdf.api.get_format",{name:r.name}).then(function(res){
+      if(res&&res.definition)loadDefinition(res.definition);   // a COPY: loadDefinition leaves fmtSaved false
+      else{toast('Could not load "'+r.label+'" — starting from a blank page.',true);if(_wz.kind==="report")newReportFormat();else newFormat();}
+      land();});
+    return;}
+  if(_wz.kind==="report")newReportFormat();else newFormat();
+  land();
+}
+/* ================= Home screen: every format on the site, as cards ================= */
+let hostLoaded=false;            // true once the desk host pushes a design into the builder
+let _homeRows=null, _homeShown=[], _homeFilter="all";
+function relDate(s){
+  if(!s)return "";
+  const d=new Date(String(s).replace(" ","T"));
+  if(isNaN(d.getTime()))return String(s).slice(0,10);
+  const sec=Math.floor((Date.now()-d.getTime())/1000);
+  if(sec<90)return "just now";
+  const m=Math.floor(sec/60);if(m<60)return m+" min ago";
+  const h=Math.floor(m/60);if(h<24)return h===1?"1 hour ago":h+" hours ago";
+  const dd=Math.floor(h/24);if(dd===1)return "yesterday";
+  if(dd<30)return dd+" days ago";
+  const mo=Math.floor(dd/30);if(mo<12)return mo===1?"1 month ago":mo+" months ago";
+  const y=Math.floor(dd/365);return y===1?"1 year ago":y+" years ago";
+}
+function _homeThumb(row){
+  const land=(row.orientation==="landscape");
+  const w=land?142:86,h=land?100:118;
+  const col=HX.test(row.primary||"")?row.primary:"#1463FF";
+  return '<div class="hthumb"><div class="hpage" style="width:'+w+'px;height:'+h+'px">'
+    +'<div class="hband" style="background:'+col+'"></div>'
+    +'<div class="hlines">'+[86,68,92,74,58,80].map(function(p){return '<i style="width:'+p+'%"></i>';}).join("")+'</div>'
+    +'</div></div>';
+}
+function _homeCard(row,i){
+  const tchip=(row.target_kind==="report")?("Report · "+(row.report_name||"—")):(row.target_doctype||"Document");
+  let chips='<span class="hchip">'+esc(tchip)+'</span>';
+  if(row.is_default)chips+='<span class="hchip star">'+UI.starFill+'Default'+(row.default_company?(" · "+esc(row.default_company)):"")+'</span>';
+  if(row.is_standard)chips+='<span class="hchip">standard</span>';
+  return '<div class="hcard" onclick="openFromHome('+i+')" title="'+esc(row.label)+'">'+_homeThumb(row)
+    +'<div class="hname">'+esc(row.label)+'</div><div class="hchips">'+chips+'</div>'
+    +'<div class="hdate">Edited '+esc(relDate(row.modified))+'</div></div>';
+}
+function homeFilter(f){_homeFilter=f;
+  const chips=document.querySelectorAll("#homeChips .chip");
+  ["all","doctype","report"].forEach(function(k,i){if(chips[i])chips[i].classList.toggle("on",k===f);});
+  renderHomeCards();}
+function renderHomeCards(){
+  const grid=document.getElementById("homeGrid"),empty=document.getElementById("homeEmpty");
+  if(!grid)return;
+  const q=((document.getElementById("homeSearch")||{}).value||"").trim().toLowerCase();
+  _homeShown=(_homeRows||[]).filter(function(r){
+    if(_homeFilter!=="all"&&r.target_kind!==_homeFilter)return false;
+    if(q&&String(r.label||"").toLowerCase().indexOf(q)<0)return false;
+    return true;});
+  const nu='<div class="hcard new" onclick="openWizard()">'+UI.plus+'<b>New format</b><span>Start blank, from a studio template,<br>or from a format you already have.</span></div>';
+  grid.innerHTML=nu+_homeShown.map(_homeCard).join("");
+  let hint="";
+  if(!(_homeRows||[]).length)hint='<div class="hempty"><b>No formats yet</b>'+(EMBED?'Design one and save it — every saved format shows up here, ready to reopen.':'This standalone demo has no site to read formats from. Create a format to try the builder.')+'</div>';
+  else if(!_homeShown.length)hint='<div class="hempty"><b>Nothing matches</b>Try a different search or filter.</div>';
+  if(empty)empty.innerHTML=hint;
+}
+function showHome(){
+  const h=document.getElementById("home");if(!h)return;
+  h.style.display="flex";
+  const s=document.getElementById("homeSearch");if(s)s.value="";
+  if(_homeRows===null)_homeRows=[];   // draw the New card immediately, fill in when the rpc lands
+  renderHomeCards();
+  rpc("brandpdf.api.home_formats").then(function(rows){_homeRows=Array.isArray(rows)?rows:[];renderHomeCards();});
+}
+function hideHome(){const h=document.getElementById("home");if(h)h.style.display="none";}
+/* Home never discards work: the editor keeps its state under the overlay. The confirm is only
+   there so an unsaved design isn't forgotten behind a full-screen list. */
+function goHome(){
+  if(fmtDirty&&!confirm("Leave without saving? Your changes stay in this tab until you save."))return;
+  showHome();
+}
+function openFromHome(i){
+  const row=(_homeShown||[])[i];if(!row)return;
+  applyTargetSwitch(row.target_kind,row.target_doctype,row.report_name);
+  openFormat(row.name);
+  hideHome();
 }
 /* ---- feedback: straight to the app makers via the site's email ---- */
 function openFeedback(){document.getElementById("feedback").style.display="flex";setTimeout(function(){document.getElementById("fbMsg").focus();},50);}
@@ -1992,7 +2307,7 @@ window.addEventListener("message",function(e){if(e.origin!==window.location.orig
   if(d.type==="brandpdf-rpc-res"&&_rpcCbs[d.reqId]){const cb=_rpcCbs[d.reqId];delete _rpcCbs[d.reqId];cb(d.ok?d.message:null);return;}
   if(d.type==="brandpdf-upload-res"&&_upCbs[d.reqId]){const cb=_upCbs[d.reqId];delete _upCbs[d.reqId];if(cb&&d.file_url)cb(d.file_url);return;}
   if(d.type==="brandpdf-theme")setTheme(d.theme);
-  if(d.type==="brandpdf-load"&&d.definition)loadDefinition(d.definition);
+  if(d.type==="brandpdf-load"&&d.definition){hostLoaded=true;hideHome();loadDefinition(d.definition);}  // the host pushed a design -> no home screen
   if(d.type==="brandpdf-fields"&&Array.isArray(d.fields)){DOCFIELDS=d.fields.map(function(x){return{f:x.fieldname,l:x.label,t:x.fieldtype||""};});render();if(cur()&&cur().type==="field")renderProps();}
   if(d.type==="brandpdf-saved"){flashSaved();
     if(!d.error){fmtSaved=true;fmtDirty=false;renderStatus();refreshDefaultFlag();
@@ -2009,6 +2324,10 @@ if(EMBED){
 } else {
   setSelOptions("doctypeSel",[{value:"Quotation",label:"Quotation"}],null,"Quotation");
 }
+/* Home shows only when nobody else claimed the canvas: the desk host pushes a design on boot
+   (brandpdf-load) when the site has an active format, and a user who has already started
+   clicking shouldn't be interrupted. Both cases skip it. */
+setTimeout(function(){if(!hostLoaded&&!userTouched)showHome();},700);
 </script>
 </body>
 </html>
