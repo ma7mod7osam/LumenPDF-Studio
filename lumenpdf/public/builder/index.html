@@ -29,7 +29,9 @@
   .brand{display:flex;align-items:center;gap:9px;font-weight:700}
   .brand .dot{width:22px;height:22px;border-radius:6px;background:linear-gradient(135deg,#1463FF,#1463FF);display:grid;place-items:center;font-size:12px;color:#fff;font-weight:800}
   .brand small{color:var(--mut);font-weight:500}
-  .fmt-name{background:var(--panel2);border:1px solid var(--line2);color:var(--ink);border-radius:8px;padding:6px 10px;font-size:13px;min-width:120px;flex:0 1 190px}
+  .fmt-name{background:transparent;border:1px solid transparent;color:var(--ink);border-radius:8px;padding:6px 10px;font-size:13.5px;font-weight:700;min-width:110px;flex:0 1 185px}
+  .fmt-name:hover{border-color:var(--line2)}
+  .fmt-name:focus{outline:none;background:var(--panel2);border-color:var(--accent);font-weight:600}
   .top .spacer{flex:1}
   .btn{border:1px solid var(--line2);background:var(--panel2);color:var(--ink);border-radius:8px;padding:7px 13px;font-size:12.5px;cursor:pointer;font-weight:600}
   .btn:hover{border-color:#42527a}
@@ -237,6 +239,13 @@
   .menu button{display:block;width:100%;text-align:left;background:none;border:0;border-radius:7px;padding:8px 11px;font-size:12.5px;color:var(--ink);cursor:pointer}
   .menu button:hover{background:var(--panel2)}
   .menu .msep{height:1px;background:var(--line);margin:5px 8px}
+  .menu.mright{left:auto;right:0}
+  .mlabel{font-size:10px;color:var(--mut2);font-weight:800;letter-spacing:.8px;text-transform:uppercase;padding:0 2px 6px}
+  #targetPop .sel{width:100%;margin:0 0 6px}
+  .iconbtn{padding:7px 9px}
+  .tchip{display:inline-flex;align-items:center;gap:5px;background:var(--accentSoft);color:var(--accent);border:0;border-radius:999px;padding:6px 11px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit}
+  .tchip .icn{width:11px;height:11px}
+  .tchip:hover{filter:brightness(.96)}
   .fmtrow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 4px;border-bottom:1px solid var(--line)}
   .fmtname{font-size:13px;color:var(--ink);font-weight:600;min-width:0}
   .fmtname .star{color:#F5A623;margin-right:5px}
@@ -373,35 +382,44 @@
 <body>
 <div class="app">
   <div class="top">
-    <div class="brand"><svg width="24" height="24" viewBox="0 0 48 48" fill="none" aria-label="LumenPDF Studio"><rect x="9" y="4" width="30" height="40" rx="4" style="stroke:var(--logoA)" stroke-width="3"/><rect x="14.5" y="10" width="19" height="3.6" rx="1.8" style="fill:var(--logoB)"/><rect x="14.5" y="18" width="19" height="9" rx="2.4" style="fill:var(--logoA)"/><rect x="14.5" y="31.5" width="12" height="3.6" rx="1.8" style="fill:var(--logoB)"/></svg> LumenPDF <small>Studio · b67</small></div>
-    <button class="btn ghost" id="homeBtn" onclick="goHome()" title="All formats (Home)"><svg class="icn" viewBox="0 0 24 24"><path d="M4 11l8-6.5 8 6.5"/><path d="M6 10v9a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-9"/></svg> Home</button>
-    <div class="menuwrap"><button class="btn ghost" id="fileBtn" onclick="toggleFileMenu(event)" title="New, open, duplicate, import/export, manage"><svg class="icn" viewBox="0 0 24 24"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg> File</button>
+    <div class="brand" title="LumenPDF Studio"><svg width="24" height="24" viewBox="0 0 48 48" fill="none" aria-label="LumenPDF Studio"><rect x="9" y="4" width="30" height="40" rx="4" style="stroke:var(--logoA)" stroke-width="3"/><rect x="14.5" y="10" width="19" height="3.6" rx="1.8" style="fill:var(--logoB)"/><rect x="14.5" y="18" width="19" height="9" rx="2.4" style="fill:var(--logoA)"/><rect x="14.5" y="31.5" width="12" height="3.6" rx="1.8" style="fill:var(--logoB)"/></svg><small>Studio · b68</small></div>
+    <button class="btn ghost iconbtn" id="homeBtn" onclick="goHome()" title="Home — all formats"><svg class="icn" viewBox="0 0 24 24"><path d="M4 11l8-6.5 8 6.5"/><path d="M6 10v9a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-9"/></svg></button>
+    <div class="menuwrap"><button class="btn ghost" id="fileBtn" onclick="toggleFileMenu(event)" title="New, open, duplicate, import/export"><svg class="icn" viewBox="0 0 24 24"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg> File</button>
       <div class="menu" id="fileMenu">
         <button onclick="closeFileMenu();goHome()"><svg class="icn" viewBox="0 0 24 24"><path d="M4 11l8-6.5 8 6.5"/><path d="M6 10v9a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-9"/></svg> Home</button>
         <div class="msep"></div>
         <button onclick="closeFileMenu();openNewFmt()"><svg class="icn" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> New format…</button>
+        <button onclick="closeFileMenu();openGallery()"><svg class="icn" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="9" x2="9" y2="21"/></svg> Templates…</button>
         <button onclick="closeFileMenu();openFormatsMgr()"><svg class="icn" viewBox="0 0 24 24"><path d="M3 7a1 1 0 0 1 1-1h5l2 2h9a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/></svg> Open / manage formats…</button>
         <button onclick="closeFileMenu();dupCurrentFmt()"><svg class="icn" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/></svg> Duplicate this format…</button>
         <div class="msep"></div>
         <button onclick="closeFileMenu();importJSON()"><svg class="icn" viewBox="0 0 24 24"><path d="M12 16V4"/><path d="M7 9l5-5 5 5"/><path d="M4 20h16"/></svg> Import from .json</button>
         <button onclick="closeFileMenu();exportJSON()"><svg class="icn" viewBox="0 0 24 24"><path d="M12 4v12"/><path d="M7 11l5 5 5-5"/><path d="M4 20h16"/></svg> Export as .json</button>
       </div></div>
-    <input class="fmt-name" id="fmtName" value="Quotation - Custom" title="Format name">
+    <input class="fmt-name" id="fmtName" value="Quotation - Custom" title="Format name — click to rename">
+    <div class="menuwrap"><button class="tchip" id="targetChip" onclick="toggleTargetPop(event)" title="What this format prints for"><span id="targetChipTxt">Quotation</span><svg class="icn" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button>
+      <div class="menu" id="targetPop" style="min-width:240px;padding:10px 12px">
+        <div class="mlabel">This format prints for</div>
+        <select class="sel" id="targetKindSel" title="Brand a document or a report" onchange="onTargetKind(this.value)"><option value="doctype">Document</option><option value="report">Report</option></select>
+        <select class="sel" id="doctypeSel" title="Target DocType" onchange="onDoctype(this.value)"></select>
+        <select class="sel" id="reportSel" title="Target Report" style="display:none" onchange="onReport(this.value)"></select>
+        <div class="hint" style="padding:6px 2px 0">Blocks stay — fields rebind to the new target.</div>
+      </div></div>
     <span id="fmtStatus"></span>
-    <select class="sel" id="targetKindSel" title="Brand a document or a report" onchange="onTargetKind(this.value)"><option value="doctype">Document</option><option value="report">Report</option></select>
-    <select class="sel" id="doctypeSel" title="Target DocType" onchange="onDoctype(this.value)"></select>
-    <select class="sel" id="reportSel" title="Target Report" style="display:none" onchange="onReport(this.value)"></select>
-    <button class="btn ghost" onclick="openGallery()" title="Start from a ready-made design"><svg class="icn" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="9" x2="9" y2="21"/></svg> Templates</button>
     <button class="btn ghost" id="restoreBtn" onclick="restoreDraft()" style="display:none" title="Restore your last unsaved draft"><svg class="icn" viewBox="0 0 24 24"><path d="M3.5 12a8.5 8.5 0 1 0 2.6-6.1"/><path d="M3.5 4.5V10H9"/></svg> Restore</button>
     <div class="spacer"></div>
-    <button class="btn ghost" id="undoBtn" onclick="undo()" title="Undo (Ctrl+Z)"><svg class="icn" viewBox="0 0 24 24"><path d="M4 8h9a5 5 0 0 1 0 10H8"/><path d="M8 4L4 8l4 4"/></svg></button>
-    <button class="btn ghost" id="redoBtn" onclick="redo()" title="Redo (Ctrl+Y)"><svg class="icn" viewBox="0 0 24 24"><path d="M20 8h-9a5 5 0 0 0 0 10h5"/><path d="M16 4l4 4-4 4"/></svg></button>
-    <button class="btn ghost" onclick="openFeedback()" title="Send feedback to the makers of LumenPDF Studio"><svg class="icn" viewBox="0 0 24 24"><path d="M20 4H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h4v4l5-4h7a1 1 0 0 0 1-1V5a1 1 0 0 0-1-1z"/></svg></button>
-    <button class="btn ghost" id="fsBtn" onclick="toggleFullscreen()" title="Full screen (F)"><svg class="icn" viewBox="0 0 24 24"><path d="M4 9V5a1 1 0 0 1 1-1h4"/><path d="M20 9V5a1 1 0 0 0-1-1h-4"/><path d="M4 15v4a1 1 0 0 0 1 1h4"/><path d="M20 15v4a1 1 0 0 1-1 1h-4"/></svg></button>
+    <button class="btn ghost iconbtn" id="undoBtn" onclick="undo()" title="Undo (Ctrl+Z)"><svg class="icn" viewBox="0 0 24 24"><path d="M4 8h9a5 5 0 0 1 0 10H8"/><path d="M8 4L4 8l4 4"/></svg></button>
+    <button class="btn ghost iconbtn" id="redoBtn" onclick="redo()" title="Redo (Ctrl+Y)"><svg class="icn" viewBox="0 0 24 24"><path d="M20 8h-9a5 5 0 0 0 0 10h5"/><path d="M16 4l4 4-4 4"/></svg></button>
     <div class="zoom"><button onclick="zoom(-.1)">−</button><span id="zoomv">80%</span><button onclick="zoom(.1)">+</button></div>
+    <div class="spacer"></div>
     <select class="sel" id="dataSel" title="Preview with a real document" onchange="loadData(this.value)"><option value="">Sample data</option></select>
-    <button class="btn ghost" onclick="previewPDF()" title="Render the real PDF with this document"><svg class="icn" viewBox="0 0 24 24"><path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6-10-6-10-6z"/><circle cx="12" cy="12" r="2.6"/></svg> Preview PDF</button>
+    <button class="btn ghost" onclick="previewPDF()" title="Render the real PDF with this document"><svg class="icn" viewBox="0 0 24 24"><path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6-10-6-10-6z"/><circle cx="12" cy="12" r="2.6"/></svg> Preview</button>
     <button class="btn primary" onclick="save()"><svg class="icn" viewBox="0 0 24 24"><path d="M4 12.5l5 5L20 6.5"/></svg> Save</button>
+    <div class="menuwrap"><button class="btn ghost iconbtn" id="moreBtn" onclick="toggleMoreMenu(event)" title="More"><svg class="icn" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.6" fill="currentColor" stroke="none"/></svg></button>
+      <div class="menu mright" id="moreMenu">
+        <button id="fsBtn" onclick="closeFileMenu();toggleFullscreen()"><svg class="icn" viewBox="0 0 24 24"><path d="M4 9V5a1 1 0 0 1 1-1h4"/><path d="M20 9V5a1 1 0 0 0-1-1h-4"/><path d="M4 15v4a1 1 0 0 0 1 1h4"/><path d="M20 15v4a1 1 0 0 1-1 1h-4"/></svg> Full screen</button>
+        <button onclick="closeFileMenu();openFeedback()"><svg class="icn" viewBox="0 0 24 24"><path d="M20 4H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h4v4l5-4h7a1 1 0 0 0 1-1V5a1 1 0 0 0-1-1z"/></svg> Send feedback</button>
+      </div></div>
   </div>
   <div id="draftBar"><span><svg class="icn" viewBox="0 0 24 24"><path d="M3.5 12a8.5 8.5 0 1 0 2.6-6.1"/><path d="M3.5 4.5V10H9"/></svg> You have <b>unsaved changes</b> from your last session.</span><button class="pri" onclick="restoreDraft()">Restore my work</button><button onclick="dismissDraft()">Discard</button></div>
   <div class="body">
@@ -718,7 +736,7 @@ var state={layout:"absolute",target:"Quotation",targetKind:"doctype",report:"",p
   mk("terms",{x:14,y:238,w:140,h:null})]};
 /* ---- save-state tracking: is the current design saved, dirty, and/or the default? ---- */
 let fmtSaved=false, fmtDirty=false, fmtIsDefault=false, fmtDefaultCompany="", fmtLoaded=false;
-function renderStatus(){const el=document.getElementById("fmtStatus");if(!el)return;let h="";
+function renderStatus(){updateTargetChip();const el=document.getElementById("fmtStatus");if(!el)return;let h="";
   if(fmtDirty)h+='<span class="fmtchip dirty"><span class="dot"></span>Unsaved changes</span>';
   else if(fmtSaved)h+='<span class="fmtchip saved"><span class="dot"></span>Saved</span>';
   if(fmtIsDefault)h+='<span class="fmtchip default"><svg class="icn" style="width:9px;height:9px" viewBox="0 0 24 24"><path d="M12 3.6l2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8L3.5 9.8l5.9-.9z" fill="currentColor" stroke="none"/></svg>Default</span>';
@@ -1082,8 +1100,12 @@ function openGalleryDialog(){const isRep=state.targetKind==="report";_galSet=isR
 function pickSiteTemplate(name){clearDraft();rpc("lumenpdf.api.get_format",{name:name}).then(function(r){if(r&&r.definition){loadDefinition(r.definition);document.getElementById("fmtName").value=(r.definition.name||name)+" copy";commitHistory();}else{toast("Could not load \""+name+"\".",true);}closeGallery();});}
 function closeGallery(){document.getElementById("gallery").style.display="none";}
 /* ---- File menu ---- */
-function toggleFileMenu(e){if(e)e.stopPropagation();const m=document.getElementById("fileMenu");m.style.display=(m.style.display==="block")?"none":"block";}
-function closeFileMenu(){document.getElementById("fileMenu").style.display="none";}
+function _menuToggle(e,id){if(e)e.stopPropagation();const m=document.getElementById(id);const open=m.style.display==="block";closeFileMenu();m.style.display=open?"none":"block";}
+function toggleFileMenu(e){_menuToggle(e,"fileMenu");}
+function toggleMoreMenu(e){_menuToggle(e,"moreMenu");}
+function toggleTargetPop(e){_menuToggle(e,"targetPop");}
+function closeFileMenu(){["fileMenu","moreMenu","targetPop"].forEach(function(id){const m=document.getElementById(id);if(m)m.style.display="none";});}
+function updateTargetChip(){const el=document.getElementById("targetChipTxt");if(!el)return;el.textContent=(state.targetKind==="report")?("Report · "+(state.report||"choose…")):(state.target||"Document");}
 document.addEventListener("mousedown",function(e){const w=e.target.closest?e.target.closest(".menuwrap"):null;if(!w)closeFileMenu();});
 /* ---- Duplicate the format being edited: save the current design under a new name ---- */
 function dupCurrentFmt(){const curName=document.getElementById("fmtName").value||"Format";const nm=prompt("Name for the copy:",curName+" copy");if(nm===null)return;const nn=(nm||"").trim();if(!nn)return;document.getElementById("fmtName").value=nn;save();toast('Now editing the copy "'+nn+'".');}
@@ -2396,7 +2418,7 @@ function rpc(method,args){return new Promise(function(res){if(!EMBED){res(null);
 let _upId=0; const _upCbs={};
 function uploadImage(cb){if(!EMBED){alert("Image upload works inside ERPNext. (In this standalone demo, paste a /files path.)");return;}const id="u"+(_upId++);_upCbs[id]=cb;window.parent.postMessage({type:"lumenpdf-upload",reqId:id},window.location.origin);}
 function setSelOptions(id,items,placeholder,current){const el=document.getElementById(id);if(!el)return;el.innerHTML=(placeholder?`<option value="">${esc(placeholder)}</option>`:"")+items.map(function(it){const v=it.value!==undefined?it.value:it;const l=it.label!==undefined?it.label:it;return `<option value="${esc(v)}" ${current===v?'selected':''}>${esc(l)}</option>`;}).join("");}
-function onDoctype(dt){state.target=dt;loadDoctypeMeta(dt);}
+function onDoctype(dt){state.target=dt;loadDoctypeMeta(dt);updateTargetChip();}
 /* ---- Report mode: target a Report instead of a DocType ---- */
 let _reports=null;
 function onTargetKind(kind){
