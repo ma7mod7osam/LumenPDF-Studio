@@ -44,7 +44,9 @@ what prints.
 
 ## Requirements
 
-- Frappe **v15** (works with or without ERPNext; ERPNext unlocks the document smart blocks).
+- Frappe **v14 or v15** (works with or without ERPNext; ERPNext unlocks the document smart
+  blocks). On v14 the engine renders through wkhtmltopdf automatically; on v15/Frappe Cloud
+  it reuses the host's Chromium generator - the self-probe picks the right path per site.
 - No extra services and no hard Python dependencies: the default engine reuses the site's own
   Chromium PDF generator, and the landscape fallback uses wkhtmltopdf, which Frappe ships.
 
