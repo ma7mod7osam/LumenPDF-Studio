@@ -86,10 +86,10 @@
   .blk{position:absolute;outline:1px dashed transparent;cursor:move}
   .blk:hover{outline-color:#bcd2ff}
   .blk.sel{outline:2px solid var(--accent);z-index:50}
-  .blk .tools{position:absolute;top:-1px;right:-1px;display:none;gap:3px;z-index:6;transform:translateY(-100%)}
+  .blk .tools{position:absolute;top:-3px;right:-1px;display:none;gap:1px;z-index:6;transform:translateY(-100%)}
   .blk:hover .tools,.blk.sel .tools{display:flex}
-  .blk .tools button{width:22px;height:22px;border-radius:5px;border:0;background:#0C1322ee;color:#fff;cursor:pointer;font-size:11px}
-  .blk .tools button:hover{background:var(--accent)}
+  .blk .tools button{width:22px;height:22px;border-radius:6px;border:0;background:transparent;color:#fff;cursor:pointer;font-size:11px}
+  .blk .tools button:hover{background:#ffffff26}
   .blk .tag{position:absolute;top:-1px;left:-1px;display:none;background:var(--accent);color:#fff;font-size:9px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;padding:1px 6px;border-radius:4px;z-index:6;transform:translateY(-100%)}
   .blk:hover .tag,.blk.sel .tag{display:block}
   .blk [contenteditable]:focus{outline:2px solid var(--accent);outline-offset:-2px}
@@ -97,10 +97,46 @@
   .sblk{cursor:pointer}
   .sblk:hover{outline:1px dashed #1463FF88;outline-offset:1px}
   .sblk.sel{outline:2px solid var(--accent);outline-offset:1px}
-  .sblk .tools{position:absolute;top:-1px;right:-1px;display:none;gap:3px;z-index:6;transform:translateY(-100%)}
+  .sblk .tools{position:absolute;top:-3px;right:-1px;display:none;gap:1px;z-index:6;transform:translateY(-100%)}
   .sblk:hover .tools,.sblk.sel .tools{display:flex}
-  .sblk .tools button{width:22px;height:22px;border-radius:5px;border:0;background:#0C1322ee;color:#fff;cursor:pointer;font-size:11px}
-  .sblk .tools button:hover{background:var(--accent)}
+  .sblk .tools button{width:22px;height:22px;border-radius:6px;border:0;background:transparent;color:#fff;cursor:pointer;font-size:11px}
+  .sblk .tools button:hover{background:#ffffff26}
+  /* Phase 4 — the .tools row is a floating dark quick bar (one row, never wraps) */
+  .blk .tools,.sblk .tools{background:#0C1322f2;border-radius:9px;padding:2px;box-shadow:0 4px 14px rgba(0,0,0,.35);flex-wrap:nowrap;white-space:nowrap;align-items:center}
+  .blk .tools button.on,.sblk .tools button.on{background:var(--accent)}
+  .blk .tools .tsep,.sblk .tools .tsep{flex:0 0 1px;width:1px;align-self:stretch;margin:3px 3px;background:#ffffff30}
+  .blk .tools .tsw,.sblk .tools .tsw{width:22px;height:22px;border-radius:6px;display:grid;place-items:center;cursor:pointer;position:relative}
+  .blk .tools .tsw:hover,.sblk .tools .tsw:hover{background:#ffffff26}
+  .blk .tools .tsw i,.sblk .tools .tsw i{display:block;width:13px;height:13px;border-radius:4px;border:1.5px solid #ffffff8a}
+  .blk .tools .tsw input,.sblk .tools .tsw input{position:absolute;left:0;top:0;width:100%;height:100%;opacity:0;cursor:pointer;border:0;padding:0;background:transparent}
+  /* hidden (eye-off) blocks: ghosted content, badge stays legible */
+  .blk .hidb,.sblk .hidb{position:absolute;right:2px;top:2px;z-index:5;width:17px;height:17px;border-radius:5px;background:#0C1322cc;color:#fff;display:grid;place-items:center;pointer-events:none}
+  .blk .hidb svg,.sblk .hidb svg{width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;display:block}
+  .blk.lockd{cursor:default}
+  /* Left rail: Insert | Layers switcher (own classes — setTab() owns .tab and would clear these) */
+  .ltabs{display:flex;gap:4px;padding:10px 12px 0}
+  .ltab{flex:1;text-align:center;padding:8px;border-radius:8px 8px 0 0;cursor:pointer;color:var(--mut);font-weight:600;font-size:12px;border:1px solid transparent;border-bottom:0;user-select:none}
+  .ltab:hover{color:var(--ink)}
+  .ltab.on{background:var(--panel2);color:var(--ink);border-color:var(--line)}
+  #layersList{padding:6px 8px 4px}
+  .lygrp{font-size:9.5px;letter-spacing:1.2px;text-transform:uppercase;color:var(--mut2);font-weight:700;margin:12px 6px 5px}
+  .lyrow{display:flex;align-items:center;gap:7px;padding:5px 7px;border-radius:7px;cursor:pointer;min-height:28px}
+  .lyrow:hover{background:var(--panel2)}
+  .lyrow.sel{background:var(--accentSoft);color:var(--accent)}
+  .lyrow.child{margin-left:16px}
+  .lyrow.hid .lyname{opacity:.5;text-decoration:line-through}
+  .lyic{width:13px;height:13px;flex:0 0 13px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;opacity:.8}
+  .lyname{flex:1;min-width:0;font-size:11.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .lyname i{font-style:normal;font-weight:400;color:var(--mut2)}
+  .lyrow.sel .lyname i{color:var(--accent);opacity:.75}
+  .lypin{width:11px;height:11px;flex:0 0 11px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;opacity:.55}
+  .lyacts{display:flex;align-items:center;gap:1px;flex:0 0 auto}
+  .lyacts button{width:19px;height:19px;border-radius:5px;border:0;background:transparent;color:var(--mut);cursor:pointer;display:grid;place-items:center;padding:0;opacity:0}
+  .lyrow:hover .lyacts button,.lyacts button.on{opacity:1}
+  .lyacts button:hover{background:var(--line);color:var(--ink)}
+  .lyacts button.on{color:var(--accent)}
+  .lyacts button svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;display:block}
+  .lyempty{font-size:10.5px;color:var(--mut2);padding:2px 7px 4px}
   .sblk .tag{position:absolute;top:-1px;left:-1px;display:none;background:var(--accent);color:#fff;font-size:9px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;padding:1px 6px;border-radius:4px;z-index:6;transform:translateY(-100%)}
   .sblk:hover .tag,.sblk.sel .tag{display:block}
   .rh{position:absolute;width:11px;height:11px;background:#fff;border:2px solid var(--accent);border-radius:2px;z-index:7}
@@ -132,6 +168,7 @@
   .bhead .bacts button{width:28px;height:28px;border-radius:7px;border:1px solid var(--line2);background:var(--panel2);color:var(--mut);cursor:pointer;display:grid;place-items:center;padding:0}
   .bhead .bacts button .icn{width:15px;height:15px;vertical-align:0}
   .bhead .bacts button:hover{color:var(--accent);border-color:var(--accent)}
+  .bhead .bacts button.on{color:var(--accent);border-color:var(--accent);background:var(--accentSoft)}
   .bhead .bacts button.danger:hover{color:var(--danger);border-color:var(--danger)}
   .subtabs{display:flex;gap:2px;margin:0 -16px 4px;padding:0 16px;border-bottom:1px solid var(--line);position:sticky;top:48px;z-index:7;background:var(--panel)}
   .subtab{flex:1;text-align:center;padding:9px 4px;cursor:pointer;color:var(--mut);font-weight:600;font-size:11.5px;border-bottom:2px solid transparent;margin-bottom:-1px;user-select:none}
@@ -336,7 +373,7 @@
 <body>
 <div class="app">
   <div class="top">
-    <div class="brand"><svg width="24" height="24" viewBox="0 0 48 48" fill="none" aria-label="LumenPDF Studio"><rect x="9" y="4" width="30" height="40" rx="4" style="stroke:var(--logoA)" stroke-width="3"/><rect x="14.5" y="10" width="19" height="3.6" rx="1.8" style="fill:var(--logoB)"/><rect x="14.5" y="18" width="19" height="9" rx="2.4" style="fill:var(--logoA)"/><rect x="14.5" y="31.5" width="12" height="3.6" rx="1.8" style="fill:var(--logoB)"/></svg> LumenPDF <small>Studio · b66</small></div>
+    <div class="brand"><svg width="24" height="24" viewBox="0 0 48 48" fill="none" aria-label="LumenPDF Studio"><rect x="9" y="4" width="30" height="40" rx="4" style="stroke:var(--logoA)" stroke-width="3"/><rect x="14.5" y="10" width="19" height="3.6" rx="1.8" style="fill:var(--logoB)"/><rect x="14.5" y="18" width="19" height="9" rx="2.4" style="fill:var(--logoA)"/><rect x="14.5" y="31.5" width="12" height="3.6" rx="1.8" style="fill:var(--logoB)"/></svg> LumenPDF <small>Studio · b67</small></div>
     <button class="btn ghost" id="homeBtn" onclick="goHome()" title="All formats (Home)"><svg class="icn" viewBox="0 0 24 24"><path d="M4 11l8-6.5 8 6.5"/><path d="M6 10v9a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-9"/></svg> Home</button>
     <div class="menuwrap"><button class="btn ghost" id="fileBtn" onclick="toggleFileMenu(event)" title="New, open, duplicate, import/export, manage"><svg class="icn" viewBox="0 0 24 24"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg> File</button>
       <div class="menu" id="fileMenu">
@@ -370,10 +407,15 @@
   <div class="body">
     <div id="rgrip" title="Drag to resize · double-click to reset" onpointerdown="startRgrip(event)" ondblclick="resetRight()"></div>
     <button id="leftExpand" onclick="toggleLeft()" title="Show insert panel"><svg class="icn" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
-    <div class="rail" id="leftRail"><div class="railhead"><h4>Insert</h4><button class="collapse" onclick="toggleLeft()" title="Collapse panel"><svg class="icn" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button></div>
-      <div style="padding:2px 12px 6px"><div class="seg" id="scopeSeg" title="Where new blocks go"><button class="on" onclick="setScope('body')">Body</button><button onclick="setScope('header')">Header</button><button onclick="setScope('footer')">Footer</button></div></div>
-      <div id="palette"></div>
-      <div class="hint" id="scopeHint">Adding to the <b>body</b> — sections flow in order. Click a block to add it.</div></div>
+    <div class="rail" id="leftRail"><div class="railhead"><h4>Blocks</h4><button class="collapse" onclick="toggleLeft()" title="Collapse panel"><svg class="icn" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button></div>
+      <div class="ltabs" id="leftTabs"><div class="ltab on" data-ltab="insert" onclick="setLeftTab('insert')">Insert</div><div class="ltab" data-ltab="layers" onclick="setLeftTab('layers')">Layers</div></div>
+      <div id="leftInsert">
+        <div style="padding:8px 12px 6px"><div class="seg" id="scopeSeg" title="Where new blocks go"><button class="on" onclick="setScope('body')">Body</button><button onclick="setScope('header')">Header</button><button onclick="setScope('footer')">Footer</button></div></div>
+        <div id="palette"></div>
+        <div class="hint" id="scopeHint">Adding to the <b>body</b> — sections flow in order. Click a block to add it.</div></div>
+      <div id="leftLayers" style="display:none">
+        <div id="layersList"></div>
+        <div class="hint">Eye hides a block from the print · lock protects it from clicks</div></div></div>
     <div class="stage" id="stage"><div class="paperwrap" id="paperwrap"><div id="paper"></div></div></div>
     <button id="rightExpand" onclick="toggleRight()" title="Show properties panel"><svg class="icn" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
     <div class="rail right" id="rightRail">
@@ -525,12 +567,34 @@ const UI={
   home:_ic('<path d="M4 11l8-6.5 8 6.5"/><path d="M6 10v9a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-9"/>'),
   doc:_ic('<path d="M6 3h7l5 5v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M13 3v5h5"/><line x1="8.5" y1="13" x2="15.5" y2="13"/><line x1="8.5" y1="17" x2="13" y2="17"/>'),
   tbl:_ic('<rect x="3" y="4" width="18" height="16" rx="1.5"/><line x1="3" y1="9.5" x2="21" y2="9.5"/><line x1="9" y1="9.5" x2="9" y2="20"/><line x1="15" y1="9.5" x2="15" y2="20"/>'),
-  file:_ic('<path d="M12 16V4"/><path d="M7 9l5-5 5 5"/><path d="M4 20h16"/>')};
+  file:_ic('<path d="M12 16V4"/><path d="M7 9l5-5 5 5"/><path d="M4 20h16"/>'),
+  eye:_ic('<path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6-10-6-10-6z"/><circle cx="12" cy="12" r="2.6"/>'),
+  eyeOff:_ic('<path d="M4 4l16 16"/><path d="M10 5.6A9.4 9.4 0 0 1 12 5.4c6.4 0 10 6.6 10 6.6a17 17 0 0 1-3.3 4"/><path d="M6.5 7.7A16.6 16.6 0 0 0 2 12s3.6 6.6 10 6.6a9.9 9.9 0 0 0 4-.8"/>'),
+  lock:_ic('<rect x="5" y="10.5" width="14" height="9.5" rx="2.2"/><path d="M8.2 10.5V7.6a3.8 3.8 0 0 1 7.6 0v2.9"/>'),
+  unlock:_ic('<rect x="5" y="10.5" width="14" height="9.5" rx="2.2"/><path d="M8.2 10.5V7.6a3.8 3.8 0 0 1 7.2-1.4"/>'),
+  pin:_ic('<path d="M9 3h6"/><path d="M10.5 3v6L8 13h8l-2.5-4V3"/><path d="M12 13v8"/>'),
+  layers:_ic('<path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M3 15l9 5 9-5"/>')};
 /* the canvas .tools chrome uses bare 12px svgs (sized by .tools button svg) */
 const TOOLI={up:'<svg viewBox="0 0 24 24"><path d="M12 19V5"/><path d="M6 11l6-6 6 6"/></svg>',
   down:'<svg viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M6 13l6 6 6-6"/></svg>',
   copy:'<svg viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/></svg>',
-  trash:'<svg viewBox="0 0 24 24"><path d="M4 7h16"/><path d="M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/><path d="M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13"/></svg>'};
+  trash:'<svg viewBox="0 0 24 24"><path d="M4 7h16"/><path d="M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/><path d="M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13"/></svg>',
+  bold:'<svg viewBox="0 0 24 24"><path d="M7 5h6.2a3.5 3.5 0 0 1 0 7H7z"/><path d="M7 12h7a3.5 3.5 0 0 1 0 7H7z"/></svg>',
+  minus:'<svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/></svg>',
+  plus:'<svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>',
+  alignL:'<svg viewBox="0 0 24 24"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="13" y2="12"/><line x1="4" y1="18" x2="17" y2="18"/></svg>',
+  alignC:'<svg viewBox="0 0 24 24"><line x1="4" y1="6" x2="20" y2="6"/><line x1="7.5" y1="12" x2="16.5" y2="12"/><line x1="5.5" y1="18" x2="18.5" y2="18"/></svg>',
+  alignR:'<svg viewBox="0 0 24 24"><line x1="4" y1="6" x2="20" y2="6"/><line x1="11" y1="12" x2="20" y2="12"/><line x1="7" y1="18" x2="20" y2="18"/></svg>',
+  eyeOff:'<svg viewBox="0 0 24 24"><path d="M4 4l16 16"/><path d="M10 5.6A9.4 9.4 0 0 1 12 5.4c6.4 0 10 6.6 10 6.6a17 17 0 0 1-3.3 4"/><path d="M6.5 7.7A16.6 16.6 0 0 0 2 12s3.6 6.6 10 6.6a9.9 9.9 0 0 0 4-.8"/></svg>'};
+/* small stroke icons for the Layers rows (12px, sized by .lyacts button svg) */
+const LYI={up:TOOLI.up,down:TOOLI.down,
+  eye:'<svg viewBox="0 0 24 24"><path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6-10-6-10-6z"/><circle cx="12" cy="12" r="2.6"/></svg>',
+  eyeOff:TOOLI.eyeOff,
+  lock:'<svg viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="9.5" rx="2.2"/><path d="M8.2 10.5V7.6a3.8 3.8 0 0 1 7.6 0v2.9"/></svg>',
+  unlock:'<svg viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="9.5" rx="2.2"/><path d="M8.2 10.5V7.6a3.8 3.8 0 0 1 7.2-1.4"/></svg>',
+  pin:'<svg class="lypin" viewBox="0 0 24 24"><path d="M9 3h6"/><path d="M10.5 3v6L8 13h8l-2.5-4V3"/><path d="M12 13v8"/></svg>'};
+/* the crossed-eye badge stamped on a hidden block on the canvas */
+const HIDB='<span class="hidb" title="Hidden — will not print">'+TOOLI.eyeOff+'</span>';
 const META={heading:{l:"Heading"},text:{l:"Text"},field:{l:"Field"},image:{l:"Image"},divider:{l:"Line"},box:{l:"Box"},row:{l:"Row / Columns"},table:{l:"Table"},pagenum:{l:"Page No"},header_banner:{l:"Header"},customer:{l:"Customer"},items:{l:"Items"},datatable:{l:"Data Table"},totals:{l:"Totals"},payment_schedule:{l:"Payment"},terms:{l:"Terms"},signature:{l:"Signature"},footer_banner:{l:"Footer"},title:{l:"Title"},report_title:{l:"Report Title"},report_filters:{l:"Filters"},report_table:{l:"Report Table"}};
 ICONS.report_title=ICONS.title;ICONS.report_filters=ICONS.terms;ICONS.report_table=ICONS.datatable;
 const ELEM=["heading","text","field","image","divider","box","row","table","pagenum"];
@@ -670,7 +734,7 @@ function isNested(b){return !!b&&state.blocks.indexOf(b)<0;}
 
 /* ---- undo / redo (snapshots taken whenever render() sees the state change) ---- */
 let history=[], hpos=-1, restoring=false;
-function snapState(){return JSON.stringify({blocks:state.blocks.map(function(b){return{type:b.type,settings:b.settings,style:b.style,pos:b.pos,float:b.float,region:b.region,cond:b.cond||null};}),branding:state.branding,header:state.header,footer:state.footer,watermark:state.watermark,target:state.target,page:state.page});}
+function snapState(){return JSON.stringify({blocks:state.blocks.map(function(b){return{type:b.type,settings:b.settings,style:b.style,pos:b.pos,float:b.float,region:b.region,cond:b.cond||null,hidden:b.hidden,locked:b.locked};}),branding:state.branding,header:state.header,footer:state.footer,watermark:state.watermark,target:state.target,page:state.page});}
 let _histT=null;
 function _continuousEdit(){
   // during a drag or while a text/color/range field is focused, coalesce into one undo step
@@ -1358,25 +1422,61 @@ function styleCss(st){if(!st)return "";const p=[];if(st.align)p.push("text-align
   return p.join(";");}
 
 function regionOf(bl){return bl.region||"body";}  // region is OWNED, never guessed from position
-function absBlk(bl,b,locked){
-  const inner=(R[bl.type]||(()=>""))(bl.settings,b,bl);const p=bl.pos||{x:0,y:0,w:180,h:null};
-  const box=`left:${p.x}mm;top:${p.y}mm;width:${p.w}mm;`+(p.h?`height:${p.h}mm;overflow:hidden;`:'')+(locked?'opacity:0.4;pointer-events:none;':'pointer-events:auto;');  // auto so a float stays clickable inside its pointer-events:none layer
-  if(locked) return `<div class="blk" data-id="${bl.id}" style="${box}${styleCss(bl.style)}">${inner}</div>`;  // inert: not selectable/movable
+/* Phase 4 — hidden / locked.
+   hidden: the block still renders (so it can be re-shown) but ghosted at .25 and badged; the ENGINE
+           skips it (_visible in blocks.py). The opacity sits on an inner wrapper, not the .blk, so the
+           badge and the selection outline stay legible.
+   locked: no .tools row, no drag/select from the canvas, no inline editing — only the Layers row selects it. */
+function _ghost(bl,inner){return bl.hidden?`<div style="opacity:.25">${inner}</div>`:inner;}
+function _inert(bl,inner){return bl.locked?String(inner).replace(/ contenteditable/g,""):inner;}  // a locked table's cells must not be typeable
+/* The selected/hovered block's floating quick bar. Every button targets the block BY ID (not cur()),
+   because .tools also shows on hover — a hovered, unselected block must not restyle the selected one. */
+function quickBar(bl,flow){
+  const st=bl.style||{},bd=(st.weight==="700"||st.weight==="800");
+  const al=st.align||"";
+  const sw=/^#[0-9a-fA-F]{3,8}$/.test(st.color||"")?st.color:"#0C1322";
+  let h="";
+  h+=`<button class="${bd?'on':''}" title="Bold" onclick="qBold(event,'${bl.id}')">${TOOLI.bold}</button>`;
+  h+=`<button title="Smaller text" onclick="qSize(event,'${bl.id}',-1)">${TOOLI.minus}</button>`;
+  h+=`<button title="Larger text" onclick="qSize(event,'${bl.id}',1)">${TOOLI.plus}</button>`;
+  h+=`<label class="tsw" title="Text colour"><i style="background:${sw}"></i><input type="color" value="${sw}" onchange="qColor(event,'${bl.id}',this.value)"></label>`;
+  h+=`<span class="tsep"></span>`;
+  h+=[["left",TOOLI.alignL,"Align left"],["center",TOOLI.alignC,"Align centre"],["right",TOOLI.alignR,"Align right"]]
+      .map(a=>`<button class="${al===a[0]?'on':''}" title="${a[2]}" onclick="qAlign(event,'${bl.id}','${a[0]}')">${a[1]}</button>`).join("");
+  h+=`<span class="tsep"></span>`;
+  if(flow)h+=`<button title="Move up" onclick="moveBody(event,'${bl.id}',-1)">${TOOLI.up}</button><button title="Move down" onclick="moveBody(event,'${bl.id}',1)">${TOOLI.down}</button>`;
+  h+=`<button title="Duplicate" onclick="duplicate('${bl.id}')">${TOOLI.copy}</button><button title="Delete" onclick="del(event,'${bl.id}')">${TOOLI.trash}</button>`;
+  return h;
+}
+function _qb(id){const b=blockById(id);if(!b)return null;if(!b.style)b.style=base();return b;}
+function qBold(e,id){if(e)e.stopPropagation();const b=_qb(id);if(!b)return;b.style.weight=(b.style.weight==="700"||b.style.weight==="800")?"":"700";render();renderProps();}
+function qSize(e,id,dir){if(e)e.stopPropagation();const b=_qb(id);if(!b)return;let v=parseFloat(b.style.size);if(!isFinite(v)||v<=0)v=(b.type==="heading")?15:9;v=Math.round(Math.max(4,Math.min(72,v+dir*0.5))*2)/2;b.style.size=v;render();renderProps();}
+function qAlign(e,id,a){if(e)e.stopPropagation();const b=_qb(id);if(!b)return;b.style.align=(b.style.align===a)?"":a;render();renderProps();}
+function qColor(e,id,v){if(e)e.stopPropagation();const b=_qb(id);if(!b)return;b.style.color=v;render();renderProps();}
+function absBlk(bl,b,dim){  // `dim` = this band is not the one being edited (NOT the new bl.locked)
+  const inner=_inert(bl,_ghost(bl,(R[bl.type]||(()=>""))(bl.settings,b,bl)));const p=bl.pos||{x:0,y:0,w:180,h:null};
+  const box=`left:${p.x}mm;top:${p.y}mm;width:${p.w}mm;`+(p.h?`height:${p.h}mm;overflow:hidden;`:'')+(dim?'opacity:0.4;pointer-events:none;':'pointer-events:auto;')+(bl.locked?'cursor:default;':'');  // auto so a float stays clickable inside its pointer-events:none layer
+  if(dim) return `<div class="blk" data-id="${bl.id}" style="${box}${styleCss(bl.style)}">${inner}${bl.hidden?HIDB:''}</div>`;  // inert: not selectable/movable
   const sel=bl.id===selId;
-  const handles=sel?'<div class="rh e" data-rh="e"></div><div class="rh s" data-rh="s"></div><div class="rh se" data-rh="se"></div>':'';
-  return `<div class="blk ${sel?'sel':''}" data-id="${bl.id}" style="${box}${styleCss(bl.style)}"><span class="tag">${META[bl.type].l}</span><div class="tools"><button title="Duplicate" onclick="duplicate('${bl.id}')">${TOOLI.copy}</button><button title="Delete" onclick="del(event,'${bl.id}')">${TOOLI.trash}</button></div>${inner}${handles}</div>`;
+  const handles=(sel&&!bl.locked)?'<div class="rh e" data-rh="e"></div><div class="rh s" data-rh="s"></div><div class="rh se" data-rh="se"></div>':'';
+  const tools=bl.locked?'':`<div class="tools">${quickBar(bl,false)}</div>`;
+  return `<div class="blk ${sel?'sel':''}${bl.locked?' lockd':''}" data-id="${bl.id}" style="${box}${styleCss(bl.style)}"><span class="tag">${META[bl.type].l}</span>${bl.hidden?HIDB:''}${tools}${inner}${handles}</div>`;
 }
 function flowBlk(bl,b){
-  const inner=(R[bl.type]||(()=>""))(bl.settings,b,bl);const sel=bl.id===selId;
-  return `<div class="blk flow ${sel?'sel':''}" data-id="${bl.id}" style="position:relative;margin-bottom:4mm;${styleCss(bl.style)}"><span class="tag">${META[bl.type].l}</span><div class="tools"><button title="Move up" onclick="moveBody(event,'${bl.id}',-1)">${TOOLI.up}</button><button title="Move down" onclick="moveBody(event,'${bl.id}',1)">${TOOLI.down}</button><button title="Duplicate" onclick="duplicate('${bl.id}')">${TOOLI.copy}</button><button title="Delete" onclick="del(event,'${bl.id}')">${TOOLI.trash}</button></div>${inner}</div>`;
+  const inner=_inert(bl,_ghost(bl,(R[bl.type]||(()=>""))(bl.settings,b,bl)));const sel=bl.id===selId;
+  const tools=bl.locked?'':`<div class="tools">${quickBar(bl,true)}</div>`;
+  return `<div class="blk flow ${sel?'sel':''}${bl.locked?' lockd':''}" data-id="${bl.id}" style="position:relative;margin-bottom:4mm;${bl.locked?'cursor:default;':''}${styleCss(bl.style)}"><span class="tag">${META[bl.type].l}</span>${bl.hidden?HIDB:''}${tools}${inner}</div>`;
 }
-function flowBlkStatic(bl,b){const inner=(R[bl.type]||(()=>""))(bl.settings,b,bl);const sel=bl.id===selId;
+function flowBlkStatic(bl,b){const inner=_inert(bl,_ghost(bl,(R[bl.type]||(()=>""))(bl.settings,b,bl)));const sel=bl.id===selId;
   // Selectable clone for continuation pages: click selects the real block (edit via the panel);
   // the move/duplicate/delete tools operate on state by id, so they work from any page. Chrome is display:none
   // by default and absolutely positioned, so measurement (computeBreaks) is unaffected.
-  const chrome=`<span class="tag">${META[bl.type].l}</span><div class="tools"><button title="Move up" onclick="moveBody(event,'${bl.id}',-1)">${TOOLI.up}</button><button title="Move down" onclick="moveBody(event,'${bl.id}',1)">${TOOLI.down}</button><button title="Duplicate" onclick="duplicate('${bl.id}')">${TOOLI.copy}</button><button title="Delete" onclick="del(event,'${bl.id}')">${TOOLI.trash}</button></div>`;
-  return `<div class="sblk${sel?' sel':''}" data-sid="${bl.id}" style="position:relative;margin-bottom:4mm;${styleCss(bl.style)}">${chrome}${inner}</div>`;}
-function rowChildBlk(c,b){const inner=(R[c.type]||(()=>""))(c.settings,b,c);const sel=c.id===selId;return `<div class="blk flow ${sel?'sel':''}" data-id="${c.id}" style="position:relative;margin-bottom:2mm;${styleCss(c.style)}"><div class="tools"><button title="Delete" onclick="del(event,'${c.id}')">${TOOLI.trash}</button></div>${inner}</div>`;}
+  // Clones keep the SIMPLE tools (no quick bar) — the styling bar belongs on the live page-1 block.
+  const chrome=bl.locked?`<span class="tag">${META[bl.type].l}</span>`:`<span class="tag">${META[bl.type].l}</span><div class="tools"><button title="Move up" onclick="moveBody(event,'${bl.id}',-1)">${TOOLI.up}</button><button title="Move down" onclick="moveBody(event,'${bl.id}',1)">${TOOLI.down}</button><button title="Duplicate" onclick="duplicate('${bl.id}')">${TOOLI.copy}</button><button title="Delete" onclick="del(event,'${bl.id}')">${TOOLI.trash}</button></div>`;
+  return `<div class="sblk${sel?' sel':''}" data-sid="${bl.id}" style="position:relative;margin-bottom:4mm;${bl.locked?'cursor:default;':''}${styleCss(bl.style)}">${chrome}${bl.hidden?HIDB:''}${inner}</div>`;}
+function rowChildBlk(c,b){const inner=_inert(c,(R[c.type]||(()=>""))(c.settings,b,c));const sel=c.id===selId;
+  const tools=c.locked?'':`<div class="tools"><button title="Duplicate" onclick="duplicate('${c.id}')">${TOOLI.copy}</button><button title="Delete" onclick="del(event,'${c.id}')">${TOOLI.trash}</button></div>`;
+  return `<div class="blk flow ${sel?'sel':''}${c.locked?' lockd':''}" data-id="${c.id}" style="position:relative;margin-bottom:2mm;${c.locked?'cursor:default;':''}${styleCss(c.style)}">${tools}${inner}</div>`;}
 function absBlkStatic(bl,b){const inner=(R[bl.type]||(()=>""))(bl.settings,b,bl);const p=bl.pos||{x:0,y:0,w:180,h:null};const box=`position:absolute;left:${p.x}mm;top:${p.y}mm;width:${p.w}mm;`+(p.h?`height:${p.h}mm;overflow:hidden;`:'')+`pointer-events:none;`;return `<div style="${box}${styleCss(bl.style)}">${inner}</div>`;}
 let _measCache={key:null,mm:0};
 function measureReel(bodyHtml,b){if(!bodyHtml)return 0;const key=PW()+"|"+(b.font||"")+"|"+bodyHtml;if(_measCache.key===key)return _measCache.mm;  // skip the forced reflow when the body didn't change
@@ -1497,6 +1597,7 @@ function _renderNow(){
   window._pg=null;
   paper.innerHTML=html;
   wireTable();
+  renderLayers();  // the Layers rail mirrors the canvas — rebuild it on every real render (cheap: it no-ops unless the tab is open)
   recordHistory();
   scheduleAutosave();
 }
@@ -1531,10 +1632,13 @@ document.getElementById("paper").addEventListener("mousedown",function(e){
   // Continuation pages (2+): clones select the real block for panel editing. Not .blk on
   // purpose — the drag/reorder machinery must never engage on a slice. Tools handle their own clicks.
   const sb=e.target.closest(".sblk");
-  if(sb){if(e.target.closest(".tools"))return;e.preventDefault();
+  if(sb){if(e.target.closest(".tools"))return;
+    const sbb=blockById(sb.dataset.sid);if(sbb&&sbb.locked)return;  // locked: the canvas is inert — select it from the Layers rail
+    e.preventDefault();
     if(sb.dataset.sid!==selId)select(sb.dataset.sid);else renderProps();return;}
   const blk=e.target.closest(".blk");if(!blk)return;
   if(e.target.closest(".tools"))return;
+  const _lb=blockById(blk.dataset.id);if(_lb&&_lb.locked)return;  // locked: no select, no drag, no reorder from the canvas
   if(e.target.isContentEditable){if(blk.dataset.id!==selId)select(blk.dataset.id);return;}
   if(blk.classList.contains("flow")){if(blk.dataset.id!==selId)select(blk.dataset.id);
     // drag a flow block: vertical move >6px = reorder (drop between blocks or into a Row column)
@@ -1664,6 +1768,7 @@ function startInlineEdit(el,b,key){
 document.getElementById("paper").addEventListener("dblclick",function(e){
   const inl=e.target.closest(".inl");if(!inl)return;const blkEl=e.target.closest(".blk");if(!blkEl)return;
   const b=blockById(blkEl.dataset.id);if(!b||!(b.type==="heading"||b.type==="text"||b.type==="box"))return;
+  if(b.locked)return;  // locked blocks are not editable on the page
   if(b.id!==selId)select(b.id);
   const el=document.querySelector('.blk[data-id="'+b.id+'"] .inl');if(el)startInlineEdit(el,b,b.type==="box"?"html":"text");
 });
@@ -1674,6 +1779,70 @@ function setScope(s){editScope=s;if(s==="header")state.header.enabled=true;if(s=
   const hint=document.getElementById("scopeHint");
   if(hint)hint.innerHTML=(s==="body")?'Adding to the <b>body</b> — sections flow in order. Click a block to add it.':('Editing the <b>'+s+'</b> band — add text, fields, a logo/image, lines… drag to position. Height is on the <b>Page</b> tab.');
   render();}
+
+/* ---------- Layers rail (left, second tab) --------------------------------------------------
+   A flat outline of the whole format: what exists, in print order, and the two switches that
+   don't belong on the canvas (hide from print, lock against clicks). It is a pure mirror of
+   state.blocks — rebuilt wholesale at the end of every render. */
+let leftTab="insert";
+function setLeftTab(t){leftTab=(t==="layers")?"layers":"insert";
+  document.querySelectorAll("#leftTabs .ltab").forEach(function(x){x.classList.toggle("on",x.dataset.ltab===leftTab);});
+  const ins=document.getElementById("leftInsert"),lay=document.getElementById("leftLayers");
+  if(ins)ins.style.display=(leftTab==="insert")?"":"none";
+  if(lay)lay.style.display=(leftTab==="layers")?"":"none";
+  if(leftTab==="layers")renderLayers();}
+/* a cheap content preview for the row — only where reading it costs nothing */
+function _lyHint(bl){const s=bl.settings||{};let v="";
+  switch(bl.type){
+    case "heading": case "text": case "title": case "report_title": v=s.text;break;
+    case "field": v=s.field;break;
+    case "customer": case "terms": case "report_filters": v=s.heading;break;
+    case "signature": v=s.label;break;
+    case "pagenum": v=s.format;break;
+    case "box": v=String(s.html||"").replace(/<[^>]*>/g," ").replace(/&(nbsp|middot|amp|quot|lt|gt|#\d+);/g," ");break;
+    case "row": v=(s.cols||2)+" columns";break;
+  }
+  v=String(v==null?"":v).replace(/\s+/g," ").trim();
+  if(!v)return "";
+  return esc(v.length>18?v.slice(0,18)+"…":v);}
+function _lyRow(bl,o){o=o||{};
+  const lbl=esc(META[bl.type]?META[bl.type].l:bl.type),hint=_lyHint(bl);
+  let acts="";
+  if(o.ord)acts+=`<button title="Move up" onclick="event.stopPropagation();moveBody(event,'${bl.id}',-1)">${LYI.up}</button>`
+                +`<button title="Move down" onclick="event.stopPropagation();moveBody(event,'${bl.id}',1)">${LYI.down}</button>`;
+  if(!o.child)acts+=`<button class="${bl.hidden?'on':''}" title="${bl.hidden?'Show this block in the print':'Hide this block from the print'}" onclick="event.stopPropagation();toggleHidden('${bl.id}')">${bl.hidden?LYI.eyeOff:LYI.eye}</button>`;
+  acts+=`<button class="${bl.locked?'on':''}" title="${bl.locked?'Unlock — allow clicks on the page':'Lock — protect it from clicks on the page'}" onclick="event.stopPropagation();toggleLocked('${bl.id}')">${bl.locked?LYI.lock:LYI.unlock}</button>`;
+  return `<div class="lyrow${bl.id===selId?' sel':''}${bl.hidden?' hid':''}${o.child?' child':''}" onclick="layerPick('${bl.id}')" title="${lbl}${hint?' — '+hint:''}">`
+    +`<svg class="lyic" viewBox="0 0 24 24">${ICONS[bl.type]||ICONS.text}</svg>`
+    +`<span class="lyname">${lbl}${hint?' <i>'+hint+'</i>':''}</span>`
+    +(o.pin?LYI.pin:"")
+    +`<span class="lyacts">${acts}</span></div>`;}
+function _lyKids(bl){if(bl.type!=="row"||!bl.settings||!bl.settings.cells)return "";
+  let h="";(bl.settings.cells||[]).forEach(function(cell){(cell||[]).forEach(function(c){if(c)h+=_lyRow(c,{child:true});});});return h;}
+function renderLayers(){
+  if(leftTab!=="layers")return;  // keep it free when the Insert tab is showing
+  const host=document.getElementById("layersList");if(!host)return;
+  const head=state.blocks.filter(function(bl){return regionOf(bl)==="header";});
+  const foot=state.blocks.filter(function(bl){return regionOf(bl)==="footer";});
+  const flow=state.blocks.filter(function(bl){return regionOf(bl)==="body"&&!bl.float;}).sort(function(a,c){return ((a.pos&&a.pos.y)||0)-((c.pos&&c.pos.y)||0);});
+  const pins=state.blocks.filter(function(bl){return regionOf(bl)==="body"&&bl.float;});
+  const none=function(m){return `<div class="lyempty">${m}</div>`;};
+  let h=`<div class="lygrp">Header · repeats</div>`;
+  h+=head.length?head.map(function(bl){return _lyRow(bl,{})+_lyKids(bl);}).join(""):none("Nothing in the header band.");
+  h+=`<div class="lygrp">Body</div>`;
+  h+=(flow.length||pins.length)
+    ? flow.map(function(bl){return _lyRow(bl,{ord:true})+_lyKids(bl);}).join("")+pins.map(function(bl){return _lyRow(bl,{pin:true})+_lyKids(bl);}).join("")
+    : none("No body blocks yet — add one from Insert.");
+  h+=`<div class="lygrp">Footer · repeats</div>`;
+  h+=foot.length?foot.map(function(bl){return _lyRow(bl,{})+_lyKids(bl);}).join(""):none("Nothing in the footer band.");
+  host.innerHTML=h;}
+/* Row click: select, then bring the block into view on the canvas (page 1 block, or its clone). */
+function layerPick(id){
+  select(id);renderNowSync();
+  try{const el=document.querySelector('#paper [data-id="'+id+'"]')||document.querySelector('#paper [data-sid="'+id+'"]');
+    if(el&&el.scrollIntoView)el.scrollIntoView({block:'nearest'});}catch(e){}}
+function toggleHidden(id){const b=blockById(id);if(!b)return;if(b.hidden)delete b.hidden;else b.hidden=true;render();renderProps();}
+function toggleLocked(id){const b=blockById(id);if(!b)return;if(b.locked)delete b.locked;else b.locked=true;render();renderProps();}
 function addBlock(t){
   const Hh=state.header.enabled?state.header.height:0, Fh=state.footer.enabled?state.footer.height:0;
   let pos;
@@ -1737,7 +1906,10 @@ function blockHead(b){const t=b.type;
     :((regionOf(b)==="header"?"Header":"Footer")+" band · pinned, repeats");
   return `<div class="bhead"><div class="bicon"><svg viewBox="0 0 24 24">${ICONS[t]||ICONS.text}</svg></div>`
     +`<div class="bmeta"><div class="bname">${esc(META[t]?META[t].l:t)}</div><div class="bsub">${esc(sub)}</div></div>`
-    +`<div class="bacts"><button title="Duplicate (Ctrl+D)" onclick="duplicate('${b.id}')">${UI.copy}</button>`
+    +`<div class="bacts">`
+    +(isNested(b)?"":`<button class="${b.hidden?'on':''}" title="${b.hidden?'Show this block in the print':'Hide this block from the print'}" onclick="toggleHidden('${b.id}')">${b.hidden?UI.eyeOff:UI.eye}</button>`)
+    +`<button class="${b.locked?'on':''}" title="${b.locked?'Unlock — allow clicks on the page':'Lock — protect it from clicks on the page'}" onclick="toggleLocked('${b.id}')">${b.locked?UI.lock:UI.unlock}</button>`
+    +`<button title="Duplicate (Ctrl+D)" onclick="duplicate('${b.id}')">${UI.copy}</button>`
     +`<button class="danger" title="Delete this block" onclick="del(null,'${b.id}')">${UI.trash}</button></div></div>`;}
 /* Panel twin of the canvas move tools — same moveBody call, reachable without hunting the block. */
 function moveControls(b){return grp("Order",`<div class="prow"><button class="btn ghost" onclick="moveBody(null,'${b.id}',-1)" title="Move this block up">${UI.up} Move up</button><button class="btn ghost" onclick="moveBody(null,'${b.id}',1)" title="Move this block down">${UI.down} Move down</button></div>`);}
@@ -2028,18 +2200,25 @@ function renderProps(){const host=document.getElementById("propsBlock"),b=cur();
 function regionControl(b,reg){
   if(reg==="body"){
     let h=`<div class="stygrp"><div class="styhead">Placement</div>`;
-    h+=`<label class="chk"><input type="checkbox" ${b.float?'checked':''} onchange="setFloat('${b.id}',this.checked)"> Free position (place anywhere in body)</label>`;
+    h+=`<div class="seg" title="How this block sits on the page"><button class="${b.float?'':'on'}" onclick="setFloat('${b.id}',false)">Flows</button><button class="${b.float?'on':''}" onclick="setFloat('${b.id}',true)">Pinned</button></div>`;
+    h+=`<div class="hint" style="padding:5px 0 0">Flows: stacks and paginates with content. Pinned: stays exactly where you place it.</div>`;
     if(b.float)h+=`<div class="fld" style="margin-top:6px"><label>Quick columns (side by side)</label><div class="seg"><button onclick="colPreset('${b.id}','left')">Left ½</button><button onclick="colPreset('${b.id}','right')">Right ½</button><button onclick="colPreset('${b.id}','full')">Full</button></div></div>`;
     if(!b.float&&b.type!=="row"&&ROWCHILDTYPES.indexOf(b.type)>=0)
       h+=`<button class="btn ghost" style="width:100%;margin-top:8px" onclick="wrapInRow('${b.id}')" title="Wrap this block in a 2-column row — then add blocks beside it">${UI.cols} Put this block in columns</button>`;
     h+= b.float
-      ? `<div class="hint" style="padding:4px 0 0">Floating — drag it freely, snap to guides, or use the presets above (e.g. Customer = Left ½, your company = Right ½).</div>`
+      ? `<div class="hint" style="padding:4px 0 0">Pinned — drag it freely, snap to guides, or use the presets above (e.g. Customer = Left ½, your company = Right ½).</div>`
       : `<div class="hint" style="padding:4px 0 0">Flows top-to-bottom — use <b>Move up / Move down</b> above to reorder. Drag onto the page to reorder, or use <b>columns</b> to put blocks side by side.</div>`;
     return h+`</div>`;
   }
   return `<div class="stygrp"><div class="styhead">Placement</div><div class="hint" style="padding:4px 0 0">In the <b>${reg}</b> band — repeats on every page. Drag to position; height is on the <b>Page</b> tab.</div></div>`;
 }
-function setFloat(id,on){const b=blockById(id);if(!b)return;b.float=on;if(on&&!b.pos)b.pos={x:14,y:60,w:120,h:null};render();renderProps();}
+/* Flows <-> Pinned. Either way the block KEEPS its pos.y, so it lands where it already was:
+   pinning freezes it there, un-pinning drops it back into the flow at that spot in the y order. */
+function setFloat(id,on){const b=blockById(id);if(!b)return;b.float=!!on;
+  if(!b.pos)b.pos={x:14,y:60,w:120,h:null};
+  if(!isFinite(+b.pos.y))b.pos.y=(state.header.enabled?state.header.height:0)+6;
+  if(!isFinite(+b.pos.w)||!b.pos.w)b.pos.w=on?120:180;
+  render();renderProps();}
 function colPreset(id,which){const b=blockById(id);if(!b)return;if(!b.pos)b.pos={x:14,y:60,w:182,h:null};const Hh=state.header.enabled?state.header.height:0;if((b.pos.y||0)<Hh+4)b.pos.y=Hh+6;if(which==="left"){b.pos.x=14;b.pos.w=88;}else if(which==="right"){b.pos.x=108;b.pos.w=88;}else{b.pos.x=14;b.pos.w=182;}render();renderProps();}
 function condControl(b){const c=b.cond||{};const on=!!c.field;let h=`<div class="stygrp"><div class="styhead">Visibility</div><label class="chk"><input type="checkbox" ${on?'checked':''} onchange="toggleCond('${b.id}',this.checked)"> Show only if a condition is met</label>`;
   if(on){h+=`<div class="fld"><label>Field</label><select onchange="setCond('field',this.value)">`+DOCFIELDS.map(f=>`<option value="${esc(f.f)}" ${c.field===f.f?'selected':''}>${esc(f.l)}</option>`).join("")+`</select></div>`;
@@ -2136,7 +2315,9 @@ function setLeft(c){leftCollapsed=c;applyCols();const ex=document.getElementById
 function setRight(c){rightCollapsed=c;applyCols();const ex=document.getElementById("rightExpand");if(ex)ex.style.display=c?"flex":"none";try{localStorage.setItem("brandpdf_rightcol",c?"1":"0");}catch(e){}}
 function toggleLeft(){setLeft(!leftCollapsed);}
 function toggleRight(){setRight(!rightCollapsed);}
-function definition(){return{name:document.getElementById("fmtName").value,layout:"absolute",target_doctype:state.target,target_kind:state.targetKind||"doctype",report_name:(state.targetKind==="report")?(state.report||""):"",page:state.page,header:state.header,footer:state.footer,watermark:state.watermark,branding:state.branding,blocks:state.blocks.map(function(b){var o={type:b.type,settings:b.settings,style:b.style,pos:b.pos,float:b.float||false,region:b.region||"body",cond:b.cond||null};if(b.type==="row"&&b.settings&&b.settings.cells){o.settings=Object.assign({},b.settings,{cells:b.settings.cells.map(function(cell){return (cell||[]).map(function(c){return{type:c.type,settings:c.settings,style:c.style};});})});}return o;})};}
+function definition(){return{name:document.getElementById("fmtName").value,layout:"absolute",target_doctype:state.target,target_kind:state.targetKind||"doctype",report_name:(state.targetKind==="report")?(state.report||""):"",page:state.page,header:state.header,footer:state.footer,watermark:state.watermark,branding:state.branding,blocks:state.blocks.map(function(b){var o={type:b.type,settings:b.settings,style:b.style,pos:b.pos,float:b.float||false,region:b.region||"body",cond:b.cond||null};
+  if(b.hidden)o.hidden=true;if(b.locked)o.locked=true;  // only when true — keeps the saved JSON lean
+  if(b.type==="row"&&b.settings&&b.settings.cells){o.settings=Object.assign({},b.settings,{cells:b.settings.cells.map(function(cell){return (cell||[]).map(function(c){var co={type:c.type,settings:c.settings,style:c.style};if(c.locked)co.locked=true;return co;});})});}return o;})};}
 function exportJSON(){const blob=new Blob([JSON.stringify(definition(),null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=(document.getElementById("fmtName").value||"format")+".json";a.click();}
 function importJSON(){const inp=document.createElement("input");inp.type="file";inp.accept="application/json,.json";
   inp.onchange=function(){const f=inp.files&&inp.files[0];if(!f)return;const r=new FileReader();
@@ -2194,7 +2375,7 @@ function confirmSaveFmt(){const name=(document.getElementById("sfName").value||"
 function flashSaved(){const b=document.querySelector(".btn.primary");if(!b)return;const t=b.innerHTML;b.innerHTML=UI.check+" Saved";setTimeout(function(){b.innerHTML=t;},1400);}  // innerHTML, not textContent — the label carries an inline SVG icon
 function loadDefinition(def){try{userTouched=false;fmtSaved=false;fmtIsDefault=false;fmtLoaded=true;state.page=Object.assign({orientation:"portrait"},def.page||{});if(def.branding)state.branding=Object.assign({primary:"#1463FF",navy:"#0C1322",font:"Montserrat",header_image:"",footer_image:""},def.branding);
   if(def.header)state.header=Object.assign({enabled:true,height:30,repeat:true,margin:4},def.header);if(def.footer)state.footer=Object.assign({enabled:true,height:32,repeat:true,margin:4},def.footer);if(def.watermark)state.watermark=Object.assign({text:"",color:"#0C1322",opacity:8,size:60},def.watermark);
-  if(Array.isArray(def.blocks))state.blocks=def.blocks.map(function(b,i){const pos=b.pos||{x:14,y:8+i*16,w:180,h:null};let settings=b.settings||(DSET[b.type]?DSET[b.type]():{});if(b.type==="row"){const st=b.settings||{};const cells=(st.cells||[]).map(function(cell){return (cell||[]).map(function(c){return{id:"b"+(idc++),type:c.type,settings:c.settings||(DSET[c.type]?DSET[c.type]():{}),style:Object.assign(base(),dstyle(c.type),c.style||{})};});});settings=Object.assign({cols:2,gap:6,width:100,widths:[null,null],cells:[[],[]]},st,{cells:cells});}return{id:"b"+(idc++),type:b.type,settings:settings,style:Object.assign(base(),dstyle(b.type),b.style||{}),pos:pos,float:b.float||false,region:b.region||_regionByY(pos),cond:b.cond||null};});
+  if(Array.isArray(def.blocks))state.blocks=def.blocks.map(function(b,i){const pos=b.pos||{x:14,y:8+i*16,w:180,h:null};let settings=b.settings||(DSET[b.type]?DSET[b.type]():{});if(b.type==="row"){const st=b.settings||{};const cells=(st.cells||[]).map(function(cell){return (cell||[]).map(function(c){var cb={id:"b"+(idc++),type:c.type,settings:c.settings||(DSET[c.type]?DSET[c.type]():{}),style:Object.assign(base(),dstyle(c.type),c.style||{})};if(c.locked)cb.locked=true;return cb;});});settings=Object.assign({cols:2,gap:6,width:100,widths:[null,null],cells:[[],[]]},st,{cells:cells});}var nb={id:"b"+(idc++),type:b.type,settings:settings,style:Object.assign(base(),dstyle(b.type),b.style||{}),pos:pos,float:b.float||false,region:b.region||_regionByY(pos),cond:b.cond||null};if(b.hidden)nb.hidden=true;if(b.locked)nb.locked=true;return nb;});
   if(def.target_kind==="report"){
     state.targetKind="report";state.report=def.report_name||state.report||"";
     var ksel=document.getElementById("targetKindSel");if(ksel)ksel.value="report";

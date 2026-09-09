@@ -425,7 +425,12 @@ def _linked_field_value(doc, field):
 
 def _visible(doc, bl):
     """Conditional visibility: a block with a `cond` {field, op, value} renders only when the
-    document's field satisfies it. No cond -> always visible."""
+    document's field satisfies it. No cond -> always visible.
+
+    A block the designer hid in the builder (eye toggle in the Layers rail) never prints, whatever
+    its condition says. Every render path funnels through here, so this one line is the whole rule."""
+    if isinstance(bl, dict) and bl.get("hidden"):
+        return False
     c = bl.get("cond") or {}
     f = c.get("field")
     if not f:
