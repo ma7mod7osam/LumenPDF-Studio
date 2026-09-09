@@ -418,7 +418,10 @@ def engine_diag():
     _require_manager()
     import inspect as _inspect
     import io as _io
-    from pypdf import PdfReader as _R
+    try:
+        from pypdf import PdfReader as _R
+    except ImportError:  # frappe v14 ships PyPDF2, not pypdf
+        from PyPDF2 import PdfReader as _R
     from frappe.utils.pdf import get_pdf as _gp
     from brandpdf.config import conf
     from brandpdf.render.base import get_renderer, default_options
