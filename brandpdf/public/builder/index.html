@@ -106,6 +106,9 @@
   /* Phase 4 — the .tools row is a floating dark quick bar (one row, never wraps) */
   .blk .tools,.sblk .tools{background:#0C1322f2;border-radius:9px;padding:2px;box-shadow:0 4px 14px rgba(0,0,0,.35);flex-wrap:nowrap;white-space:nowrap;align-items:center}
   .blk .tools button.on,.sblk .tools button.on{background:var(--accent)}
+  .tools.below{top:auto;bottom:-1px;transform:translateY(100%)}
+  .btn:disabled,.zoom button:disabled{opacity:.35;cursor:default}
+  .btn:disabled:hover{border-color:var(--line2)}
   .blk .tools .tsep,.sblk .tools .tsep{flex:0 0 1px;width:1px;align-self:stretch;margin:3px 3px;background:#ffffff30}
   .blk .tools .tsw,.sblk .tools .tsw{width:22px;height:22px;border-radius:6px;display:grid;place-items:center;cursor:pointer;position:relative}
   .blk .tools .tsw:hover,.sblk .tools .tsw:hover{background:#ffffff26}
@@ -382,7 +385,7 @@
 <body>
 <div class="app">
   <div class="top">
-    <div class="brand" title="LumenPDF Studio"><svg width="24" height="24" viewBox="0 0 48 48" fill="none" aria-label="LumenPDF Studio"><rect x="9" y="4" width="30" height="40" rx="4" style="stroke:var(--logoA)" stroke-width="3"/><rect x="14.5" y="10" width="19" height="3.6" rx="1.8" style="fill:var(--logoB)"/><rect x="14.5" y="18" width="19" height="9" rx="2.4" style="fill:var(--logoA)"/><rect x="14.5" y="31.5" width="12" height="3.6" rx="1.8" style="fill:var(--logoB)"/></svg><small>Studio · b68</small></div>
+    <div class="brand" title="LumenPDF Studio"><svg width="24" height="24" viewBox="0 0 48 48" fill="none" aria-label="LumenPDF Studio"><rect x="9" y="4" width="30" height="40" rx="4" style="stroke:var(--logoA)" stroke-width="3"/><rect x="14.5" y="10" width="19" height="3.6" rx="1.8" style="fill:var(--logoB)"/><rect x="14.5" y="18" width="19" height="9" rx="2.4" style="fill:var(--logoA)"/><rect x="14.5" y="31.5" width="12" height="3.6" rx="1.8" style="fill:var(--logoB)"/></svg><small>Studio · b69</small></div>
     <button class="btn ghost iconbtn" id="homeBtn" onclick="goHome()" title="Home — all formats"><svg class="icn" viewBox="0 0 24 24"><path d="M4 11l8-6.5 8 6.5"/><path d="M6 10v9a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-9"/></svg></button>
     <div class="menuwrap"><button class="btn ghost" id="fileBtn" onclick="toggleFileMenu(event)" title="New, open, duplicate, import/export"><svg class="icn" viewBox="0 0 24 24"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg> File</button>
       <div class="menu" id="fileMenu">
@@ -767,6 +770,21 @@ function recordHistory(){if(restoring)return;clearTimeout(_histT);
 }
 function commitHistory(){if(restoring)return;clearTimeout(_histT);_recordHistoryNow();}
 function _recordHistoryNow(){if(restoring)return;const s=snapState();if(hpos>=0&&history[hpos]===s)return;history=history.slice(0,hpos+1);history.push(s);hpos=history.length-1;if(history.length>80){history.shift();hpos--;}updateUndoUI();}
+function fixQuickBar(){
+  // The selected block's quick bar sits above the block (translateY(-100%)); the flow layer has
+  // overflow:hidden, so on a block right under the header the bar was CLIPPED. Flip it below the
+  // block's top edge when it would be cut, and clamp it left when a narrow block hugs the left edge.
+  const t=document.querySelector('#paper .blk.sel>.tools');if(!t)return;
+  t.classList.remove('below');t.style.left='';t.style.right='';
+  const blk=t.closest('.blk');if(!blk)return;
+  const fl=document.querySelector('#paper [data-flow]');
+  const clip=(fl&&fl.contains(blk))?fl:blk.parentElement;if(!clip)return;
+  const cr=clip.getBoundingClientRect();
+  let tr=t.getBoundingClientRect();
+  if(tr.top<cr.top+1)t.classList.add('below');
+  tr=t.getBoundingClientRect();
+  if(tr.left<cr.left+1){t.style.left='-1px';t.style.right='auto';}
+}
 function updateUndoUI(){const u=document.getElementById("undoBtn"),r=document.getElementById("redoBtn");if(u)u.disabled=hpos<=0;if(r)r.disabled=hpos>=history.length-1;}
 function applyHistory(){restoring=true;const s=JSON.parse(history[hpos]);state.blocks=s.blocks.map(function(b){const nb=Object.assign({id:"b"+(idc++)},b);if(nb.type==="row"&&nb.settings&&nb.settings.cells){nb.settings.cells.forEach(function(cell){(cell||[]).forEach(function(c){c.id="b"+(idc++);});});}return nb;});state.branding=s.branding;state.header=s.header;state.footer=s.footer;state.watermark=s.watermark||state.watermark;state.target=s.target;state.page=s.page||state.page;selId=null;renderNowSync();renderProps();renderBrand();restoring=false;updateUndoUI();}
 function undo(){clearTimeout(_histT);_recordHistoryNow();if(hpos<=0)return;hpos--;applyHistory();}
@@ -1597,7 +1615,7 @@ function _renderNow(){
   const firstCutMm=(N>1?breaks[1]:bodyAreaMm);
   // flowing body first, then free-positioned floats ON TOP (z-index 3) so they stay clickable even
   // when they overlap flowing content — otherwise the flow layer swallows the click and you can't reselect a float.
-  p1+=`<div style="position:absolute;left:0;top:${bodyTop}mm;width:${PWm}mm;height:${firstCutMm}mm;overflow:hidden;padding:4mm 14mm 0;box-sizing:border-box;z-index:2;opacity:${ba?1:0.4};pointer-events:${ba?'auto':'none'}">`+body.map(bl=>flowBlk(bl,b)).join("")+`</div>`;
+  p1+=`<div data-flow="1" style="position:absolute;left:0;top:${bodyTop}mm;width:${PWm}mm;height:${firstCutMm}mm;overflow:hidden;padding:4mm 14mm 0;box-sizing:border-box;z-index:2;opacity:${ba?1:0.4};pointer-events:${ba?'auto':'none'}">`+body.map(bl=>flowBlk(bl,b)).join("")+`</div>`;
   if(floats.length)p1+=`<div style="position:absolute;left:0;top:0;width:${PWm}mm;height:${PHm}mm;z-index:3;clip-path:inset(${bodyTop}mm 0 ${(Fh+fm)}mm 0);opacity:${ba?1:0.4};pointer-events:none">`+floats.map(bl=>absBlk(bl,b,!ba)).join("")+`</div>`;
   // margin masks: body text must stop hm below the header and fm above the footer, exactly like
   // the PDF's @page margins — never bleed up to (or under) a band edge.
@@ -1619,7 +1637,8 @@ function _renderNow(){
   window._pg=null;
   paper.innerHTML=html;
   wireTable();
-  renderLayers();  // the Layers rail mirrors the canvas — rebuild it on every real render (cheap: it no-ops unless the tab is open)
+  try{renderLayers();}catch(e){console.error("layers",e);}  // NEVER let a panel error kill the history/autosave below
+  try{fixQuickBar();}catch(e){}
   recordHistory();
   scheduleAutosave();
 }
@@ -2318,7 +2337,7 @@ function imgAttach(lbl,key,val,setter){const after=(setter==="setB")?"renderBran
   return `<div class="fld"><label>${lbl}</label><div style="display:flex;gap:6px"><button class="btn ghost" style="flex:1" onclick="uploadImage(function(u){${setter}('${key}',u);${after}();})">${UI.upload} Attach image</button>${val?`<button class="btn ghost" title="Remove" onclick="${setter}('${key}','');${after}()">${UI.close}</button>`:''}</div><div class="hint" style="padding:4px 0 0;word-break:break-all">${val?esc(val):'No image — or build the band from blocks.'}</div></div>`;}
 function renderBrand(){const b=state.branding;document.getElementById("propsBrand").innerHTML=`<div class="ptitle">Branding</div><div class="fld"><label>Primary color</label><div class="color"><input type="color" value="${b.primary}" oninput="setB('primary',this.value)"><input type="text" value="${esc(b.primary)}" oninput="setB('primary',this.value)"></div></div><div class="fld"><label>Secondary / navy</label><div class="color"><input type="color" value="${b.navy}" oninput="setB('navy',this.value)"><input type="text" value="${esc(b.navy)}" oninput="setB('navy',this.value)"></div></div><div class="fld"><label>Font</label><select onchange="setB('font',this.value)">`+fontOptions(b.font)+`</select></div><div class="hint" style="padding:10px 0 0">Header &amp; footer banner images are now in the <b>Page</b> tab, next to the band height.</div>`;}
 
-function zoom(d){scale=Math.min(1.6,Math.max(.35,scale+d));document.getElementById("paperwrap").style.transform=`scale(${scale})`;document.getElementById("zoomv").textContent=Math.round(scale*100)+"%";}
+function zoom(d){scale=Math.min(1.6,Math.max(.35,scale+d));document.getElementById("paperwrap").style.transform=`scale(${scale})`;document.getElementById("zoomv").textContent=Math.round(scale*100)+"%";try{fixQuickBar();}catch(e){}}
 let leftCollapsed=false, rightCollapsed=false, rightW=300;
 try{const w=parseInt(localStorage.getItem("brandpdf_rightw"),10);if(w>=240&&w<=760)rightW=w;}catch(e){}
 function _rightMax(){return Math.max(300,(window.innerWidth||1200)-(leftCollapsed?0:222)-340);}
