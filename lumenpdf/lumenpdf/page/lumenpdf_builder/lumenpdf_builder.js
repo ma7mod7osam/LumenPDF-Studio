@@ -74,7 +74,7 @@ frappe.pages['lumenpdf-builder'].on_page_load = function (wrapper) {
 		'lumenpdf.api.builder_doctypes': 1, 'lumenpdf.api.builder_docs': 1, 'lumenpdf.api.builder_sample': 1,
 		'lumenpdf.api.doctype_fields': 1, 'lumenpdf.api.doctype_link_fields': 1, 'lumenpdf.api.child_tables': 1, 'lumenpdf.api.list_formats': 1, 'lumenpdf.api.get_format': 1,
 		'lumenpdf.api.save_format': 1, 'lumenpdf.api.set_default_format': 1, 'lumenpdf.api.delete_format': 1, 'lumenpdf.api.duplicate_format': 1,
-		'lumenpdf.api.list_companies': 1, 'lumenpdf.api.set_gallery': 1, 'lumenpdf.api.gallery_list': 1,
+		'lumenpdf.api.list_companies': 1, 'lumenpdf.api.set_gallery': 1, 'lumenpdf.api.gallery_list': 1, 'lumenpdf.api.home_formats': 1,
 		'lumenpdf.api.builder_reports': 1, 'lumenpdf.report.report_sample': 1, 'lumenpdf.api.set_default_report_format': 1,
 		'lumenpdf.api.list_snippets': 1, 'lumenpdf.api.save_snippet': 1, 'lumenpdf.api.delete_snippet': 1,
 		'lumenpdf.api.submit_feedback': 1,
