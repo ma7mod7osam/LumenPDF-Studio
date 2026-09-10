@@ -118,9 +118,11 @@ def base_css(b, pw=210.0, ph=297.0):
   table.bs-items tbody td *:not(.it-name):not(.it-desc):not(.it-img):not(.it-img *) {{ font-weight:normal !important; background:transparent !important; border:0 !important; color:inherit; }}
   table.bs-items .it-name {{ font-weight:600 !important; }}
   table.bs-items .it-desc {{ color:#6b6b6e !important; font-size:7pt; line-height:1.4; }}
-  table.bs-tot {{ width:100%; border-collapse:collapse; font-size:8pt; }}
+  table.bs-tot {{ width:100%; border-collapse:collapse; font-size:8pt; table-layout:fixed; }}
+  table.bs-tot td.lbl {{ width:52%; }}
+  table.bs-tot td.val {{ width:48%; }}
   table.bs-tot td {{ padding:4px 8px; border:0; }}
-  table.bs-tot td.lbl {{ color:#6b6b6e; text-align:right; }}
+  table.bs-tot td.lbl {{ color:#6b6b6e; text-align:right; word-break:break-word; }}
   table.bs-tot td.val {{ text-align:right; white-space:nowrap; font-weight:600; }}
   table.bs-tot tr.grand {{ break-inside:avoid; }}
   .bs-sec-lbl {{ font-size:7pt; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:{primary}; margin-bottom:3px; }}
@@ -213,7 +215,7 @@ def _b_totals(doc, b, row, ctx):
         f'<td style="background-color:{primary} !important;color:#fff !important;font-weight:700;font-size:10pt;text-align:right;white-space:nowrap;padding:6px 8px;-webkit-print-color-adjust:exact;"><bdi>{doc.get_formatted("grand_total")}</bdi></td></tr>'
     )
     return (
-        '<table style="width:100%;border-collapse:collapse;"><tr><td style="border:0;"></td>'
+        '<table style="width:100%;border-collapse:collapse;table-layout:fixed;"><tr><td style="border:0;"></td>'
         '<td style="border:0;width:82mm;"><table class="bs-tot">' + "".join(lines) + grand + '</table></td></tr></table>'
     )
 
@@ -252,7 +254,7 @@ def _b_terms(doc, b, row, ctx):
 def _b_signature(doc, b, row, ctx):
     label = frappe.utils.escape_html(row.get("label") or "Authorized Signature")
     return (
-        '<table style="width:100%;border-collapse:collapse;"><tr><td style="border:0;"></td>'
+        '<table style="width:100%;border-collapse:collapse;table-layout:fixed;"><tr><td style="border:0;"></td>'
         f'<td style="border:0;width:60mm;text-align:center;"><div class="bs-sign-box">{label}</div></td></tr></table>'
     )
 
@@ -1027,8 +1029,8 @@ def _d_totals(doc, b, s, ctx):
         f'<td style="background-color:{gc} !important;color:{gtc} !important;font-weight:700;{gszc}text-align:right;white-space:nowrap;padding:6px 8px;-webkit-print-color-adjust:exact;"><bdi>{_esc(doc.get_formatted("grand_total"))}</bdi></td></tr>'
     )
     return (
-        '<table style="width:100%;border-collapse:collapse;"><tr><td style="border:0;"></td>'
-        f'<td style="border:0;width:{wmm}mm;width:min({wmm}mm,100%);"><table class="bs-tot" style="width:100%;">' + "".join(lines) + grand + "</table></td></tr></table>"
+        f'<div style="width:{wmm}mm;max-width:100%;margin-left:auto;">'
+        f'<table class="bs-tot" style="width:100%;">' + "".join(lines) + grand + "</table></div>"
     )
 
 
@@ -1095,7 +1097,7 @@ def _d_signature(doc, b, s, ctx):
     tsz = _num(s.get("labelSize"))
     tszc = f"font-size:{_fmt_num(min(72, max(4, tsz)))}pt;" if tsz else ""
     return (
-        '<table style="width:100%;border-collapse:collapse;"><tr><td style="border:0;"></td>'
+        '<table style="width:100%;border-collapse:collapse;table-layout:fixed;"><tr><td style="border:0;"></td>'
         f'<td style="border:0;width:{bw}mm;text-align:center;"><div class="bs-sign-box" '
         f'style="border-top:{lw}px solid {lcol};{tcol}{tszc}">{label}</div></td></tr></table>'
     )
