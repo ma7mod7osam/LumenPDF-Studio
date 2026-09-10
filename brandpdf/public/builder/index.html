@@ -385,7 +385,7 @@
 <body>
 <div class="app">
   <div class="top">
-    <div class="brand" title="LumenPDF Studio"><svg width="24" height="24" viewBox="0 0 48 48" fill="none" aria-label="LumenPDF Studio"><rect x="9" y="4" width="30" height="40" rx="4" style="stroke:var(--logoA)" stroke-width="3"/><rect x="14.5" y="10" width="19" height="3.6" rx="1.8" style="fill:var(--logoB)"/><rect x="14.5" y="18" width="19" height="9" rx="2.4" style="fill:var(--logoA)"/><rect x="14.5" y="31.5" width="12" height="3.6" rx="1.8" style="fill:var(--logoB)"/></svg><small>Studio · b69</small></div>
+    <div class="brand" title="LumenPDF Studio"><svg width="24" height="24" viewBox="0 0 48 48" fill="none" aria-label="LumenPDF Studio"><rect x="9" y="4" width="30" height="40" rx="4" style="stroke:var(--logoA)" stroke-width="3"/><rect x="14.5" y="10" width="19" height="3.6" rx="1.8" style="fill:var(--logoB)"/><rect x="14.5" y="18" width="19" height="9" rx="2.4" style="fill:var(--logoA)"/><rect x="14.5" y="31.5" width="12" height="3.6" rx="1.8" style="fill:var(--logoB)"/></svg><small>Studio · b70</small></div>
     <button class="btn ghost iconbtn" id="homeBtn" onclick="goHome()" title="Home — all formats"><svg class="icn" viewBox="0 0 24 24"><path d="M4 11l8-6.5 8 6.5"/><path d="M6 10v9a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-9"/></svg></button>
     <div class="menuwrap"><button class="btn ghost" id="fileBtn" onclick="toggleFileMenu(event)" title="New, open, duplicate, import/export"><svg class="icn" viewBox="0 0 24 24"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg> File</button>
       <div class="menu" id="fileMenu">
@@ -767,6 +767,13 @@ function recordHistory(){if(restoring)return;clearTimeout(_histT);
   if(fmtLoaded){fmtDirty=true;renderStatus();}  // guard: only once a format is actually loaded
   if(_continuousEdit())_histT=setTimeout(_recordHistoryNow,450);  // typing/dragging -> one step
   else _recordHistoryNow();  // discrete action (button/select/checkbox/drop) -> its own step
+}
+function resetHistory(){
+  // The undo stack belongs to the document being edited. Loading another format (or starting a
+  // new one) must CLOSE the old stack: otherwise undo walks backwards out of the current design
+  // into whatever was on the canvas before it — the user pressed undo twice and their format
+  // turned into the boot demo, then undo went dead at the floor. One document, one history.
+  clearTimeout(_histT);history=[];hpos=-1;restoring=false;_recordHistoryNow();
 }
 function commitHistory(){if(restoring)return;clearTimeout(_histT);_recordHistoryNow();}
 function _recordHistoryNow(){if(restoring)return;const s=snapState();if(hpos>=0&&history[hpos]===s)return;history=history.slice(0,hpos+1);history.push(s);hpos=history.length-1;if(history.length>80){history.shift();hpos--;}updateUndoUI();}
@@ -1723,7 +1730,7 @@ document.addEventListener("mousemove",function(e){
   }
   drawGuides(gx,gy);
 });
-document.addEventListener("mouseup",function(){if(!drag)return;const d=drag;drag=null;clearGuides();if(d.pend){const b=blockById(d.id);if(b)b.pos=d.pend;render();renderProps();}});
+document.addEventListener("mouseup",function(){if(!drag)return;const d=drag;drag=null;clearGuides();if(d.pend){const b=blockById(d.id);if(b)b.pos=d.pend;render();renderProps();}commitHistory();});  // a finished drag is ONE undo step, committed now — not 450ms later where the next gesture would swallow it
 // drag the band edge to resize the header/footer height
 let bandDrag=null;
 /* drag the divider between Row columns to resize them (page-builder style) */
@@ -1736,7 +1743,7 @@ document.addEventListener("mousemove",function(e){
   row.settings.widths[colDrag.idx]=Math.round(w*10)/10;
   render();
 });
-document.addEventListener("mouseup",function(){if(colDrag){const r=blockById(colDrag.rowid);colDrag=null;render();if(r&&r.id===selId)renderProps();}});  // render() clears the divider's 'on' highlight even when the row isn't selected
+document.addEventListener("mouseup",function(){if(colDrag){const r=blockById(colDrag.rowid);colDrag=null;render();if(r&&r.id===selId)renderProps();commitHistory();}});  // render() clears the divider's 'on' highlight even when the row isn't selected
 /* drag-to-reorder flow blocks + drop into Row columns (page-builder style) */
 function _flowEls(ex){return [...document.querySelectorAll('.blk.flow')].filter(el=>el.dataset.id!==ex&&!el.closest('[data-cell]'));}
 function _insLine(){let l=document.getElementById('insline');if(!l){l=document.createElement('div');l.id='insline';document.body.appendChild(l);}return l;}
@@ -2430,7 +2437,7 @@ function loadDefinition(def){try{userTouched=false;fmtSaved=false;fmtIsDefault=f
     buildPalette();
     if(def.target_doctype){state.target=def.target_doctype;const ds=document.getElementById("doctypeSel");if(ds)ds.value=def.target_doctype;loadDoctypeMeta(state.target);}
   }
-  if(def.name)document.getElementById("fmtName").value=def.name;ensureBanners();selId=null;renderNowSync();renderProps();renderBrand();renderStatus();}catch(e){console.error("BrandPDF load failed",e);}}
+  if(def.name)document.getElementById("fmtName").value=def.name;ensureBanners();selId=null;renderNowSync();renderProps();renderBrand();renderStatus();resetHistory();}catch(e){console.error("BrandPDF load failed",e);}}
 /* ---- embedded RPC bridge to the desk page ---- */
 let _rpcId=0; const _rpcCbs={};
 function rpc(method,args){return new Promise(function(res){if(!EMBED){res(null);return;}const id="r"+(_rpcId++);_rpcCbs[id]=res;window.parent.postMessage({type:"brandpdf-rpc",reqId:id,method:method,args:args||{}},window.location.origin);setTimeout(function(){if(_rpcCbs[id]){delete _rpcCbs[id];res(null);}},15000);});}
@@ -2467,7 +2474,7 @@ function loadReportSample(rep){REPORTSAMPLE={name:rep,columns:[],rows:[],filters
 function newReportFormat(){clearDraft();fmtSaved=false;fmtIsDefault=false;fmtLoaded=true;renderStatus();state.page=Object.assign({},state.page,{orientation:"landscape"});
   const y0=(state.header&&state.header.enabled?(+state.header.height||0):0)+6;  // keep blocks in the BODY, clear of the header band
   state.blocks=[mk("report_title",{x:12,y:y0,w:PW()-24,h:null}),mk("report_filters",{x:12,y:y0+14,w:PW()-24,h:null}),mk("report_table",{x:12,y:y0+26,w:PW()-24,h:null})];
-  selId=null;document.getElementById("fmtName").value=((state.report||"Report"))+" - Branded";renderNowSync();renderProps();renderBrand();}
+  selId=null;document.getElementById("fmtName").value=((state.report||"Report"))+" - Branded";renderNowSync();renderProps();renderBrand();resetHistory();}
 function loadDoctypeMeta(dt){
   rpc("brandpdf.api.doctype_fields",{doctype:dt}).then(function(fl){if(Array.isArray(fl)&&fl.length){DOCFIELDS=fl.map(function(x){return{f:x.fieldname,l:x.label,t:x.fieldtype||""};});if(cur()&&cur().type==="field")renderProps();}});
   rpc("brandpdf.api.doctype_link_fields",{doctype:dt}).then(function(lf){LINKFIELDS=Array.isArray(lf)?lf:[];if(cur()&&cur().type==="field")renderProps();});
@@ -2521,7 +2528,7 @@ function toggleFullscreen(){_fs=!_fs;
   const btn=document.getElementById("fsBtn");if(btn){btn.classList.toggle("on",_fs);btn.title=_fs?"Exit full screen (F)":"Full screen (F)";}  // icon is the same either way; only the tooltip flips
 }
 if(!EMBED)document.addEventListener("fullscreenchange",function(){_fs=!!document.fullscreenElement;const btn=document.getElementById("fsBtn");if(btn)btn.classList.toggle("on",_fs);});
-function newFormat(){clearDraft();fmtSaved=false;fmtIsDefault=false;fmtLoaded=true;renderStatus();state.blocks=[];selId=null;FIELDVALS=null;SAMPLE=JSON.parse(JSON.stringify(BASE_SAMPLE));state.branding.header_image="";state.branding.footer_image="";document.getElementById("fmtName").value="New Format";const ds=document.getElementById("dataSel");if(ds)ds.value="";renderNowSync();renderProps();renderBrand();}
+function newFormat(){clearDraft();fmtSaved=false;fmtIsDefault=false;fmtLoaded=true;renderStatus();state.blocks=[];selId=null;FIELDVALS=null;SAMPLE=JSON.parse(JSON.stringify(BASE_SAMPLE));state.branding.header_image="";state.branding.footer_image="";document.getElementById("fmtName").value="New Format";const ds=document.getElementById("dataSel");if(ds)ds.value="";renderNowSync();renderProps();renderBrand();resetHistory();}
 function loadData(name){if(!name){FIELDVALS=null;SAMPLE=JSON.parse(JSON.stringify(BASE_SAMPLE));render();return;}rpc("brandpdf.api.builder_sample",{doctype:state.target,name:name}).then(applyData);}
 function applyData(d){if(!d||!d.name){FIELDVALS=null;SAMPLE=JSON.parse(JSON.stringify(BASE_SAMPLE));render();return;}SAMPLE=Object.assign(JSON.parse(JSON.stringify(BASE_SAMPLE)),{name:d.name,transaction_date:d.transaction_date||"",valid_till:d.valid_till||"",customer_name:d.customer_name||"",address_display:d.address_display||"",total:d.total||"",grand_total:d.grand_total||"",items:(d.items&&d.items.length)?d.items:[],taxes:d.taxes||[],payment_schedule:d.payment_schedule||[],tables:(d.tables&&typeof d.tables==="object")?d.tables:{},terms:String((d.fields&&d.fields.terms)||"").replace(/<[^>]*>/g," ").replace(/\s+/g," ").trim()});FIELDVALS=d.fields||null;render();}
 
