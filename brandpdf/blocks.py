@@ -115,7 +115,7 @@ def base_css(b, pw=210.0, ph=297.0):
   table.bs-items tbody tr {{ break-inside:avoid; }}
   table.bs-items.zebra-default tbody tr:nth-child(even) td {{ background-color:#eef6fc; -webkit-print-color-adjust:exact; print-color-adjust:exact; }}
   table.bs-items.nozebra tbody tr:nth-child(even) td {{ background-color:transparent !important; }}
-  table.bs-items tbody td *:not(.it-name):not(.it-desc) {{ font-weight:normal !important; background:transparent !important; border:0 !important; color:inherit; }}
+  table.bs-items tbody td *:not(.it-name):not(.it-desc):not(.it-img):not(.it-img *) {{ font-weight:normal !important; background:transparent !important; border:0 !important; color:inherit; }}
   table.bs-items .it-name {{ font-weight:600 !important; }}
   table.bs-items .it-desc {{ color:#6b6b6e !important; font-size:7pt; line-height:1.4; }}
   table.bs-tot {{ width:100%; border-collapse:collapse; font-size:8pt; }}
@@ -896,15 +896,31 @@ def _d_items(doc, b, s, ctx):
         # attach. Rows without an image (services, section lines) get no box — matching how a
         # product-catalog quotation reads.
         ih = ""
+        ipos = str(s.get("imgPos") or "top").lower()
+        if ipos not in ("top", "left", "right"):
+            ipos = "top"
+        iw = _fmt_num(min(180, max(15, _num(s.get("imgW"), 58))))   # up to full column width
         if s.get("showImage"):
             src = it.get("image") or ""
             if src and (str(src).startswith("/files/") or str(src).startswith("/private/files/")):
-                iw = _fmt_num(min(180, max(15, _num(s.get("imgW"), 58))))   # up to full column width
                 iht = _fmt_num(min(150, max(10, _num(s.get("imgH"), 40))))
-                ih = (f'<div style="margin:1mm 0 1.5mm;"><img src="{_esc(src)}" '
+                mg = "margin:1mm 0 1.5mm;" if ipos == "top" else "margin:0;"
+                ih = (f'<div class="it-img" style="{mg}"><img src="{_esc(src)}" '
                       f'style="width:{iw}mm;height:{iht}mm;object-fit:contain;background:#fff;'
                       f'border:1px solid #e8ebee;border-radius:8px;display:block;"></div>')
-        tds = f'<td class="num" style="{c_num}">{i}</td><td style="{c_item}">{ih}<div class="it-name">{nm}</div>{dh}</td>'
+        txt = f'<div class="it-name">{nm}</div>{dh}'
+        # Beside the text: a nested table, not flexbox — it lays out identically in Chromium AND
+        # wkhtmltopdf (the landscape fallback), so the canvas and the PDF cannot drift apart.
+        if ih and ipos in ("left", "right"):
+            pad = "padding:0 0 0 3mm;" if ipos == "left" else "padding:0 3mm 0 0;"
+            icell = f'<td style="border:0;padding:0;width:{iw}mm;vertical-align:top;">{ih}</td>'
+            tcell = f'<td style="border:0;{pad}vertical-align:top;">{txt}</td>'
+            inner_cell = ('<table style="width:100%;border-collapse:collapse;border:0;"><tr>'
+                          + (icell + tcell if ipos == "left" else tcell + icell)
+                          + "</tr></table>")
+        else:
+            inner_cell = ih + txt
+        tds = f'<td class="num" style="{c_num}">{i}</td><td style="{c_item}">{inner_cell}</td>'
         if cols_cfg.get("qty"):
             tds += f'<td class="num" style="{c_qty}"><bdi>{_esc(it.get_formatted("qty"))} {_esc(it.get("uom") or "")}</bdi></td>'
         if cols_cfg.get("rate"):
@@ -1450,6 +1466,10 @@ def _absolute_page_html(doc, branding, blocks_list, ctx, grow=False, top_mm=0.0,
     return "".join(parts)
 
 
+_SPLITTABLE = {"items", "datatable", "table", "payment_schedule",
+               "report_table", "report_native"}
+
+
 def _flow_body_html(doc, branding, body_blocks, ctx, top_mm=0.0, bottom_mm=0.0, floats=None, spacer_mode=False, pw=210.0, ph=297.0):
     """Body in document flow: blocks stack top-to-bottom (so a variable-length items table never
     overlaps the totals/terms below it), reserving @page top/bottom margins so the body stays
@@ -1494,7 +1514,11 @@ def _flow_body_html(doc, branding, body_blocks, ctx, top_mm=0.0, bottom_mm=0.0, 
             continue
         inner = fn(doc, branding, bl.get("settings") or {}, ctx)
         css = _style_css(bl.get("style") or {}, t)
-        parts.append(f'<div style="margin-bottom:4mm;{css}">{inner}</div>')
+        # Only long, row-based blocks may straddle a page break (they paginate at their own rows).
+        # Everything else prints whole or moves to the next page — matching the builder's canvas,
+        # where the same rule decides where a page is cut.
+        brk = "" if t in _SPLITTABLE else "page-break-inside:avoid;break-inside:avoid;"
+        parts.append(f'<div style="margin-bottom:4mm;{brk}{css}">{inner}</div>')
     if spacer_mode:
         parts.append("</td></tr></tbody></table>")
     for bl in (floats or []):

@@ -236,7 +236,7 @@
   .paper .bs-sign-box{display:block;text-align:center;border-top:1.5px solid #0C1322;padding-top:4px;font-size:8.5pt;font-weight:600}
   .ph-banner{width:100%;height:30mm;display:flex;align-items:center;justify-content:center;color:#ffffffcc;font-size:9pt;letter-spacing:2px;text-transform:uppercase}
   .paper .cellempty,.sheet .cellempty{border:1px dashed #b9c6e0;color:#9aa6c2;padding:10px;text-align:center;font-size:8pt;border-radius:4px}
-  #gallery,#fmtmgr,#newfmt,#feedback,#savefmt{position:fixed;inset:0;background:#000a;display:none;align-items:center;justify-content:center;z-index:200}
+  #gallery,#fmtmgr,#newfmt,#feedback,#savefmt,#shortcuts{position:fixed;inset:0;background:#000a;display:none;align-items:center;justify-content:center;z-index:200}
   .menuwrap{position:relative}
   .menu{position:absolute;top:calc(100% + 6px);left:0;background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);z-index:300;min-width:196px;padding:5px;display:none}
   .menu button{display:block;width:100%;text-align:left;background:none;border:0;border-radius:7px;padding:8px 11px;font-size:12.5px;color:var(--ink);cursor:pointer}
@@ -280,10 +280,10 @@
   .chip.on{border-color:var(--accent);background:#1463FF14;color:var(--accent)}
   .psecb .fld input,.psecb .fld select{padding:6px 9px;font-size:12px}
   .psecb .fld{margin-bottom:7px}
-  #gallery .gcard-wrap,#fmtmgr .gcard-wrap,#newfmt .gcard-wrap,#feedback .gcard-wrap,#savefmt .gcard-wrap{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px 22px;width:700px;max-width:92vw;max-height:90vh;display:flex;flex-direction:column}
-  #gallery h3,#fmtmgr h3,#newfmt h3,#feedback h3,#savefmt h3{margin:0;font-size:16px;flex:0 0 auto}
+  #gallery .gcard-wrap,#fmtmgr .gcard-wrap,#newfmt .gcard-wrap,#feedback .gcard-wrap,#shortcuts .gcard-wrap,#savefmt .gcard-wrap{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px 22px;width:700px;max-width:92vw;max-height:90vh;display:flex;flex-direction:column}
+  #gallery h3,#fmtmgr h3,#newfmt h3,#feedback h3,#shortcuts h3,#savefmt h3{margin:0;font-size:16px;flex:0 0 auto}
   #gallery .ghint,#fmtmgr .ghint,#newfmt .ghint,#feedback .ghint,#savefmt .ghint{font-size:12px;color:var(--mut);margin-top:4px;flex:0 0 auto}
-  #gallery .gclose,#fmtmgr .gclose,#newfmt .gclose,#feedback .gclose,#savefmt .gclose{float:right;cursor:pointer;color:var(--ink);font-weight:600}
+  #gallery .gclose,#fmtmgr .gclose,#newfmt .gclose,#feedback .gclose,#shortcuts .gclose,#savefmt .gclose{float:right;cursor:pointer;color:var(--ink);font-weight:600}
   #newfmt .fld,#feedback .fld,#savefmt .fld{margin-bottom:11px}
   #newfmt .fld label,#feedback .fld label,#savefmt .fld label{display:block;font-size:11px;color:var(--mut);margin-bottom:4px}
   #newfmt input[type=text],#newfmt select,#feedback input[type=text],#feedback textarea,#savefmt input[type=text],#savefmt select{width:100%;background:var(--panel2);color:var(--ink);border:1px solid var(--line2);border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit}
@@ -385,7 +385,7 @@
 <body>
 <div class="app">
   <div class="top">
-    <div class="brand" title="LumenPDF Studio"><svg width="24" height="24" viewBox="0 0 48 48" fill="none" aria-label="LumenPDF Studio"><rect x="9" y="4" width="30" height="40" rx="4" style="stroke:var(--logoA)" stroke-width="3"/><rect x="14.5" y="10" width="19" height="3.6" rx="1.8" style="fill:var(--logoB)"/><rect x="14.5" y="18" width="19" height="9" rx="2.4" style="fill:var(--logoA)"/><rect x="14.5" y="31.5" width="12" height="3.6" rx="1.8" style="fill:var(--logoB)"/></svg><small>Studio · b70</small></div>
+    <div class="brand" title="LumenPDF Studio"><svg width="24" height="24" viewBox="0 0 48 48" fill="none" aria-label="LumenPDF Studio"><rect x="9" y="4" width="30" height="40" rx="4" style="stroke:var(--logoA)" stroke-width="3"/><rect x="14.5" y="10" width="19" height="3.6" rx="1.8" style="fill:var(--logoB)"/><rect x="14.5" y="18" width="19" height="9" rx="2.4" style="fill:var(--logoA)"/><rect x="14.5" y="31.5" width="12" height="3.6" rx="1.8" style="fill:var(--logoB)"/></svg><small>Studio · b73</small></div>
     <button class="btn ghost iconbtn" id="homeBtn" onclick="goHome()" title="Home — all formats"><svg class="icn" viewBox="0 0 24 24"><path d="M4 11l8-6.5 8 6.5"/><path d="M6 10v9a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-9"/></svg></button>
     <div class="menuwrap"><button class="btn ghost" id="fileBtn" onclick="toggleFileMenu(event)" title="New, open, duplicate, import/export"><svg class="icn" viewBox="0 0 24 24"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg> File</button>
       <div class="menu" id="fileMenu">
@@ -422,6 +422,7 @@
       <div class="menu mright" id="moreMenu">
         <button id="fsBtn" onclick="closeFileMenu();toggleFullscreen()"><svg class="icn" viewBox="0 0 24 24"><path d="M4 9V5a1 1 0 0 1 1-1h4"/><path d="M20 9V5a1 1 0 0 0-1-1h-4"/><path d="M4 15v4a1 1 0 0 0 1 1h4"/><path d="M20 15v4a1 1 0 0 1-1 1h-4"/></svg> Full screen</button>
         <button onclick="closeFileMenu();openFeedback()"><svg class="icn" viewBox="0 0 24 24"><path d="M20 4H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h4v4l5-4h7a1 1 0 0 0 1-1V5a1 1 0 0 0-1-1z"/></svg> Send feedback</button>
+        <button onclick="closeFileMenu();openShortcuts()"><svg class="icn" viewBox="0 0 24 24"><rect x="2.5" y="6" width="19" height="12" rx="2"/><path d="M6 10h.01M9.5 10h.01M13 10h.01M16.5 10h.01M7.5 14h9"/></svg> Keyboard shortcuts</button>
       </div></div>
   </div>
   <div id="draftBar"><span><svg class="icn" viewBox="0 0 24 24"><path d="M3.5 12a8.5 8.5 0 1 0 2.6-6.1"/><path d="M3.5 4.5V10H9"/></svg> You have <b>unsaved changes</b> from your last session.</span><button class="pri" onclick="restoreDraft()">Restore my work</button><button onclick="dismissDraft()">Discard</button></div>
@@ -482,6 +483,7 @@
     <div class="hint" style="padding:2px 0 0">The default is what Print → PDF uses.</div>
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px"><button class="btn ghost" onclick="closeSaveFmt()">Cancel</button><button class="btn primary" onclick="confirmSaveFmt()">Save format</button></div>
   </div></div></div>
+<div id="shortcuts"><div class="gcard-wrap" style="width:460px"><h3>Keyboard shortcuts</h3><div class="ghint">On a Mac use Cmd instead of Ctrl.<span class="gclose" onclick="closeShortcuts()">Close</span></div><div style="margin-top:12px;max-height:60vh;overflow:auto"><div style="display:flex;align-items:center;gap:10px;padding:6px 2px;border-bottom:1px solid var(--line)"><kbd style="flex:0 0 150px;font-family:inherit;font-size:11px;font-weight:700;background:var(--panel2);border:1px solid var(--line2);border-radius:6px;padding:4px 8px;text-align:center">Ctrl + Z</kbd><span style="font-size:12px;color:var(--mut)">Undo</span></div><div style="display:flex;align-items:center;gap:10px;padding:6px 2px;border-bottom:1px solid var(--line)"><kbd style="flex:0 0 150px;font-family:inherit;font-size:11px;font-weight:700;background:var(--panel2);border:1px solid var(--line2);border-radius:6px;padding:4px 8px;text-align:center">Ctrl + Shift + Z</kbd><span style="font-size:12px;color:var(--mut)">Redo</span></div><div style="display:flex;align-items:center;gap:10px;padding:6px 2px;border-bottom:1px solid var(--line)"><kbd style="flex:0 0 150px;font-family:inherit;font-size:11px;font-weight:700;background:var(--panel2);border:1px solid var(--line2);border-radius:6px;padding:4px 8px;text-align:center">Ctrl + C</kbd><span style="font-size:12px;color:var(--mut)">Copy the selected block</span></div><div style="display:flex;align-items:center;gap:10px;padding:6px 2px;border-bottom:1px solid var(--line)"><kbd style="flex:0 0 150px;font-family:inherit;font-size:11px;font-weight:700;background:var(--panel2);border:1px solid var(--line2);border-radius:6px;padding:4px 8px;text-align:center">Ctrl + X</kbd><span style="font-size:12px;color:var(--mut)">Cut the selected block</span></div><div style="display:flex;align-items:center;gap:10px;padding:6px 2px;border-bottom:1px solid var(--line)"><kbd style="flex:0 0 150px;font-family:inherit;font-size:11px;font-weight:700;background:var(--panel2);border:1px solid var(--line2);border-radius:6px;padding:4px 8px;text-align:center">Ctrl + V</kbd><span style="font-size:12px;color:var(--mut)">Paste the block</span></div><div style="display:flex;align-items:center;gap:10px;padding:6px 2px;border-bottom:1px solid var(--line)"><kbd style="flex:0 0 150px;font-family:inherit;font-size:11px;font-weight:700;background:var(--panel2);border:1px solid var(--line2);border-radius:6px;padding:4px 8px;text-align:center">Ctrl + D</kbd><span style="font-size:12px;color:var(--mut)">Duplicate the selected block</span></div><div style="display:flex;align-items:center;gap:10px;padding:6px 2px;border-bottom:1px solid var(--line)"><kbd style="flex:0 0 150px;font-family:inherit;font-size:11px;font-weight:700;background:var(--panel2);border:1px solid var(--line2);border-radius:6px;padding:4px 8px;text-align:center">Delete</kbd><span style="font-size:12px;color:var(--mut)">Delete the selected block</span></div><div style="display:flex;align-items:center;gap:10px;padding:6px 2px;border-bottom:1px solid var(--line)"><kbd style="flex:0 0 150px;font-family:inherit;font-size:11px;font-weight:700;background:var(--panel2);border:1px solid var(--line2);border-radius:6px;padding:4px 8px;text-align:center">Ctrl + S</kbd><span style="font-size:12px;color:var(--mut)">Save the format</span></div><div style="display:flex;align-items:center;gap:10px;padding:6px 2px;border-bottom:1px solid var(--line)"><kbd style="flex:0 0 150px;font-family:inherit;font-size:11px;font-weight:700;background:var(--panel2);border:1px solid var(--line2);border-radius:6px;padding:4px 8px;text-align:center">Arrows</kbd><span style="font-size:12px;color:var(--mut)">Nudge a pinned block (Shift = 10mm)</span></div><div style="display:flex;align-items:center;gap:10px;padding:6px 2px;border-bottom:1px solid var(--line)"><kbd style="flex:0 0 150px;font-family:inherit;font-size:11px;font-weight:700;background:var(--panel2);border:1px solid var(--line2);border-radius:6px;padding:4px 8px;text-align:center">Ctrl + + / -</kbd><span style="font-size:12px;color:var(--mut)">Zoom in / out</span></div><div style="display:flex;align-items:center;gap:10px;padding:6px 2px;border-bottom:1px solid var(--line)"><kbd style="flex:0 0 150px;font-family:inherit;font-size:11px;font-weight:700;background:var(--panel2);border:1px solid var(--line2);border-radius:6px;padding:4px 8px;text-align:center">Ctrl + 0</kbd><span style="font-size:12px;color:var(--mut)">Zoom to 80%</span></div><div style="display:flex;align-items:center;gap:10px;padding:6px 2px;border-bottom:1px solid var(--line)"><kbd style="flex:0 0 150px;font-family:inherit;font-size:11px;font-weight:700;background:var(--panel2);border:1px solid var(--line2);border-radius:6px;padding:4px 8px;text-align:center">Pinch on trackpad</kbd><span style="font-size:12px;color:var(--mut)">Zoom the page</span></div><div style="display:flex;align-items:center;gap:10px;padding:6px 2px;border-bottom:1px solid var(--line)"><kbd style="flex:0 0 150px;font-family:inherit;font-size:11px;font-weight:700;background:var(--panel2);border:1px solid var(--line2);border-radius:6px;padding:4px 8px;text-align:center">F</kbd><span style="font-size:12px;color:var(--mut)">Full screen</span></div><div style="display:flex;align-items:center;gap:10px;padding:6px 2px;border-bottom:1px solid var(--line)"><kbd style="flex:0 0 150px;font-family:inherit;font-size:11px;font-weight:700;background:var(--panel2);border:1px solid var(--line2);border-radius:6px;padding:4px 8px;text-align:center">Esc</kbd><span style="font-size:12px;color:var(--mut)">Deselect / close a dialog</span></div><div style="display:flex;align-items:center;gap:10px;padding:6px 2px;border-bottom:1px solid var(--line)"><kbd style="flex:0 0 150px;font-family:inherit;font-size:11px;font-weight:700;background:var(--panel2);border:1px solid var(--line2);border-radius:6px;padding:4px 8px;text-align:center">?</kbd><span style="font-size:12px;color:var(--mut)">This list</span></div></div></div></div>
 <div id="feedback"><div class="gcard-wrap" style="width:460px"><h3><svg class="icn" viewBox="0 0 24 24" style="width:17px;height:17px"><path d="M20 4H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h4v4l5-4h7a1 1 0 0 0 1-1V5a1 1 0 0 0-1-1z"/></svg> Send feedback</h3><div class="ghint">Goes straight to the LumenPDF Studio team. Bugs, ideas, anything.<span class="gclose" onclick="closeFeedback()"><svg class="icn" viewBox="0 0 24 24"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg> Close</span></div>
   <div style="margin-top:14px">
     <div class="fld"><label>Your message</label><textarea id="fbMsg" placeholder="What's working? What's broken? What's missing?"></textarea></div>
@@ -649,8 +651,17 @@ const R={
   items:(s,b)=>{const w=s.widths||{};const lb=s.labels||{};const cols=[[esc(lb.num||"#"),"num",w.num],[esc(lb.item||"Item & Description"),"",w.item]];if(s.cols.qty)cols.push([esc(lb.qty||"Qty"),"num",w.qty]);if(s.cols.rate)cols.push([esc(lb.rate||"Rate"),"num",w.rate]);if(s.cols.amount)cols.push([esc(lb.amount||"Amount"),"num",w.amount]);const hc=s.headerColor==="navy"?b.navy:b.primary;const sk=tblSkin(s,b,hc);const cg=`<colgroup>`+cols.map(c=>`<col style="width:${c[2]&&!isNaN(c[2])?(+c[2])+'mm':'auto'}">`).join("")+`</colgroup>`;const th=skinHeads(cols.map(c=>`<th class="${c[1]}" style="${sk.th}${sk.pad}${sk.tdBorder}">${c[0]}</th>`).join(""),sk);const zc=s.zebraColor||"#eef6fc";const bt=sk.pad+sk.tdBorder;const cN=bt+colCss(s,"num",true),cI=bt+colCss(s,"item",false),cQ=bt+colCss(s,"qty",true),cR=bt+colCss(s,"rate",true),cA=bt+colCss(s,"amount",true);
     const ds=s.descStyle||{};let dcss="";if(HX.test(ds.color||''))dcss+="color:"+ds.color+" !important;";const dn=parseFloat(ds.size);if(dn&&!isNaN(dn))dcss+="font-size:"+Math.min(72,Math.max(4,dn))+"pt;";
     const iw=Math.min(180,Math.max(15,parseFloat(s.imgW)||58)),iht=Math.min(150,Math.max(10,parseFloat(s.imgH)||40));
-    const imgBox=(it)=>!s.showImage?"":(it.i?`<div style="margin:1mm 0 1.5mm"><img src="${esc(it.i)}" style="width:${iw}mm;height:${iht}mm;object-fit:contain;background:#fff;border:1px solid #e8ebee;border-radius:8px;display:block"></div>`:`<div style="margin:1mm 0 1.5mm;width:${iw}mm;height:${iht}mm;background:#f5f7f9;border:1px solid #e8ebee;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#9aa6c2;font-size:7pt">item photo</div>`);
-    const rows=SAMPLE.items.map((it,i)=>{let t=`<td class="num" style="${cN}">${i+1}</td><td style="${cI}">${imgBox(it)}<div class="it-name">${esc(it.n)}</div>`+(s.cols.desc&&it.d?`<div class="it-desc" style="${dcss}">${esc(it.d)}</div>`:"")+`</td>`;if(s.cols.qty)t+=`<td class="num" style="${cQ}">${esc(it.q)}</td>`;if(s.cols.rate)t+=`<td class="num" style="${cR}">${esc(it.r)}</td>`;if(s.cols.amount)t+=`<td class="num" style="${cA}">${esc(it.a)}</td>`;return `<tr${s.zebra&&i%2?` style="background:${zc}"`:''}>${t}</tr>`;}).join("");return `<table class="bs-items" style="${sk.table}">${cg}<thead><tr>${th}</tr></thead><tbody>${rows}</tbody></table>`;},
+    const ipos=(["top","left","right"].indexOf(s.imgPos)>=0)?s.imgPos:"top";
+    const imgMg=ipos==="top"?"margin:1mm 0 1.5mm;":"margin:0;";
+    const imgBox=(it)=>!s.showImage?"":(it.i?`<div class="it-img" style="${imgMg}"><img src="${esc(it.i)}" style="width:${iw}mm;height:${iht}mm;object-fit:contain;background:#fff;border:1px solid #e8ebee;border-radius:8px;display:block"></div>`:`<div class="it-img" style="${imgMg}width:${iw}mm;height:${iht}mm;background:#f5f7f9;border:1px solid #e8ebee;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#9aa6c2;font-size:7pt">item photo</div>`);
+    // Same nested-table markup the engine emits, so the canvas shows exactly what prints.
+    const itemCell=(it)=>{const img=imgBox(it);const txt=`<div class="it-name">${esc(it.n)}</div>`+(s.cols.desc&&it.d?`<div class="it-desc" style="${dcss}">${esc(it.d)}</div>`:"");
+      if(!img||ipos==="top")return img+txt;
+      const pad=ipos==="left"?"padding:0 0 0 3mm;":"padding:0 3mm 0 0;";
+      const ic=`<td style="border:0;padding:0;width:${iw}mm;vertical-align:top">${img}</td>`;
+      const tc=`<td style="border:0;${pad}vertical-align:top">${txt}</td>`;
+      return `<table style="width:100%;border-collapse:collapse;border:0"><tr>${ipos==="left"?ic+tc:tc+ic}</tr></table>`;};
+    const rows=SAMPLE.items.map((it,i)=>{let t=`<td class="num" style="${cN}">${i+1}</td><td style="${cI}">${itemCell(it)}</td>`;if(s.cols.qty)t+=`<td class="num" style="${cQ}">${esc(it.q)}</td>`;if(s.cols.rate)t+=`<td class="num" style="${cR}">${esc(it.r)}</td>`;if(s.cols.amount)t+=`<td class="num" style="${cA}">${esc(it.a)}</td>`;return `<tr${s.zebra&&i%2?` style="background:${zc}"`:''}>${t}</tr>`;}).join("");return `<table class="bs-items" style="${sk.table}">${cg}<thead><tr>${th}</tr></thead><tbody>${rows}</tbody></table>`;},
   datatable:(s,b)=>{const cols=(s.columns||[]).filter(c=>c&&c.field);const rows=(SAMPLE.tables&&SAMPLE.tables[s.table])||[];const zc=s.zebraColor||"#eef6fc";const hc=s.headerColor==="navy"?b.navy:b.primary;const sk=tblSkin(s,b,hc);const thPad=sk.pad||"padding:6px 8px;";const thFs=(s.headerStyle&&s.headerStyle.size)?"":"font-size:7.5pt;";const cg=`<colgroup>`+cols.map(c=>`<col style="width:${c.width&&!isNaN(c.width)?(+c.width)+'mm':'auto'}">`).join("")+`</colgroup>`;const th=skinHeads(cols.map(c=>`<th style="${sk.th}${sk.th.indexOf('color:')<0?'color:#fff;':''}font-weight:600;${thFs}${thPad}${sk.tdBorder}text-align:${c.align||'left'};word-wrap:break-word">${esc(c.label||c.field)}</th>`).join(""),sk);const dtPad=sk.pad||"padding:6px 8px;";const dtBor=sk.tdBorder||"border-bottom:1px solid #cfe5f6;";let body;if(!cols.length){body=`<tr><td style="padding:10px;color:#9aa6c2">Pick a table and add columns in the panel →</td></tr>`;}else if(!rows.length){body=[0,1].map(i=>`<tr${s.zebra&&i%2?` style="background:${zc}"`:''}>`+cols.map(c=>`<td style="${dtPad}${dtBor}text-align:${c.align||'left'};color:#9aa6c2;word-wrap:break-word">${c.field==='idx'?(i+1):'«'+esc(c.label||c.field)+'»'}</td>`).join("")+`</tr>`).join("");}else{body=rows.map((r,i)=>`<tr${s.zebra&&i%2?` style="background:${zc}"`:''}>`+cols.map(c=>`<td style="${dtPad}${dtBor}text-align:${c.align||'left'};${c.align==='right'?sk.num:''}word-wrap:break-word">${esc(r[c.field]!==undefined&&r[c.field]!==""?r[c.field]:(c.field==='idx'?(i+1):''))}</td>`).join("")+`</tr>`).join("");}return `<table style="width:100%;border-collapse:collapse;font-size:8pt;table-layout:fixed;${sk.table}">${cg}<thead><tr>${th}</tr></thead><tbody>${body}</tbody></table>`;},
   totals:(s,b)=>{const gc=HX.test(s.grandBg||'')?s.grandBg:(s.grandColor==="navy"?b.navy:b.primary);const gtc=HX.test(s.grandTextColor||'')?s.grandTextColor:'#fff';
     const gsz=parseFloat(s.grandSize);const gszc=(gsz&&!isNaN(gsz))?`font-size:${Math.min(72,Math.max(4,gsz))}pt;`:'font-size:10pt;';
@@ -1388,6 +1399,8 @@ function openFromHome(i){
   hideHome();
 }
 /* ---- feedback: straight to the app makers via the site's email ---- */
+function openShortcuts(){document.getElementById("shortcuts").style.display="flex";}
+function closeShortcuts(){document.getElementById("shortcuts").style.display="none";}
 function openFeedback(){document.getElementById("feedback").style.display="flex";setTimeout(function(){document.getElementById("fbMsg").focus();},50);}
 function closeFeedback(){document.getElementById("feedback").style.display="none";}
 function sendFeedback(){const msg=(document.getElementById("fbMsg").value||"").trim();
@@ -1399,8 +1412,8 @@ function sendFeedback(){const msg=(document.getElementById("fbMsg").value||"").t
     else toast("Could not send"+(EMBED?" — check the site's outgoing email settings.":" (works inside ERPNext)."),true);});}
 /* Extra ways out of the modals: click the dark backdrop, or press Escape. */
 (function(){function bd(id,close){var el=document.getElementById(id);if(el)el.addEventListener("mousedown",function(e){if(e.target===el)close();});}
-  bd("gallery",closeGallery);bd("fmtmgr",function(){closeFmtMgr();});bd("newfmt",closeNewFmt);bd("feedback",closeFeedback);bd("savefmt",closeSaveFmt);
-  document.addEventListener("keydown",function(e){if(e.key==="Escape"){["gallery","fmtmgr","newfmt","feedback","savefmt"].forEach(function(id){var el=document.getElementById(id);if(el&&el.style.display==="flex"){if(id==="gallery")closeGallery();else if(id==="fmtmgr")closeFmtMgr();else if(id==="newfmt")closeNewFmt();else if(id==="feedback")closeFeedback();else closeSaveFmt();}});}});})();
+  bd("gallery",closeGallery);bd("fmtmgr",function(){closeFmtMgr();});bd("newfmt",closeNewFmt);bd("feedback",closeFeedback);bd("shortcuts",closeShortcuts);bd("savefmt",closeSaveFmt);
+  document.addEventListener("keydown",function(e){if(e.key==="Escape"){["gallery","fmtmgr","newfmt","feedback","savefmt","shortcuts"].forEach(function(id){var el=document.getElementById(id);if(el&&el.style.display==="flex"){if(id==="gallery")closeGallery();else if(id==="fmtmgr")closeFmtMgr();else if(id==="newfmt")closeNewFmt();else if(id==="feedback")closeFeedback();else if(id==="shortcuts")closeShortcuts();else closeSaveFmt();}});}});})();
 function pickStarter(i){const f=(_galSet||FORMATS)[i];if(!f)return;clearDraft();loadDefinition(f.make());closeGallery();}
 /* ---- READY SECTIONS: pre-composed block groups you insert into the current design ---- */
 const SECTIONS=[
@@ -1520,7 +1533,7 @@ function flowBlkStatic(bl,b){const inner=_inert(bl,_ghost(bl,(R[bl.type]||(()=>"
   // by default and absolutely positioned, so measurement (computeBreaks) is unaffected.
   // Clones keep the SIMPLE tools (no quick bar) — the styling bar belongs on the live page-1 block.
   const chrome=bl.locked?`<span class="tag">${META[bl.type].l}</span>`:`<span class="tag">${META[bl.type].l}</span><div class="tools"><button title="Move up" onclick="moveBody(event,'${bl.id}',-1)">${TOOLI.up}</button><button title="Move down" onclick="moveBody(event,'${bl.id}',1)">${TOOLI.down}</button><button title="Duplicate" onclick="duplicate('${bl.id}')">${TOOLI.copy}</button><button title="Delete" onclick="del(event,'${bl.id}')">${TOOLI.trash}</button></div>`;
-  return `<div class="sblk${sel?' sel':''}" data-sid="${bl.id}" style="position:relative;margin-bottom:4mm;${bl.locked?'cursor:default;':''}${styleCss(bl.style)}">${chrome}${bl.hidden?HIDB:''}${inner}</div>`;}
+  return `<div class="sblk${sel?' sel':''}" data-sid="${bl.id}" data-type="${bl.type}" style="position:relative;margin-bottom:4mm;${bl.locked?'cursor:default;':''}${styleCss(bl.style)}">${chrome}${bl.hidden?HIDB:''}${inner}</div>`;}
 function rowChildBlk(c,b){const inner=_inert(c,(R[c.type]||(()=>""))(c.settings,b,c));const sel=c.id===selId;
   const tools=c.locked?'':`<div class="tools"><button title="Duplicate" onclick="duplicate('${c.id}')">${TOOLI.copy}</button><button title="Delete" onclick="del(event,'${c.id}')">${TOOLI.trash}</button></div>`;
   return `<div class="blk flow ${sel?'sel':''}${c.locked?' lockd':''}" data-id="${c.id}" style="position:relative;margin-bottom:2mm;${c.locked?'cursor:default;':''}${styleCss(c.style)}">${tools}${inner}</div>`;}
@@ -1531,6 +1544,7 @@ function measureReel(bodyHtml,b){if(!bodyHtml)return 0;const key=PW()+"|"+(b.fon
 /* Row-aware page breaks: measure the static body once, collect atomic boundaries (each top-level
    block, and each <tr> inside tables), then greedily pack pages so a page never cuts through a
    line/row — the canvas mirror of the PDF's page-break-inside:avoid. Returns [0,c1,...,total]. */
+const SPLITTABLE={items:1,datatable:1,table:1,payment_schedule:1,report_table:1,report_native:1};
 function computeBreaks(bodyHtml,b,areaMm){
   if(!bodyHtml)return [0,0];
   try{
@@ -1542,9 +1556,16 @@ function computeBreaks(bodyHtml,b,areaMm){
     const total=inner.offsetHeight/PXMM;
     const cands=new Set();
     const push=el=>{const bot=(el.getBoundingClientRect().bottom-base)/PXMM;if(bot>0.5)cands.add(+bot.toFixed(2));};
+    // A page may be cut BETWEEN the rows of a genuinely long, row-based block (an items/data/report
+    // table). Every other block is ATOMIC: blocks like Row/Columns, Totals or Signature are built
+    // out of <table> internally, and treating their inner <tr>s as cut points is what split a Row
+    // block across two pages — half its content stranded on page 1. Their only candidate is their
+    // own bottom edge, so a block that does not fit moves whole to the next page.
     Array.prototype.forEach.call(inner.children,function(ch){
-      const rows=ch.querySelectorAll("tr");
-      if(rows.length){Array.prototype.forEach.call(rows,push);}else{push(ch);}
+      const t=ch.getAttribute?ch.getAttribute("data-type"):null;
+      const rows=SPLITTABLE[t]?ch.querySelectorAll("tr"):null;
+      if(rows&&rows.length)Array.prototype.forEach.call(rows,push);
+      push(ch);  // the block's own end is always a valid cut
     });
     document.body.removeChild(host);
     const list=Array.from(cands).sort((x,y)=>x-y);
@@ -1792,15 +1813,54 @@ document.addEventListener("mouseup",function(){
 document.getElementById("paper").addEventListener("mousedown",function(e){const g=e.target.closest(".bandgrip");if(!g)return;e.preventDefault();e.stopPropagation();if(_inlineActive())document.activeElement.blur();bandDrag={band:g.dataset.band,sy:e.clientY,o:(g.dataset.band==="header"?state.header.height:state.footer.height)};},true);
 document.addEventListener("mousemove",function(e){if(!bandDrag)return;const dy=(e.clientY-bandDrag.sy)/(scale*PXMM);let h=bandDrag.o+(bandDrag.band==="header"?dy:-dy);h=Math.max(6,Math.min(140,Math.round(h)));if(bandDrag.band==="header")state.header.height=h;else state.footer.height=h;render();});
 document.addEventListener("mouseup",function(){if(bandDrag){bandDrag=null;if(typeof renderPage==="function"&&tab==="page")renderPage();}});
+/* ---- block clipboard: copy/cut/paste a configured block, Row children included ---- */
+let _clip=null;
+function _freshIds(b){const nb=JSON.parse(JSON.stringify(b));nb.id="b"+(idc++);
+  if(nb.type==="row"&&nb.settings&&nb.settings.cells)nb.settings.cells.forEach(function(cell){(cell||[]).forEach(function(c){c.id="b"+(idc++);});});
+  return nb;}
+function copyBlock(){const b=cur();if(!b)return;_clip=JSON.parse(JSON.stringify(b));toast('Copied "'+(META[b.type]?META[b.type].l:b.type)+'" — paste with Ctrl+V.');}
+function cutBlock(){const b=cur();if(!b)return;copyBlock();del(null,b.id);}
+function pasteBlock(){
+  if(!_clip){toast("Nothing copied yet.",true);return;}
+  const nb=_freshIds(_clip);
+  const sel=cur();
+  // paste INTO the same Row column when a nested block is selected, else after the selected block
+  if(sel){for(var bi=0;bi<state.blocks.length;bi++){var rb=state.blocks[bi];
+      if(rb.type==="row"&&rb.settings&&rb.settings.cells){for(var ci=0;ci<rb.settings.cells.length;ci++){
+        var k=rb.settings.cells[ci].findIndex(function(c){return c&&c.id===sel.id;});
+        if(k>=0){delete nb.pos;nb.float=false;rb.settings.cells[ci].splice(k+1,0,nb);selId=nb.id;render();renderProps();return;}}}}}
+  if(!nb.pos)nb.pos={x:14,y:0,w:182,h:null};else nb.pos=Object.assign({},nb.pos);
+  if(sel&&sel.pos){nb.pos.y=(sel.pos.y||0)+(nb.float||regionOf(nb)!=="body"?4:0.1);if(nb.float)nb.pos.x=(nb.pos.x||0)+4;}
+  else{let maxY=(state.header.enabled?state.header.height:0)+2;state.blocks.forEach(function(b){if(regionOf(b)==="body"&&!b.float)maxY=Math.max(maxY,(b.pos&&b.pos.y)||0);});nb.pos.y=maxY+8;nb.region="body";nb.float=false;}
+  const i=sel?state.blocks.findIndex(function(x){return x.id===sel.id;}):-1;
+  if(i>=0)state.blocks.splice(i+1,0,nb);else state.blocks.push(nb);
+  selId=nb.id;render();renderProps();}
+function zoomReset(){zoom(0.8-scale);}
+function _modalOpen(){return ["gallery","fmtmgr","newfmt","feedback","savefmt","shortcuts"].some(function(id){const m=document.getElementById(id);return m&&m.style.display==="flex";});}
+/* ---- trackpad: pinch to zoom the page (a pinch arrives as wheel + ctrlKey) ---- */
+(function(){const st=document.getElementById("stage");if(!st)return;
+  st.addEventListener("wheel",function(e){
+    if(!e.ctrlKey&&!e.metaKey)return;   // plain two-finger scroll stays scrolling
+    e.preventDefault();zoom(-e.deltaY*0.003);
+  },{passive:false});})();
 document.addEventListener("keydown",function(e){
   const tg=(e.target.tagName||"").toLowerCase();if(tg==="input"||tg==="textarea"||e.target.isContentEditable)return;
   if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="z"&&!e.shiftKey){e.preventDefault();undo();return;}
   if((e.ctrlKey||e.metaKey)&&(e.key.toLowerCase()==="y"||(e.shiftKey&&e.key.toLowerCase()==="z"))){e.preventDefault();redo();return;}
   if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="d"){e.preventDefault();if(selId)duplicate(selId);return;}
+  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="s"){e.preventDefault();save();return;}
+  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="c"){if(selId){e.preventDefault();copyBlock();}return;}
+  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="x"){if(selId){e.preventDefault();cutBlock();}return;}
+  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="v"){e.preventDefault();pasteBlock();return;}
+  if((e.ctrlKey||e.metaKey)&&(e.key==="="||e.key==="+")){e.preventDefault();zoom(.1);return;}
+  if((e.ctrlKey||e.metaKey)&&e.key==="-"){e.preventDefault();zoom(-.1);return;}
+  if((e.ctrlKey||e.metaKey)&&e.key==="0"){e.preventDefault();zoomReset();return;}
+  if(e.key==="?"&&!e.ctrlKey&&!e.metaKey){e.preventDefault();openShortcuts();return;}
   if((e.key==="f"||e.key==="F")&&!e.ctrlKey&&!e.metaKey&&!_continuousEdit()){e.preventDefault();toggleFullscreen();return;}
+  if(e.key==="Escape"&&!_modalOpen()&&selId){e.preventDefault();selId=null;render();renderProps();return;}
   if(!selId)return;
   const b=cur();if(!b)return;const st=e.shiftKey?10:1;let m=false;
-  if(e.key==="ArrowLeft"){b.pos.x=Math.max(0,b.pos.x-st);m=true;}else if(e.key==="ArrowRight"){b.pos.x+=st;m=true;}else if(e.key==="ArrowUp"){b.pos.y=Math.max(0,b.pos.y-st);m=true;}else if(e.key==="ArrowDown"){b.pos.y+=st;m=true;}else if(e.key==="Delete"){del(null,b.id);e.preventDefault();return;}
+  if(e.key==="ArrowLeft"){b.pos.x=Math.max(0,b.pos.x-st);m=true;}else if(e.key==="ArrowRight"){b.pos.x+=st;m=true;}else if(e.key==="ArrowUp"){b.pos.y=Math.max(0,b.pos.y-st);m=true;}else if(e.key==="ArrowDown"){b.pos.y+=st;m=true;}else if(e.key==="Delete"||e.key==="Backspace"){del(null,b.id);e.preventDefault();return;}
   if(m){e.preventDefault();render();renderProps();}
 });
 
@@ -2147,7 +2207,10 @@ function renderProps(){const host=document.getElementById("propsBlock"),b=cur();
   else if(t==="items"){const w=s.widths||(s.widths={});const wnum=(l,k,v)=>`<div class="fld"><label>${l}</label><input type="text" value="${v==null?'':v}" placeholder="auto" oninput="setS('${k}',this.value===''?null:(parseFloat(this.value)||null))"></div>`;
     h+=`<div class="fld"><label>Columns</label>`+ck("Description","cols.desc",s.cols.desc)+ck("Qty","cols.qty",s.cols.qty)+ck("Rate","cols.rate",s.cols.rate)+ck("Amount","cols.amount",s.cols.amount)+`</div>`;
     h+=ck("Product photo per item","showImage",s.showImage);
-    if(s.showImage)h+=`<div class="hint" style="padding:0 0 6px">Prints each row's <b>Image</b> attachment above the item name (rows without one — services — get no box).</div><div class="row2"><div class="fld"><label>Photo width (mm)</label><input type="text" value="${s.imgW==null?'':s.imgW}" placeholder="58" oninput="setSNum('imgW',this.value)"></div><div class="fld"><label>Photo height (mm)</label><input type="text" value="${s.imgH==null?'':s.imgH}" placeholder="40" oninput="setSNum('imgH',this.value)"></div></div>`;
+    if(s.showImage){const ip=(["top","left","right"].indexOf(s.imgPos)>=0)?s.imgPos:"top";
+      h+=`<div class="hint" style="padding:0 0 6px">Prints each row's <b>Image</b> attachment (rows without one — services — get no box).</div>`;
+      h+=`<div class="fld"><label>Photo position</label><div class="seg">`+[["top","Above name"],["left","Left of text"],["right","Right of text"]].map(o=>`<button class="${ip===o[0]?'on':''}" onclick="setS('imgPos','${o[0]}');renderProps()">${o[1]}</button>`).join("")+`</div></div>`;
+      h+=`<div class="row2"><div class="fld"><label>Photo width (mm)</label><input type="text" value="${s.imgW==null?'':s.imgW}" placeholder="58" oninput="setSNum('imgW',this.value)"></div><div class="fld"><label>Photo height (mm)</label><input type="text" value="${s.imgH==null?'':s.imgH}" placeholder="40" oninput="setSNum('imgH',this.value)"></div></div>`;}
     h+=ck("Zebra rows","zebra",s.zebra);
     if(s.zebra)h+=`<div class="fld"><label>Zebra color</label><div class="color"><input type="color" value="${s.zebraColor||'#eef6fc'}" oninput="setS('zebraColor',this.value)"><input type="text" value="${esc(s.zebraColor||'')}" placeholder="#eef6fc" oninput="setS('zebraColor',this.value)"></div></div>`;
     h+=sg("Header color","headerColor",s.headerColor,[["primary","Primary"],["navy","Navy"]]);
