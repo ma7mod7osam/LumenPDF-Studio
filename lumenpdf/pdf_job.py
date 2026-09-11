@@ -99,6 +99,7 @@ def generate_preview(job_token, definition, doctype, docname, user, _retry=0):
             html = B.render_definition(doc, d, "")
             br = (d.get("branding") or {}) if isinstance(d, dict) else {}
             allowed = set(filter(None, [br.get("header_image"), br.get("footer_image")])) | B.collect_image_srcs(d)
+            allowed |= B.collect_doc_image_srcs(doc, d)  # item photos + Data Table image lines
             html = assets.neutralize_remote(assets.inline_images(html, allowed=allowed))
             pdf = renderer.render(html, default_options())
         file_url = _save_private_file(doc, pdf, docname + "-preview")

@@ -277,6 +277,40 @@
   .psecb{padding:10px 13px 6px}
   .stycardlbl{font-size:10px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--mut2);margin-bottom:6px}
   .stycard .fld label{font-size:10px}
+  /* Data Table composer: one card per column, one row per line inside it. Vars only: dark mode follows the tokens. */
+  .dtcard{border:1px solid var(--line2);border-radius:10px;background:var(--panel2);padding:8px 8px 7px;margin:0 0 10px}
+  .dthd{display:flex;gap:6px;align-items:center}
+  .props .dthd input[type=text]{padding:6px 8px;font-size:12px;font-weight:600;min-width:0}
+  .props .dthd input.dtw{flex:0 0 60px;width:60px;font-weight:400}
+  .dtbar{display:flex;gap:5px;align-items:center;margin:6px 0 2px}
+  .dtbar .seg,.dtr .seg{flex:0 0 auto}
+  .dtseg button{padding:4px 7px;font-size:11px;display:inline-flex;align-items:center;justify-content:center}
+  .dtseg .icn{width:13px;height:13px;vertical-align:0}
+  .dtsp{flex:1}
+  .dtib{width:24px;height:24px;flex:0 0 24px;display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--line2);border-radius:6px;background:var(--panel);color:var(--mut);cursor:pointer;padding:0}
+  .dtib:hover:not(:disabled){color:var(--accent);border-color:var(--accent)}
+  .dtib.danger:hover:not(:disabled){color:var(--danger);border-color:var(--danger)}
+  .dtib:disabled{opacity:.35;cursor:default}
+  .dtib .icn{width:13px;height:13px;vertical-align:0}
+  .dtlines{margin:6px 0 6px}
+  .dtline{border:1px solid var(--line);border-radius:8px;background:var(--panel);padding:6px;margin:0 0 5px}
+  .dtline.open{border-color:var(--accent)}
+  .dtr{display:flex;gap:5px;align-items:center}
+  .props .dtr select{flex:1;min-width:0;padding:5px 6px;font-size:12px}
+  .dtn{flex:0 0 14px;text-align:center;font-size:10px;font-weight:700;color:var(--mut2)}
+  .dtstyb{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--line2);border-radius:7px;background:var(--panel2);color:var(--mut);font-size:11px;font-weight:600;padding:4px 8px;cursor:pointer;flex:0 0 auto}
+  .dtstyb.on,.dtstyb:hover{color:var(--accent);border-color:var(--accent)}
+  .dtstyb .icn{width:12px;height:12px;vertical-align:0}
+  .dtsum{flex:1;min-width:0;font-size:10.5px;color:var(--mut2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .dtsty{border-top:1px dashed var(--line2);margin-top:6px;padding-top:2px}
+  .dtsty .fld{margin:6px 0}
+  .dtsty .fld label{font-size:10px;margin-bottom:3px}
+  .props .dtsty input[type=text]{padding:5px 7px;font-size:12px}
+  .dtsty .chips{margin:6px 0 2px}
+  .dtadd{width:100%;display:flex;align-items:center;justify-content:center;gap:5px;border:1px dashed var(--line2);border-radius:8px;background:transparent;color:var(--accent);font-size:11.5px;font-weight:600;padding:6px;cursor:pointer}
+  .dtadd:hover{background:var(--accentSoft);border-color:var(--accent)}
+  .dtadd .icn{width:12px;height:12px;vertical-align:0}
+  .dtconv{border:1px solid var(--line2);border-radius:10px;background:var(--panel2);padding:8px 8px 2px;margin:4px 0 10px}
   #draftBar{display:none;align-items:center;gap:10px;padding:8px 14px;background:#FFF6E0;border-bottom:1px solid #F0D98A;color:#7A5A00;font-size:12.5px;font-weight:600}
   #draftBar button{border:1px solid #d9c58a;background:#fff;color:#7A5A00;border-radius:7px;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer}
   #draftBar button.pri{background:#1463FF;border-color:#1463FF;color:#fff}
@@ -391,7 +425,7 @@
 <body>
 <div class="app">
   <div class="top">
-    <div class="brand" title="LumenPDF Studio"><svg width="24" height="24" viewBox="0 0 48 48" fill="none" aria-label="LumenPDF Studio"><rect x="9" y="4" width="30" height="40" rx="4" style="stroke:var(--logoA)" stroke-width="3"/><rect x="14.5" y="10" width="19" height="3.6" rx="1.8" style="fill:var(--logoB)"/><rect x="14.5" y="18" width="19" height="9" rx="2.4" style="fill:var(--logoA)"/><rect x="14.5" y="31.5" width="12" height="3.6" rx="1.8" style="fill:var(--logoB)"/></svg><small>Studio · b74</small></div>
+    <div class="brand" title="LumenPDF Studio"><svg width="24" height="24" viewBox="0 0 48 48" fill="none" aria-label="LumenPDF Studio"><rect x="9" y="4" width="30" height="40" rx="4" style="stroke:var(--logoA)" stroke-width="3"/><rect x="14.5" y="10" width="19" height="3.6" rx="1.8" style="fill:var(--logoB)"/><rect x="14.5" y="18" width="19" height="9" rx="2.4" style="fill:var(--logoA)"/><rect x="14.5" y="31.5" width="12" height="3.6" rx="1.8" style="fill:var(--logoB)"/></svg><small>Studio · b76</small></div>
     <button class="btn ghost iconbtn" id="homeBtn" onclick="goHome()" title="Home — all formats"><svg class="icn" viewBox="0 0 24 24"><path d="M4 11l8-6.5 8 6.5"/><path d="M6 10v9a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-9"/></svg></button>
     <div class="menuwrap"><button class="btn ghost" id="fileBtn" onclick="toggleFileMenu(event)" title="New, open, duplicate, import/export"><svg class="icn" viewBox="0 0 24 24"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg> File</button>
       <div class="menu" id="fileMenu">
@@ -535,6 +569,28 @@ function colCss(sett,key,numeric){const cs=(sett.colStyles&&typeof sett.colStyle
   if(["left","center","right"].indexOf(st.align)>=0)out+="text-align:"+st.align+";";
   if(HX.test(st.bg||''))out+="background-color:"+st.bg+";";
   return out;}
+/* Data Table: a column is a STACK OF LINES (blocks._dt_lines). Legacy {field,label,width,align}
+   columns have no `lines` and read as one plain line, so old formats look exactly as before. */
+function dtLinesOf(c){if(!c)return [];if(Array.isArray(c.lines)&&c.lines.length)return c.lines.filter(l=>l&&l.field);return c.field?[{field:c.field}]:[];}
+function dtAl(c){return ["left","center","right"].indexOf(c&&c.align)>=0?c.align:"left";}
+function dtIsFile(v){return /^\/(private\/)?files\//.test(String(v==null?"":v).trim());}
+function dtImgMm(v){const n=parseFloat(v);return Math.min(120,Math.max(8,(n&&!isNaN(n))?n:20));}
+function dtLineCss(l){let c="";const n=parseFloat(l.size);if(n&&!isNaN(n))c+="font-size:"+Math.min(72,Math.max(4,n))+"pt;";if(["400","600","700"].indexOf(String(l.weight||""))>=0)c+="font-weight:"+l.weight+";";const col=String(l.color||"").trim();if(HX.test(col))c+="color:"+col+";";if(l.italic)c+="font-style:italic;";if(l.upper)c+="text-transform:uppercase;";return c;}
+function dtFieldLabel(table,f){if(f==="idx")return "#";const tb=CTABLES.find(x=>x.fieldname===table);const x=tb&&(tb.fields||[]).find(y=>y.fieldname===f);return (x&&x.label)||f;}
+/* One composed cell, same markup as blocks._dt_cell: a div per NON-EMPTY line. ph=true means no sample
+   rows for this table, so show «field» placeholders. Image lines with no value show a grey box. */
+function dtCellHtml(c,r,i,ph,table){const lines=dtLinesOf(c),al=dtAl(c),parts=[];let prev=null;
+  lines.forEach(l=>{const f=l.field;
+    if(l.kind==="image"){if(f==="idx")return;const v=ph?"":String(r[f]==null?"":r[f]).trim();const iw=dtImgMm(l.imgW),ih=dtImgMm(l.imgH);
+      const mg=al==="center"?"margin-left:auto;margin-right:auto;":(al==="right"?"margin-left:auto;":"");
+      if(dtIsFile(v))parts.push(["image",`<img src="${esc(v)}" style="width:${iw}mm;height:${ih}mm;object-fit:contain;background:#fff;border:1px solid #e8ebee;border-radius:6px;display:block;${mg}">`,""]);
+      else if(!v)parts.push(["image",`<div style="width:${iw}mm;height:${ih}mm;background:#f5f7f9;border:1px solid #e8ebee;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#9aa6c2;font-size:6.5pt;box-sizing:border-box;${mg}">photo</div>`,""]);
+      return;}
+    let v;if(ph)v=f==="idx"?String(i):"«"+((lines.length===1&&c.label)?c.label:dtFieldLabel(table,f))+"»";
+    else{v=r[f];if(v===undefined||v===null||v==="")v=(f==="idx"?i:"");v=String(v).trim();}
+    if(!v)return;if(!ph&&l.skipDup&&prev!==null&&v===prev)return;prev=v;
+    parts.push(["text",`<bdi>${esc(l.prefix||"")}${esc(v)}${esc(l.suffix||"")}</bdi>`,dtLineCss(l)]);});
+  return parts.map((p,k)=>{const gap=k===0?"":((p[0]==="image"||parts[k-1][0]==="image")?"margin-top:1mm;":"margin-top:1px;");return `<div class="dt-ln" style="${gap}${p[2]}">${p[1]}</div>`;}).join("");}
 function skinHeads(th,sk){if(!sk.thFirst)return th;th=th.replace('style="','style="'+sk.thFirst);const k=th.lastIndexOf('style="');return th.slice(0,k)+'style="'+sk.thLast+th.slice(k+7);}
 /* Fonts: mirrors blocks.GOOGLE_FONTS (all @import-loaded above) + system fonts, grouped. */
 const FONT_GROUPS=[["Sans (Latin)",["Plus Jakarta Sans","Inter","Montserrat","Roboto","Open Sans","Lato","Poppins","Archivo","Manrope","Bricolage Grotesque"]],["Serif & Mono",["Newsreader","Instrument Serif","IBM Plex Mono"]],["Arabic",["Cairo","Almarai","Tajawal","IBM Plex Sans Arabic","Noto Kufi Arabic","Amiri"]],["System",["Arial","Tahoma"]]];
@@ -549,7 +605,7 @@ const BASE_SAMPLE={name:"SAL-QTN-2026-00006",transaction_date:"25-06-2026",valid
   payment_schedule:[{t:"Advance",due:"25-06-2026",pct:"50.0",amt:"BHD 926.750"},{t:"On Delivery",due:"25-07-2026",pct:"50.0",amt:"BHD 926.750"}],
   terms:"Prices valid for 30 days. Payment due Net 30. Warranty per manufacturer terms.",
   tables:{
-    items:[{idx:1,item_code:"CCTV",item_name:"CCTV",description:"CCTV",qty:"1 Service",uom:"Service",rate:"BHD 0.000",amount:"BHD 0.000"},{idx:2,item_code:"DS-2CD",item_name:"HIKVISION 6 MP ColorVu",description:"High quality imaging, 8 MP",qty:"38 Pcs",uom:"Pcs",rate:"BHD 27.500",amount:"BHD 1,045.000"},{idx:3,item_code:"NVR-64",item_name:"HIKVISION 64-ch 2U 4K NVR",description:"",qty:"2 Pcs",uom:"Pcs",rate:"BHD 322.500",amount:"BHD 645.000"}],
+    items:[{idx:1,item_code:"CCTV",item_name:"CCTV",description:"CCTV",qty:"1",uom:"Service",rate:"BHD 0.000",amount:"BHD 0.000"},{idx:2,item_code:"DS-2CD",item_name:"HIKVISION 6 MP ColorVu",description:"High quality imaging, 8 MP",qty:"38",uom:"Pcs",rate:"BHD 27.500",amount:"BHD 1,045.000"},{idx:3,item_code:"NVR-64",item_name:"HIKVISION 64-ch 2U 4K NVR",description:"",qty:"2",uom:"Pcs",rate:"BHD 322.500",amount:"BHD 645.000"}],
     taxes:[{idx:1,description:"VAT 10%",rate:"10",tax_amount:"BHD 168.500"}],
     payment_schedule:[{idx:1,payment_term:"Advance",due_date:"25-06-2026",invoice_portion:"50.0",payment_amount:"BHD 926.750"},{idx:2,payment_term:"On Delivery",due_date:"25-07-2026",invoice_portion:"50.0",payment_amount:"BHD 926.750"}]
   }};
@@ -561,7 +617,7 @@ let DOCFIELDS=FIELDS.slice();  // replaced with the real doctype field list when
 let LINKFIELDS=[];  // per Link field, the linked doctype's fields -> one-hop paths like customer.email_id
 // child tables + their fields (replaced with the real doctype meta when embedded); used by the Data Table block
 let CTABLES=[
-  {fieldname:"items",label:"Items",child_doctype:"",fields:[{fieldname:"idx",label:"#"},{fieldname:"item_code",label:"Item Code"},{fieldname:"item_name",label:"Item"},{fieldname:"description",label:"Description"},{fieldname:"qty",label:"Qty"},{fieldname:"uom",label:"UOM"},{fieldname:"rate",label:"Rate"},{fieldname:"amount",label:"Amount"}]},
+  {fieldname:"items",label:"Items",child_doctype:"",fields:[{fieldname:"idx",label:"#"},{fieldname:"item_code",label:"Item Code"},{fieldname:"item_name",label:"Item"},{fieldname:"description",label:"Description"},{fieldname:"qty",label:"Qty"},{fieldname:"uom",label:"UOM"},{fieldname:"rate",label:"Rate"},{fieldname:"amount",label:"Amount"},{fieldname:"image",label:"Image"}]},
   {fieldname:"taxes",label:"Taxes and Charges",child_doctype:"",fields:[{fieldname:"idx",label:"#"},{fieldname:"description",label:"Description"},{fieldname:"rate",label:"Rate"},{fieldname:"tax_amount",label:"Amount"}]},
   {fieldname:"payment_schedule",label:"Payment Schedule",child_doctype:"",fields:[{fieldname:"idx",label:"#"},{fieldname:"payment_term",label:"Payment Term"},{fieldname:"due_date",label:"Due Date"},{fieldname:"invoice_portion",label:"Portion %"},{fieldname:"payment_amount",label:"Amount"}]}
 ];
@@ -602,7 +658,13 @@ const UI={
   lock:_ic('<rect x="5" y="10.5" width="14" height="9.5" rx="2.2"/><path d="M8.2 10.5V7.6a3.8 3.8 0 0 1 7.6 0v2.9"/>'),
   unlock:_ic('<rect x="5" y="10.5" width="14" height="9.5" rx="2.2"/><path d="M8.2 10.5V7.6a3.8 3.8 0 0 1 7.2-1.4"/>'),
   pin:_ic('<path d="M9 3h6"/><path d="M10.5 3v6L8 13h8l-2.5-4V3"/><path d="M12 13v8"/>'),
-  layers:_ic('<path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M3 15l9 5 9-5"/>')};
+  layers:_ic('<path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M3 15l9 5 9-5"/>'),
+  left:_ic('<path d="M19 12H5"/><path d="M11 6l-6 6 6 6"/>'),
+  right:_ic('<path d="M5 12h14"/><path d="M13 6l6 6-6 6"/>'),
+  alL:_ic('<line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="13" y2="12"/><line x1="4" y1="18" x2="17" y2="18"/>'),
+  alC:_ic('<line x1="4" y1="6" x2="20" y2="6"/><line x1="7.5" y1="12" x2="16.5" y2="12"/><line x1="5.5" y1="18" x2="18.5" y2="18"/>'),
+  alR:_ic('<line x1="4" y1="6" x2="20" y2="6"/><line x1="11" y1="12" x2="20" y2="12"/><line x1="7" y1="18" x2="20" y2="18"/>'),
+  sliders:_ic('<path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/>')};
 /* the canvas .tools chrome uses bare 12px svgs (sized by .tools button svg) */
 const TOOLI={up:'<svg viewBox="0 0 24 24"><path d="M12 19V5"/><path d="M6 11l6-6 6 6"/></svg>',
   down:'<svg viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M6 13l6 6 6-6"/></svg>',
@@ -627,6 +689,15 @@ const HIDB='<span class="hidb" title="Hidden — will not print">'+TOOLI.eyeOff+
 const META={heading:{l:"Heading"},text:{l:"Text"},field:{l:"Field"},image:{l:"Image"},divider:{l:"Line"},box:{l:"Box"},row:{l:"Row / Columns"},table:{l:"Table"},pagenum:{l:"Page No"},header_banner:{l:"Header"},customer:{l:"Customer"},items:{l:"Items"},datatable:{l:"Data Table"},totals:{l:"Totals"},payment_schedule:{l:"Payment"},terms:{l:"Terms"},signature:{l:"Signature"},footer_banner:{l:"Footer"},title:{l:"Title"},report_title:{l:"Report Title"},report_filters:{l:"Filters"},report_table:{l:"Report Table"}};
 ICONS.report_title=ICONS.title;ICONS.report_filters=ICONS.terms;ICONS.report_table=ICONS.datatable;
 const ELEM=["heading","text","field","image","divider","box","row","table","pagenum"];
+/* Row column widths that always FIT the row. Fixed widths are kept as the user set them unless,
+   together with the gaps and a 12mm floor for every auto column, they exceed the row: then they
+   are scaled down in proportion. The engine applies the identical rule (_row_fit_widths), so a
+   format saved with overflowing widths still prints inside the margins. */
+function rowFitWidths(s){const cols=Math.max(1,Math.min(4,+s.cols||2)),gap=Math.max(0,+s.gap||6),pct=Math.max(20,Math.min(100,+s.width||100));
+  const avail=Math.max(20,(PW()-28)*pct/100-gap*(cols-1));const f=[];
+  for(let i=0;i<cols;i++){const w=parseFloat((s.widths||[])[i]);f.push(w>0?w:null);}
+  const autoN=f.filter(x=>x===null).length,room=avail-12*autoN,tot=f.reduce((a,x)=>a+(x||0),0);
+  const k=(tot>room&&room>0)?room/tot:1;return f.map(x=>x===null?null:Math.round(x*k*10)/10);}
 const ROWCHILDTYPES=["heading","text","field","image","divider","box","customer","signature","table","datatable","totals"];
 const BLOCKS=["title","customer","items","datatable","totals","payment_schedule","terms","signature"];
 const REPORTBLOCKS=["report_title","report_filters","report_table"];  // shown when the target is a Report
@@ -668,7 +739,7 @@ const R={
       const tc=`<td style="border:0;${pad}vertical-align:top">${txt}</td>`;
       return `<table style="width:100%;border-collapse:collapse;border:0"><tr>${ipos==="left"?ic+tc:tc+ic}</tr></table>`;};
     const rows=SAMPLE.items.map((it,i)=>{let t=`<td class="num" style="${cN}">${i+1}</td><td style="${cI}">${itemCell(it)}</td>`;if(s.cols.qty)t+=`<td class="num" style="${cQ}">${esc(it.q)}</td>`;if(s.cols.rate)t+=`<td class="num" style="${cR}">${esc(it.r)}</td>`;if(s.cols.amount)t+=`<td class="num" style="${cA}">${esc(it.a)}</td>`;return `<tr${s.zebra&&i%2?` style="background:${zc}"`:''}>${t}</tr>`;}).join("");return `<table class="bs-items" style="${sk.table}">${cg}<thead><tr>${th}</tr></thead><tbody>${rows}</tbody></table>`;},
-  datatable:(s,b)=>{const cols=(s.columns||[]).filter(c=>c&&c.field);const rows=(SAMPLE.tables&&SAMPLE.tables[s.table])||[];const zc=s.zebraColor||"#eef6fc";const hc=s.headerColor==="navy"?b.navy:b.primary;const sk=tblSkin(s,b,hc);const thPad=sk.pad||"padding:6px 8px;";const thFs=(s.headerStyle&&s.headerStyle.size)?"":"font-size:7.5pt;";const cg=`<colgroup>`+cols.map(c=>`<col style="width:${c.width&&!isNaN(c.width)?(+c.width)+'mm':'auto'}">`).join("")+`</colgroup>`;const th=skinHeads(cols.map(c=>`<th style="${sk.th}${sk.th.indexOf('color:')<0?'color:#fff;':''}font-weight:600;${thFs}${thPad}${sk.tdBorder}text-align:${c.align||'left'};word-wrap:break-word">${esc(c.label||c.field)}</th>`).join(""),sk);const dtPad=sk.pad||"padding:6px 8px;";const dtBor=sk.tdBorder||"border-bottom:1px solid #cfe5f6;";let body;if(!cols.length){body=`<tr><td style="padding:10px;color:#9aa6c2">Pick a table and add columns in the panel →</td></tr>`;}else if(!rows.length){body=[0,1].map(i=>`<tr${s.zebra&&i%2?` style="background:${zc}"`:''}>`+cols.map(c=>`<td style="${dtPad}${dtBor}text-align:${c.align||'left'};color:#9aa6c2;word-wrap:break-word">${c.field==='idx'?(i+1):'«'+esc(c.label||c.field)+'»'}</td>`).join("")+`</tr>`).join("");}else{body=rows.map((r,i)=>`<tr${s.zebra&&i%2?` style="background:${zc}"`:''}>`+cols.map(c=>`<td style="${dtPad}${dtBor}text-align:${c.align||'left'};${c.align==='right'?sk.num:''}word-wrap:break-word">${esc(r[c.field]!==undefined&&r[c.field]!==""?r[c.field]:(c.field==='idx'?(i+1):''))}</td>`).join("")+`</tr>`).join("");}return `<table style="width:100%;border-collapse:collapse;font-size:8pt;table-layout:fixed;${sk.table}">${cg}<thead><tr>${th}</tr></thead><tbody>${body}</tbody></table>`;},
+  datatable:(s,b)=>{const cols=(s.columns||[]).filter(c=>dtLinesOf(c).length);const rows=(SAMPLE.tables&&SAMPLE.tables[s.table])||[];const zc=s.zebraColor||"#eef6fc";const hc=s.headerColor==="navy"?b.navy:b.primary;const sk=tblSkin(s,b,hc);const thPad=sk.pad||"padding:6px 8px;";const thFs=(s.headerStyle&&s.headerStyle.size)?"":"font-size:7.5pt;";const cg=`<colgroup>`+cols.map(c=>`<col style="width:${c.width&&!isNaN(c.width)?(+c.width)+'mm':'auto'}">`).join("")+`</colgroup>`;const th=skinHeads(cols.map(c=>`<th style="${sk.th}${sk.th.indexOf('color:')<0?'color:#fff;':''}font-weight:600;${thFs}${thPad}${sk.tdBorder}text-align:${dtAl(c)};word-wrap:break-word">${esc(c.label||c.field||dtLinesOf(c)[0].field)}</th>`).join(""),sk);const dtPad=sk.pad||"padding:6px 8px;";const dtBor=sk.tdBorder||"border-bottom:1px solid #cfe5f6;";const va=c=>c.valign==="middle"?"middle":"top";let body;if(!cols.length){body=`<tr><td style="padding:10px;color:#9aa6c2">Pick a table and add columns in the panel →</td></tr>`;}else if(!rows.length){body=[0,1].map(i=>`<tr${s.zebra&&i%2?` style="background:${zc}"`:''}>`+cols.map(c=>`<td style="${dtPad}${dtBor}text-align:${dtAl(c)};vertical-align:${va(c)};color:#9aa6c2;word-wrap:break-word">${dtCellHtml(c,{},i+1,true,s.table)}</td>`).join("")+`</tr>`).join("");}else{body=rows.map((r,i)=>`<tr${s.zebra&&i%2?` style="background:${zc}"`:''}>`+cols.map(c=>`<td style="${dtPad}${dtBor}text-align:${dtAl(c)};vertical-align:${va(c)};${dtAl(c)==='right'?sk.num:''}word-wrap:break-word">${dtCellHtml(c,r,i+1,false,s.table)}</td>`).join("")+`</tr>`).join("");}return `<table style="width:100%;border-collapse:collapse;font-size:8pt;table-layout:fixed;${sk.table}">${cg}<thead><tr>${th}</tr></thead><tbody>${body}</tbody></table>`;},
   totals:(s,b)=>{const gc=HX.test(s.grandBg||'')?s.grandBg:(s.grandColor==="navy"?b.navy:b.primary);const gtc=HX.test(s.grandTextColor||'')?s.grandTextColor:'#fff';
     const gsz=parseFloat(s.grandSize);const gszc=(gsz&&!isNaN(gsz))?`font-size:${Math.min(72,Math.max(4,gsz))}pt;`:'font-size:10pt;';
     const lc=HX.test(s.labelColor||'')?`color:${s.labelColor};`:'';const vc=HX.test(s.valueColor||'')?`color:${s.valueColor};`:'';
@@ -694,10 +765,11 @@ const R={
   divider:(s)=>`<div style="border-top:${(+s.thickness||1)}px ${s.lstyle||'solid'} ${s.color||'#cfe5f6'}"></div>`,
   box:(s)=>`<div class="inl">${s.html||""}</div>`,
   row:(s,b,bl)=>{const cols=Math.max(1,Math.min(4,+s.cols||2)),gap=Math.max(0,+s.gap||6),widths=s.widths||[],cells=s.cells||[];const pct=Math.max(20,Math.min(100,+s.width||100));
+    const fitW=rowFitWidths(s);
     let h=`<div style="display:flex;align-items:flex-start;width:${pct}%">`;
     for(let i=0;i<cols;i++){
       if(i>0)h+=`<div class="coldiv" data-rowid="${bl?bl.id:''}" data-div="${i-1}" title="Drag to resize columns" style="flex:0 0 ${gap}mm;align-self:stretch"><i></i></div>`;
-      const w=widths[i];const fx=(w&&!isNaN(w))?`flex:0 0 ${(+w)}mm`:`flex:1 1 0`;const ch=cells[i]||[];
+      const w=fitW[i];const fx=(w!==null)?`flex:0 0 ${w}mm`:`flex:1 1 0`;const ch=cells[i]||[];
       h+=`<div class="rowcell" data-rowid="${bl?bl.id:''}" data-cell="${i}" style="${fx};min-width:0">`+(ch.length?ch.map(c=>rowChildBlk(c,b)).join(""):`<div class="cellempty">Column ${i+1} — drop here</div>`)+`</div>`;
     }
     return h+`</div>`;},
@@ -1703,7 +1775,7 @@ document.getElementById("paper").addEventListener("mousedown",function(e){
   if(cd){e.preventDefault();e.stopPropagation();if(drag||reorderDrag||reorderArm||bandDrag)return;const row=blockById(cd.dataset.rowid);if(!row)return;
     const idx=+cd.dataset.div;const cellEl=document.querySelector('.rowcell[data-rowid="'+cd.dataset.rowid+'"][data-cell="'+idx+'"]');
     const w0=cellEl?cellEl.getBoundingClientRect().width/(scale*PXMM):40;
-    cd.classList.add('on');colDrag={rowid:cd.dataset.rowid,idx:idx,sx:e.clientX,w0:w0};return;}
+    const cellR=document.querySelector('.rowcell[data-rowid="'+cd.dataset.rowid+'"][data-cell="'+(idx+1)+'"]');const w1=cellR?cellR.getBoundingClientRect().width/(scale*PXMM):40;const W0=(row.settings.widths||[]);cd.classList.add('on');colDrag={rowid:cd.dataset.rowid,idx:idx,sx:e.clientX,w0:w0,w1:w1,fixL:parseFloat(W0[idx])>0,fixR:parseFloat(W0[idx+1])>0};return;}
   if(colDrag)return;  // never arm a block drag while a divider drag is live (mutual exclusion)
   // Continuation pages (2+): clones select the real block for panel editing. Not .blk on
   // purpose — the drag/reorder machinery must never engage on a slice. Tools handle their own clicks.
@@ -1765,10 +1837,16 @@ let bandDrag=null;
 document.addEventListener("mousemove",function(e){
   if(!colDrag)return;e.preventDefault();
   const row=blockById(colDrag.rowid);if(!row)return;
-  const dx=(e.clientX-colDrag.sx)/(scale*PXMM);
-  let w=Math.max(8,Math.min(170,colDrag.w0+dx));
-  if(!row.settings.widths)row.settings.widths=[];
-  row.settings.widths[colDrag.idx]=Math.round(w*10)/10;
+  // The divider separates two columns: what one gains the other loses, so the row can never
+  // grow past its margins. Setting only the LEFT width (the old behaviour) pushed a fixed-width
+  // right column (a Totals column) off the page at its original size.
+  const dx=(e.clientX-colDrag.sx)/(scale*PXMM),MIN=12;
+  const d=Math.max(MIN-colDrag.w0,Math.min(colDrag.w1-MIN,dx));
+  const L=Math.round((colDrag.w0+d)*10)/10,Rw=Math.round((colDrag.w1-d)*10)/10;
+  if(!row.settings.widths)row.settings.widths=[];const W=row.settings.widths;
+  if(colDrag.fixL&&colDrag.fixR){W[colDrag.idx]=L;W[colDrag.idx+1]=Rw;}
+  else if(colDrag.fixR){W[colDrag.idx+1]=Rw;}   // left is auto: it absorbs the change
+  else{W[colDrag.idx]=L;}                        // right is auto (or both were): it absorbs
   render();
 });
 document.addEventListener("mouseup",function(){if(colDrag){const r=blockById(colDrag.rowid);colDrag=null;render();if(r&&r.id===selId)renderProps();commitHistory();}});  // render() clears the divider's 'on' highlight even when the row isn't selected
@@ -2080,10 +2158,96 @@ function tableSkinUI(sett,o){o=o||{};const hs=sett.headerStyle||{},bo=sett.borde
   return h;}
 // Data Table block helpers
 function defaultDTCols(tb){const out=[{field:"idx",label:"#",width:8,align:"right"}];if(tb&&tb.fields)tb.fields.filter(f=>f.fieldname!=="idx").slice(0,5).forEach(f=>out.push({field:f.fieldname,label:f.label,width:null,align:"left"}));return out;}
-function setDT(k,v){const b=cur();if(!b)return;b.settings[k]=v;if(k==="table"){const tb=CTABLES.find(x=>x.fieldname===v);if(tb){b.settings.child_doctype=tb.child_doctype||"";b.settings.columns=defaultDTCols(tb);}}render();renderProps();}
-function setDTCol(ci,k,v){const b=cur();if(!b||!b.settings.columns||!b.settings.columns[ci])return;if(k==="width"){const n=parseFloat(v);b.settings.columns[ci].width=(v===""||isNaN(n))?null:n;}else b.settings.columns[ci][k]=v;render();}
+function setDT(k,v){const b=cur();if(!b)return;
+  // switching the data source rebuilds the columns: ask first when the user has composed cells
+  if(k==="table"&&v!==b.settings.table&&(b.settings.columns||[]).some(c=>dtLinesOf(c).length>1)&&!confirm("Switch the data source? Your composed columns will be replaced with this table's default columns (Ctrl+Z undoes it).")){renderProps();return;}
+  b.settings[k]=v;if(k==="table"){const tb=CTABLES.find(x=>x.fieldname===v);if(tb){b.settings.child_doctype=tb.child_doctype||"";b.settings.columns=defaultDTCols(tb);}}render();renderProps();}
+/* Column composer. A column = {label,width,align,valign,lines:[{field,kind,size,weight,color,italic,upper,prefix,suffix,imgW,imgH,skipDup}]}.
+   Any edit to a LEGACY column (no lines) first materializes its lines from `field`; untouched legacy columns are never rewritten.
+   col.field is kept = the first text line's field so the column still names a field for older readers. */
+const _dtOpen=new WeakSet();  // lines whose style row is expanded (a legacy column is keyed by the column object itself)
+function dtFields(table){const tb=CTABLES.find(x=>x.fieldname===table)||{fields:[]};return [{fieldname:"idx",label:"Row number"}].concat((tb.fields||[]).filter(f=>f.fieldname&&f.fieldname!=="idx"));}
+function dtColNorm(col){if(!Array.isArray(col.lines)||!col.lines.length){const ln={field:col.field||"idx",kind:"text"};if(_dtOpen.has(col)){_dtOpen.delete(col);_dtOpen.add(ln);}col.lines=[ln];}if(!col.valign)col.valign="top";return col.lines;}
+function dtSync(col){const ls=col.lines||[];const t=ls.find(l=>l&&l.kind!=="image")||ls[0];col.field=t?t.field:"";}
+function dtCol(ci){const b=cur();return (b&&b.settings.columns)?b.settings.columns[ci]:null;}
+function dtFirstFree(table,used){const fs=dtFields(table);return (fs.find(x=>x.fieldname!=="idx"&&used.indexOf(x.fieldname)<0)||fs.find(x=>x.fieldname!=="idx")||fs[0]);}
+function setDTCol(ci,k,v,rp){const c=dtCol(ci);if(!c)return;dtColNorm(c);if(k==="width"){const n=parseFloat(v);c.width=(v===""||isNaN(n))?null:n;}else c[k]=v;dtSync(c);render();if(rp)renderProps();}
 function delDTCol(ci){const b=cur();if(!b||!b.settings.columns)return;b.settings.columns.splice(ci,1);render();renderProps();}
-function addDTCol(field){if(!field)return;const b=cur();if(!b)return;const tb=CTABLES.find(x=>x.fieldname===b.settings.table)||{fields:[]};const f=(tb.fields||[]).find(x=>x.fieldname===field);if(!b.settings.columns)b.settings.columns=[];b.settings.columns.push({field:field,label:f?f.label:field,width:null,align:"left"});render();renderProps();}
+function moveDTCol(ci,d){const b=cur();if(!b||!b.settings.columns)return;const cs=b.settings.columns,j=ci+d;if(j<0||j>=cs.length)return;const t=cs[ci];cs[ci]=cs[j];cs[j]=t;render();renderProps();}
+function addDTColBlank(){const b=cur();if(!b)return;if(!b.settings.columns)b.settings.columns=[];const used=[];b.settings.columns.forEach(c=>dtLinesOf(c).forEach(l=>used.push(l.field)));const f=dtFirstFree(b.settings.table,used);b.settings.columns.push({label:f.fieldname==="idx"?"#":(f.label||f.fieldname),width:null,align:"left",valign:"top",field:f.fieldname,lines:[{field:f.fieldname,kind:"text"}]});render();renderProps();}
+function setDTLine(ci,li,k,v,rp){const c=dtCol(ci);if(!c)return;const l=dtColNorm(c)[li];if(!l)return;
+  if(k==="size"||k==="imgW"||k==="imgH"){const n=parseFloat(v);l[k]=(v===""||isNaN(n))?null:n;}
+  else if(k==="color"){const x=String(v==null?"":v).trim();l.color=x||null;}
+  else if(k==="weight")l.weight=v||null;
+  else l[k]=v;
+  dtSync(c);render();if(rp)renderProps();}
+function addDTLine(ci){const c=dtCol(ci);const b=cur();if(!c||!b)return;const ls=dtColNorm(c);const f=dtFirstFree(b.settings.table,ls.map(l=>l.field));ls.push({field:f.fieldname,kind:"text"});dtSync(c);render();renderProps();}
+function delDTLine(ci,li){const c=dtCol(ci);if(!c)return;const ls=dtColNorm(c);if(ls.length<=1||!ls[li])return;ls.splice(li,1);dtSync(c);render();renderProps();}
+function moveDTLine(ci,li,d){const c=dtCol(ci);if(!c)return;const ls=dtColNorm(c),j=li+d;if(j<0||j>=ls.length)return;const t=ls[li];ls[li]=ls[j];ls[j]=t;dtSync(c);render();renderProps();}
+function toggleDTSty(ci,li){const c=dtCol(ci);if(!c)return;const key=(Array.isArray(c.lines)&&c.lines.length)?c.lines[li]:c;if(!key)return;if(_dtOpen.has(key))_dtOpen.delete(key);else _dtOpen.add(key);renderProps();}
+function dtSum(l){if(l.kind==="image")return dtImgMm(l.imgW)+" x "+dtImgMm(l.imgH)+" mm";const p=[];if(l.size)p.push(l.size+"pt");if(l.weight==="600")p.push("Semi");if(l.weight==="700")p.push("Bold");if(l.color)p.push(l.color);if(l.italic)p.push("Italic");if(l.upper)p.push("CAPS");if(l.prefix||l.suffix)p.push("affix");if(l.skipDup)p.push("no repeat");return p.join(" · ");}
+function dtLineHtml(c,ci,l,li,n,fs,legacy){const img=l.kind==="image",open=_dtOpen.has(legacy?c:l);
+  let opts=fs.map(f=>`<option value="${esc(f.fieldname)}" ${l.field===f.fieldname?'selected':''}>${esc(f.label||f.fieldname)}</option>`).join("");
+  if(!fs.some(f=>f.fieldname===l.field))opts=`<option value="${esc(l.field)}" selected>${esc(l.field)} (not in this table)</option>`+opts;
+  let h=`<div class="dtline${open?' open':''}"><div class="dtr"><span class="dtn">${li+1}</span><select title="Field shown on this line" onchange="setDTLine(${ci},${li},'field',this.value,1)">${opts}</select>`
+    +`<button class="dtib" title="Move line up" ${li===0?'disabled':''} onclick="moveDTLine(${ci},${li},-1)">${UI.up}</button>`
+    +`<button class="dtib" title="Move line down" ${li===n-1?'disabled':''} onclick="moveDTLine(${ci},${li},1)">${UI.down}</button>`
+    +`<button class="dtib danger" title="${n<=1?'A column needs at least one line. Delete the column instead.':'Remove this line'}" ${n<=1?'disabled':''} onclick="delDTLine(${ci},${li})">${UI.close}</button></div>`;
+  h+=`<div class="dtr" style="margin-top:5px"><div class="seg dtseg">`+[["text","Text"],["image","Image"]].map(k=>`<button class="${(img?'image':'text')===k[0]?'on':''}" onclick="setDTLine(${ci},${li},'kind','${k[0]}',1)">${k[1]}</button>`).join("")+`</div>`
+    +`<button class="dtstyb${open?' on':''}" title="${img?'Photo size':'Size, weight, colour, prefix and suffix'}" onclick="toggleDTSty(${ci},${li})">${UI.sliders}${img?'Size':'Style'}</button><span class="dtsum">${open?'':esc(dtSum(l))}</span></div>`;
+  if(open){const F=(lb,inner)=>`<div class="fld"><label>${lb}</label>${inner}</div>`;const N=(k,v,ph)=>`<input type="text" value="${v==null?'':esc(v)}" placeholder="${ph}" oninput="setDTLine(${ci},${li},'${k}',this.value)">`;
+    h+=`<div class="dtsty">`;
+    if(img){h+=`<div class="row2">`+F("Width (mm)",N("imgW",l.imgW,"20"))+F("Height (mm)",N("imgH",l.imgH,"20"))+`</div><div class="hint" style="padding:0 0 4px">Prints the file attached in this field on each row (8 to 120 mm). Rows without a file print nothing.</div>`;}
+    else{const w=String(l.weight||""),col=String(l.color||"");
+      h+=`<div class="row2">`+F("Size (pt)",N("size",l.size,"inherit"))+F("Weight",`<div class="seg">`+[["","Regular"],["600","Semi"],["700","Bold"]].map(o=>`<button class="${(w===o[0]||(o[0]===''&&w==='400'))?'on':''}" onclick="setDTLine(${ci},${li},'weight','${o[0]}',1)">${o[1]}</button>`).join("")+`</div>`)+`</div>`;
+      h+=F("Colour",`<div class="color"><input type="color" value="${/^#[0-9a-f]{6}$/i.test(col)?col:'#0c1322'}" oninput="setDTLine(${ci},${li},'color',this.value);this.nextElementSibling.value=this.value"><input type="text" value="${esc(col)}" placeholder="inherit" oninput="setDTLine(${ci},${li},'color',this.value)"></div>`);
+      h+=`<div class="chips"><button class="chip ${l.italic?'on':''}" onclick="setDTLine(${ci},${li},'italic',${!l.italic},1)">Italic</button><button class="chip ${l.upper?'on':''}" onclick="setDTLine(${ci},${li},'upper',${!l.upper},1)">UPPERCASE</button>`
+        +(li>0?`<button class="chip ${l.skipDup?'on':''}" title="Skip this line on rows where it repeats the line above (e.g. a description equal to the item name)" onclick="setDTLine(${ci},${li},'skipDup',${!l.skipDup},1)">Hide if same as above</button>`:'')+`</div>`;
+      h+=`<div class="row2">`+F("Prefix",`<input type="text" value="${esc(l.prefix||'')}" placeholder="e.g. SKU: " oninput="setDTLine(${ci},${li},'prefix',this.value)">`)+F("Suffix",`<input type="text" value="${esc(l.suffix||'')}" placeholder="e.g.  pcs" oninput="setDTLine(${ci},${li},'suffix',this.value)">`)+`</div>`;}
+    h+=`</div>`;}
+  return h+`</div>`;}
+function dtCardHtml(c,ci,n,fs){const legacy=!(Array.isArray(c.lines)&&c.lines.length);const lines=dtLinesOf(c).length?dtLinesOf(c):[{field:c.field||"idx"}];const al=dtAl(c),va=c.valign==="middle"?"middle":"top";
+  let h=`<div class="dtcard"><div class="dthd"><input type="text" value="${esc(c.label||'')}" placeholder="Column title" title="Column title (header)" oninput="setDTCol(${ci},'label',this.value)"><input type="text" class="dtw" value="${c.width==null?'':c.width}" placeholder="W mm" title="Column width in mm (blank = auto)" oninput="setDTCol(${ci},'width',this.value)"></div>`;
+  h+=`<div class="dtbar"><div class="seg dtseg">`+[["left",UI.alL,"Align left"],["center",UI.alC,"Align centre"],["right",UI.alR,"Align right"]].map(a=>`<button class="${al===a[0]?'on':''}" title="${a[2]}" onclick="setDTCol(${ci},'align','${a[0]}',1)">${a[1]}</button>`).join("")+`</div>`
+    +`<div class="seg dtseg">`+[["top","Top","Lines start at the top of the cell"],["middle","Mid","Lines centred vertically in the cell"]].map(a=>`<button class="${va===a[0]?'on':''}" title="${a[2]}" onclick="setDTCol(${ci},'valign','${a[0]}',1)">${a[1]}</button>`).join("")+`</div><span class="dtsp"></span>`
+    +`<button class="dtib" title="Move column left" ${ci===0?'disabled':''} onclick="moveDTCol(${ci},-1)">${UI.left}</button>`
+    +`<button class="dtib" title="Move column right" ${ci===n-1?'disabled':''} onclick="moveDTCol(${ci},1)">${UI.right}</button>`
+    +`<button class="dtib danger" title="Delete this column" onclick="delDTCol(${ci})">${UI.trash}</button></div>`;
+  h+=`<div class="dtlines">`+lines.map((l,li)=>dtLineHtml(c,ci,l,li,lines.length,fs,legacy)).join("")+`</div>`;
+  h+=`<button class="dtadd" onclick="addDTLine(${ci})">${UI.plus}Add a line to this column</button></div>`;
+  return h;}
+/* Items preset -> Data Table on `items`, rebuilt as composed columns that reproduce the preset's look.
+   Replaces the block in place (same slot, pos, region, float, style); Ctrl+Z restores the Items block. */
+function convertItemsToDT(){const b=cur();if(!b||b.type!=="items")return;
+  if(!confirm("Convert Items into an editable Data Table? You can undo with Ctrl+Z."))return;
+  const s=b.settings||{},on=s.cols||{desc:true,qty:true,rate:true,amount:true},lb=s.labels||{},w=s.widths||{},cs=s.colStyles||{},ds=s.descStyle||{};
+  const cp=o=>JSON.parse(JSON.stringify(o));
+  // widths: the preset's explicit mm; else its default share of the block width, in mm. Item stays auto and takes the rest.
+  const W=(b.pos&&parseFloat(b.pos.w))||182,pct={num:6,qty:12,rate:20,amount:22};
+  const wid=k=>{const v=parseFloat(w[k]);if(!isNaN(v)&&v>0)return v;return k==="item"?null:Math.round(W*pct[k]/100);};
+  const al=(k,d)=>{const a=(cs[k]||{}).align;return ["left","center","right"].indexOf(a)>=0?a:d;};
+  const wt=v=>({"400":"400",normal:"400","500":"600","600":"600","700":"700",bold:"700","800":"700"})[String(v||"")]||null;
+  const sty=(k,ln,keepWeight)=>{const st=cs[k]||{};if(HX.test(st.color||''))ln.color=st.color;const n=parseFloat(st.size);if(n&&!isNaN(n))ln.size=n;if(!keepWeight&&wt(st.weight))ln.weight=wt(st.weight);return ln;};
+  const col=(k,label,align,lines)=>({label:lb[k]||label,width:wid(k),align:al(k,align),valign:"top",field:(lines.find(l=>l.kind!=="image")||lines[0]).field,lines:lines});
+  const item=[sty("item",{field:"item_name",kind:"text",weight:"600"},true)];
+  if(on.desc!==false)item.push({field:"description",kind:"text",size:parseFloat(ds.size)||7,color:HX.test(ds.color||'')?ds.color:"#6b6b6e",skipDup:true});
+  if(s.showImage){const cl=v=>Math.min(120,Math.max(8,v));
+    // imgPos top: the photo is the first line, above the name, exactly like the preset.
+    // imgPos left/right: also the first line here. A true side-by-side photo needs its own column
+    // (add a column holding one Image line, then place it left or right of this one).
+    item.unshift({field:"image",kind:"image",imgW:cl(parseFloat(s.imgW)||58),imgH:cl(parseFloat(s.imgH)||40)});}
+  const cols=[col("num","#","right",[sty("num",{field:"idx",kind:"text"})]),col("item","Item & Description","left",item)];
+  if(on.qty)cols.push(col("qty","Qty","right",[sty("qty",{field:"qty",kind:"text"}),{field:"uom",kind:"text",size:7,color:"#6b6b6e"}]));
+  if(on.rate)cols.push(col("rate","Rate","right",[sty("rate",{field:"rate",kind:"text"})]));
+  if(on.amount)cols.push(col("amount","Amount","right",[sty("amount",{field:"amount",kind:"text"})]));
+  const ct=CTABLES.find(x=>x.fieldname==="items");
+  const nb={id:"b"+(idc++),type:"datatable",settings:{table:"items",child_doctype:(ct&&ct.child_doctype)||"",columns:cols,headerColor:s.headerColor==="navy"?"navy":"primary",zebra:s.zebra!==false},style:cp(b.style||dstyle("datatable"))};
+  ["zebraColor","headerStyle","borders","cellPad","numStyle"].forEach(k=>{if(s[k]!==undefined&&s[k]!==null&&s[k]!=="")nb.settings[k]=cp(s[k]);});  // everything tblSkin reads
+  ["pos","region","float","cond","hidden","locked"].forEach(k=>{if(b[k]!==undefined)nb[k]=cp(b[k]);});
+  const i=state.blocks.indexOf(b);
+  if(i>=0)state.blocks.splice(i,1,nb);
+  else state.blocks.forEach(r=>{if(r.type==="row"&&r.settings&&r.settings.cells)r.settings.cells.forEach(cell=>{const k=(cell||[]).indexOf(b);if(k>=0)cell.splice(k,1,nb);});});
+  selId=nb.id;render();renderProps();}
 // Report Table column helpers (columns come from REPORTSAMPLE.columns; empty = print all columns)
 function setRTCol(ci,k,v){const b=cur();if(!b||!b.settings.columns||!b.settings.columns[ci])return;if(k==="width"){const n=parseFloat(v);b.settings.columns[ci].width=(v===""||isNaN(n))?null:n;}else b.settings.columns[ci][k]=v;render();}
 function delRTCol(ci){const b=cur();if(!b||!b.settings.columns)return;b.settings.columns.splice(ci,1);render();renderProps();}
@@ -2225,6 +2389,7 @@ function renderProps(){const host=document.getElementById("propsBlock"),b=cur();
       +`<div class="fld"><label>Name size (pt)</label><input type="text" value="${s.nameSize==null?'':s.nameSize}" placeholder="10" oninput="setSNum('nameSize',this.value)"></div>`
       +`<div class="row2">`+cfl("Address color",s.addrColor,"addrColor","inherit","#3A4456")+`<div class="fld"><label>Address size (pt)</label><input type="text" value="${s.addrSize==null?'':s.addrSize}" placeholder="inherit" oninput="setSNum('addrSize',this.value)"></div></div></div>`;}
   else if(t==="items"){const w=s.widths||(s.widths={});const wnum=(l,k,v)=>`<div class="fld"><label>${l}</label><input type="text" value="${v==null?'':v}" placeholder="auto" oninput="setS('${k}',this.value===''?null:(parseFloat(this.value)||null))"></div>`;
+    h+=`<div class="dtconv"><button class="btn ghost" style="width:100%" onclick="convertItemsToDT()">${UI.tbl} Convert to editable table</button><div class="hint" style="padding:6px 2px 6px">Turns this into a Data Table where every column is yours to compose.</div></div>`;
     h+=`<div class="fld"><label>Columns</label>`+ck("Description","cols.desc",s.cols.desc)+ck("Qty","cols.qty",s.cols.qty)+ck("Rate","cols.rate",s.cols.rate)+ck("Amount","cols.amount",s.cols.amount)+`</div>`;
     h+=ck("Product photo per item","showImage",s.showImage);
     if(s.showImage){const ip=(["top","left","right"].indexOf(s.imgPos)>=0)?s.imgPos:"top";
@@ -2239,10 +2404,9 @@ function renderProps(){const host=document.getElementById("propsBlock"),b=cur();
     h+=`<div class="styhead">Column widths (mm · blank = auto)</div><div class="row2">${wnum("#","widths.num",w.num)}${wnum("Item","widths.item",w.item)}</div><div class="row2">${s.cols.qty?wnum("Qty","widths.qty",w.qty):'<div class="fld"></div>'}${s.cols.rate?wnum("Rate","widths.rate",w.rate):'<div class="fld"></div>'}</div>${s.cols.amount?`<div class="row2">${wnum("Amount","widths.amount",w.amount)}<div class="fld"></div></div>`:""}`;}
   else if(t==="datatable"){const tbl=CTABLES.find(x=>x.fieldname===s.table)||{fields:[]};
     h+=`<div class="fld"><label>Data source (child table)</label><select onchange="setDT('table',this.value)">`+(CTABLES.length?CTABLES.map(x=>`<option value="${esc(x.fieldname)}" ${s.table===x.fieldname?'selected':''}>${esc(x.label)} (${esc(x.fieldname)})</option>`).join(""):`<option selected>${esc(s.table||'items')}</option>`)+`</select></div>`;
-    h+=`<div class="styhead">Columns</div>`;
-    (s.columns||[]).forEach((c,ci)=>{h+=`<div style="margin-bottom:8px;border-bottom:1px solid var(--line);padding-bottom:6px"><div class="row2"><input type="text" value="${esc(c.label||'')}" placeholder="Header label" oninput="setDTCol(${ci},'label',this.value)"><input type="text" value="${c.width==null?'':c.width}" placeholder="W mm" oninput="setDTCol(${ci},'width',this.value)"></div><div class="row2"><select onchange="setDTCol(${ci},'align',this.value)">`+[["left","Left"],["center","Center"],["right","Right"]].map(a=>`<option value="${a[0]}" ${(c.align||'left')===a[0]?'selected':''}>${a[1]}</option>`).join("")+`</select><button class="btn ghost" title="Remove column" onclick="delDTCol(${ci})">${UI.close} remove</button></div><div class="hint" style="padding:2px 0 0">field: <b>${esc(c.field)}</b></div></div>`;});
-    const avail=(tbl.fields||[]).filter(f=>!(s.columns||[]).some(c=>c.field===f.fieldname));
-    h+=`<div class="fld"><label>Add a field as a column</label><select onchange="addDTCol(this.value)"><option value="">+ Add column…</option>`+avail.map(f=>`<option value="${esc(f.fieldname)}">${esc(f.label)} (${esc(f.fieldname)})</option>`).join("")+`</select></div>`;
+    h+=`<div class="styhead">Columns</div><div class="hint" style="padding:0 0 8px">Each column is a stack of lines. Add lines to put any field under another, style each line, or show a photo.</div>`;
+    {const fs=dtFields(s.table),cols=s.columns||[];cols.forEach((c,ci)=>{h+=dtCardHtml(c,ci,cols.length,fs);});}
+    h+=`<button class="dtadd" style="margin:0 0 10px;padding:8px" onclick="addDTColBlank()">${UI.plus}Add column</button>`;
     h+=ck("Zebra rows","zebra",s.zebra);
     if(s.zebra)h+=`<div class="fld"><label>Zebra color</label><div class="color"><input type="color" value="${s.zebraColor||'#eef6fc'}" oninput="setS('zebraColor',this.value)"><input type="text" value="${esc(s.zebraColor||'')}" placeholder="#eef6fc" oninput="setS('zebraColor',this.value)"></div></div>`;
     h+=sg("Header color","headerColor",s.headerColor,[["primary","Primary"],["navy","Navy"]]);}
