@@ -115,7 +115,7 @@ def base_css(b, pw=210.0, ph=297.0):
   table.bs-items tbody tr {{ break-inside:avoid; }}
   table.bs-items.zebra-default tbody tr:nth-child(even) td {{ background-color:#eef6fc; -webkit-print-color-adjust:exact; print-color-adjust:exact; }}
   table.bs-items.nozebra tbody tr:nth-child(even) td {{ background-color:transparent !important; }}
-  table.bs-items tbody td *:not(.it-name):not(.it-desc):not(.it-img):not(.it-img *) {{ font-weight:normal !important; background:transparent !important; border:0 !important; color:inherit; }}
+  table.bs-items tbody td *:not(.it-name):not(.it-desc):not(.it-img):not(.it-img *):not(.dt-ln):not(.dt-ln *) {{ font-weight:normal !important; background:transparent !important; border:0 !important; color:inherit; }}
   table.bs-items .it-name {{ font-weight:600 !important; }}
   table.bs-items .it-desc {{ color:#6b6b6e !important; font-size:7pt; line-height:1.4; }}
   table.bs-tot {{ width:100%; border-collapse:collapse; font-size:8pt; table-layout:fixed; }}
@@ -938,20 +938,102 @@ def _d_items(doc, b, s, ctx):
     return f'<table class="{zcls}" style="{sk["table"]}">{colgroup}<thead><tr>{heads}</tr></thead><tbody>{"".join(body)}</tbody></table>'
 
 
+def _dt_lines(c):
+    """A Data Table column is a STACK OF LINES the user composes (item name over description,
+    any field under any other). A legacy column {field,label,width,align} has no `lines`: it
+    reads as ONE plain line of its field, so formats saved before b75 print exactly as before.
+    Normalized on read only; saved data is never rewritten here."""
+    ls = c.get("lines")
+    if isinstance(ls, list) and ls:
+        return [ln for ln in ls if isinstance(ln, dict) and ln.get("field")]
+    return [{"field": c.get("field")}] if c.get("field") else []
+
+
+def _dt_is_file(v):
+    v = str(v or "").strip()
+    return v.startswith("/files/") or v.startswith("/private/files/")
+
+
+def _dt_line_css(ln):
+    """Typography of one text line: size / weight / color / italic / uppercase. Empty = inherit."""
+    css = ""
+    n = _num(ln.get("size"))
+    if n:
+        css += f"font-size:{_fmt_num(min(72, max(4, n)))}pt;"
+    if str(ln.get("weight") or "") in ("400", "600", "700"):
+        css += f'font-weight:{ln.get("weight")};'
+    if _hexok(ln.get("color")):
+        css += f'color:{ln["color"].strip()};'
+    if ln.get("italic"):
+        css += "font-style:italic;"
+    if ln.get("upper"):
+        css += "text-transform:uppercase;"
+    return css
+
+
+def _dt_cell(row, i, lines, align):
+    """One composed cell: a <div class="dt-ln"> per NON-EMPTY line (an empty value leaves no
+    gap; prefix/suffix only print around a real value). `dt-ln` is exempt from the bs-items
+    reset rule in base_css, which would otherwise force every nested element back to normal
+    weight and strip image borders. The canvas (R.datatable / dtCellHtml) emits the same markup."""
+    parts = []  # (kind, inner_html, css)
+    prev = None
+    for ln in lines:
+        f = ln.get("field")
+        if ln.get("kind") == "image":
+            src = "" if f == "idx" else str(row.get(f) or "").strip()
+            if not _dt_is_file(src):
+                continue  # only uploaded site files; anything else would be a remote fetch
+            iw = _fmt_num(min(120, max(8, _num(ln.get("imgW"), 20) or 20)))
+            ih = _fmt_num(min(120, max(8, _num(ln.get("imgH"), 20) or 20)))
+            mg = "margin-left:auto;margin-right:auto;" if align == "center" else ("margin-left:auto;" if align == "right" else "")
+            parts.append(("image", f'<img src="{_esc(src)}" style="width:{iw}mm;height:{ih}mm;object-fit:contain;'
+                                   f'background:#fff;border:1px solid #e8ebee;border-radius:6px;display:block;{mg}">', ""))
+            continue
+        if f == "idx":
+            val = str(getattr(row, "idx", None) or i)
+        else:
+            try:
+                val = row.get_formatted(f)
+            except Exception:
+                val = row.get(f)
+            val = "" if val is None else frappe.utils.strip_html_tags(str(val)).strip()
+        if not val:
+            continue
+        if ln.get("skipDup") and prev is not None and val == prev:
+            continue  # e.g. a description that merely repeats the item name (ERPNext default)
+        prev = val
+        pre, suf = str(ln.get("prefix") or ""), str(ln.get("suffix") or "")
+        parts.append(("text", f"<bdi>{_esc(pre)}{_esc(val)}{_esc(suf)}</bdi>", _dt_line_css(ln)))
+    out = []
+    for k, (kind, inner, css) in enumerate(parts):
+        gap = "" if k == 0 else ("margin-top:1mm;" if (kind == "image" or parts[k - 1][0] == "image") else "margin-top:1px;")
+        out.append(f'<div class="dt-ln" style="{gap}{css}">{inner}</div>')
+    return "".join(out)
+
+
 def _d_datatable(doc, b, s, ctx):
-    """Generic table from ANY child table on the doc: chosen columns, per-column width + align."""
+    """Generic table from ANY child table on the doc. Each column = label/width/align/valign and a
+    stack of composed LINES (see _dt_lines); legacy single-field columns still work unchanged."""
     table = s.get("table") or "items"
-    columns = [c for c in _list(s.get("columns")) if isinstance(c, dict) and c.get("field")]
+    columns = []
+    for c in _list(s.get("columns")):
+        if isinstance(c, dict):
+            lines = _dt_lines(c)
+            if lines:
+                columns.append((c, lines))
     if not columns:
         return ""
     # Safety: only render standard (permlevel 0) child fields so a saved format can never leak a
-    # permission-gated column (e.g. cost/valuation) to whoever prints the document.
+    # permission-gated column (e.g. cost/valuation) to whoever prints the document. Applied PER
+    # LINE: a gated line is dropped, and a column left with no lines is dropped with it.
     try:
         tf = doc.meta.get_field(table)
         if tf and tf.options:
             allowed = {"idx"} | {cf.fieldname for cf in frappe.get_meta(tf.options).fields
                                  if cf.fieldname and (cf.permlevel or 0) == 0}
-            columns = [c for c in columns if c.get("field") in allowed]
+            columns = [(c, [ln for ln in lines if ln.get("field") in allowed]) for c, lines in columns]
+            columns = [(c, lines) for c, lines in columns if lines]
     except Exception:
         pass
     if not columns:
@@ -962,41 +1044,37 @@ def _d_datatable(doc, b, s, ctx):
     zebra = s.get("zebra", True)
     rows = doc.get(table) or []
     colgroup = "<colgroup>" + "".join(
-        (f'<col style="width:{_fmt_num(c.get("width"))}mm">' if c.get("width") else "<col>") for c in columns
+        (f'<col style="width:{_fmt_num(c.get("width"))}mm">' if _num(c.get("width")) else "<col>") for c, _l in columns
     ) + "</colgroup>"
+
+    def _al(c):
+        return c.get("align") if c.get("align") in ("left", "center", "right") else "left"
+
     sk = _tbl_skin(s, b, hc)
     hs_size = _num((s.get("headerStyle") or {}).get("size")) if isinstance(s.get("headerStyle"), dict) else None
     th_extra = ("" if hs_size else "font-size:7.5pt;") + (sk["pad"] or "padding:6px 8px;") + sk["td_border"]
     heads = "".join(
         f'<th style="{sk["th"]}{"color:#fff !important;" if "color:" not in sk["th"] else ""}'
-        f'text-align:{(c.get("align") or "left")};font-weight:600;{th_extra}'
+        f'text-align:{_al(c)};font-weight:600;{th_extra}'
         f'word-wrap:break-word;-webkit-print-color-adjust:exact;">'
-        f'{_esc(c.get("label") or c.get("field"))}</th>'
-        for c in columns
+        f'{_esc(c.get("label") or c.get("field") or lines[0].get("field"))}</th>'
+        for c, lines in columns
     )
     if sk["th_first"]:
         heads = heads.replace('style="', 'style="' + sk["th_first"], 1)
         k = heads.rfind('style="')
         heads = heads[:k] + 'style="' + sk["th_last"] + heads[k + 7:]
     body = []
+    td_pad = sk["pad"] or "padding:6px 8px;"
+    td_bor = sk["td_border"] or "border-bottom:1px solid #cfe5f6;"
     for i, row in enumerate(rows, start=1):
         tds = ""
-        for c in columns:
-            f = c.get("field")
-            if f == "idx":
-                val = str(getattr(row, "idx", i) or i)
-            else:
-                try:
-                    val = row.get_formatted(f)
-                except Exception:
-                    val = row.get(f)
-                val = "" if val is None else frappe.utils.strip_html_tags(str(val)).strip()
-            align = c.get("align") or "left"
-            td_pad = sk["pad"] or "padding:6px 8px;"
-            td_bor = sk["td_border"] or "border-bottom:1px solid #cfe5f6;"
+        for c, lines in columns:
+            align = _al(c)
+            valign = "middle" if c.get("valign") == "middle" else "top"
             td_num = sk["num"] if align == "right" else ""
-            tds += (f'<td style="text-align:{align};{td_pad}{td_bor}{td_num}'
-                    f'word-wrap:break-word;"><bdi>{_esc(val)}</bdi></td>')
+            tds += (f'<td style="text-align:{align};vertical-align:{valign};{td_pad}{td_bor}{td_num}'
+                    f'word-wrap:break-word;">{_dt_cell(row, i, lines, align)}</td>')
         body.append(f"<tr>{tds}</tr>")
     zcls, zbg = _zebra_parts(s)
     if zbg:
@@ -1340,8 +1418,9 @@ def collect_image_srcs(definition):
 
 def collect_doc_image_srcs(doc, definition):
     """DOC-derived image srcs the render will emit (unknown at definition time): the items rows'
-    own `image` attachments, when an items block has showImage on. These join the inline_images
-    allow-list; path-traversal is still blocked downstream by assets._safe_local_path."""
+    own `image` attachments when an items block has showImage on, and the row values of every
+    Data Table image line. These join the inline_images allow-list (without it the photos are
+    dropped); path-traversal is still blocked downstream by assets._safe_local_path."""
     if isinstance(definition, str):
         try:
             definition = json.loads(definition)
@@ -1350,28 +1429,38 @@ def collect_doc_image_srcs(doc, definition):
     if not isinstance(definition, dict):
         return set()
 
-    def _wants_images(blocks_list):
+    # (table, field) pairs whose row values print as images: the items block's photo, plus every
+    # image-kind line of a Data Table column (top-level or nested inside a Row's cells).
+    wanted = set()
+
+    def _walk(blocks_list):
         for bl in blocks_list or []:
             if not isinstance(bl, dict):
                 continue
-            if bl.get("type") == "items" and (bl.get("settings") or {}).get("showImage"):
-                return True
-            if bl.get("type") == "row":
-                for cell in (bl.get("settings") or {}).get("cells") or []:
-                    if isinstance(cell, list) and _wants_images(cell):
-                        return True
-        return False
+            st = bl.get("settings") or {}
+            if bl.get("type") == "items" and st.get("showImage"):
+                wanted.add(("items", "image"))
+            elif bl.get("type") == "datatable":
+                for c in _list(st.get("columns")):
+                    if isinstance(c, dict):
+                        for ln in _dt_lines(c):
+                            if ln.get("kind") == "image" and ln.get("field") != "idx":
+                                wanted.add((st.get("table") or "items", ln.get("field")))
+            elif bl.get("type") == "row":
+                for cell in st.get("cells") or []:
+                    if isinstance(cell, list):
+                        _walk(cell)
 
-    if not _wants_images(definition.get("blocks")):
-        return set()
+    _walk(definition.get("blocks"))
     srcs = set()
-    try:
-        for it in (doc.get("items") or []):
-            src = it.get("image")
-            if src and (str(src).startswith("/files/") or str(src).startswith("/private/files/")):
-                srcs.add(src)
-    except Exception:
-        pass
+    for table, field in wanted:
+        try:
+            for row in (doc.get(table) or []):
+                src = row.get(field)
+                if src and _dt_is_file(src):
+                    srcs.update({str(src), str(src).strip()})
+        except Exception:
+            pass
     return srcs
 
 
