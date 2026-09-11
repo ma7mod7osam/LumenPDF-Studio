@@ -425,7 +425,7 @@
 <body>
 <div class="app">
   <div class="top">
-    <div class="brand" title="LumenPDF Studio"><svg width="24" height="24" viewBox="0 0 48 48" fill="none" aria-label="LumenPDF Studio"><rect x="9" y="4" width="30" height="40" rx="4" style="stroke:var(--logoA)" stroke-width="3"/><rect x="14.5" y="10" width="19" height="3.6" rx="1.8" style="fill:var(--logoB)"/><rect x="14.5" y="18" width="19" height="9" rx="2.4" style="fill:var(--logoA)"/><rect x="14.5" y="31.5" width="12" height="3.6" rx="1.8" style="fill:var(--logoB)"/></svg><small>Studio · b75</small></div>
+    <div class="brand" title="LumenPDF Studio"><svg width="24" height="24" viewBox="0 0 48 48" fill="none" aria-label="LumenPDF Studio"><rect x="9" y="4" width="30" height="40" rx="4" style="stroke:var(--logoA)" stroke-width="3"/><rect x="14.5" y="10" width="19" height="3.6" rx="1.8" style="fill:var(--logoB)"/><rect x="14.5" y="18" width="19" height="9" rx="2.4" style="fill:var(--logoA)"/><rect x="14.5" y="31.5" width="12" height="3.6" rx="1.8" style="fill:var(--logoB)"/></svg><small>Studio · b76</small></div>
     <button class="btn ghost iconbtn" id="homeBtn" onclick="goHome()" title="Home — all formats"><svg class="icn" viewBox="0 0 24 24"><path d="M4 11l8-6.5 8 6.5"/><path d="M6 10v9a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-9"/></svg></button>
     <div class="menuwrap"><button class="btn ghost" id="fileBtn" onclick="toggleFileMenu(event)" title="New, open, duplicate, import/export"><svg class="icn" viewBox="0 0 24 24"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg> File</button>
       <div class="menu" id="fileMenu">
@@ -689,6 +689,15 @@ const HIDB='<span class="hidb" title="Hidden — will not print">'+TOOLI.eyeOff+
 const META={heading:{l:"Heading"},text:{l:"Text"},field:{l:"Field"},image:{l:"Image"},divider:{l:"Line"},box:{l:"Box"},row:{l:"Row / Columns"},table:{l:"Table"},pagenum:{l:"Page No"},header_banner:{l:"Header"},customer:{l:"Customer"},items:{l:"Items"},datatable:{l:"Data Table"},totals:{l:"Totals"},payment_schedule:{l:"Payment"},terms:{l:"Terms"},signature:{l:"Signature"},footer_banner:{l:"Footer"},title:{l:"Title"},report_title:{l:"Report Title"},report_filters:{l:"Filters"},report_table:{l:"Report Table"}};
 ICONS.report_title=ICONS.title;ICONS.report_filters=ICONS.terms;ICONS.report_table=ICONS.datatable;
 const ELEM=["heading","text","field","image","divider","box","row","table","pagenum"];
+/* Row column widths that always FIT the row. Fixed widths are kept as the user set them unless,
+   together with the gaps and a 12mm floor for every auto column, they exceed the row: then they
+   are scaled down in proportion. The engine applies the identical rule (_row_fit_widths), so a
+   format saved with overflowing widths still prints inside the margins. */
+function rowFitWidths(s){const cols=Math.max(1,Math.min(4,+s.cols||2)),gap=Math.max(0,+s.gap||6),pct=Math.max(20,Math.min(100,+s.width||100));
+  const avail=Math.max(20,(PW()-28)*pct/100-gap*(cols-1));const f=[];
+  for(let i=0;i<cols;i++){const w=parseFloat((s.widths||[])[i]);f.push(w>0?w:null);}
+  const autoN=f.filter(x=>x===null).length,room=avail-12*autoN,tot=f.reduce((a,x)=>a+(x||0),0);
+  const k=(tot>room&&room>0)?room/tot:1;return f.map(x=>x===null?null:Math.round(x*k*10)/10);}
 const ROWCHILDTYPES=["heading","text","field","image","divider","box","customer","signature","table","datatable","totals"];
 const BLOCKS=["title","customer","items","datatable","totals","payment_schedule","terms","signature"];
 const REPORTBLOCKS=["report_title","report_filters","report_table"];  // shown when the target is a Report
@@ -756,10 +765,11 @@ const R={
   divider:(s)=>`<div style="border-top:${(+s.thickness||1)}px ${s.lstyle||'solid'} ${s.color||'#cfe5f6'}"></div>`,
   box:(s)=>`<div class="inl">${s.html||""}</div>`,
   row:(s,b,bl)=>{const cols=Math.max(1,Math.min(4,+s.cols||2)),gap=Math.max(0,+s.gap||6),widths=s.widths||[],cells=s.cells||[];const pct=Math.max(20,Math.min(100,+s.width||100));
+    const fitW=rowFitWidths(s);
     let h=`<div style="display:flex;align-items:flex-start;width:${pct}%">`;
     for(let i=0;i<cols;i++){
       if(i>0)h+=`<div class="coldiv" data-rowid="${bl?bl.id:''}" data-div="${i-1}" title="Drag to resize columns" style="flex:0 0 ${gap}mm;align-self:stretch"><i></i></div>`;
-      const w=widths[i];const fx=(w&&!isNaN(w))?`flex:0 0 ${(+w)}mm`:`flex:1 1 0`;const ch=cells[i]||[];
+      const w=fitW[i];const fx=(w!==null)?`flex:0 0 ${w}mm`:`flex:1 1 0`;const ch=cells[i]||[];
       h+=`<div class="rowcell" data-rowid="${bl?bl.id:''}" data-cell="${i}" style="${fx};min-width:0">`+(ch.length?ch.map(c=>rowChildBlk(c,b)).join(""):`<div class="cellempty">Column ${i+1} — drop here</div>`)+`</div>`;
     }
     return h+`</div>`;},
@@ -1765,7 +1775,7 @@ document.getElementById("paper").addEventListener("mousedown",function(e){
   if(cd){e.preventDefault();e.stopPropagation();if(drag||reorderDrag||reorderArm||bandDrag)return;const row=blockById(cd.dataset.rowid);if(!row)return;
     const idx=+cd.dataset.div;const cellEl=document.querySelector('.rowcell[data-rowid="'+cd.dataset.rowid+'"][data-cell="'+idx+'"]');
     const w0=cellEl?cellEl.getBoundingClientRect().width/(scale*PXMM):40;
-    cd.classList.add('on');colDrag={rowid:cd.dataset.rowid,idx:idx,sx:e.clientX,w0:w0};return;}
+    const cellR=document.querySelector('.rowcell[data-rowid="'+cd.dataset.rowid+'"][data-cell="'+(idx+1)+'"]');const w1=cellR?cellR.getBoundingClientRect().width/(scale*PXMM):40;const W0=(row.settings.widths||[]);cd.classList.add('on');colDrag={rowid:cd.dataset.rowid,idx:idx,sx:e.clientX,w0:w0,w1:w1,fixL:parseFloat(W0[idx])>0,fixR:parseFloat(W0[idx+1])>0};return;}
   if(colDrag)return;  // never arm a block drag while a divider drag is live (mutual exclusion)
   // Continuation pages (2+): clones select the real block for panel editing. Not .blk on
   // purpose — the drag/reorder machinery must never engage on a slice. Tools handle their own clicks.
@@ -1827,10 +1837,16 @@ let bandDrag=null;
 document.addEventListener("mousemove",function(e){
   if(!colDrag)return;e.preventDefault();
   const row=blockById(colDrag.rowid);if(!row)return;
-  const dx=(e.clientX-colDrag.sx)/(scale*PXMM);
-  let w=Math.max(8,Math.min(170,colDrag.w0+dx));
-  if(!row.settings.widths)row.settings.widths=[];
-  row.settings.widths[colDrag.idx]=Math.round(w*10)/10;
+  // The divider separates two columns: what one gains the other loses, so the row can never
+  // grow past its margins. Setting only the LEFT width (the old behaviour) pushed a fixed-width
+  // right column (a Totals column) off the page at its original size.
+  const dx=(e.clientX-colDrag.sx)/(scale*PXMM),MIN=12;
+  const d=Math.max(MIN-colDrag.w0,Math.min(colDrag.w1-MIN,dx));
+  const L=Math.round((colDrag.w0+d)*10)/10,Rw=Math.round((colDrag.w1-d)*10)/10;
+  if(!row.settings.widths)row.settings.widths=[];const W=row.settings.widths;
+  if(colDrag.fixL&&colDrag.fixR){W[colDrag.idx]=L;W[colDrag.idx+1]=Rw;}
+  else if(colDrag.fixR){W[colDrag.idx+1]=Rw;}   // left is auto: it absorbs the change
+  else{W[colDrag.idx]=L;}                        // right is auto (or both were): it absorbs
   render();
 });
 document.addEventListener("mouseup",function(){if(colDrag){const r=blockById(colDrag.rowid);colDrag=null;render();if(r&&r.id===selId)renderProps();commitHistory();}});  // render() clears the divider's 'on' highlight even when the row isn't selected

@@ -1325,17 +1325,36 @@ def _render_child(doc, b, c, ctx):
     return f'<div style="margin-bottom:2mm;{wrap}">{inner}</div>'
 
 
+def _row_fit_widths(s, cols, gap, pct, ctx):
+    """Column widths that always fit the row (mirror of the builder's rowFitWidths): fixed widths
+    stay as set unless, with the gaps and a 12mm floor per auto column, they exceed the row; then
+    they scale down in proportion. Protects formats saved with overflowing widths, which would
+    otherwise print a column past the right margin."""
+    body_w = _num((ctx or {}).get("body_w"), 182.0) or 182.0
+    avail = max(20.0, body_w * pct / 100.0 - gap * (cols - 1))
+    raw = _list(s.get("widths"))
+    fixed = []
+    for i in range(cols):
+        w = _num(raw[i]) if i < len(raw) else None
+        fixed.append(w if (w and w > 0) else None)
+    auto_n = sum(1 for w in fixed if w is None)
+    room = avail - 12.0 * auto_n
+    tot = sum(w for w in fixed if w)
+    k = (room / tot) if (tot and tot > room and room > 0) else 1.0
+    return [None if w is None else round(w * k, 1) for w in fixed]
+
+
 def _d_row(doc, b, s, ctx):
     """A row split into 2-3 columns; each column flows its own nested blocks (side-by-side layout)."""
     cols = max(1, min(4, int(_num(s.get("cols"), 2) or 2)))
     gap = max(0.0, _num(s.get("gap"), 6) or 0)
     pct = max(20.0, min(100.0, _num(s.get("width"), 100) or 100))
-    widths = _list(s.get("widths"))
+    widths = _row_fit_widths(s, cols, gap, pct, ctx)
     cells = _list(s.get("cells"))
     half = _fmt_num(gap / 2.0)
     tds = []
     for i in range(cols):
-        w = _num(widths[i]) if i < len(widths) else None
+        w = widths[i]
         wcss = f"width:{_fmt_num(w)}mm;" if w else ""
         children = cells[i] if i < len(cells) and isinstance(cells[i], list) else []
         inner = "".join(_render_child(doc, b, c, ctx) for c in children)
@@ -1471,7 +1490,7 @@ def render_definition(doc, definition, terms_html=""):
     if not isinstance(definition, dict):
         return ""
     branding = _branding_from_def(definition, doc)
-    ctx = {"terms_html": terms_html}
+    ctx = {"terms_html": terms_html, "body_w": page_dims(definition)[0] - 28.0}
     if definition.get("layout") == "absolute":
         return _render_absolute(doc, definition, branding, ctx)
     _pw, _ph = page_dims(definition)
