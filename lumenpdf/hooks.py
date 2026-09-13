@@ -60,6 +60,5 @@ after_install = "lumenpdf.setup.install_config.ensure_config"
 
 after_migrate = [
     "lumenpdf.setup.install_config.ensure_config",
-    "lumenpdf.setup.install_browser.ensure_chromium",
     "lumenpdf.compose.clear_probe_cache",  # engine behavior may change with a deploy
 ]

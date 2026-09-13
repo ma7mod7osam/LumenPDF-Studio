@@ -17,8 +17,9 @@ frappe.provide("lumenpdf");
             });
             // The current form's refresh already fired before this async call returned, so
             // add the button to it now (the dominant "open form by URL" path) — review #4.
-            if (window.cur_frm && cur_frm.doctype && dts.indexOf(cur_frm.doctype) > -1) {
-                lumenpdf_add_button(cur_frm);
+            const open_frm = frappe.container && frappe.container.page && frappe.container.page.frm;
+            if (open_frm && open_frm.doctype && dts.indexOf(open_frm.doctype) > -1) {
+                lumenpdf_add_button(open_frm);
             }
         },
     });

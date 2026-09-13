@@ -38,7 +38,9 @@ def render_html(doc, kind=None, value=None) -> str:
     else:
         # A "body" template is raw Jinja authored ONLY by System Manager (trusted, review #1).
         src = _read_template(value) if kind == "file" else value
-        html = frappe.render_template(src, {"doc": doc, "branding": branding, "terms_html": terms_html})
+        # Trusted input: "body" templates can only be created or edited by System Managers (DocType
+        # permissions) and "file" templates ship inside this app, so src is never end-user controlled.
+        html = frappe.render_template(src, {"doc": doc, "branding": branding, "terms_html": terms_html})  # nosemgrep
 
     html = assets.inline_images(html, allowed={a for a in allowed if a})
     return assets.neutralize_remote(html)  # block remaining server-side fetches (SSRF defense)
@@ -49,5 +51,6 @@ def _read_template(relpath: str) -> str:
     full = os.path.realpath(frappe.get_app_path("lumenpdf", *relpath.split("/")))
     if not (full == base or full.startswith(base + os.sep)):
         frappe.throw("Invalid LumenPDF template path.")
-    with open(full, encoding="utf-8") as fh:
+    # Safe: `full` was realpath-checked above to sit inside this app's templates directory.
+    with open(full, encoding="utf-8") as fh:  # nosemgrep
         return fh.read()
