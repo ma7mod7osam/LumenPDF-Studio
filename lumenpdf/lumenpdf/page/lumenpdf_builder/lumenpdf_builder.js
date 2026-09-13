@@ -1,6 +1,7 @@
-// Copyright (c) 2026 Lumen Solutions (BSTC W.L.L)
-// SPDX-License-Identifier: AGPL-3.0-only
-// "LumenPDF" and "LumenPDF Studio" are trademarks of Lumen Solutions. See TRADEMARKS.md.
+// Copyright (c) 2026 Lumen Solutions (BSTC W.L.L). All rights reserved.
+// SPDX-License-Identifier: LicenseRef-Lumen-Proprietary
+// Proprietary and confidential. See license.txt. "LumenPDF" and "LumenPDF Studio" are
+// trademarks of Lumen Solutions.
 // Desk host for the visual format builder. Loads the builder (static asset) in an iframe and
 // bridges Save/Load to lumenpdf.api over postMessage. Origin + source checked (review hardening).
 function _bpdfPreviewPoll(job, tries) {

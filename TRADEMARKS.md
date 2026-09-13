@@ -2,9 +2,8 @@
 
 "LumenPDF", "LumenPDF Studio" and the LumenPDF logo are trademarks of Lumen Solutions (BSTC W.L.L).
 
-The source code of this app is licensed under the GNU Affero General Public License v3.0 (see
-`license.txt`). That license covers the code only. It does not give anyone permission to use
-our names or logo.
+The source code of this app is proprietary (see `license.txt`). Even where you are allowed to
+read or run the code, that does not give you permission to use our names or logo.
 
 ## You may
 
@@ -20,7 +19,7 @@ our names or logo.
   different name and logo.
 - Remove or alter the copyright and license notices in the source files.
 
-## Commercial licensing
+## Licensing
 
-To use LumenPDF Studio under terms other than the AGPL, for example inside a closed-source
-product, contact hello@lumen-solutions.co.
+To license LumenPDF Studio for uses beyond `license.txt` (redistribution, embedding in your
+own product, etc.), contact hello@lumen-solutions.co.

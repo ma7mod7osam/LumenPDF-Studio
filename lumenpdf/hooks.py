@@ -1,6 +1,7 @@
-# Copyright (c) 2026 Lumen Solutions (BSTC W.L.L)
-# SPDX-License-Identifier: AGPL-3.0-only
-# "LumenPDF" and "LumenPDF Studio" are trademarks of Lumen Solutions. See TRADEMARKS.md.
+# Copyright (c) 2026 Lumen Solutions (BSTC W.L.L). All rights reserved.
+# SPDX-License-Identifier: LicenseRef-Lumen-Proprietary
+# Proprietary and confidential. See license.txt. "LumenPDF" and "LumenPDF Studio" are
+# trademarks of Lumen Solutions.
 # Internal module id. NEVER rename this on a site that already has the app installed: Frappe
 # registers the app by this id, so renamed code + an old registration = ModuleNotFoundError that
 # wedges every bench command. A rename is only safe as a FRESH install of the new id
@@ -12,7 +13,7 @@ app_description = ("Visual print-format builder for Frappe/ERPNext: design pixel
                    "PDFs for documents AND reports with drag-and-drop blocks, ready-made templates, "
                    "multi-company branding and bilingual (EN/AR) support.")
 app_email = "hello@lumen-solutions.co"
-app_license = "AGPL-3.0"
+app_license = "Proprietary"
 app_logo_url = "/assets/lumenpdf/images/lumenpdf-logo.svg"
 
 # ---------------------------------------------------------------------------

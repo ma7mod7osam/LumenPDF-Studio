@@ -1,6 +1,7 @@
-// Copyright (c) 2026 Lumen Solutions (BSTC W.L.L)
-// SPDX-License-Identifier: AGPL-3.0-only
-// "LumenPDF" and "LumenPDF Studio" are trademarks of Lumen Solutions. See TRADEMARKS.md.
+// Copyright (c) 2026 Lumen Solutions (BSTC W.L.L). All rights reserved.
+// SPDX-License-Identifier: LicenseRef-Lumen-Proprietary
+// Proprietary and confidential. See license.txt. "LumenPDF" and "LumenPDF Studio" are
+// trademarks of Lumen Solutions.
 // Global desk script: registers a "Download Branded PDF" button on every DocType that has
 // an enabled LumenPDF Mapping (falls back to Quotation). POSTs to the queued endpoint and
 // polls for the private file URL (PLAN H6/H7). No GET/window.open of the endpoint itself.

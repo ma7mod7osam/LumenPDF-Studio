@@ -1,6 +1,7 @@
-// Copyright (c) 2026 Lumen Solutions (BSTC W.L.L)
-// SPDX-License-Identifier: AGPL-3.0-only
-// "LumenPDF" and "LumenPDF Studio" are trademarks of Lumen Solutions. See TRADEMARKS.md.
+// Copyright (c) 2026 Lumen Solutions (BSTC W.L.L). All rights reserved.
+// SPDX-License-Identifier: LicenseRef-Lumen-Proprietary
+// Proprietary and confidential. See license.txt. "LumenPDF" and "LumenPDF Studio" are
+// trademarks of Lumen Solutions.
 // Adds a "Branded PDF" button to the Query Report view. It re-runs the report server-side
 // (lumenpdf.report.report_pdf) with the current filters and streams back a branded PDF — a fully
 // styled dynamic table (or a mapped LumenPDF report template when one exists). This is separate

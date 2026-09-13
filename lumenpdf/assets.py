@@ -1,6 +1,7 @@
-# Copyright (c) 2026 Lumen Solutions (BSTC W.L.L)
-# SPDX-License-Identifier: AGPL-3.0-only
-# "LumenPDF" and "LumenPDF Studio" are trademarks of Lumen Solutions. See TRADEMARKS.md.
+# Copyright (c) 2026 Lumen Solutions (BSTC W.L.L). All rights reserved.
+# SPDX-License-Identifier: LicenseRef-Lumen-Proprietary
+# Proprietary and confidential. See license.txt. "LumenPDF" and "LumenPDF Studio" are
+# trademarks of Lumen Solutions.
 """Inline local image assets as base64 so the renderer needs no network access.
 
 Security (code review H4): only `src`s in the caller's `allowed` set are inlined, and the
