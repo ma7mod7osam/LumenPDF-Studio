@@ -1,0 +1,103 @@
+# Copyright (c) 2026 Lumen Solutions (BSTC W.L.L). All rights reserved.
+# CI: install LumenPDF Studio on a real bench for every Frappe version the
+# marketplace listing covers, run migrate, and smoke-test the config spine.
+name: CI
+
+on:
+  push:
+    branches: [lumenpdf]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  install:
+    name: Frappe ${{ matrix.frappe-branch }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - frappe-branch: version-15
+            python: "3.12"
+            node: "20"
+          - frappe-branch: version-16
+            python: "3.14"
+            node: "24"
+
+    services:
+      mariadb:
+        image: mariadb:11.4
+        env:
+          MARIADB_ROOT_PASSWORD: root
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s --health-timeout=5s --health-retries=15
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout app
+        uses: actions/checkout@v4
+        with:
+          path: app
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+
+      - name: Install bench
+        run: |
+          pip install frappe-bench
+          sudo apt-get update -qq && sudo apt-get install -y -qq libmariadb-dev
+
+      - name: Init bench (frappe ${{ matrix.frappe-branch }})
+        run: |
+          bench init --skip-redis-config-generation \
+            --frappe-branch ${{ matrix.frappe-branch }} \
+            --python python${{ matrix.python }} frappe-bench
+          cd frappe-bench
+          bench set-config -g db_host 127.0.0.1
+          bench set-config -g redis_cache redis://127.0.0.1:6379/0
+          bench set-config -g redis_queue redis://127.0.0.1:6379/1
+          bench set-config -g redis_socketio redis://127.0.0.1:6379/2
+
+      - name: Get app (builds assets too)
+        working-directory: frappe-bench
+        run: bench get-app lumenpdf "$GITHUB_WORKSPACE/app"
+
+      - name: Create site and install app
+        working-directory: frappe-bench
+        run: |
+          bench new-site test.localhost \
+            --db-root-password root --admin-password admin \
+            --mariadb-user-host-login-scope=%
+          bench --site test.localhost install-app lumenpdf
+
+      - name: Migrate
+        working-directory: frappe-bench
+        run: bench --site test.localhost migrate
+
+      - name: Smoke tests
+        working-directory: frappe-bench
+        run: |
+          # after_install must have created the whole config spine; re-running is a no-op
+          bench --site test.localhost execute lumenpdf.setup.install_config.ensure_config
+          bench --site test.localhost execute lumenpdf.compose.clear_probe_cache
+          # every module of the app must byte-compile on this Python
+          ./env/bin/python -m compileall -q apps/lumenpdf/lumenpdf
+          bench --site test.localhost list-apps

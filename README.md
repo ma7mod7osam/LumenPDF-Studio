@@ -1,6 +1,6 @@
 # LumenPDF Studio
 
-**A visual print-format builder for Frappe / ERPNext v14 and v15.** Design pixel-perfect, branded PDFs
+**A visual print-format builder for Frappe / ERPNext v14, v15 and v16.** Design pixel-perfect, branded PDFs
 for your documents *and* your reports — with drag-and-drop blocks, ready-made templates, live
 preview, and zero code.
 
@@ -51,9 +51,10 @@ what prints.
 
 ## Requirements
 
-- Frappe **v14 or v15** (works with or without ERPNext; ERPNext unlocks the document smart
-  blocks). On v14 the engine renders through wkhtmltopdf automatically; on v15/Frappe Cloud
-  it reuses the host's Chromium generator - the self-probe picks the right path per site.
+- Frappe **v14, v15 or v16** (works with or without ERPNext; ERPNext unlocks the document
+  smart blocks). On v14 the engine renders through wkhtmltopdf automatically; on v15/v16 and
+  Frappe Cloud it reuses the host's Chromium generator - the self-probe picks the right path
+  per site.
 - No extra services and no hard Python dependencies: the default engine reuses the site's own
   Chromium PDF generator, and the landscape fallback uses wkhtmltopdf, which Frappe ships.
 
