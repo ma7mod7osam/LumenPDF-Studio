@@ -8,7 +8,7 @@ app_publisher = "Lumen Solutions (BSTC W.L.L)"
 app_description = ("Visual print-format builder for Frappe/ERPNext: design pixel-perfect branded "
                    "PDFs for documents AND reports with drag-and-drop blocks, ready-made templates, "
                    "multi-company branding and bilingual (EN/AR) support.")
-app_email = "support@bstc-bh.com"
+app_email = "hello@lumen-solutions.co"
 app_license = "MIT"
 app_logo_url = "/assets/lumenpdf/images/lumenpdf-logo.svg"
 
