@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Lumen Solutions (BSTC W.L.L)
+# SPDX-License-Identifier: AGPL-3.0-only
+# "LumenPDF" and "LumenPDF Studio" are trademarks of Lumen Solutions. See TRADEMARKS.md.
 """Wire BrandPDF into ERPNext's native PDF flows (the BrandPDF Mapping toggles).
 
 - replace_print_pdf: overrides `frappe.utils.print_format.download_pdf` — the endpoint behind the

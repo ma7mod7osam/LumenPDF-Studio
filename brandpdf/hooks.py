@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Lumen Solutions (BSTC W.L.L)
+# SPDX-License-Identifier: AGPL-3.0-only
+# "LumenPDF" and "LumenPDF Studio" are trademarks of Lumen Solutions. See TRADEMARKS.md.
 app_name = "brandpdf"  # internal module id — DO NOT rename (breaks imports/hooks/DocType module)
 app_title = "LumenPDF Studio"
 app_publisher = "Lumen Solutions (BSTC W.L.L)"
@@ -5,7 +8,7 @@ app_description = ("Visual print-format builder for Frappe/ERPNext: design pixel
                    "PDFs for documents AND reports with drag-and-drop blocks, ready-made templates, "
                    "multi-company branding and bilingual (EN/AR) support.")
 app_email = "hello@lumen-solutions.co"
-app_license = "MIT"
+app_license = "AGPL-3.0"
 app_logo_url = "/assets/brandpdf/images/lumenpdf-logo.svg"
 
 # ---------------------------------------------------------------------------

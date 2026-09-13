@@ -3,7 +3,7 @@
 ## Already done in this repo (v1.1.0)
 
 - [x] Semantic version `1.1.0` (`brandpdf/__init__.py`), git tags `v1.0.0` / `v1.1.0`.
-- [x] MIT `license.txt`; `pyproject.toml` metadata; no hard pip dependencies
+- [x] AGPL-3.0 `license.txt` + `TRADEMARKS.md`; `pyproject.toml` metadata; no hard pip dependencies
       (playwright/gotenberg are optional extras).
 - [x] Marketplace-grade `README.md` (the marketplace listing imports it as the description).
 - [x] Product logo — the "Page Blocks" mark (`brandpdf/public/images/lumenpdf-logo.svg`, wired

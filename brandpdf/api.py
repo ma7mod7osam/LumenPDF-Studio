@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Lumen Solutions (BSTC W.L.L)
+# SPDX-License-Identifier: AGPL-3.0-only
+# "LumenPDF" and "LumenPDF Studio" are trademarks of Lumen Solutions. See TRADEMARKS.md.
 """Whitelisted endpoints. Rendering is ENQUEUED (never run in the web process) so a
 managed box can't be OOM'd by concurrent clicks (PLAN H7). The button POSTs via
 frappe.call and polls for a private, user-scoped file URL (PLAN H6).
