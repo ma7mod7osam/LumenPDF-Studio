@@ -1,8 +1,15 @@
 # LumenPDF Studio
 
-**A visual print-format builder for Frappe / ERPNext v15.** Design pixel-perfect, branded PDFs
+**A visual print-format builder for Frappe / ERPNext v14 and v15.** Design pixel-perfect, branded PDFs
 for your documents *and* your reports — with drag-and-drop blocks, ready-made templates, live
 preview, and zero code.
+
+![Canvas and inspector](docs/screenshots/01-canvas-and-inspector.png)
+
+| | |
+|---|---|
+| ![Template gallery](docs/screenshots/02-template-gallery.png) | ![Composable table cells](docs/screenshots/03-composable-table.png) |
+| ![Branded report](docs/screenshots/04-branded-report.png) | ![Layers and product photos](docs/screenshots/05-layers-and-product-photos.png) |
 
 ## Why
 
