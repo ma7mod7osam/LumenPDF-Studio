@@ -160,10 +160,55 @@ def ensure_config():
         frappe.log_error(title="BrandPDF: ensure_config failed", message=frappe.get_traceback())
 
 
+def _deferred_links(fields):
+    """Link fields whose target DocType is not installed (e.g. Company without ERPNext).
+    They are left out for now; _sync_fields adds them on the first run after the target
+    app arrives, so a bare-frappe bench installs clean instead of failing the whole step."""
+    return {f["fieldname"] for f in fields
+            if f.get("fieldtype") == "Link" and f.get("options")
+            and not frappe.db.exists("DocType", f["options"])}
+
+
+def check_config():
+    """Raise if the config spine is incomplete. Used by CI right after install-app and again
+    after migrate, so a regression in fresh-install behavior turns the build red instead of
+    hiding behind the fail-soft ensure_config."""
+    expected = {
+        "BrandPDF Settings": SETTINGS_FIELDS,
+        "BrandPDF Block": BLOCK_FIELDS,
+        "BrandPDF Template": TEMPLATE_FIELDS,
+        "BrandPDF Snippet": SNIPPET_FIELDS,
+        "BrandPDF Mapping Condition": CONDITION_FIELDS,
+        "BrandPDF Mapping": MAPPING_FIELDS,
+    }
+    problems = []
+    for name, fields in expected.items():
+        if not frappe.db.exists("DocType", name):
+            problems.append(f"missing DocType: {name}")
+            continue
+        frappe.clear_cache(doctype=name)
+        have = {f.fieldname for f in frappe.get_meta(name).fields}
+        want = {f["fieldname"] for f in fields} - _deferred_links(fields)
+        gaps = sorted(want - have)
+        if gaps:
+            problems.append(f"{name} is missing fields: {gaps}")
+    if problems:
+        logs = frappe.get_all("Error Log", filters={"method": ["like", "BrandPDF%"]},
+                              fields=["method", "error"], order_by="creation desc", limit=3)
+        detail = "\n".join(f"--- {l.method}\n{(l.error or '')[:800]}" for l in logs)
+        raise RuntimeError("BrandPDF config incomplete:\n" + "\n".join(problems)
+                           + ("\n\nRecent error logs:\n" + detail if logs else ""))
+    print("BrandPDF config check: complete.")
+
+
 def _ensure(name, fields, as_custom, istable=0, autoname=None):
     if frappe.db.exists("DocType", name):
         _sync_fields(name, fields)
         return
+    deferred = _deferred_links(fields)
+    if deferred:
+        print("  deferring link fields on", name, "until their DocTypes exist:", sorted(deferred))
+        fields = [f for f in fields if f["fieldname"] not in deferred]
     doc = frappe.get_doc(
         {
             "doctype": "DocType",
@@ -188,7 +233,8 @@ def _sync_fields(name, fields):
     new Blocks table). Uses Custom Fields so it works on standard or custom DocTypes without
     developer_mode."""
     existing = {f.fieldname for f in frappe.get_meta(name).fields}
-    missing = [f for f in fields if f["fieldname"] not in existing]
+    deferred = _deferred_links(fields)
+    missing = [f for f in fields if f["fieldname"] not in existing and f["fieldname"] not in deferred]
     if not missing:
         return
     from frappe.custom.doctype.custom_field.custom_field import create_custom_fields

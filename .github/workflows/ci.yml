@@ -88,9 +88,17 @@ jobs:
             --mariadb-user-host-login-scope=%
           bench --site test.localhost install-app brandpdf
 
+      - name: Fresh-install config must be complete (before any migrate)
+        working-directory: frappe-bench
+        run: bench --site test.localhost execute brandpdf.setup.install_config.check_config
+
       - name: Migrate
         working-directory: frappe-bench
         run: bench --site test.localhost migrate
+
+      - name: Config still complete after migrate
+        working-directory: frappe-bench
+        run: bench --site test.localhost execute brandpdf.setup.install_config.check_config
 
       - name: Smoke tests
         working-directory: frappe-bench
