@@ -1,6 +1,7 @@
-# Copyright (c) 2026 Lumen Solutions (BSTC W.L.L)
-# SPDX-License-Identifier: AGPL-3.0-only
-# "LumenPDF" and "LumenPDF Studio" are trademarks of Lumen Solutions. See TRADEMARKS.md.
+# Copyright (c) 2026 Lumen Solutions (BSTC W.L.L). All rights reserved.
+# SPDX-License-Identifier: LicenseRef-Lumen-Proprietary
+# Proprietary and confidential. See license.txt. "LumenPDF" and "LumenPDF Studio" are
+# trademarks of Lumen Solutions.
 """Engine abstraction. Swapping engines is a config change, never a rewrite (PLAN 2.1)."""
 from brandpdf.config import conf
 

@@ -96,20 +96,16 @@ engine treats margins, full-bleed and landscape.
 - Renders are serialized behind a lock so the PDF endpoint can't be used to stack Chromium
   processes.
 
-## License
+## Licence
 
-Copyright (c) 2026 Lumen Solutions (BSTC W.L.L).
+**Proprietary. Copyright (c) 2026 Lumen Solutions (BSTC W.L.L). All rights reserved.**
 
-LumenPDF Studio is licensed under the **GNU Affero General Public License v3.0** (see
-`license.txt`). You may use, study and modify it. If you distribute it, or run a modified
-version as a network service, you must publish your complete source code under the same
-license and keep all copyright notices. It may not be relicensed or resold as closed-source
-software.
+This repository is public so that Frappe Cloud can build and distribute the app, and so you
+can read exactly what runs on your site. **It is not open source.** Being able to read the
+source does not grant a right to copy, redistribute or resell it. See `license.txt`.
 
-For a commercial license without the AGPL obligations, contact hello@lumen-solutions.co.
+Releases up to v1.4.0 were MIT, and two commits on 2026-09-13 were briefly AGPL-3.0; those
+grants stand for whoever obtained them then. See the Licence History in `license.txt`.
 
-## Trademarks
-
-"LumenPDF", "LumenPDF Studio" and the LumenPDF logo are trademarks of Lumen Solutions. The code
-license does not grant permission to use them. Forks and modified versions must use a
-different name and logo. See `TRADEMARKS.md`.
+"LumenPDF Studio" and the LumenPDF logo are trademarks of Lumen Solutions and are not covered by
+any code licence. See `TRADEMARKS.md`.
