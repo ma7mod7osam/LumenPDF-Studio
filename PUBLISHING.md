@@ -29,7 +29,7 @@
    - report mode (General Ledger, landscape),
    - a finished branded PDF,
    - the Formats manager.
-4. **Support links**: website / support email (support@bstc-bh.com) / docs link (the README).
+4. **Support links**: website / support email (hello@lumen-solutions.co) / docs link (the README).
 5. **Pricing**: free, or set plans (Marketplace supports paid apps with revenue share).
 6. **Submit for review.** Frappe's team checks that it installs cleanly on a fresh bench and
    that the listing is honest. The `after_migrate` self-configuration means a plain

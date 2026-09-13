@@ -1,7 +1,7 @@
 [project]
 name = "brandpdf"
 authors = [
-    { name = "BSTC", email = "support@bstc-bh.com" },
+    { name = "Lumen Solutions", email = "hello@lumen-solutions.co" },
 ]
 description = "LumenPDF Studio — a visual print-format builder for Frappe/ERPNext: pixel-perfect branded PDFs for documents and reports, with ready-made templates."
 requires-python = ">=3.10"
