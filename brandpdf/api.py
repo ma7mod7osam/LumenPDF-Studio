@@ -257,7 +257,6 @@ def set_default_format(doctype, template, company=None):
                 frappe.delete_doc("BrandPDF Mapping", r["name"], ignore_permissions=True)
     except Exception:
         pass
-    frappe.db.commit()
     return {"default": template, "company": company or ""}
 
 
@@ -289,7 +288,6 @@ def set_default_report_format(report_name, template):
                             "replace_report_pdf": 1})
         m.flags.ignore_permissions = True
         m.insert()
-    frappe.db.commit()
     return {"default": template, "report_name": report_name}
 
 
@@ -320,7 +318,6 @@ def duplicate_format(name, new_name=None):
     })
     t.flags.ignore_permissions = True
     t.insert()
-    frappe.db.commit()
     return {"name": nm, "target_doctype": src.target_doctype}
 
 
@@ -356,7 +353,6 @@ def delete_format(name):
             m.enabled = 0  # nothing left -> native PDF takes over
         m.flags.ignore_permissions = True
         m.save()
-    frappe.db.commit()
     return {"deleted": True, "target_doctype": target}
 
 
@@ -537,7 +533,6 @@ def save_format(definition, name=None):
         _activate_report_mapping(report_name, tmpl_name, target)
     else:
         _activate_mapping(target, tmpl_name)
-    frappe.db.commit()
     return {"name": tmpl_name, "target_doctype": target, "target_kind": kind,
             "report_name": report_name, "activated": True}
 
@@ -557,7 +552,7 @@ def submit_feedback(message, reply_to=None):
     reply_to = (reply_to or "").strip() or None
     if reply_to and not frappe.utils.validate_email_address(reply_to):
         reply_to = None
-    to = frappe.conf.get("brandpdf_feedback_email") or "support@bstc-bh.com"
+    to = frappe.conf.get("brandpdf_feedback_email") or "hello@lumen-solutions.co"
     try:
         from brandpdf import __version__ as _v
     except Exception:
@@ -622,7 +617,6 @@ def save_snippet(name, block):
         d = frappe.get_doc({"doctype": "BrandPDF Snippet", "snippet_name": nm, "block": payload})
         d.flags.ignore_permissions = True
         d.insert()
-    frappe.db.commit()
     return {"name": nm}
 
 
@@ -631,7 +625,6 @@ def delete_snippet(name):
     _require_manager()
     if frappe.db.exists("BrandPDF Snippet", name):
         frappe.delete_doc("BrandPDF Snippet", name, ignore_permissions=True)
-        frappe.db.commit()
     return {"deleted": True}
 
 
@@ -665,7 +658,6 @@ def set_gallery(name, on):
     t.flags.ignore_permissions = True
     t.flags.brandpdf_allow_standard_edit = True  # flag change only; body stays read-only
     t.save()
-    frappe.db.commit()
     return {"name": name, "in_gallery": bool(t.in_gallery)}
 
 

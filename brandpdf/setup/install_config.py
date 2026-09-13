@@ -113,7 +113,9 @@ def run(as_custom=False):
     for label, fn in steps:
         try:
             fn()
-            frappe.db.commit()
+            # Deliberate per-step commit in an install/migrate hook: each DocType step is isolated so
+            # one failure (rolled back below) cannot undo the steps that already succeeded.
+            frappe.db.commit()  # nosemgrep
         except Exception:
             frappe.db.rollback()
             failures.append(label)

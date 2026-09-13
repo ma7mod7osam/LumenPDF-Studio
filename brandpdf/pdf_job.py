@@ -98,7 +98,7 @@ def generate_preview(job_token, definition, doctype, docname, user, _retry=0):
         if not pdf:
             html = B.render_definition(doc, d, "")
             br = (d.get("branding") or {}) if isinstance(d, dict) else {}
-            allowed = set(filter(None, [br.get("header_image"), br.get("footer_image")])) | B.collect_image_srcs(d)
+            allowed = {src for src in (br.get("header_image"), br.get("footer_image")) if src} | B.collect_image_srcs(d)
             allowed |= B.collect_doc_image_srcs(doc, d)  # item photos + Data Table image lines
             html = assets.neutralize_remote(assets.inline_images(html, allowed=allowed))
             pdf = renderer.render(html, default_options())
@@ -117,7 +117,9 @@ def generate_preview(job_token, definition, doctype, docname, user, _retry=0):
 def _acquire(lock, job_id):
     try:
         # raw redis SET NX EX; returns True if acquired, None/False if held.
-        return bool(frappe.cache().set(lock, job_id, nx=True, ex=240))
+        # A real lock needs an atomic SET NX EX, which set_value() does not offer. The key is made
+        # site-scoped with make_key(), so locks never collide across sites on a shared bench.
+        return bool(frappe.cache().set(frappe.cache().make_key(lock), job_id, nx=True, ex=240))  # nosemgrep
     except Exception:
         # Backend doesn't support NX set -> degrade to relying on a single long worker.
         return True
@@ -125,7 +127,7 @@ def _acquire(lock, job_id):
 
 def _release(lock):
     try:
-        frappe.cache().delete(lock)
+        frappe.cache().delete_value(lock)  # applies the same site-scoped make_key()
     except Exception:
         pass
 

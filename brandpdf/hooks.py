@@ -51,6 +51,5 @@ scheduler_events = {
 # available for the Playwright engine. Both idempotent + non-fatal.
 after_migrate = [
     "brandpdf.setup.install_config.ensure_config",
-    "brandpdf.setup.install_browser.ensure_chromium",
     "brandpdf.compose.clear_probe_cache",  # engine behavior may change with a deploy
 ]

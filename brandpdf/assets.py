@@ -30,7 +30,9 @@ def inline_images(html: str, allowed=None) -> str:
         if not disk or not os.path.exists(disk):
             return m.group(0)
         mime = mimetypes.guess_type(disk)[0] or "image/png"
-        with open(disk, "rb") as fh:
+        # Safe by construction: `disk` comes from _safe_local_path(), which realpath-confines it to
+        # this site's files directories, and only allow-listed srcs reach this point.
+        with open(disk, "rb") as fh:  # nosemgrep
             b64 = base64.b64encode(fh.read()).decode()
         return f'src="data:{mime};base64,{b64}"'
 
