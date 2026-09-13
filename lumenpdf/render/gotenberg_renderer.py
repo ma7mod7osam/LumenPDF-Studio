@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Lumen Solutions (BSTC W.L.L)
+# SPDX-License-Identifier: AGPL-3.0-only
+# "LumenPDF" and "LumenPDF Studio" are trademarks of Lumen Solutions. See TRADEMARKS.md.
 """Fallback/Phase-2 engine: a Gotenberg container (Chromium HTML->PDF over HTTP).
 
 Same options, different transport. Selected via site_config `lumenpdf_engine: "gotenberg"`.

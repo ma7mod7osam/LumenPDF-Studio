@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Lumen Solutions (BSTC W.L.L)
+# SPDX-License-Identifier: AGPL-3.0-only
+# "LumenPDF" and "LumenPDF Studio" are trademarks of Lumen Solutions. See TRADEMARKS.md.
 """Make Chromium available to the renderer on a managed host (Frappe Cloud), self-healing.
 
 Only needed for the OPT-IN playwright engine (the default frappe_chrome engine reuses the host's

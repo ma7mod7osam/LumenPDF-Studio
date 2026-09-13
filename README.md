@@ -105,4 +105,18 @@ engine treats margins, full-bleed and landscape.
 
 ## License
 
-MIT © BSTC (Building Solutions Trading & Contracting W.L.L). See `license.txt`.
+Copyright (c) 2026 Lumen Solutions (BSTC W.L.L).
+
+LumenPDF Studio is licensed under the **GNU Affero General Public License v3.0** (see
+`license.txt`). You may use, study and modify it. If you distribute it, or run a modified
+version as a network service, you must publish your complete source code under the same
+license and keep all copyright notices. It may not be relicensed or resold as closed-source
+software.
+
+For a commercial license without the AGPL obligations, contact hello@lumen-solutions.co.
+
+## Trademarks
+
+"LumenPDF", "LumenPDF Studio" and the LumenPDF logo are trademarks of Lumen Solutions. The code
+license does not grant permission to use them. Forks and modified versions must use a
+different name and logo. See `TRADEMARKS.md`.

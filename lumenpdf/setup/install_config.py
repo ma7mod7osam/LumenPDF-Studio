@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Lumen Solutions (BSTC W.L.L)
+# SPDX-License-Identifier: AGPL-3.0-only
+# "LumenPDF" and "LumenPDF Studio" are trademarks of Lumen Solutions. See TRADEMARKS.md.
 """Phase-2 config spine — programmatic DocType creator.
 
 Per PLAN/PHASE2 docs we do NOT hand-write DocType JSON. The app must be installed & migrated

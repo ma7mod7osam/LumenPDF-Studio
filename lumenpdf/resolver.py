@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Lumen Solutions (BSTC W.L.L)
+# SPDX-License-Identifier: AGPL-3.0-only
+# "LumenPDF" and "LumenPDF Studio" are trademarks of Lumen Solutions. See TRADEMARKS.md.
 """Phase-2 resolution with graceful Phase-1 fallback.
 
 Every lookup is wrapped so the app works whether or not the config DocTypes exist yet.

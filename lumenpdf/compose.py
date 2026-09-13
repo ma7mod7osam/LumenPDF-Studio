@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Lumen Solutions (BSTC W.L.L)
+# SPDX-License-Identifier: AGPL-3.0-only
+# "LumenPDF" and "LumenPDF Studio" are trademarks of Lumen Solutions. See TRADEMARKS.md.
 """Final PDF composition.
 
 For an absolute-layout (free-canvas) format: the BODY sections flow in document order (so a

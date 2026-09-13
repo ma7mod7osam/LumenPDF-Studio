@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Lumen Solutions (BSTC W.L.L)
+# SPDX-License-Identifier: AGPL-3.0-only
+# "LumenPDF" and "LumenPDF Studio" are trademarks of Lumen Solutions. See TRADEMARKS.md.
 """Branded PDF for REPORTS (Query / Script / Report Builder), a separate pipeline from documents.
 
 Two entry points, both reusing the same compose engine (repeating header/footer bands, page
