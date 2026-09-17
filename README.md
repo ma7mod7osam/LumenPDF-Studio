@@ -49,6 +49,11 @@ what prints.
 - **In-app feedback**: a 💬 button in the builder emails feedback (with site/user/version
   context) straight to the maintainers via the site's own outgoing email.
 
+- **QR codes, bilingual tables and tinted stationery.** A QR block generates the code at print
+  time (ZATCA tax-invoice payload, any field, or fixed text) with no extra dependency, table
+  headers can stack two languages, and a page background colour prints behind every page.
+  Two ready starters use all of it: *Tax Invoice EN·AR* and *Merchant Statement EN·AR*.
+
 ## Requirements
 
 - Frappe **v14, v15 or v16** (works with or without ERPNext; ERPNext unlocks the document
