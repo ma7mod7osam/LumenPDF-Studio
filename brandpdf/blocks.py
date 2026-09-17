@@ -19,6 +19,7 @@ style}); `render_definition()` turns that into the SAME HTML the builder preview
 PDF matches the builder exactly. Generic elements (heading/text/field/image/divider/box/
 table) are mirrored from the builder's JS renderers.
 """
+import io
 import json
 import re
 
@@ -91,10 +92,15 @@ def base_css(b, pw=210.0, ph=297.0):
     navy = b.get("navy", "#1A1E2A")
     font = b.get("font") or "Montserrat"
     _pw, _ph = _fmt_num(pw or 210), _fmt_num(ph or 297)
+    # page.bg paints EVERY page (html+body), so a tinted stationery look survives pagination and
+    # the header/footer overlays compose lays on top.
+    pg_bg = b.get("page_bg")
+    page_bg = (f"background-color:{pg_bg.strip()} !important; -webkit-print-color-adjust:exact; "
+               "print-color-adjust:exact; " if _hexok(pg_bg) else "")
     return f"""<style>
   @import url('{FONT_IMPORT_URL}');
   @page {{ size: {_pw}mm {_ph}mm; margin: 0; }}
-  html, body {{ margin:0 !important; padding:0 !important; }}
+  html, body {{ margin:0 !important; padding:0 !important; {page_bg}}}
   img {{ max-width:100%; }}
   .bs-banner {{ width:100%; display:block; }}
   .bs-content {{ font-family:'{font}','Segoe UI',Arial,sans-serif; color:{navy}; font-size:8.5pt; padding:6mm 14mm; -webkit-print-color-adjust:exact; print-color-adjust:exact; }}
@@ -335,6 +341,13 @@ _WIDTH = re.compile(r"^\d+(\.\d+)?(mm|%|px|cm)$")
 _FONTS = set(GOOGLE_FONTS) | set(SYSTEM_FONTS)  # allow-list (font is injected into <style>)
 
 
+def _label(v):
+    """A table header label may stack two lines (e.g. Arabic over English): a real newline, or
+    the two characters \\n typed into the builder's single-line label box. Escaped first, so only
+    our own <br> survives."""
+    return _esc(v).replace("\n", "<br>").replace("\\n", "<br>")
+
+
 def _esc(s):
     return frappe.utils.escape_html("" if s is None else str(s))
 
@@ -541,7 +554,9 @@ def _e_field(doc, b, s, ctx):
     field = s.get("field")
     prefix = _esc(s.get("prefix") or "")
     val = _field_value(doc, field)
-    if val and _field_is_rich(doc, field):
+    # settings.html opts a plain field into HTML rendering: ERPNext stores address_display and
+    # similar as Small Text that already CONTAINS <br> tags, which would otherwise print raw.
+    if val and (s.get("html") or _field_is_rich(doc, field)):
         from frappe.utils.html_utils import sanitize_html
         return prefix + sanitize_html(val)  # rich fields (e.g. Terms) print STYLED, not as raw tags
     return prefix + _esc(val)
@@ -865,7 +880,7 @@ def _d_items(doc, b, s, ctx):
     lb = s.get("labels") if isinstance(s.get("labels"), dict) else {}
 
     def L(k, d):  # editable column titles (settings.labels), defaulting to the classics
-        return _esc(lb.get(k) or d)
+        return _label(lb.get(k) or d)
 
     coldefs = [("num", "6%"), ("item", "40%")]
     heads = th(L("num", "#")) + th(L("item", "Item & Description"), "")
@@ -1061,7 +1076,7 @@ def _d_datatable(doc, b, s, ctx):
         f'<th style="{sk["th"]}{"color:#fff !important;" if "color:" not in sk["th"] else ""}'
         f'text-align:{_al(c)};font-weight:600;{th_extra}'
         f'word-wrap:break-word;-webkit-print-color-adjust:exact;">'
-        f'{_esc(c.get("label") or c.get("field") or lines[0].get("field"))}</th>'
+        f'{_label(c.get("label") or c.get("field") or lines[0].get("field"))}</th>'
         for c, lines in columns
     )
     if sk["th_first"]:
@@ -1099,15 +1114,15 @@ def _d_totals(doc, b, s, ctx):
     vszc = f"font-size:{_fmt_num(min(72, max(4, vsz)))}pt;" if vsz else ""
     wmm = _num(s.get("width"), 82) or 82
     wmm = _fmt_num(min(200, max(40, wmm)))
-    lines = [f'<tr><td class="lbl" style="{lc}{vszc}">{_esc(s.get("subtotalLabel") or "Subtotal")}</td><td class="val" style="{vc}{vszc}"><bdi>{_esc(doc.get_formatted("total"))}</bdi></td></tr>']
+    lines = [f'<tr><td class="lbl" style="{lc}{vszc}">{_label(s.get("subtotalLabel") or "Subtotal")}</td><td class="val" style="{vc}{vszc}"><bdi>{_esc(doc.get_formatted("total"))}</bdi></td></tr>']
     if doc.get("discount_amount"):
-        lines.append(f'<tr><td class="lbl" style="{lc}{vszc}">{_esc(s.get("discountLabel") or "Discount")}</td><td class="val" style="{vc}{vszc}"><bdi>- {_esc(doc.get_formatted("discount_amount"))}</bdi></td></tr>')
+        lines.append(f'<tr><td class="lbl" style="{lc}{vszc}">{_label(s.get("discountLabel") or "Discount")}</td><td class="val" style="{vc}{vszc}"><bdi>- {_esc(doc.get_formatted("discount_amount"))}</bdi></td></tr>')
     for tax in (doc.get("taxes") or []):
         if tax.tax_amount:
             d = _esc(frappe.utils.strip_html_tags(tax.description or ""))
             lines.append(f'<tr><td class="lbl" style="{lc}{vszc}">{d}</td><td class="val" style="{vc}{vszc}"><bdi>{_esc(tax.get_formatted("tax_amount"))}</bdi></td></tr>')
     grand = (
-        f'<tr class="grand"><td style="background-color:{gc} !important;color:{gtc} !important;font-weight:700;{gszc}text-align:right;padding:6px 8px;-webkit-print-color-adjust:exact;">{_esc(s.get("grandLabel") or "Grand Total")}</td>'
+        f'<tr class="grand"><td style="background-color:{gc} !important;color:{gtc} !important;font-weight:700;{gszc}text-align:right;padding:6px 8px;-webkit-print-color-adjust:exact;">{_label(s.get("grandLabel") or "Grand Total")}</td>'
         f'<td style="background-color:{gc} !important;color:{gtc} !important;font-weight:700;{gszc}text-align:right;white-space:nowrap;padding:6px 8px;-webkit-print-color-adjust:exact;"><bdi>{_esc(doc.get_formatted("grand_total"))}</bdi></td></tr>'
     )
     return (
@@ -1183,6 +1198,69 @@ def _d_signature(doc, b, s, ctx):
         f'<td style="border:0;width:{bw}mm;text-align:center;"><div class="bs-sign-box" '
         f'style="border-top:{lw}px solid {lcol};{tcol}{tszc}">{label}</div></td></tr></table>'
     )
+
+
+def _zatca_tlv(doc, s):
+    """ZATCA (Saudi e-invoice) phase-1 QR payload: base64 of TLV tags 1-5 — seller name, seller
+    VAT number, timestamp, invoice total (incl. VAT), VAT amount. Values come from the document
+    and its company; settings may override the two seller fields for non-standard setups."""
+    import base64
+
+    company = s.get("company_field") and doc.get(s["company_field"]) or doc.get("company") or ""
+    seller = s.get("seller_name") or company or ""
+    vat_no = s.get("vat_number") or ""
+    if not vat_no and company:
+        for field in ("tax_id", "vat_number"):
+            try:
+                vat_no = frappe.db.get_value("Company", company, field) or ""
+            except Exception:
+                vat_no = ""
+            if vat_no:
+                break
+    stamp = str(doc.get("posting_date") or doc.get("transaction_date") or "")
+    tm = str(doc.get("posting_time") or "00:00:00")
+    if stamp:
+        stamp = f"{stamp}T{tm[:8]}Z"
+    total = str(doc.get("grand_total") or doc.get("rounded_total") or "")
+    vat = str(doc.get("total_taxes_and_charges") or "")
+    out = b""
+    for tag, value in ((1, seller), (2, vat_no), (3, stamp), (4, total), (5, vat)):
+        raw = str(value or "").encode("utf-8")
+        out += bytes([tag, len(raw)]) + raw
+    return base64.b64encode(out).decode()
+
+
+def _qr_payload(doc, s):
+    mode = (s.get("mode") or "zatca").lower()
+    if mode == "text":
+        return s.get("text") or ""
+    if mode == "field":
+        return _field_value(doc, s.get("field") or "name")
+    return _zatca_tlv(doc, s)
+
+
+def _e_qr(doc, b, s, ctx):
+    """Real QR code, drawn as inline SVG (crisp at any print size, no file to attach). Uses
+    PyQRCode, which Frappe already ships for two-factor auth — no new dependency. If the payload
+    is empty or the encoder is unavailable, the block renders nothing rather than a broken box."""
+    data = _qr_payload(doc, s)
+    if not data:
+        return ""
+    size = _fmt_num(min(120, max(10, _num(s.get("size"), 25) or 25)))
+    dark = s["color"].strip() if _hexok(s.get("color")) else "#000000"
+    light = s["bg"].strip() if _hexok(s.get("bg")) else "#ffffff"
+    try:
+        import pyqrcode
+        buf = io.BytesIO()  # pyqrcode writes bytes, even for SVG
+        pyqrcode.create(data, error=(s.get("ecc") if s.get("ecc") in ("L", "M", "Q", "H") else "M")).svg(
+            buf, scale=4, module_color=dark, background=light, quiet_zone=2, omithw=True, xmldecl=False)
+        svg = buf.getvalue().decode("utf-8")
+    except Exception:
+        frappe.log_error(title="BrandPDF: QR encode failed", message=frappe.get_traceback())
+        return ""
+    # omithw leaves a viewBox but no width/height: stretch it to the block's mm box instead.
+    svg = svg.replace("<svg", '<svg width="100%" height="100%"', 1)
+    return f'<div style="width:{size}mm;height:{size}mm;line-height:0;">{svg}</div>'
 
 
 def _e_pagenum(doc, b, s, ctx):
@@ -1388,6 +1466,7 @@ DEF_RENDERERS = {
     "box": _e_box,
     "table": _e_table,
     "pagenum": _e_pagenum,
+    "qr": _e_qr,
     "spacer": _e_spacer,
     "custom_html": _e_box,  # back-compat: old custom_html == box content
     "report_title": _d_report_title,
@@ -1413,6 +1492,9 @@ def _branding_from_def(definition, doc):
             b[k] = v
     if dbr.get("font") in _FONTS:  # allow-list: font is interpolated into a <style> block
         b["font"] = dbr["font"]
+    pg = definition.get("page") if isinstance(definition, dict) else None
+    if isinstance(pg, dict) and _hexok(pg.get("bg")):
+        b["page_bg"] = pg["bg"].strip()
     return b
 
 
