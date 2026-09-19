@@ -19,6 +19,13 @@ Can't enable developer_mode? Create Custom DocTypes instead (DB-only, exportable
 """
 import frappe
 
+AI_SETTINGS_FIELDS = [
+    {"fieldname": "gemini_api_key", "fieldtype": "Password", "label": "Gemini API Key",
+     "description": "Used only for the design copilot in the format builder. Stored encrypted."},
+    {"fieldname": "gemini_model", "fieldtype": "Data", "label": "Model", "default": "gemini-flash-latest",
+     "description": "Leave as-is unless you need a specific Gemini model."},
+]
+
 SETTINGS_FIELDS = [
     {"fieldname": "company", "fieldtype": "Link", "label": "Company", "options": "Company", "reqd": 1, "unique": 1, "in_list_view": 1},
     {"fieldname": "branding_sb", "fieldtype": "Section Break", "label": "Branding"},
@@ -111,6 +118,7 @@ def run(as_custom=False):
         ("BrandPDF Snippet", lambda: _ensure("BrandPDF Snippet", SNIPPET_FIELDS, as_custom, autoname="field:snippet_name")),
         ("BrandPDF Mapping Condition", lambda: _ensure("BrandPDF Mapping Condition", CONDITION_FIELDS, as_custom, istable=1)),
         ("BrandPDF Mapping", lambda: _ensure("BrandPDF Mapping", MAPPING_FIELDS, as_custom)),
+        ("BrandPDF AI Settings", lambda: _ensure("BrandPDF AI Settings", AI_SETTINGS_FIELDS, as_custom, issingle=1)),
         ("seed", _seed),
     ]
     failures = []
@@ -135,7 +143,7 @@ def run(as_custom=False):
 def _integrity_check():
     """Log a clear report if the config didn't fully materialize, so a half-installed state is
     visible instead of silently re-failing each deploy."""
-    expected = ["BrandPDF Settings", "BrandPDF Block", "BrandPDF Template", "BrandPDF Mapping Condition", "BrandPDF Mapping"]
+    expected = ["BrandPDF Settings", "BrandPDF Block", "BrandPDF Template", "BrandPDF Mapping Condition", "BrandPDF Mapping", "BrandPDF AI Settings"]
     missing = [d for d in expected if not frappe.db.exists("DocType", d)]
     gaps = []
     if frappe.db.exists("DocType", "BrandPDF Template"):
@@ -174,6 +182,7 @@ def check_config():
     after migrate, so a regression in fresh-install behavior turns the build red instead of
     hiding behind the fail-soft ensure_config."""
     expected = {
+        "BrandPDF AI Settings": AI_SETTINGS_FIELDS,
         "BrandPDF Settings": SETTINGS_FIELDS,
         "BrandPDF Block": BLOCK_FIELDS,
         "BrandPDF Template": TEMPLATE_FIELDS,
@@ -201,7 +210,7 @@ def check_config():
     print("BrandPDF config check: complete.")
 
 
-def _ensure(name, fields, as_custom, istable=0, autoname=None):
+def _ensure(name, fields, as_custom, istable=0, autoname=None, issingle=0):
     if frappe.db.exists("DocType", name):
         _sync_fields(name, fields)
         return
@@ -216,6 +225,7 @@ def _ensure(name, fields, as_custom, istable=0, autoname=None):
             "module": "BrandPDF",
             "custom": 1 if as_custom else 0,
             "istable": istable,
+            "issingle": issingle,
             "editable_grid": 1 if istable else 0,
             "engine": "InnoDB",
             "autoname": autoname,

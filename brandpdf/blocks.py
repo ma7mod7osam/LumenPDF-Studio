@@ -56,6 +56,17 @@ def page_dims(definition):
     return 210.0, 297.0
 
 
+def page_margin_x(definition):
+    """Side margin (mm) for the flowing body. page.margin_x lets a format hug the paper edge
+    (full-bleed cards) or sit further in; 14mm keeps every format saved before this unchanged."""
+    pg = definition.get("page") if isinstance(definition, dict) else None
+    mx = _num((pg or {}).get("margin_x"), 14.0)
+    if mx is None:
+        mx = 14.0
+    pw = page_dims(definition)[0]
+    return max(0.0, min(pw / 2.0 - 10.0, float(mx)))
+
+
 # Curated Google Fonts (Latin + Arabic). Name -> Google css2 family spec. The builder mirrors
 # this list; SYSTEM_FONTS need no web fetch. Browsers download glyph files only for families
 # actually applied, so listing all in one @import is a single CSS request.
@@ -1576,7 +1587,7 @@ def render_definition(doc, definition, terms_html=""):
     if not isinstance(definition, dict):
         return ""
     branding = _branding_from_def(definition, doc)
-    ctx = {"terms_html": terms_html, "body_w": page_dims(definition)[0] - 28.0}
+    ctx = {"terms_html": terms_html, "body_w": page_dims(definition)[0] - 2 * page_margin_x(definition)}
     if definition.get("layout") == "absolute":
         return _render_absolute(doc, definition, branding, ctx)
     _pw, _ph = page_dims(definition)
@@ -1666,7 +1677,7 @@ _SPLITTABLE = {"items", "datatable", "table", "payment_schedule",
                "report_table", "report_native"}
 
 
-def _flow_body_html(doc, branding, body_blocks, ctx, top_mm=0.0, bottom_mm=0.0, floats=None, spacer_mode=False, pw=210.0, ph=297.0):
+def _flow_body_html(doc, branding, body_blocks, ctx, top_mm=0.0, bottom_mm=0.0, floats=None, spacer_mode=False, pw=210.0, ph=297.0, margin_x=14.0):
     """Body in document flow: blocks stack top-to-bottom (so a variable-length items table never
     overlaps the totals/terms below it), reserving @page top/bottom margins so the body stays
     clear of the running header/footer bands on EVERY page. `floats` are free-positioned elements
@@ -1689,7 +1700,7 @@ def _flow_body_html(doc, branding, body_blocks, ctx, top_mm=0.0, bottom_mm=0.0, 
         # box-sizing MATTERS: without it this box is 210mm + 28mm padding = 238mm — Chromium
         # silently shrink-to-fits (~0.88x, shrinking fonts with it) and wkhtmltopdf CLIPS the
         # right column off the page. border-box keeps 210mm meaning 210mm.
-        f'<div style="position:relative;width:{_fmt_num(pw)}mm;box-sizing:border-box;padding:0 14mm;font-family:\'{font}\',\'Segoe UI\',Arial,sans-serif;'
+        f'<div style="position:relative;width:{_fmt_num(pw)}mm;box-sizing:border-box;padding:0 {_fmt_num(margin_x)}mm;font-family:\'{font}\',\'Segoe UI\',Arial,sans-serif;'
         f'color:{navy};font-size:8.5pt;-webkit-print-color-adjust:exact;print-color-adjust:exact;">'
     )
     if spacer_mode:

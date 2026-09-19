@@ -194,6 +194,7 @@ def _compose(doc, definition, renderer):
 
     branding = B._branding_from_def(definition, doc)
     pw, ph = B.page_dims(definition)  # A4 portrait or landscape
+    mx = B.page_margin_x(definition)  # side margin of the flowing body
     terms_raw = doc.get("terms")
     terms_html = sanitize_html(terms_raw) if terms_raw else ""
 
@@ -243,9 +244,9 @@ def _compose(doc, definition, renderer):
     # 1) Body in flow (+ floating elements), may span multiple pages, kept clear of the bands.
     honored = _margins_honored(renderer)
     body_pdf = _finish(
-        B._flow_body_html(doc, branding, flow_body, {"terms_html": terms_html, "body_w": pw - 28.0},
+        B._flow_body_html(doc, branding, flow_body, {"terms_html": terms_html, "body_w": pw - 2 * mx},
                           top_mm=hh + hm, bottom_mm=fh + fm, floats=float_body, spacer_mode=not honored,
-                          pw=pw, ph=ph),
+                          pw=pw, ph=ph, margin_x=mx),
         allowed, renderer, margins=({"top": hh + hm, "bottom": fh + fm} if honored else None),
         page=(pw, ph),
     )
@@ -289,7 +290,7 @@ def _compose(doc, definition, renderer):
             key = (i == 0, i == n - 1, (i + 1) if has_pagenum else 0)
             if key not in cache:
                 ov = B._absolute_page_html(
-                    doc, branding, bands, {"terms_html": terms_html, "page": i + 1, "total": n, "body_w": pw - 28.0}, grow=False,
+                    doc, branding, bands, {"terms_html": terms_html, "page": i + 1, "total": n, "body_w": pw - 2 * mx}, grow=False,
                     pw=pw, ph=ph,
                 )
                 cache[key] = PdfReader(io.BytesIO(_finish(ov, allowed, renderer, page=(pw, ph)))).pages[0]
