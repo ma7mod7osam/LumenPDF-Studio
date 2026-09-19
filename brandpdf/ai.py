@@ -27,6 +27,9 @@ ALTERNATE_MODELS = ("gemini-2.5-flash", "gemini-2.0-flash")
 REQUEST_TIMEOUT = 90
 MAX_BLOCKS = 80
 MAX_INSTRUCTION = 4000
+# A reference document the model LOOKS at (screenshot, scan or PDF). Gemini reads these natively.
+ATTACH_MIMES = {"image/png", "image/jpeg", "image/webp", "image/heic", "image/heif", "application/pdf"}
+MAX_ATTACH_BYTES = 12 * 1024 * 1024
 
 BLOCK_TYPES = {
     "header_banner", "footer_banner", "title", "customer", "items", "datatable", "row", "totals",
@@ -208,6 +211,56 @@ RULES
 """
 
 
+IMITATE_GUIDE = """
+A REFERENCE DOCUMENT IS ATTACHED (image or PDF). Study it before writing anything:
+1. Page: A4 portrait or landscape? Is the paper tinted (page.bg)? How far is the content from the
+   left/right paper edge, in mm (page.margin_x)? Measure against the 210mm A4 width.
+2. Palette: read the real colours off the page as #RRGGBB: bands, table headers, rules, text,
+   tinted rows. Set branding.primary to the dominant accent and branding.navy to the body text.
+3. Type: pick the closest font from the allowed list (Arabic-capable fonts for Arabic text) and
+   estimate each text size in pt from its height relative to the page.
+4. Structure, top to bottom: bands/cards, title lockup, meta rows, party blocks, item table,
+   totals, payment/bank details, terms, signature, footer, QR. Reproduce each one with the
+   closest blocks: rows for side-by-side areas, datatable for line items (a column label may
+   stack Arabic over English with a newline), totals for the money summary, qr for a QR code.
+5. Bind every value that changes per document to a real field of the target doctype. Keep the
+   printed LABELS from the reference (translated only if the user asks). Replace the sender's
+   name, logo, address, VAT and CR numbers with fields or neutral placeholders.
+6. Spacing: copy the rhythm. Use style.mt/mb and cellPad so gaps match the reference.
+Return the full definition.
+"""
+
+
+def _clean_attachment(att):
+    """Validate an uploaded reference file: an allow-listed type, base64, and a size cap."""
+    import base64
+
+    if not att:
+        return None
+    if isinstance(att, str):
+        try:
+            att = json.loads(att)
+        except ValueError:
+            return None
+    if not isinstance(att, dict):
+        return None
+    mime = str(att.get("mime") or "").lower().strip()
+    data = str(att.get("data") or "")
+    if "," in data[:80] and data.startswith("data:"):
+        data = data.split(",", 1)[1]  # tolerate a data: URL
+    if mime not in ATTACH_MIMES or not data:
+        frappe.throw(_("Attach a PNG, JPG, WEBP or PDF file."))
+    try:
+        raw = base64.b64decode(data, validate=True)
+    except Exception:
+        frappe.throw(_("The attached file could not be read."))
+    if len(raw) > MAX_ATTACH_BYTES:
+        frappe.throw(_("The attached file is too large. Keep it under 12 MB."))
+    if mime == "application/pdf" and not raw.startswith(b"%PDF"):
+        frappe.throw(_("That file is not a real PDF."))
+    return {"mime_type": mime, "data": data}
+
+
 def _fields_brief(doctype):
     """The fieldnames the model may bind to, plus the child tables it can build datatables from."""
     if not doctype or not frappe.db.exists("DocType", doctype):
@@ -237,7 +290,7 @@ def _fields_brief(doctype):
     return "\n".join(out)
 
 
-def _prompt(mode, instruction, definition, doctype, sample):
+def _prompt(mode, instruction, definition, doctype, sample, attached=False):
     parts = [SCHEMA_BRIEF, _fields_brief(doctype)]
     if mode == "edit":
         parts.append("TASK: change the format below as asked. Keep everything the user did not ask "
@@ -249,6 +302,8 @@ def _prompt(mode, instruction, definition, doctype, sample):
                      "below, as closely as the block vocabulary allows, bound to the target "
                      "doctype's own fields. Do not copy any company name, logo, address or tax "
                      "number from the sample: keep it generic.")
+        if attached:
+            parts.append(IMITATE_GUIDE)
         if sample:
             parts.append("SAMPLE TO IMITATE:\n" + str(sample)[:120000])
         if definition:
@@ -256,6 +311,9 @@ def _prompt(mode, instruction, definition, doctype, sample):
                          + json.dumps(definition, ensure_ascii=False)[:40000])
     else:
         parts.append("TASK: design a new format from scratch for this document.")
+    if attached and mode != "clone":
+        parts.append("An image or PDF of a reference document is attached. Use it as the visual "
+                     "reference for what the user asks.")
     parts.append("USER REQUEST:\n" + str(instruction or "")[:MAX_INSTRUCTION])
     parts.append("Return only the JSON object.")
     return "\n\n".join(p for p in parts if p)
@@ -421,8 +479,12 @@ def sanitize_definition(d, fallback_doctype=None):
 # --------------------------------------------------------------------------------------------
 # the call
 # --------------------------------------------------------------------------------------------
-def _generate(prompt, key, model):
-    body = {"contents": [{"role": "user", "parts": [{"text": prompt}]}],
+def _generate(prompt, key, model, attachment=None):
+    parts = [{"text": prompt}]
+    if attachment:
+        # the reference goes first, so the model reads the picture before the instructions
+        parts.insert(0, {"inline_data": attachment})
+    body = {"contents": [{"role": "user", "parts": parts}],
             "generationConfig": {"responseMimeType": "application/json", "temperature": 0.25}}
     last_error = None
     for candidate in [model] + [m for m in ALTERNATE_MODELS if m != model]:
@@ -451,7 +513,7 @@ def _generate(prompt, key, model):
 
 
 @frappe.whitelist()
-def ai_format(instruction, definition=None, mode="edit", target_doctype=None, sample=None):
+def ai_format(instruction, definition=None, mode="edit", target_doctype=None, sample=None, attachment=None):
     """Design or change a format from a plain-language instruction. Returns a sanitized definition."""
     from brandpdf.api import _require_manager
 
@@ -459,8 +521,11 @@ def ai_format(instruction, definition=None, mode="edit", target_doctype=None, sa
     key = _resolve_key()
     if not key:
         frappe.throw(_("Add a Gemini API key in BrandPDF AI Settings to use the design copilot."))
+    att = _clean_attachment(attachment)
     if not (instruction or "").strip():
-        frappe.throw(_("Tell the copilot what to design or change."))
+        if not att:
+            frappe.throw(_("Tell the copilot what to design or change."))
+        instruction = "Reproduce the attached document's design for this doctype."
     if isinstance(definition, str) and definition.strip():
         try:
             definition = json.loads(definition)
@@ -468,6 +533,7 @@ def ai_format(instruction, definition=None, mode="edit", target_doctype=None, sa
             definition = None
     mode = mode if mode in ("edit", "create", "clone") else "edit"
     doctype = target_doctype or (definition or {}).get("target_doctype") or "Quotation"
-    out = _generate(_prompt(mode, instruction, definition, doctype, sample), key, _model())
+    out = _generate(_prompt(mode, instruction, definition, doctype, sample, attached=bool(att)),
+                    key, _model(), attachment=att)
     return {"definition": sanitize_definition(out, fallback_doctype=doctype),
             "notes": str(out.get("notes") or "")[:500] if isinstance(out, dict) else ""}

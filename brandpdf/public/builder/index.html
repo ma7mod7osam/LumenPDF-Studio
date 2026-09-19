@@ -520,7 +520,7 @@
     <button class="btn primary" id="wzNext" onclick="wzNext()">Continue</button>
   </div></div></div>
 <div id="copilot"><div class="gcard-wrap" style="width:560px"><h3>Design copilot</h3>
-  <div class="ghint">Describe what you want. It edits this format, designs a new one, or imitates a design you paste in.<span class="gclose" onclick="closeCopilot()"><svg class="icn" viewBox="0 0 24 24"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg> Close</span></div>
+  <div class="ghint">Describe what you want. It edits this format, designs a new one, or rebuilds a document from a picture or PDF.<span class="gclose" onclick="closeCopilot()"><svg class="icn" viewBox="0 0 24 24"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg> Close</span></div>
   <div style="margin-top:14px">
     <div class="seg" id="cpModes" style="margin-bottom:10px">
       <button class="on" data-m="edit" onclick="cpMode('edit')">Change this format</button>
@@ -529,8 +529,14 @@
     </div>
     <div class="fld"><label id="cpLabel">What should change?</label>
       <textarea id="cpPrompt" rows="4" placeholder="e.g. make the totals bar green, move the customer block beside the invoice number, and add a QR at the bottom right"></textarea></div>
-    <div class="fld" id="cpSampleFld" style="display:none"><label>Paste the design to imitate (a format .json, or a description of it)</label>
-      <textarea id="cpSample" rows="5" placeholder="Paste an exported format JSON here, or describe the layout you want copied."></textarea></div>
+    <div class="fld" id="cpSampleFld" style="display:none"><label>The design to imitate</label>
+      <div id="cpDrop" onclick="document.getElementById('cpFile').click()" ondragover="event.preventDefault();this.classList.add('over')" ondragleave="this.classList.remove('over')" ondrop="cpDropFile(event)"
+        style="border:1.5px dashed var(--line);border-radius:10px;padding:14px;text-align:center;cursor:pointer;font-size:12px;color:var(--mut)">
+        <div id="cpDropTxt"><b style="color:var(--txt)">Drop a picture or PDF of the document here</b><br>or click to choose one. PNG, JPG, WEBP or PDF, up to 12 MB.</div>
+        <img id="cpThumb" alt="" style="display:none;max-height:120px;max-width:100%;margin:8px auto 0;border-radius:6px;border:1px solid var(--line)">
+      </div>
+      <input type="file" id="cpFile" accept="image/png,image/jpeg,image/webp,application/pdf" style="display:none" onchange="cpPickFile(this.files&&this.files[0])">
+      <textarea id="cpSample" rows="3" style="margin-top:8px" placeholder="Optional: paste an exported format JSON or describe the layout instead."></textarea></div>
     <div class="fld" id="cpKeyFld" style="display:none"><label>Gemini API key</label>
       <div style="display:flex;gap:6px"><input type="password" id="cpKey" placeholder="Paste a Gemini API key" style="flex:1">
       <button class="btn ghost" onclick="cpSaveKey()">Save key</button></div>
@@ -2721,13 +2727,27 @@ function _doSave(){fmtLoaded=true;  // a save means the user is editing THIS for
 const def=definition();if(EMBED){window.parent.postMessage({type:"brandpdf-save",definition:def},window.location.origin);flashSaved();clearDraft();return;}if(window.frappe&&frappe.call){frappe.call({method:"brandpdf.api.save_format",args:{definition:JSON.stringify(def)},callback:()=>{frappe.show_alert({message:"Format saved",indicator:"green"});fmtSaved=true;fmtDirty=false;renderStatus();}});return;}console.log("DEFINITION",def);alert("Saved (demo) - logged to console.");fmtSaved=true;fmtDirty=false;renderStatus();}
 /* ---- first-save dialog: name it, optionally set as default, then run the save above ---- */
 let _pendingSetDefault=null;
-var _cpMode="edit", _cpBusy=false;
+var _cpMode="edit", _cpBusy=false, _cpFile=null;
+var CP_MAX=12*1024*1024, CP_TYPES=["image/png","image/jpeg","image/webp","application/pdf"];
+function cpDropFile(e){e.preventDefault();document.getElementById("cpDrop").classList.remove("over");
+  var f=e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files[0];if(f)cpPickFile(f);}
+function cpPickFile(f){if(!f)return;
+  if(CP_TYPES.indexOf(f.type)<0){cpMsg("Use a PNG, JPG, WEBP or PDF file.",true);return;}
+  if(f.size>CP_MAX){cpMsg("That file is over 12 MB. Try a smaller scan or a single page.",true);return;}
+  var r=new FileReader();
+  r.onload=function(){var url=String(r.result||"");_cpFile={name:f.name,mime:f.type,data:url.split(",")[1]||""};
+    var th=document.getElementById("cpThumb");
+    if(f.type.indexOf("image/")===0){th.src=url;th.style.display="block";}else{th.removeAttribute("src");th.style.display="none";}
+    document.getElementById("cpDropTxt").innerHTML='<b style="color:var(--txt)">'+esc(f.name)+'</b> · '+Math.max(1,Math.round(f.size/1024))+' KB<br><span style="text-decoration:underline">choose another</span>';
+    cpMsg("Got it. Add anything it should change, then Generate.");};
+  r.onerror=function(){cpMsg("That file could not be read.",true);};
+  r.readAsDataURL(f);}
 function cpMode(m){_cpMode=m;document.querySelectorAll("#cpModes button").forEach(function(b){b.classList.toggle("on",b.dataset.m===m);});
   document.getElementById("cpSampleFld").style.display=(m==="clone")?"":"none";
   document.getElementById("cpLabel").textContent=(m==="edit")?"What should change?":(m==="create")?"What should it look like?":"What should it copy, and what should differ?";
   var ph={edit:"e.g. make the totals bar green and add a QR at the bottom right",
           create:"e.g. a clean Arabic/English delivery note: logo band, items table, signature line",
-          clone:"e.g. same layout and colours as the pasted format, but for our Purchase Order"};
+          clone:"Optional: e.g. keep the layout and colours, but make the table columns Arabic first"};
   document.getElementById("cpPrompt").placeholder=ph[m];}
 function openCopilot(){document.getElementById("copilot").style.display="flex";cpMsg("");
   document.getElementById("cpPrompt").focus();
@@ -2745,12 +2765,14 @@ function cpSaveKey(){var k=(document.getElementById("cpKey").value||"").trim();i
 function cpRun(){
   if(_cpBusy)return;
   var instruction=(document.getElementById("cpPrompt").value||"").trim();
-  if(!instruction){cpMsg("Tell it what you want first.",true);return;}
+  var withFile=(_cpMode==="clone"&&_cpFile);
+  if(!instruction&&!withFile){cpMsg(_cpMode==="clone"?"Attach the document to imitate, or describe it.":"Tell it what you want first.",true);return;}
   var args={instruction:instruction,mode:_cpMode,target_doctype:state.target||"",
             definition:JSON.stringify(definition())};
   if(_cpMode==="clone")args.sample=(document.getElementById("cpSample").value||"").slice(0,120000);
+  if(withFile)args.attachment=JSON.stringify({mime:_cpFile.mime,data:_cpFile.data});
   _cpBusy=true;document.getElementById("cpGo").disabled=true;
-  cpMsg(_cpMode==="edit"?"Reworking this format...":"Designing...");
+  cpMsg(_cpMode==="edit"?"Reworking this format...":withFile?"Reading the document and rebuilding it... this can take up to a minute.":"Designing...");
   rpc("brandpdf.ai.ai_format",args).then(function(out){
     _cpBusy=false;document.getElementById("cpGo").disabled=false;
     if(!out||!out.definition){cpMsg("Nothing came back. Try a shorter, more specific request.",true);return;}
