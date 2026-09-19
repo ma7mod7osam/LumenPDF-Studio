@@ -1,11 +1,12 @@
 # Copyright (c) 2026 Lumen Solutions (BSTC W.L.L). All rights reserved.
-# CI: install LumenPDF Studio on a real bench for every Frappe version the
-# marketplace listing covers, run migrate, and smoke-test the config spine.
+# CI for the version-16 branch: install LumenPDF Studio on a real Frappe v16 bench, run
+# migrate, and gate on a complete config. version-15 runs alongside it, because this branch
+# carries the same code the v14/v15 listing serves, so a break there must fail here too.
 name: CI
 
 on:
   push:
-    branches: [lumenpdf]
+    branches: [version-16]
   pull_request:
   workflow_dispatch:
 
@@ -22,12 +23,12 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - frappe-branch: version-15
-            python: "3.12"
-            node: "20"
           - frappe-branch: version-16
             python: "3.14"
             node: "24"
+          - frappe-branch: version-15
+            python: "3.12"
+            node: "20"
 
     services:
       mariadb:

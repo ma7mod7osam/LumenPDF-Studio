@@ -60,6 +60,12 @@ what prints.
 - **Page control.** Side margins are adjustable per format (edge-to-edge bands are possible),
   on top of the page background colour.
 
+## Branches
+
+- `version-16` is the Frappe/ERPNext **v16** branch. Its CI installs the app on a real v16
+  bench on every push.
+- `lumenpdf` serves **v14 and v15** and carries the same code.
+
 ## Requirements
 
 - Frappe **v14, v15 or v16** (works with or without ERPNext; ERPNext unlocks the document
