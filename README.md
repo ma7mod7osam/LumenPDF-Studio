@@ -55,7 +55,7 @@ what prints.
   Two ready starters use all of it: *Tax Invoice EN·AR* and *Merchant Statement EN·AR*.
 
 - **A design copilot (Gemini).** Describe a change in plain language, ask for a whole new
-  format, or paste a design and have it imitated. Every answer is validated against the block
+  format, or drop in a picture or PDF of any document and have it rebuilt. Every answer is validated against the block
   schema before it reaches the canvas, and one Ctrl+Z puts the page back. Bring your own key.
 - **Page control.** Side margins are adjustable per format (edge-to-edge bands are possible),
   on top of the page background colour.
