@@ -82,6 +82,7 @@ frappe.pages['lumenpdf-builder'].on_page_load = function (wrapper) {
 		'lumenpdf.api.builder_reports': 1, 'lumenpdf.report.report_sample': 1, 'lumenpdf.api.set_default_report_format': 1,
 		'lumenpdf.api.list_snippets': 1, 'lumenpdf.api.save_snippet': 1, 'lumenpdf.api.delete_snippet': 1,
 		'lumenpdf.api.submit_feedback': 1,
+		'lumenpdf.ai.ai_status': 1, 'lumenpdf.ai.ai_format': 1, 'lumenpdf.ai.save_ai_key': 1,
 	};
 	window.addEventListener('message', function (e) {
 		if (e.origin !== origin) return;

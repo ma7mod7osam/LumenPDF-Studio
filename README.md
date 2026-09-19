@@ -54,6 +54,12 @@ what prints.
   headers can stack two languages, and a page background colour prints behind every page.
   Two ready starters use all of it: *Tax Invoice EN·AR* and *Merchant Statement EN·AR*.
 
+- **A design copilot (Gemini).** Describe a change in plain language, ask for a whole new
+  format, or paste a design and have it imitated. Every answer is validated against the block
+  schema before it reaches the canvas, and one Ctrl+Z puts the page back. Bring your own key.
+- **Page control.** Side margins are adjustable per format (edge-to-edge bands are possible),
+  on top of the page background colour.
+
 ## Requirements
 
 - Frappe **v14, v15 or v16** (works with or without ERPNext; ERPNext unlocks the document
