@@ -192,17 +192,29 @@ BLOCK TYPES AND THEIR settings
   html:true renders a field that already contains HTML (address_display, terms).
 - image: {"src": "/files/...", "width": <percent>}
 - divider: {"thickness": 1, "color": "#hex", "lstyle": "solid|dashed|dotted"}
-- box: {"html": "<b>Note</b><br>free HTML, sanitized"}
+- box: {"html": "<b>Note</b><br>free HTML, sanitized"} — LAST RESORT. A box cannot be edited block
+  by block in the builder, so reach for a row with cellStyles, a table, or a divider first.
 - spacer: {} with style.pad for vertical space.
 - pagenum: {"format": "Page {p} of {n}"}
 - qr: {"mode": "zatca"|"field"|"text", "field": "name", "text": "", "size": <mm>, "ecc": "L|M|Q|H"}
   zatca builds the Saudi tax-invoice payload from the document itself.
 - row: {"cols": 2|3|4, "gap": <mm>, "width": 100, "widths": [<mm>|null, ...],
-        "cells": [[<child block>, ...], ...]} — children are blocks WITHOUT pos/region; this is how
-  you place things side by side. Cells may hold text, field, heading, image, divider, box, qr,
-  table, datatable, totals, customer, signature.
-- table (static): {"cols": ["Col A","Col B"], "rows": [["a","b"], ...], "headerBg": "#hex"}
-  A cell whose whole text is "{fieldname}" prints that document field.
+        "cells": [[<child block>, ...], ...],
+        "cellStyles": [{"bg":"#hex","padX":<mm>,"padY":<mm>,"align":"left|center|right",
+                        "valign":"top|middle|bottom","radius":px,
+                        "border":{"on":true,"w":1,"color":"#hex","style":"solid",
+                                  "sides":{"t":false,"r":true,"b":false,"l":false}}}, ...]}
+  Children are blocks WITHOUT pos/region; this is how you place things side by side. Cells may hold
+  text, field, heading, image, divider, box, qr, table, datatable, totals, customer, signature.
+  cellStyles paints ONE column: a coloured header card, a tinted sidebar, or a hairline between two
+  columns (border with only one side on). Use it instead of writing an HTML box.
+- table (static): {"cols": ["Col A","Col B"], "rows": [["a","b"], ...], "headerBg": "#hex",
+   "headerOn": false, "colStyle": [{"w":<mm>,"align","size","weight","color","bg","bw","bcolor","bstyle"}],
+   "rowStyle": [{"bg":"#hex","color":"#hex","size":pt,"weight":"700","h":<mm>}],
+   "borders": {...}, "cellPad": {"y":px,"x":px}, "zebra": bool, "zebraColor": "#hex"}
+  A cell whose whole text is "{fieldname}" prints that document field. A cell may contain a newline
+  to print two lines. "headerOn": false drops the header band, so row 1 becomes the first visible
+  line — that is how a label/value panel or a banded summary strip is built.
 - items (the ready item table): {"cols": {"desc":true,"qty":true,"rate":true,"amount":true},
    "widths": {"num":8,"item":100,"qty":16,"rate":28,"amount":30}, "zebra": bool,
    "headerColor": "primary"|"navy", "showImage": bool, "imgPos": "top|left|right", "imgW": mm,
