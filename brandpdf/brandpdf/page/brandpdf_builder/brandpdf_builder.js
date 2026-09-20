@@ -82,7 +82,7 @@ frappe.pages['brandpdf-builder'].on_page_load = function (wrapper) {
 		'brandpdf.api.builder_reports': 1, 'brandpdf.report.report_sample': 1, 'brandpdf.api.set_default_report_format': 1,
 		'brandpdf.api.list_snippets': 1, 'brandpdf.api.save_snippet': 1, 'brandpdf.api.delete_snippet': 1,
 		'brandpdf.api.submit_feedback': 1,
-		'brandpdf.ai.ai_status': 1, 'brandpdf.ai.ai_format': 1, 'brandpdf.ai.save_ai_key': 1,
+		'brandpdf.ai.ai_status': 1, 'brandpdf.ai.ai_format': 1, 'brandpdf.ai.save_ai_key': 1, 'brandpdf.ai.list_models': 1,
 	};
 	window.addEventListener('message', function (e) {
 		if (e.origin !== origin) return;

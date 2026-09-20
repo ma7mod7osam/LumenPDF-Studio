@@ -541,6 +541,9 @@
       <div style="display:flex;gap:6px"><input type="password" id="cpKey" placeholder="Paste a Gemini API key" style="flex:1">
       <button class="btn ghost" onclick="cpSaveKey()">Save key</button></div>
       <div class="hint" style="padding:6px 0 0">Stored encrypted on this site (BrandPDF AI Settings). Used only for this copilot.</div></div>
+    <div class="fld" id="cpModelFld" style="display:none"><label>Model</label>
+      <div style="display:flex;gap:6px"><select id="cpModel" style="flex:1" onchange="cpSaveModel()"></select>
+      <button class="btn ghost" onclick="cpLoadModels()" title="Ask Google which models this key can use">Refresh</button></div></div>
     <div id="cpMsg" class="hint" style="padding:8px 0 0;min-height:18px"></div>
   </div>
   <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:6px">
@@ -2754,7 +2757,18 @@ function openCopilot(){document.getElementById("copilot").style.display="flex";c
   rpc("brandpdf.ai.ai_status",{}).then(function(st){
     if(!st){cpMsg("The copilot runs on your site — open the builder from the desk page.",true);return;}
     document.getElementById("cpKeyFld").style.display=st.ready?"none":"";
-    if(!st.ready)cpMsg("Add a Gemini API key to switch the copilot on.");});}
+    document.getElementById("cpModelFld").style.display=st.ready?"":"none";
+    if(!st.ready)cpMsg("Add a Gemini API key to switch the copilot on.");
+    else{_cpCurModel=st.model||"";cpLoadModels();}});}
+var _cpCurModel="";
+function cpLoadModels(){const sel=document.getElementById("cpModel");
+  sel.innerHTML='<option>'+esc(_cpCurModel||"gemini-flash-latest")+'</option>';
+  rpc("brandpdf.ai.list_models",{}).then(function(list){
+    if(!list||!list.length){cpMsg("Could not list models for this key. The copilot still tries the built-in ones.");return;}
+    if(_cpCurModel&&list.indexOf(_cpCurModel)<0)list.unshift(_cpCurModel);
+    sel.innerHTML=list.map(function(m){return '<option '+(m===_cpCurModel?'selected':'')+'>'+esc(m)+'</option>';}).join("");});}
+function cpSaveModel(){const m=document.getElementById("cpModel").value;
+  rpc("brandpdf.ai.save_ai_key",{model:m}).then(function(st){if(st){_cpCurModel=st.model||m;cpMsg("Model set to "+_cpCurModel+".");}});}
 function closeCopilot(){document.getElementById("copilot").style.display="none";}
 function cpMsg(t,err){var e=document.getElementById("cpMsg");e.textContent=t||"";e.style.color=err?"var(--danger,#E0413F)":"var(--mut)";}
 function cpSaveKey(){var k=(document.getElementById("cpKey").value||"").trim();if(!k){cpMsg("Paste a key first.",true);return;}
@@ -2775,7 +2789,10 @@ function cpRun(){
   cpMsg(_cpMode==="edit"?"Reworking this format...":withFile?"Reading the document and rebuilding it... this can take up to a minute.":"Designing...");
   rpc("brandpdf.ai.ai_format",args).then(function(out){
     _cpBusy=false;document.getElementById("cpGo").disabled=false;
-    if(!out||!out.definition){cpMsg("Nothing came back. Try a shorter, more specific request.",true);return;}
+    if(!out||!out.definition){
+      // the desk bridge surfaces the server message in its own dialog; repeat the useful part here
+      cpMsg("That request did not come back with a format. If the message mentions a model, pick another one above; otherwise try a shorter, more specific request.",true);
+      return;}
     var keepName=document.getElementById("fmtName").value;
     loadDefinition(out.definition);
     if(_cpMode==="edit"&&keepName)document.getElementById("fmtName").value=keepName;
