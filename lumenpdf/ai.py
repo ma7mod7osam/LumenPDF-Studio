@@ -23,7 +23,10 @@ from frappe import _
 GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
 # floating alias: Google keeps it pointed at the current flash model
 DEFAULT_MODEL = "gemini-flash-latest"
-ALTERNATE_MODELS = ("gemini-2.5-flash", "gemini-2.0-flash")
+# Google retires dated model names and keeps the "-latest" aliases pointed at the current ones,
+# so the alias leads and the dated names are only a fallback for keys that pin an older model.
+ALTERNATE_MODELS = ("gemini-3.6-flash", "gemini-flash-latest", "gemini-2.5-flash", "gemini-2.0-flash")
+GEMINI_MODELS_URL = "https://generativelanguage.googleapis.com/v1beta/models"
 REQUEST_TIMEOUT = 90
 MAX_BLOCKS = 80
 MAX_INSTRUCTION = 4000
@@ -107,6 +110,36 @@ def save_ai_key(api_key=None, model=None):
     doc.flags.ignore_permissions = False
     doc.save()
     return ai_status()
+
+
+@frappe.whitelist()
+def list_models():
+    """The text models this key may call, newest-looking first. Lets the copilot offer a real
+    choice instead of guessing a name Google may have retired."""
+    from lumenpdf.api import _require_manager
+
+    _require_manager()
+    key = _resolve_key()
+    if not key:
+        return []
+    skip = ("embedding", "aqa", "image", "tts", "audio", "vision-", "learnlm", "gemma")
+    try:
+        r = requests.get(GEMINI_MODELS_URL, headers={"x-goog-api-key": key},
+                         params={"pageSize": 200}, timeout=30)
+        if r.status_code != 200:
+            return []
+        out = []
+        for m in r.json().get("models") or []:
+            name = str(m.get("name") or "").replace("models/", "")
+            if not name or any(t in name for t in skip):
+                continue
+            if "generateContent" not in (m.get("supportedGenerationMethods") or []):
+                continue
+            out.append(name)
+        out.sort(key=lambda n: ("latest" not in n, n), reverse=False)
+        return out[:40]
+    except requests.RequestException:
+        return []
 
 
 # --------------------------------------------------------------------------------------------
@@ -487,6 +520,7 @@ def _generate(prompt, key, model, attachment=None):
     body = {"contents": [{"role": "user", "parts": parts}],
             "generationConfig": {"responseMimeType": "application/json", "temperature": 0.25}}
     last_error = None
+    tried = []
     for candidate in [model] + [m for m in ALTERNATE_MODELS if m != model]:
         try:
             r = requests.post(GEMINI_URL.format(model=candidate), headers={"x-goog-api-key": key},
@@ -505,11 +539,15 @@ def _generate(prompt, key, model, attachment=None):
             pass
         if r.status_code in (400, 401, 403) and "key" in detail.lower():
             frappe.throw(_("The Gemini API key was rejected. Check it in LumenPDF AI Settings."))
-        if r.status_code in (429, 500, 503):  # busy or out of quota: step to the next model
+        # 404 means Google retired that model name for this key, which is exactly what the next
+        # candidate is for. 429/500/503 are busy or out of quota. Both step sideways.
+        if r.status_code in (404, 429, 500, 503):
             last_error = detail or r.status_code
+            tried.append(candidate)
             continue
         frappe.throw(_("Gemini API error {0}: {1}").format(r.status_code, detail))
-    frappe.throw(_("The AI service is busy right now ({0}). Try again in a moment.").format(last_error))
+    frappe.throw(_("None of these models answered: {0}. Last message from Google: {1}. "
+                   "Pick a model your key supports in LumenPDF AI Settings.").format(", ".join(tried), last_error))
 
 
 @frappe.whitelist()
