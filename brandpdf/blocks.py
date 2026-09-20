@@ -671,9 +671,11 @@ def _e_table(doc, b, s, ctx):
         f'text-align:{_esc(cst(ci).get("align") or "left")};{_sz(hs.get("size") or cst(ci).get("size"))}'
         f'{cell_border(cst(ci), tbc if bo else hbg)}'
         f'font-weight:{hweight};-webkit-print-color-adjust:exact;">'
-        f"{_esc(_cell_value(doc, cols[ci]))}</th>"
+        f"{_label(_cell_value(doc, cols[ci]))}</th>"
         for ci in range(len(cols))
     )
+    if s.get("headerOn") is False:  # a label/value table often wants no header band at all
+        th = ""
     body = []
     for ri, r in enumerate(rows):
         r = r if isinstance(r, (list, tuple)) else []
@@ -686,14 +688,17 @@ def _e_table(doc, b, s, ctx):
         for ci in range(len(cols)):
             st = cst(ci)
             weight = rst.get("weight") or st.get("weight") or "normal"
-            color = f'color:{_esc(st["color"])};' if _hexok(st.get("color")) else ""
+            # a row may override the column's text colour, which is what a highlighted total row
+            # on a tinted background needs
+            rcol = rst["color"].strip() if _hexok(rst.get("color")) else None
+            color = f'color:{_esc(rcol or st["color"])};' if (rcol or _hexok(st.get("color"))) else ""
             size = _sz(rst.get("size") or st.get("size"))  # row size wins over column size
             # bg precedence: explicit row bg (on the tr) > column bg > zebra (on the tr)
             colbg = f'background-color:{st["bg"].strip()};-webkit-print-color-adjust:exact;' \
                 if (_hexok(st.get("bg")) and not _hexok(rst.get("bg"))) else ""
             tds += (f'<td style="{padding}{cell_border(st, tbc)}{height}'
                     f'text-align:{_esc(st.get("align") or "left")};font-weight:{_esc(weight)};{color}{size}{colbg}'
-                    f'word-wrap:break-word;">{_esc(_cell_value(doc, r[ci] if ci < len(r) else ""))}</td>')
+                    f'word-wrap:break-word;">{_label(_cell_value(doc, r[ci] if ci < len(r) else ""))}</td>')
         body.append(f'<tr style="{trbg}">{tds}</tr>')
     outline = f"border:{_fmt_num(tbw)}px {tbs} {tbc};" if (preset == "outline" and tbw) else ""
     collapse = "border-collapse:collapse;"
@@ -706,7 +711,8 @@ def _e_table(doc, b, s, ctx):
         collapse = "border-collapse:separate;border-spacing:0;"  # collapse ignores radius
     return (
         f'<table style="width:100%;{collapse}table-layout:fixed;word-wrap:break-word;{outline}">'
-        f"{colgroup}<thead><tr>{th}</tr></thead><tbody>{''.join(body)}</tbody></table>"
+        f"{colgroup}" + (f"<thead><tr>{th}</tr></thead>" if th else "")
+        + f"<tbody>{''.join(body)}</tbody></table>"
     )
 
 
@@ -1437,6 +1443,42 @@ def _row_fit_widths(s, cols, gap, pct, ctx):
     return [None if w is None else round(w * k, 1) for w in fixed]
 
 
+def _cell_css(cs):
+    """CSS for ONE row column: settings.cellStyles[i] {bg, pad, padX, padY, align, valign, radius,
+    border{on,w,color,style,sides}}. This is what lets a Row be a coloured card with an inner rule
+    instead of a hand-written HTML table."""
+    if not isinstance(cs, dict):
+        return "", False
+    out = ""
+    if _hexok(cs.get("bg")):
+        out += f'background-color:{cs["bg"].strip()};-webkit-print-color-adjust:exact;print-color-adjust:exact;'
+    py = _num(cs.get("padY"), _num(cs.get("pad")))
+    px = _num(cs.get("padX"), _num(cs.get("pad")))
+    if py is not None or px is not None:
+        out += f"padding:{_fmt_num(min(60, max(0, py or 0)))}mm {_fmt_num(min(60, max(0, px or 0)))}mm;"
+    if cs.get("align") in _ALIGN:
+        out += f'text-align:{cs["align"]};'
+    if cs.get("valign") in ("top", "middle", "bottom"):
+        out += f'vertical-align:{cs["valign"]};'
+    r = _num(cs.get("radius"))
+    if r:
+        out += f"border-radius:{_fmt_num(min(40, max(0, r)))}px;"
+    bd = cs.get("border") if isinstance(cs.get("border"), dict) else {}
+    if bd.get("on"):
+        bw = _fmt_num(min(20, max(0, _num(bd.get("w"), 1) or 0)))
+        bs = bd.get("style") if bd.get("style") in _BORDER_STYLE else "solid"
+        bc = bd["color"].strip() if _hexok(bd.get("color")) else "#cfe5f6"
+        sides = bd.get("sides") if isinstance(bd.get("sides"), dict) else None
+        if sides and not all(sides.get(k, True) for k in ("t", "r", "b", "l")):
+            for key, css in (("t", "border-top"), ("r", "border-right"), ("b", "border-bottom"), ("l", "border-left")):
+                if sides.get(key, True):
+                    out += f"{css}:{bw}px {bs} {bc};"
+        else:
+            out += f"border:{bw}px {bs} {bc};"
+    # a padded/coloured cell should not also carry the row's gutter padding
+    return out, ("pad" in cs or "padX" in cs or "padY" in cs)
+
+
 def _d_row(doc, b, s, ctx):
     """A row split into 2-3 columns; each column flows its own nested blocks (side-by-side layout)."""
     cols = max(1, min(4, int(_num(s.get("cols"), 2) or 2)))
@@ -1444,6 +1486,7 @@ def _d_row(doc, b, s, ctx):
     pct = max(20.0, min(100.0, _num(s.get("width"), 100) or 100))
     widths = _row_fit_widths(s, cols, gap, pct, ctx)
     cells = _list(s.get("cells"))
+    cstyles = _list(s.get("cellStyles"))
     half = _fmt_num(gap / 2.0)
     tds = []
     for i in range(cols):
@@ -1451,9 +1494,11 @@ def _d_row(doc, b, s, ctx):
         wcss = f"width:{_fmt_num(w)}mm;" if w else ""
         children = cells[i] if i < len(cells) and isinstance(cells[i], list) else []
         inner = "".join(_render_child(doc, b, c, ctx) for c in children)
+        css, own_pad = _cell_css(cstyles[i] if i < len(cstyles) else None)
         lp = "0" if i == 0 else half
         rp = "0" if i == cols - 1 else half
-        tds.append(f'<td style="vertical-align:top;{wcss}padding:0 {rp}mm 0 {lp}mm;">{inner}</td>')
+        gutter = "" if own_pad else f"padding:0 {rp}mm 0 {lp}mm;"
+        tds.append(f'<td style="vertical-align:top;{wcss}{gutter}{css}">{inner}</td>')
     return f'<table style="width:{_fmt_num(pct)}%;border-collapse:collapse;table-layout:fixed;"><tr>{"".join(tds)}</tr></table>'
 
 
