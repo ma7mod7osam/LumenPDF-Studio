@@ -91,7 +91,25 @@ GOOGLE_FONTS = {
     "IBM Plex Mono": "IBM+Plex+Mono:wght@400;500;600",
     "Instrument Serif": "Instrument+Serif:ital@0;1",
     "Bricolage Grotesque": "Bricolage+Grotesque:wght@400;600;700;800",
+    # Arabic families. A document picks one of these as its Arabic font; it is appended to every
+    # font stack, so Arabic text stops falling through to the host's default face.
+    "Noto Sans Arabic": "Noto+Sans+Arabic:wght@400;500;600;700;800",
+    "Noto Naskh Arabic": "Noto+Naskh+Arabic:wght@400;500;600;700",
+    "Readex Pro": "Readex+Pro:wght@400;500;600;700",
+    "Alexandria": "Alexandria:wght@400;500;600;700;800",
+    "Changa": "Changa:wght@400;500;600;700;800",
+    "El Messiri": "El+Messiri:wght@400;500;600;700",
+    "Reem Kufi": "Reem+Kufi:wght@400;500;600;700",
+    "Markazi Text": "Markazi+Text:wght@400;500;600;700",
+    "Scheherazade New": "Scheherazade+New:wght@400;500;600;700",
+    "Rubik": "Rubik:wght@400;500;600;700;800",
 }
+# The families that actually carry Arabic glyphs. Anything outside this list leaves Arabic to the
+# host, which is the whole bug this list exists to close.
+ARABIC_FONTS = ["Cairo", "Almarai", "Tajawal", "IBM Plex Sans Arabic", "Noto Sans Arabic",
+                "Noto Naskh Arabic", "Noto Kufi Arabic", "Readex Pro", "Alexandria", "Changa",
+                "El Messiri", "Reem Kufi", "Markazi Text", "Rubik", "Amiri", "Scheherazade New"]
+DEFAULT_FONT_AR = "Cairo"
 SYSTEM_FONTS = ["Arial", "Tahoma"]
 FONT_IMPORT_URL = ("https://fonts.googleapis.com/css2?"
                    + "&".join("family=" + spec for spec in GOOGLE_FONTS.values())
@@ -102,6 +120,8 @@ def base_css(b, pw=210.0, ph=297.0):
     primary = b.get("primary", "#1C75BC")
     navy = b.get("navy", "#1A1E2A")
     font = b.get("font") or "Montserrat"
+    font_ar = b.get("font_ar") if b.get("font_ar") in _AR_FONTS else DEFAULT_FONT_AR
+    stack = font_stack(font, font_ar)
     _pw, _ph = _fmt_num(pw or 210), _fmt_num(ph or 297)
     # page.bg paints EVERY page (html+body), so a tinted stationery look survives pagination and
     # the header/footer overlays compose lays on top.
@@ -114,11 +134,11 @@ def base_css(b, pw=210.0, ph=297.0):
   html, body {{ margin:0 !important; padding:0 !important; {page_bg}}}
   img {{ max-width:100%; }}
   .bs-banner {{ width:100%; display:block; }}
-  .bs-content {{ font-family:'{font}','Segoe UI',Arial,sans-serif; color:{navy}; font-size:8.5pt; padding:6mm 14mm; -webkit-print-color-adjust:exact; print-color-adjust:exact; }}
+  .bs-content {{ font-family:{stack}; color:{navy}; font-size:8.5pt; padding:6mm 14mm; -webkit-print-color-adjust:exact; print-color-adjust:exact; }}
   table.bs-head {{ width:100%; border-collapse:collapse; margin-bottom:8mm; }}
   table.bs-head td {{ border:0; vertical-align:top; padding:0; }}
   .bs-title {{ font-size:23pt; font-weight:800; letter-spacing:1px; line-height:1; color:{navy}; }}
-  .bs-title-ar {{ font-family:'Cairo','Tajawal',Tahoma,sans-serif; font-size:12pt; font-weight:600; color:{primary}; direction:rtl; margin-top:6px; }}
+  .bs-title-ar {{ font-family:'{font_ar}','Cairo',Tahoma,sans-serif; font-size:12pt; font-weight:600; color:{primary}; direction:rtl; margin-top:6px; }}
   table.bs-meta {{ display:inline-block; text-align:left; border:1px solid #cfe5f6; border-collapse:collapse; font-size:8pt; }}
   table.bs-meta td {{ border:1px solid #cfe5f6; padding:3px 7px; }}
   table.bs-meta td.k {{ font-weight:600; }}
@@ -350,6 +370,26 @@ _BORDER_STYLE = {"solid", "dashed", "dotted", "double", "none"}
 _WEIGHT = {"400", "500", "600", "700", "800", "normal", "bold"}
 _WIDTH = re.compile(r"^\d+(\.\d+)?(mm|%|px|cm)$")
 _FONTS = set(GOOGLE_FONTS) | set(SYSTEM_FONTS)  # allow-list (font is injected into <style>)
+_AR_FONTS = set(ARABIC_FONTS)
+
+
+def _doc_fonts(b):
+    """The (latin, arabic) pair a block inherits when it overrides only one of them."""
+    b = b if isinstance(b, dict) else {}
+    return (b.get("font"), b.get("font_ar"))
+
+
+def font_stack(latin, arabic=None):
+    """The font stack for a bilingual document: Latin family first, Arabic family second.
+
+    A browser resolves font-family per CHARACTER, not per element: a Latin family has no Arabic
+    glyphs, so every Arabic run walks down the stack. Before this second entry existed it landed
+    on the host's default face, which on a Linux bench is DejaVu Sans. Naming the Arabic family
+    here fixes Arabic everywhere without tagging the language on individual blocks."""
+    lat = latin if latin in _FONTS else "Montserrat"
+    ar = arabic if arabic in _AR_FONTS else DEFAULT_FONT_AR
+    fams = [lat] if lat == ar else [lat, ar]
+    return ",".join(f"'{f}'" for f in fams) + ",'Segoe UI',Arial,sans-serif"
 
 
 def _label(v):
@@ -472,7 +512,7 @@ def _visible(doc, bl):
         return True
 
 
-def _style_css(style, type_=None, absolute=False):
+def _style_css(style, type_=None, absolute=False, fonts=None):
     """Validate the builder's style object into a safe inline CSS string (mirror of the
     builder's styleCss). Colors are hex-only; sizes/spacings numeric; enums allow-listed —
     so a saved style can never inject arbitrary CSS. In absolute (free-canvas) layout, margins
@@ -507,9 +547,13 @@ def _style_css(style, type_=None, absolute=False):
         p.append("direction:rtl")
         if a not in _ALIGN:
             p.append("text-align:right")
-    fnt = style.get("font")
-    if fnt in _FONTS:
-        p.append(f"font-family:'{fnt}','Segoe UI',Arial,sans-serif")
+    # A block may override either half of the pair. `fonts` carries the document's own pair so
+    # overriding one does not silently drop the other.
+    fnt, far = style.get("font"), style.get("fontAr")
+    doc_lat, doc_ar = fonts if isinstance(fonts, (tuple, list)) and len(fonts) == 2 else (None, None)
+    if fnt in _FONTS or far in _AR_FONTS:
+        p.append("font-family:" + font_stack(fnt if fnt in _FONTS else doc_lat,
+                                             far if far in _AR_FONTS else doc_ar))
     spacing = (("pad", "padding"),) if absolute else (("mt", "margin-top"), ("mb", "margin-bottom"), ("pad", "padding"))
     for key, css in spacing:
         v = _num(style.get(key))
@@ -1420,7 +1464,7 @@ def _render_child(doc, b, c, ctx):
     if not fn:
         return ""
     inner = fn(doc, b, c.get("settings") or {}, ctx)
-    wrap = _style_css(c.get("style") or {}, c.get("type"))
+    wrap = _style_css(c.get("style") or {}, c.get("type"), fonts=_doc_fonts(b))
     return f'<div style="margin-bottom:2mm;{wrap}">{inner}</div>'
 
 
@@ -1548,6 +1592,8 @@ def _branding_from_def(definition, doc):
             b[k] = v
     if dbr.get("font") in _FONTS:  # allow-list: font is interpolated into a <style> block
         b["font"] = dbr["font"]
+    if dbr.get("font_ar") in _AR_FONTS:
+        b["font_ar"] = dbr["font_ar"]
     pg = definition.get("page") if isinstance(definition, dict) else None
     if isinstance(pg, dict) and _hexok(pg.get("bg")):
         b["page_bg"] = pg["bg"].strip()
@@ -1667,7 +1713,7 @@ def render_definition(doc, definition, terms_html=""):
             parts.append(inner)
         else:
             open_c()
-            wrap = _style_css(bl.get("style") or {}, t)
+            wrap = _style_css(bl.get("style") or {}, t, fonts=_doc_fonts(branding))
             parts.append(f'<div style="{wrap}">{inner}</div>' if wrap else inner)
     close()
     return "".join(parts)
@@ -1691,7 +1737,7 @@ def _absolute_page_html(doc, branding, blocks_list, ctx, grow=False, top_mm=0.0,
         container = "position:relative;width:%smm;height:%smm;overflow:hidden;" % (_fmt_num(pw), _fmt_num(ph))
     parts.append(
         f'<div style="{container}'
-        f"font-family:'{font}','Segoe UI',Arial,sans-serif;color:{navy};font-size:8.5pt;"
+        f"font-family:{font_stack(font, branding.get('font_ar'))};color:{navy};font-size:8.5pt;"
         f'-webkit-print-color-adjust:exact;print-color-adjust:exact;">'
     )
     for bl in (blocks_list or []):
@@ -1712,7 +1758,7 @@ def _absolute_page_html(doc, branding, blocks_list, ctx, grow=False, top_mm=0.0,
         box = f"position:absolute;left:{_fmt_num(x)}mm;top:{_fmt_num(y)}mm;width:{_fmt_num(w)}mm;"
         if h:
             box += f"height:{_fmt_num(h)}mm;overflow:hidden;"
-        wrap = _style_css(bl.get("style") or {}, t, absolute=True)
+        wrap = _style_css(bl.get("style") or {}, t, absolute=True, fonts=_doc_fonts(branding))
         parts.append(f'<div style="{box}{wrap}">{inner}</div>')
     parts.append("</div>")
     return "".join(parts)
@@ -1745,7 +1791,7 @@ def _flow_body_html(doc, branding, body_blocks, ctx, top_mm=0.0, bottom_mm=0.0, 
         # box-sizing MATTERS: without it this box is 210mm + 28mm padding = 238mm — Chromium
         # silently shrink-to-fits (~0.88x, shrinking fonts with it) and wkhtmltopdf CLIPS the
         # right column off the page. border-box keeps 210mm meaning 210mm.
-        f'<div style="position:relative;width:{_fmt_num(pw)}mm;box-sizing:border-box;padding:0 {_fmt_num(margin_x)}mm;font-family:\'{font}\',\'Segoe UI\',Arial,sans-serif;'
+        f'<div style="position:relative;width:{_fmt_num(pw)}mm;box-sizing:border-box;padding:0 {_fmt_num(margin_x)}mm;font-family:{font_stack(font, branding.get("font_ar"))};'
         f'color:{navy};font-size:8.5pt;-webkit-print-color-adjust:exact;print-color-adjust:exact;">'
     )
     if spacer_mode:
@@ -1765,7 +1811,7 @@ def _flow_body_html(doc, branding, body_blocks, ctx, top_mm=0.0, bottom_mm=0.0, 
         if not fn:
             continue
         inner = fn(doc, branding, bl.get("settings") or {}, ctx)
-        css = _style_css(bl.get("style") or {}, t)
+        css = _style_css(bl.get("style") or {}, t, fonts=_doc_fonts(branding))
         # Only long, row-based blocks may straddle a page break (they paginate at their own rows).
         # Everything else prints whole or moves to the next page — matching the builder's canvas,
         # where the same rule decides where a page is cut.
@@ -1795,7 +1841,7 @@ def _flow_body_html(doc, branding, body_blocks, ctx, top_mm=0.0, bottom_mm=0.0, 
         box = f"position:absolute;left:{_fmt_num(x)}mm;top:{_fmt_num(y)}mm;width:{_fmt_num(w)}mm;"
         if h:
             box += f"height:{_fmt_num(h)}mm;overflow:hidden;"
-        wrap = _style_css(bl.get("style") or {}, t, absolute=True)
+        wrap = _style_css(bl.get("style") or {}, t, absolute=True, fonts=_doc_fonts(branding))
         parts.append(f'<div style="{box}{wrap}">{inner}</div>')
     parts.append("</div>")
     return "".join(parts)
@@ -1826,7 +1872,7 @@ def watermark_page_html(branding, wm, pw=210.0, ph=297.0):
     return (
         base_css(branding, pw, ph)
         + _pf_css(0, 0, pw=pw, ph=ph)
-        + f"<div style=\"position:relative;width:{_fmt_num(pw)}mm;height:{_fmt_num(ph)}mm;overflow:hidden;font-family:'{font}',Arial,sans-serif;\">"
+        + f"<div style=\"position:relative;width:{_fmt_num(pw)}mm;height:{_fmt_num(ph)}mm;overflow:hidden;font-family:{font_stack(font, branding.get('font_ar'))};\">"
         + f'<div style="position:absolute;top:50%;left:50%;-webkit-transform:{xf};transform:{xf};'
         + f'font-size:{_fmt_num(size)}pt;font-weight:800;'
         + f'color:{color};opacity:{_fmt_num((op or 8) / 100.0)};white-space:nowrap;letter-spacing:2px;'
