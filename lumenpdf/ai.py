@@ -243,7 +243,14 @@ BILINGUAL WORK
 - A table column label may contain a newline: "الوصف\\nDESCRIPTION" stacks Arabic over English.
   The same works for totals labels.
 - Put style.rtl true on Arabic text/field blocks, and align them "right".
-- Arabic-capable fonts: Cairo, Almarai, Tajawal, IBM Plex Sans Arabic, Noto Kufi Arabic, Amiri.
+- branding.font is the LATIN font and branding.font_ar is the ARABIC one. Always set font_ar on a
+  bilingual format: a Latin family carries no Arabic glyphs, so without it the Arabic falls back
+  to the host's default face and prints ugly. A block may override either with style.font /
+  style.fontAr.
+- Arabic fonts (font_ar): Cairo, Almarai, Tajawal, IBM Plex Sans Arabic, Noto Sans Arabic,
+  Noto Naskh Arabic, Noto Kufi Arabic, Readex Pro, Alexandria, Changa, El Messiri, Reem Kufi,
+  Markazi Text, Rubik, Amiri, Scheherazade New. Amiri, Noto Naskh Arabic, Markazi Text and
+  Scheherazade New are naskh (traditional); the rest are modern sans.
 - Latin fonts: Plus Jakarta Sans, Inter, Montserrat, Roboto, Open Sans, Lato, Poppins, Archivo,
   Manrope, Bricolage Grotesque, Newsreader, Instrument Serif, IBM Plex Mono, Arial, Tahoma.
 
@@ -493,6 +500,7 @@ def sanitize_definition(d, fallback_doctype=None):
     br = d.get("branding") if isinstance(d.get("branding"), dict) else {}
     branding = {"primary": _hex(br.get("primary")) or "#1463FF", "navy": _hex(br.get("navy")) or "#0C1322",
                 "font": str(br.get("font") or "Plus Jakarta Sans")[:40],
+                "font_ar": str(br.get("font_ar") or "Cairo")[:40],
                 "header_image": str(br.get("header_image") or "")[:255],
                 "footer_image": str(br.get("footer_image") or "")[:255]}
     wm = d.get("watermark") if isinstance(d.get("watermark"), dict) else {}

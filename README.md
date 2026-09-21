@@ -35,8 +35,9 @@ what prints.
 - **Product-catalog documents**: per-item **product photos** in the items table, pulled from
   each row's Image attachment, sized how you want — rows without a photo (services) get no box.
 - **Branding that scales**: per-company colors, fonts and banner images (LumenPDF Settings), with
-  per-format overrides and opt-outs. Bilingual EN/AR out of the box — curated Latin + Arabic
-  Google fonts, RTL-aware blocks.
+  per-format overrides and opt-outs. Bilingual EN/AR out of the box: a document picks a Latin
+  font AND an Arabic font, so Arabic prints in the face you chose instead of the server's
+  fallback. 16 Arabic Google fonts, naskh and modern sans, plus RTL-aware blocks.
 - **Deep data binding**: any field of the document (including custom fields), one-hop linked
   fields (e.g. the customer's email on a Sales Invoice), any child table as a styled data table,
   conditional block visibility, conditional watermarks (e.g. status = Paid → "PAID"),

@@ -9,7 +9,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>LumenPDF Studio</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&family=Montserrat:wght@300;400;500;600;700;800&family=Roboto:wght@400;500;700&family=Open+Sans:wght@400;600;700;800&family=Lato:wght@400;700;900&family=Poppins:wght@400;500;600;700;800&family=Cairo:wght@400;600;700;800&family=Almarai:wght@400;700;800&family=Tajawal:wght@400;500;700;800&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Noto+Kufi+Arabic:wght@400;600;700&family=Amiri:wght@400;700&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&family=Montserrat:wght@300;400;500;600;700;800&family=Roboto:wght@400;500;700&family=Open+Sans:wght@400;600;700;800&family=Lato:wght@400;700;900&family=Poppins:wght@400;500;600;700;800&family=Cairo:wght@400;600;700;800&family=Almarai:wght@400;700;800&family=Tajawal:wght@400;500;700;800&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Noto+Kufi+Arabic:wght@400;600;700&family=Amiri:wght@400;700&family=Noto+Sans+Arabic:wght@400;500;600;700;800&family=Noto+Naskh+Arabic:wght@400;500;600;700&family=Readex+Pro:wght@400;500;600;700&family=Alexandria:wght@400;500;600;700;800&family=Changa:wght@400;500;600;700;800&family=El+Messiri:wght@400;500;600;700&family=Reem+Kufi:wght@400;500;600;700&family=Markazi+Text:wght@400;500;600;700&family=Scheherazade+New:wght@400;500;600;700&family=Rubik:wght@400;500;600;700;800&display=swap');
   :root{--bg:#F4F6FA;--panel:#FFFFFF;--panel2:#F0F3F8;--line:#E4E8F0;--line2:#D4DAE5;--ink:#0C1322;--mut:#687386;--mut2:#98A1B2;--accent:#1463FF;--accentSoft:#EAF1FF;--danger:#C4384A;--ok:#0F9D7A;--paper:#fff;--shadow:0 24px 60px rgba(16,24,40,.14),0 8px 18px rgba(16,24,40,.06)}
   /* Dark mode: darken only the CHROME neutrals. --paper/--accent/--ok stay light so the document
      preview stays white paper (the PDF is white) and the brand blue is unchanged. Follows the
@@ -429,7 +429,7 @@
 <body>
 <div class="app">
   <div class="top">
-    <div class="brand" title="LumenPDF Studio"><svg width="24" height="24" viewBox="0 0 48 48" fill="none" aria-label="LumenPDF Studio"><rect x="9" y="4" width="30" height="40" rx="4" style="stroke:var(--logoA)" stroke-width="3"/><rect x="14.5" y="10" width="19" height="3.6" rx="1.8" style="fill:var(--logoB)"/><rect x="14.5" y="18" width="19" height="9" rx="2.4" style="fill:var(--logoA)"/><rect x="14.5" y="31.5" width="12" height="3.6" rx="1.8" style="fill:var(--logoB)"/></svg><small>Studio · b77</small></div>
+    <div class="brand" title="LumenPDF Studio"><svg width="24" height="24" viewBox="0 0 48 48" fill="none" aria-label="LumenPDF Studio"><rect x="9" y="4" width="30" height="40" rx="4" style="stroke:var(--logoA)" stroke-width="3"/><rect x="14.5" y="10" width="19" height="3.6" rx="1.8" style="fill:var(--logoB)"/><rect x="14.5" y="18" width="19" height="9" rx="2.4" style="fill:var(--logoA)"/><rect x="14.5" y="31.5" width="12" height="3.6" rx="1.8" style="fill:var(--logoB)"/></svg><small>Studio · b78</small></div>
     <button class="btn ghost iconbtn" id="homeBtn" onclick="goHome()" title="Home — all formats"><svg class="icn" viewBox="0 0 24 24"><path d="M4 11l8-6.5 8 6.5"/><path d="M6 10v9a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-9"/></svg></button>
     <div class="menuwrap"><button class="btn ghost" id="copilotBtn" onclick="openCopilot()" title="Design copilot: describe a change, a new format, or a design to imitate"><svg class="icn" viewBox="0 0 24 24"><path d="M12 3l1.8 4.6L18.5 9l-4.7 1.4L12 15l-1.8-4.6L5.5 9l4.7-1.4z"/><path d="M18 15l.9 2.3 2.3.7-2.3.9-.9 2.1-.9-2.1-2.3-.9 2.3-.7z"/></svg> AI</button><button class="btn ghost" id="fileBtn" onclick="toggleFileMenu(event)" title="New, open, duplicate, import/export"><svg class="icn" viewBox="0 0 24 24"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg> File</button>
       <div class="menu" id="fileMenu">
@@ -628,7 +628,15 @@ function dtCellHtml(c,r,i,ph,table){const lines=dtLinesOf(c),al=dtAl(c),parts=[]
   return parts.map((p,k)=>{const gap=k===0?"":((p[0]==="image"||parts[k-1][0]==="image")?"margin-top:1mm;":"margin-top:1px;");return `<div class="dt-ln" style="${gap}${p[2]}">${p[1]}</div>`;}).join("");}
 function skinHeads(th,sk){if(!sk.thFirst)return th;th=th.replace('style="','style="'+sk.thFirst);const k=th.lastIndexOf('style="');return th.slice(0,k)+'style="'+sk.thLast+th.slice(k+7);}
 /* Fonts: mirrors blocks.GOOGLE_FONTS (all @import-loaded above) + system fonts, grouped. */
-const FONT_GROUPS=[["Sans (Latin)",["Plus Jakarta Sans","Inter","Montserrat","Roboto","Open Sans","Lato","Poppins","Archivo","Manrope","Bricolage Grotesque"]],["Serif & Mono",["Newsreader","Instrument Serif","IBM Plex Mono"]],["Arabic",["Cairo","Almarai","Tajawal","IBM Plex Sans Arabic","Noto Kufi Arabic","Amiri"]],["System",["Arial","Tahoma"]]];
+/* Arabic families. A Latin family has no Arabic glyphs, so a document names one of these as
+   its Arabic font and it goes second in every font stack: the browser resolves per character,
+   English takes the Latin family, Arabic takes this one instead of the host's default face. */
+const AR_FONTS=["Cairo", "Almarai", "Tajawal", "IBM Plex Sans Arabic", "Noto Sans Arabic", "Noto Naskh Arabic", "Noto Kufi Arabic", "Readex Pro", "Alexandria", "Changa", "El Messiri", "Reem Kufi", "Markazi Text", "Rubik", "Amiri", "Scheherazade New"];
+const DEFAULT_FONT_AR="Cairo";
+function fontStack(latin,arabic){const lat=latin||"Montserrat";const ar=(AR_FONTS.indexOf(arabic)>=0)?arabic:DEFAULT_FONT_AR;
+  return (lat===ar?[lat]:[lat,ar]).map(f=>"'"+f+"'").join(",")+",'Segoe UI',Arial,sans-serif";}
+const FONT_GROUPS=[["Sans (Latin)",["Plus Jakarta Sans","Inter","Montserrat","Roboto","Open Sans","Lato","Poppins","Archivo","Manrope","Bricolage Grotesque"]],["Serif & Mono",["Newsreader","Instrument Serif","IBM Plex Mono"]],["Arabic",AR_FONTS],["System",["Arial","Tahoma"]]];
+function fontOptionsAr(cur){return AR_FONTS.map(f=>`<option ${cur===f?'selected':''}>${f}</option>`).join("");}
 function fontOptions(cur){return FONT_GROUPS.map(g=>`<optgroup label="${g[0]}">`+g[1].map(f=>`<option ${cur===f?'selected':''}>${f}</option>`).join("")+`</optgroup>`).join("");}
 function MX(){var v=parseFloat((state.page&&state.page.margin_x));if(isNaN(v))v=14;return Math.max(0,Math.min(PW()/2-10,v));}
 function LAND(){return !!(state&&state.page&&state.page.orientation==="landscape");}
@@ -878,7 +886,7 @@ const R={
 };
 
 let selId=null,tab="block",scale=.8;
-var state={layout:"absolute",target:"Quotation",targetKind:"doctype",report:"",page:{orientation:"portrait"},header:{enabled:true,height:30,repeat:true,margin:4},footer:{enabled:true,height:32,repeat:true,margin:4},watermark:{text:"",color:"#0C1322",opacity:8,size:60},branding:{primary:"#1463FF",navy:"#0C1322",font:"Plus Jakarta Sans",header_image:"",footer_image:""},blocks:[
+var state={layout:"absolute",target:"Quotation",targetKind:"doctype",report:"",page:{orientation:"portrait"},header:{enabled:true,height:30,repeat:true,margin:4},footer:{enabled:true,height:32,repeat:true,margin:4},watermark:{text:"",color:"#0C1322",opacity:8,size:60},branding:{primary:"#1463FF",navy:"#0C1322",font:"Plus Jakarta Sans",font_ar:"Cairo",header_image:"",footer_image:""},blocks:[
   mk("title",{x:14,y:38,w:182,h:null}),mk("customer",{x:14,y:62,w:120,h:null}),
   mk("items",{x:14,y:90,w:182,h:null}),mk("totals",{x:104,y:172,w:92,h:null}),mk("payment_schedule",{x:14,y:200,w:182,h:null}),
   mk("terms",{x:14,y:238,w:140,h:null})]};
@@ -1617,7 +1625,8 @@ function styleCss(st){if(!st)return "";const p=[];if(st.align)p.push("text-align
   if(st.letterSpacing&&!isNaN(st.letterSpacing))p.push("letter-spacing:"+(+st.letterSpacing)+"px");
   if(st.underline)p.push("text-decoration:underline");
   if(st.rtl){p.push("direction:rtl");if(!st.align)p.push("text-align:right");}
-  if(st.font)p.push(`font-family:'${st.font}','Segoe UI',Arial,sans-serif`);
+  // a block may override either half of the pair; the other half stays the document's
+  if(st.font||st.fontAr)p.push("font-family:"+fontStack(st.font||state.branding.font,st.fontAr||state.branding.font_ar));
   return p.join(";");}
 
 function regionOf(bl){return bl.region||"body";}  // region is OWNED, never guessed from position
@@ -1740,7 +1749,7 @@ function renderFlushPending(){if(_rdPend){_rdPend=false;render();}}
 function renderNowSync(){clearTimeout(_rdT);_rdT=null;_rdPend=false;_rdLast=Date.now();_renderNow();}  // cancel pending + render THIS instant (for DOM reads / state swaps)
 function _renderNow(){
   const b=state.branding,paper=document.getElementById("paper");
-  paper.style.fontFamily=`'${b.font}','Segoe UI',Arial,sans-serif`;
+  paper.style.fontFamily=fontStack(b.font,b.font_ar);
   const Hh=state.header.enabled?state.header.height:0, Fh=state.footer.enabled?state.footer.height:0;
   const ha=editScope==="header", fa=editScope==="footer", ba=editScope==="body";
   const head=state.blocks.filter(bl=>regionOf(bl)==="header"&&bl.type!=="header_banner");
@@ -2417,6 +2426,7 @@ function styleControlsDesign(st,type){const seg=_styH.seg,num=_styH.num,col=_sty
   typo+=`<div class="row2">${num("Font size (pt)","size",st.size)}${segW(st.weight)}</div>`;
   typo+=col("Text color","color",st.color);
   typo+=`<div class="fld"><label>Font (this block)</label><select onchange="setStyle('font',this.value)"><option value="" ${st.font?'':'selected'}>Inherit (branding font)</option>`+fontOptions(st.font)+`</select></div>`;
+  typo+=`<div class="fld"><label>Arabic font (this block)</label><select onchange="setStyle('fontAr',this.value)"><option value="" ${st.fontAr?'':'selected'}>Inherit (branding Arabic font)</option>`+fontOptionsAr(st.fontAr)+`</select></div>`;
   typo+=`<div class="row2">${num("Line height","lineHeight",st.lineHeight)}${num("Letter spacing (px)","letterSpacing",st.letterSpacing)}</div>`;
   typo+=ckk("Italic","italic",st.italic)+ckk("Underline","underline",st.underline)+ckk("RTL (right-to-left)","rtl",st.rtl);
   const bd=st.border||{on:false,w:1,color:"#cfe5f6",style:"solid",radius:0};
@@ -2732,7 +2742,7 @@ function autoSizeBand(isH,url){
 function ensureBanners(){state.blocks=state.blocks.filter(bl=>bl.type!=="header_banner"&&bl.type!=="footer_banner");if(BIMG(state.branding.header_image))state.header.enabled=true;if(BIMG(state.branding.footer_image))state.footer.enabled=true;}
 function imgAttach(lbl,key,val,setter){const after=(setter==="setB")?"renderBrand":"renderProps";
   return `<div class="fld"><label>${lbl}</label><div style="display:flex;gap:6px"><button class="btn ghost" style="flex:1" onclick="uploadImage(function(u){${setter}('${key}',u);${after}();})">${UI.upload} Attach image</button>${val?`<button class="btn ghost" title="Remove" onclick="${setter}('${key}','');${after}()">${UI.close}</button>`:''}</div><div class="hint" style="padding:4px 0 0;word-break:break-all">${val?esc(val):'No image — or build the band from blocks.'}</div></div>`;}
-function renderBrand(){const b=state.branding;document.getElementById("propsBrand").innerHTML=`<div class="ptitle">Branding</div><div class="fld"><label>Primary color</label><div class="color"><input type="color" value="${b.primary}" oninput="setB('primary',this.value)"><input type="text" value="${esc(b.primary)}" oninput="setB('primary',this.value)"></div></div><div class="fld"><label>Secondary / navy</label><div class="color"><input type="color" value="${b.navy}" oninput="setB('navy',this.value)"><input type="text" value="${esc(b.navy)}" oninput="setB('navy',this.value)"></div></div><div class="fld"><label>Font</label><select onchange="setB('font',this.value)">`+fontOptions(b.font)+`</select></div><div class="hint" style="padding:10px 0 0">Header &amp; footer banner images are now in the <b>Page</b> tab, next to the band height.</div>`;}
+function renderBrand(){const b=state.branding;document.getElementById("propsBrand").innerHTML=`<div class="ptitle">Branding</div><div class="fld"><label>Primary color</label><div class="color"><input type="color" value="${b.primary}" oninput="setB('primary',this.value)"><input type="text" value="${esc(b.primary)}" oninput="setB('primary',this.value)"></div></div><div class="fld"><label>Secondary / navy</label><div class="color"><input type="color" value="${b.navy}" oninput="setB('navy',this.value)"><input type="text" value="${esc(b.navy)}" oninput="setB('navy',this.value)"></div></div><div class="fld"><label>Font (Latin)</label><select onchange="setB('font',this.value)">`+fontOptions(b.font)+`</select></div><div class="fld"><label>Font (Arabic)</label><select onchange="setB('font_ar',this.value)">`+fontOptionsAr(b.font_ar||DEFAULT_FONT_AR)+`</select><div class="hint" style="padding:6px 0 0">Arabic text uses this one. A Latin font has no Arabic letters, so without it the PDF falls back to whatever face the server happens to have.</div><div style="margin-top:8px;padding:9px 11px;border:1px solid var(--line);border-radius:8px;direction:rtl;text-align:right;font-size:15px;font-family:'${b.font_ar||DEFAULT_FONT_AR}',Tahoma,sans-serif">فاتورة ضريبية · الإجمالي المستحق</div></div><div class="hint" style="padding:10px 0 0">Header &amp; footer banner images are now in the <b>Page</b> tab, next to the band height.</div>`;}
 
 function zoom(d){scale=Math.min(1.6,Math.max(.35,scale+d));document.getElementById("paperwrap").style.transform=`scale(${scale})`;document.getElementById("zoomv").textContent=Math.round(scale*100)+"%";try{fixQuickBar();}catch(e){}}
 let leftCollapsed=false, rightCollapsed=false, rightW=300;
@@ -2880,7 +2890,7 @@ function confirmSaveFmt(){const name=(document.getElementById("sfName").value||"
   _pendingSetDefault=wantDefault?(isRep?{kind:"report",report:state.report}:{kind:"doctype",doctype:state.target,company:document.getElementById("sfCompany").value||""}):null;
   closeSaveFmt();_doSave();}
 function flashSaved(){const b=document.querySelector(".btn.primary");if(!b)return;const t=b.innerHTML;b.innerHTML=UI.check+" Saved";setTimeout(function(){b.innerHTML=t;},1400);}  // innerHTML, not textContent — the label carries an inline SVG icon
-function loadDefinition(def){try{userTouched=false;fmtSaved=false;fmtIsDefault=false;fmtLoaded=true;state.page=Object.assign({orientation:"portrait"},def.page||{});if(def.branding)state.branding=Object.assign({primary:"#1463FF",navy:"#0C1322",font:"Montserrat",header_image:"",footer_image:""},def.branding);
+function loadDefinition(def){try{userTouched=false;fmtSaved=false;fmtIsDefault=false;fmtLoaded=true;state.page=Object.assign({orientation:"portrait"},def.page||{});if(def.branding)state.branding=Object.assign({primary:"#1463FF",navy:"#0C1322",font:"Montserrat",font_ar:"Cairo",header_image:"",footer_image:""},def.branding);
   if(def.header)state.header=Object.assign({enabled:true,height:30,repeat:true,margin:4},def.header);if(def.footer)state.footer=Object.assign({enabled:true,height:32,repeat:true,margin:4},def.footer);if(def.watermark)state.watermark=Object.assign({text:"",color:"#0C1322",opacity:8,size:60},def.watermark);
   if(Array.isArray(def.blocks))state.blocks=def.blocks.map(function(b,i){const pos=b.pos||{x:14,y:8+i*16,w:180,h:null};let settings=b.settings||(DSET[b.type]?DSET[b.type]():{});if(b.type==="row"){const st=b.settings||{};const cells=(st.cells||[]).map(function(cell){return (cell||[]).map(function(c){var cb={id:"b"+(idc++),type:c.type,settings:c.settings||(DSET[c.type]?DSET[c.type]():{}),style:Object.assign(base(),dstyle(c.type),c.style||{})};if(c.locked)cb.locked=true;return cb;});});settings=Object.assign({cols:2,gap:6,width:100,widths:[null,null],cells:[[],[]]},st,{cells:cells});}var nb={id:"b"+(idc++),type:b.type,settings:settings,style:Object.assign(base(),dstyle(b.type),b.style||{}),pos:pos,float:b.float||false,region:b.region||_regionByY(pos),cond:b.cond||null};if(b.hidden)nb.hidden=true;if(b.locked)nb.locked=true;return nb;});
   if(def.target_kind==="report"){
