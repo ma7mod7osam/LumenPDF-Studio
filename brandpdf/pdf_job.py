@@ -49,8 +49,8 @@ def generate(job_token, doctype, docname, user, template=None, _retry=0):
 
         from brandpdf.compose import compose_pdf
         pdf_bytes = compose_pdf(doc, template=template)  # chosen format (or default) + running header/footer
-        file_url = _save_private_file(doc, pdf_bytes, docname)
-        set_state(job_id, {"status": "done", "file_url": file_url}, user)
+        saved = _save_private_file(doc, pdf_bytes, docname)
+        set_state(job_id, dict(saved, status="done"), user)
     except Exception:
         frappe.log_error(message=frappe.get_traceback(), title="BrandPDF render failed")
         set_state(job_id, {"status": "error", "message": "Render failed — see Error Log."}, user)
@@ -106,8 +106,8 @@ def generate_preview(job_token, definition, doctype, docname, user, _retry=0):
             allowed |= B.collect_doc_image_srcs(doc, d)  # item photos + Data Table image lines
             html = assets.neutralize_remote(assets.inline_images(html, allowed=allowed))
             pdf = renderer.render(html, default_options())
-        file_url = _save_private_file(doc, pdf, docname + "-preview")
-        set_state(job_id, {"status": "done", "file_url": file_url}, user)
+        saved = _save_private_file(doc, pdf, docname + "-preview")
+        set_state(job_id, dict(saved, status="done"), user)
     except Exception:
         frappe.log_error(message=frappe.get_traceback(), title="BrandPDF preview failed")
         set_state(job_id, {"status": "error", "message": "Preview failed — see Error Log."}, user)
@@ -139,6 +139,8 @@ def _release(lock):
 # --- file output -----------------------------------------------------------
 
 def _save_private_file(doc, pdf_bytes, docname):
+    """Returns what a caller needs to hand the file on: the url to show it, and the File record
+    itself, because the email composer attaches by File name, not by url."""
     f = frappe.get_doc(
         {
             "doctype": "File",
@@ -151,7 +153,7 @@ def _save_private_file(doc, pdf_bytes, docname):
     )
     f.flags.ignore_permissions = True
     f.insert()
-    return f.file_url
+    return {"file_url": f.file_url, "file_name": f.file_name, "file_id": f.name}
 
 
 def cleanup_expired_files():
