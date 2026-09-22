@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: LicenseRef-Lumen-Proprietary
 // Proprietary and confidential. See license.txt. "LumenPDF" and "LumenPDF Studio" are
 // trademarks of Lumen Solutions.
-// Global desk script: registers a "Download Branded PDF" button on every DocType that has
-// an enabled LumenPDF Mapping (falls back to Quotation). POSTs to the queued endpoint and
-// polls for the private file URL (PLAN H6/H7). No GET/window.open of the endpoint itself.
+// Global desk script: registers a branded "Print with LumenPDF" button on every DocType that
+// has an enabled LumenPDF Mapping (falls back to Quotation). The button routes to our own print
+// screen, which renders, previews, prints, downloads and emails the document.
 
 frappe.provide("lumenpdf");
 
@@ -29,92 +29,33 @@ frappe.provide("lumenpdf");
     });
 })();
 
+// Our own mark on the button: the person printing should know whose screen they are about to
+// land on, and find their way back to it next time.
+const BRANDPDF_MARK =
+    '<svg viewBox="0 0 48 48" width="14" height="14" style="margin-right:6px;vertical-align:-2px;flex:0 0 auto" aria-hidden="true">'
+    + '<rect width="48" height="48" rx="11" fill="#1463FF"></rect>'
+    + '<rect x="15" y="11" width="18" height="26" rx="3" fill="none" stroke="#fff" stroke-width="2.6"></rect>'
+    + '<path d="M20 19h8M20 24h8M20 29h5" stroke="#fff" stroke-width="2.6" stroke-linecap="round"></path>'
+    + '</svg>';
+
 function lumenpdf_add_button(frm) {
     if (frm.is_new()) return;
+    const label = __("Print with LumenPDF");
     // Dedup: refresh fires on every reload/save/workflow action — review #6.
-    if (frm.custom_buttons && frm.custom_buttons[__("Download Branded PDF")]) return;
-    frm.add_custom_button(__("Download Branded PDF"), () => lumenpdf_generate(frm));
-}
-
-function lumenpdf_generate(frm) {
-    // If the doctype has more than one format, let the user choose; otherwise render directly.
-    frappe.call({
-        method: "lumenpdf.api.list_formats",
-        args: { doctype: frm.doc.doctype, company: frm.doc.company || "" },  // company default marked ★
-        callback(r) {
-            const formats = r.message || [];
-            if (formats.length > 1) {
-                // Option value = template name (labels can repeat / carry the ★ default marker).
-                const def = formats.find((f) => f.is_default) || formats[0];
-                const d = new frappe.ui.Dialog({
-                    title: __("Choose a format"),
-                    fields: [{
-                        fieldname: "fmt", fieldtype: "Select", label: __("Format"), reqd: 1,
-                        options: formats.map((f) => ({
-                            value: f.name, label: f.label + (f.is_default ? "  ★ " + __("default") : ""),
-                        })),
-                        default: def.name,
-                    }],
-                    primary_action_label: __("Download"),
-                    primary_action(v) {
-                        d.hide();
-                        lumenpdf_run(frm, v.fmt || def.name);
-                    },
-                });
-                d.show();
-            } else {
-                lumenpdf_run(frm, formats[0] ? formats[0].name : null);
-            }
-        },
-        error() {
-            lumenpdf_run(frm, null);  // fall back to the default format
-        },
-    });
-}
-
-function lumenpdf_run(frm, template) {
-    frappe.dom.freeze(__("Generating branded PDF…"));
-    frappe.call({
-        method: "lumenpdf.api.request_pdf",
-        args: { doctype: frm.doc.doctype, name: frm.doc.name, template: template || "" },
-        callback(r) {
-            const job_id = r.message && r.message.job_id;
-            if (!job_id) {
-                frappe.dom.unfreeze();
-                frappe.msgprint(__("Could not start the PDF job."));
-                return;
-            }
-            lumenpdf_poll(job_id, 0);
-        },
-        error() {
-            frappe.dom.unfreeze();
-        },
-    });
-}
-
-function lumenpdf_poll(job_id, tries) {
-    if (tries > 80) {
-        frappe.dom.unfreeze();
-        frappe.msgprint(__("PDF generation timed out. Please try again."));
-        return;
+    if (frm.custom_buttons && frm.custom_buttons[label]) return;
+    const $btn = frm.add_custom_button(label, () => lumenpdf_open_print(frm));
+    // add_custom_button renders plain text; dress it with the mark without losing the handler.
+    try {
+        $btn.html(BRANDPDF_MARK + '<span>' + frappe.utils.escape_html(label) + '</span>');
+        $btn.css({ display: 'inline-flex', "align-items": 'center' });
+    } catch (e) {
+        // a future Frappe may return something else; the plain button still works
     }
-    frappe.call({
-        method: "lumenpdf.api.get_job_result",
-        args: { job_id },
-        callback(r) {
-            const s = r.message || {};
-            if (s.status === "done" && s.file_url) {
-                frappe.dom.unfreeze();
-                window.open(s.file_url, "_blank");
-            } else if (s.status === "error") {
-                frappe.dom.unfreeze();
-                frappe.msgprint(__(s.message || "Render failed."));
-            } else {
-                setTimeout(() => lumenpdf_poll(job_id, tries + 1), 1500);
-            }
-        },
-        error() {
-            frappe.dom.unfreeze();
-        },
-    });
+}
+
+// The button's whole job: hand the document to our own print screen, where the person can
+// switch formats, see the real file, then print, download or email it. ERPNext's print view
+// is still one click away from there: we add a way in, we never take one away.
+function lumenpdf_open_print(frm) {
+    frappe.set_route("lumenpdf-print", frm.doc.doctype, frm.doc.name);
 }
