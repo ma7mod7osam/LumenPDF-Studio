@@ -1,7 +1,7 @@
 # LumenPDF Studio
 
 **A visual print-format builder for Frappe / ERPNext v14, v15 and v16.** Design pixel-perfect, branded PDFs
-for your documents *and* your reports — with drag-and-drop blocks, ready-made templates, live
+for your documents *and* your reports, with drag-and-drop blocks, ready-made templates, live
 preview, and zero code.
 
 ![Canvas and inspector](docs/screenshots/01-canvas-and-inspector.png)
@@ -21,19 +21,20 @@ what prints.
 
 ## Highlights
 
-- **Visual builder** (`/app/lumenpdf-builder`): drag blocks onto an A4 canvas — headings, text,
+- **Visual builder** (`/app/lumenpdf-builder`): drag blocks onto an A4 canvas, headings, text,
   bound document fields, images, dividers, boxes, multi-column rows, custom tables, page
-  numbers — plus smart blocks for items, totals, taxes, payment schedule, customer, terms and
+  numbers, plus smart blocks for items, totals, taxes, payment schedule, customer, terms and
   signature. Undo/redo, autosave drafts, inline editing, zoom, full-screen, dark mode.
 - **Documents and reports**: brand any DocType's print format, and any Query/Script report
-  (General Ledger, Trial Balance, …) — portrait or landscape, with a dynamic report table whose
+  (General Ledger, Trial Balance, ...) in portrait or landscape, with a dynamic report table whose
   columns you choose or inherit from the report.
 - **Ready-made templates**: 10 invoice/quotation designs and 8 financial report formats, each a
   complete starting point you can restyle freely. Publish your own formats to a site-wide
   gallery, export/import them as JSON, and save any configured block to a reusable **block
   library** ("My blocks") you can insert into any format.
 - **Product-catalog documents**: per-item **product photos** in the items table, pulled from
-  each row's Image attachment, sized how you want — rows without a photo (services) get no box.
+  each row's Image attachment, sized how you want. A row without a photo, a service line, gets
+  no empty box.
 - **Branding that scales**: per-company colors, fonts and banner images (LumenPDF Settings), with
   per-format overrides and opt-outs. Bilingual EN/AR out of the box: a document picks a Latin
   font AND an Arabic font, so Arabic prints in the face you chose instead of the server's
@@ -42,13 +43,17 @@ what prints.
   fields (e.g. the customer's email on a Sales Invoice), any child table as a styled data table,
   conditional block visibility, conditional watermarks (e.g. status = Paid → "PAID"),
   amount-in-words.
-- **Wired into ERPNext flows**: replace the native Print → PDF per doctype, a "Download Branded
-  PDF" button with a format chooser, auto-attach the branded PDF on submit, a "Branded PDF"
-  button on every report, and optional branding of native report PDFs.
+- **A print screen of your own**: every document gets a **Print with LumenPDF** button that
+  opens your formats side by side. Pick one, see the actual PDF (not an approximation of it),
+  then print it, download it, or email it with the file already attached to ERPNext's own
+  email window. ERPNext's print view stays one click away, untouched.
+- **Wired into ERPNext flows**: auto-attach the branded PDF on submit, a "Branded PDF" button on
+  every report, optional branding of native report PDFs, and, per doctype, the option to let the
+  native Print PDF button produce your branded file instead.
 - **Multi-page correctness**: repeating header/footer bands with real page numbers, row-aware
   pagination, and a compose pipeline that keeps flowing content clear of the bands on every page.
-- **In-app feedback**: a 💬 button in the builder emails feedback (with site/user/version
-  context) straight to the maintainers via the site's own outgoing email.
+- **In-app feedback**: a feedback button in the builder emails us the note, with the site,
+  user and version, through the site's own outgoing email.
 
 - **QR codes, bilingual tables and tinted stationery.** A QR block generates the code at print
   time (ZATCA tax-invoice payload, any field, or fixed text) with no extra dependency, table
@@ -86,20 +91,20 @@ deploy.
 
 1. Open **LumenPDF Studio** (`/app/lumenpdf-builder`) as a System Manager.
 2. Pick a target: a **Document** type (Quotation, Sales Invoice, …) or a **Report**.
-3. Start from **▦ Templates** or a blank canvas; drag blocks, bind fields, style everything.
-4. **✓ Save** — then print: the document's **Download Branded PDF** button, the report's
-   **Branded PDF** button, or (if enabled per mapping) the native **Print → PDF** itself.
+3. Start from **Templates** or a blank canvas, then drag blocks, bind fields and style everything.
+4. **Save**, then print: the document's **Print with LumenPDF** button, the report's
+   **Branded PDF** button, or, if you enable it for that doctype, the native **Print PDF** itself.
 5. Manage defaults per doctype/company in **File → Open / manage formats**.
 
 Company-wide branding (colors, fonts, header/footer banner images) lives in **LumenPDF
-Settings** — one row per company. Formats inherit it and can override or suppress it.
+Settings**, one row per company. Formats inherit it and can override or suppress it.
 
 ## PDF engines
 
 | Engine | When | Notes |
 |---|---|---|
 | `frappe_chrome` (default) | Always available | Reuses the host's own Chromium PDF generator; zero setup. |
-| wkhtmltopdf fallback | Automatic | Used when the host's chrome generator can't produce landscape pages — detected and cached automatically. |
+| wkhtmltopdf fallback | Automatic | Used when the host's chrome generator can't produce landscape pages, detected and cached automatically. |
 | `playwright` / `gotenberg` | Opt-in | Set `lumenpdf_engine` in site_config; install the matching optional dependency (`pip install lumenpdf[playwright]`). |
 
 Diagnostics: `/api/method/lumenpdf.api.engine_diag` (System Manager) reports how the active
@@ -108,7 +113,8 @@ engine treats margins, full-bleed and landscape.
 ## Security posture
 
 - Builder and format management are **System Manager only**; standard templates are read-only.
-- Formats can only reference **uploaded site files** for images (no remote URLs — SSRF-safe),
+- Formats can only reference **uploaded site files** for images (no remote URLs, so a format cannot be used to reach
+  an internal address),
   and remaining remote references are neutralized before rendering.
 - Permission-gated fields (`permlevel > 0`) are never offered in the builder and never render,
   including via linked fields and child tables. Linked-field hops require read permission on
