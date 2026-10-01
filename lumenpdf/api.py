@@ -43,6 +43,41 @@ def request_pdf(doctype: str, name: str, template: str = None):
     return {"job_id": job_id}
 
 
+MAX_BULK = 50
+
+
+@frappe.whitelist()
+def request_bulk_pdf(doctype: str, names, template: str = None):
+    """One PDF for a selection from the list view. Printing fifty invoices is a real day's
+    work in ERPNext, and doing it one document at a time is the reason people keep a stack of
+    browser tabs open."""
+    if isinstance(names, str):
+        names = json.loads(names)
+    if not isinstance(names, list) or not names:
+        frappe.throw("Pick at least one document.")
+    names = [str(n) for n in names][:MAX_BULK]
+    for n in names:
+        _authorize(doctype, n)  # every single one, before anything is queued
+    if template and not (
+        frappe.db.exists("DocType", "LumenPDF Template")
+        and frappe.db.exists("LumenPDF Template", {"name": template, "target_doctype": doctype})
+    ):
+        template = None
+    job_id = frappe.generate_hash(length=20)
+    set_state(job_id, {"status": "queued", "total": len(names), "done": 0}, frappe.session.user)
+    frappe.enqueue(
+        "lumenpdf.pdf_job.generate_bulk",
+        queue="long",
+        timeout=(config.conf("render_timeout") or 120) * len(names) + 60,
+        job_token=job_id,
+        doctype=doctype,
+        docnames=names,
+        user=frappe.session.user,
+        template=template,
+    )
+    return {"job_id": job_id, "total": len(names)}
+
+
 def _fresh_render(doctype, name, template):
     """A file already rendered for this document AND this format, after the document last
     changed. Printing the same thing twice is the common case: the print screen opens on the

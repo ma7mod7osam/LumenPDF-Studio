@@ -157,6 +157,65 @@ def _release(lock):
 
 # --- file output -----------------------------------------------------------
 
+def generate_bulk(job_token, doctype, docnames, user, template=None):
+    """Render each document, then bind them into one file. One slot for the whole batch, so a
+    bulk print cannot squeeze the single-document prints out of the renderer."""
+    job_id = job_token
+    lock = _acquire_slot(job_id)
+    if not lock:
+        set_state(job_id, {"status": "error", "message": "Renderer busy; please retry."}, user)
+        return
+    prev_user = frappe.session.user
+    try:
+        frappe.set_user(user)
+        from lumenpdf.compose import compose_pdf
+
+        parts, failed = [], []
+        for i, name in enumerate(docnames):
+            try:
+                doc = frappe.get_doc(doctype, name)
+                doc.check_permission("read")
+                if not frappe.has_permission(doctype, "print", doc=doc):
+                    raise frappe.PermissionError
+                doc.apply_fieldlevel_read_permissions()
+                parts.append(compose_pdf(doc, template=template))
+            except Exception:
+                failed.append(name)
+                frappe.log_error(message=frappe.get_traceback(), title="LumenPDF bulk render failed")
+            set_state(job_id, {"status": "working", "done": i + 1, "total": len(docnames)}, user)
+        if not parts:
+            set_state(job_id, {"status": "error", "message": "Nothing could be printed."}, user)
+            return
+        merged = _merge(parts)
+        first = frappe.get_doc(doctype, docnames[0])
+        saved = _save_private_file(first, merged, f"{len(parts)}-{frappe.scrub(doctype)}", template)
+        state = dict(saved, status="done", printed=len(parts))
+        if failed:
+            state["skipped"] = failed  # said out loud rather than quietly dropped
+        set_state(job_id, state, user)
+    except Exception:
+        frappe.log_error(message=frappe.get_traceback(), title="LumenPDF bulk job failed")
+        set_state(job_id, {"status": "error", "message": "Bulk print failed, see the Error Log."}, user)
+    finally:
+        frappe.set_user(prev_user)
+        _release(lock)
+
+
+def _merge(parts):
+    """Bind the rendered files into one. pypdf comes with Frappe, so this adds no dependency."""
+    if len(parts) == 1:
+        return parts[0]
+    from pypdf import PdfReader, PdfWriter
+
+    writer = PdfWriter()
+    for blob in parts:
+        for page in PdfReader(io.BytesIO(blob)).pages:
+            writer.add_page(page)
+    out = io.BytesIO()
+    writer.write(out)
+    return out.getvalue()
+
+
 def file_suffix(template=None):
     """The tail of a rendered file name. It carries the format, so a cached file is only reused
     for the format it was printed with."""
