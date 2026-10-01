@@ -258,12 +258,24 @@ lumenpdf.print.doEmail = function () {
 	const S = lumenpdf.print.state;
 	const f = lumenpdf.print.file();
 	if (!f) return;
+	// the format may carry its own covering email, already filled in from the document
+	frappe.call({
+		method: 'lumenpdf.api.format_email',
+		args: { template: S.current, doctype: S.doctype, name: S.name },
+		callback: function (r) { lumenpdf.print.compose(f, (r && r.message) || {}); },
+		error: function () { lumenpdf.print.compose(f, {}); },
+	});
+};
+
+lumenpdf.print.compose = function (f, mail) {
+	const S = lumenpdf.print.state;
 	// ERPNext's own composer, with our file attached and already ticked: the person keeps the
 	// email screen they know. It attaches by File record, which is why the render returns one.
 	new frappe.views.CommunicationComposer({
 		doctype: S.doctype,
 		name: S.name,
-		subject: __(S.doctype) + ': ' + S.name,
+		subject: mail.email_subject || (__(S.doctype) + ': ' + S.name),
+		message: mail.email_body || '',  // the composer reads 'message', not 'content'
 		attach_document_print: false,
 		attachments: [f],
 	});

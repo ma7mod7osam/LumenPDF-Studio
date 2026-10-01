@@ -43,6 +43,34 @@ def request_pdf(doctype: str, name: str, template: str = None):
     return {"job_id": job_id}
 
 
+@frappe.whitelist()
+def format_email(template: str, doctype: str, name: str):
+    """The covering email a format carries, with the document's own values filled in. Sending a
+    quotation is the same two sentences every time, and typing them again is the kind of small
+    friction that makes people avoid the feature."""
+    _authorize(doctype, name)
+    if not (template and frappe.db.exists("DocType", "LumenPDF Template")):
+        return {}
+    row = frappe.db.get_value(
+        "LumenPDF Template", {"name": template, "target_doctype": doctype},
+        ["email_subject", "email_body"], as_dict=True,
+    )
+    if not row or not (row.get("email_subject") or row.get("email_body")):
+        return {}
+    doc = frappe.get_doc(doctype, name)
+    doc.apply_fieldlevel_read_permissions()
+    out = {}
+    for key in ("email_subject", "email_body"):
+        text = row.get(key)
+        if not text:
+            continue
+        try:
+            out[key] = frappe.render_template(text, {"doc": doc})
+        except Exception:
+            out[key] = text  # a broken placeholder should not block the email
+    return out
+
+
 MAX_BULK = 50
 
 
