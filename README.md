@@ -46,7 +46,16 @@ what prints.
 - **A print screen of your own**: every document gets a **Print with LumenPDF** button that
   opens your formats side by side. Pick one, see the actual PDF (not an approximation of it),
   then print it, download it, or email it with the file already attached to ERPNext's own
-  email window. ERPNext's print view stays one click away, untouched.
+  email window. ERPNext's print view stays one click away, untouched. A document already
+  printed opens at once, because the file is reused until the document, the format or the
+  company settings change.
+- **Print a whole selection**: tick the rows in any list view, pick the format once, and the
+  batch comes back as a single PDF in the order they are listed, up to fifty at a time.
+- **A covering email per format**: give a format an email subject and body, with document
+  fields in them, and the Email button opens the composer already written and attached.
+- **No network at print time**: nine font families ship inside the app and are embedded in the
+  page, so a bench that is offline, firewalled, or falling back to wkhtmltopdf still prints in
+  the faces you chose instead of the server's own.
 - **Wired into ERPNext flows**: auto-attach the branded PDF on submit, a "Branded PDF" button on
   every report, optional branding of native report PDFs, and, per doctype, the option to let the
   native Print PDF button produce your branded file instead.
