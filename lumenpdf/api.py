@@ -25,6 +25,9 @@ def request_pdf(doctype: str, name: str, template: str = None):
         and frappe.db.exists("LumenPDF Template", {"name": template, "target_doctype": doctype})
     ):
         template = None
+    ready = _fresh_render(doctype, name, template)
+    if ready:
+        return dict(ready, status="done")  # nothing changed since it was printed, hand it straight back
     job_id = frappe.generate_hash(length=20)
     set_state(job_id, {"status": "queued"}, frappe.session.user)
     frappe.enqueue(
@@ -38,6 +41,106 @@ def request_pdf(doctype: str, name: str, template: str = None):
         template=template,
     )
     return {"job_id": job_id}
+
+
+@frappe.whitelist()
+def format_email(template: str, doctype: str, name: str):
+    """The covering email a format carries, with the document's own values filled in. Sending a
+    quotation is the same two sentences every time, and typing them again is the kind of small
+    friction that makes people avoid the feature."""
+    _authorize(doctype, name)
+    if not (template and frappe.db.exists("DocType", "LumenPDF Template")):
+        return {}
+    row = frappe.db.get_value(
+        "LumenPDF Template", {"name": template, "target_doctype": doctype},
+        ["email_subject", "email_body"], as_dict=True,
+    )
+    if not row or not (row.get("email_subject") or row.get("email_body")):
+        return {}
+    doc = frappe.get_doc(doctype, name)
+    doc.apply_fieldlevel_read_permissions()
+    out = {}
+    for key in ("email_subject", "email_body"):
+        text = row.get(key)
+        if not text:
+            continue
+        try:
+            out[key] = frappe.render_template(text, {"doc": doc})
+        except Exception:
+            out[key] = text  # a broken placeholder should not block the email
+    return out
+
+
+MAX_BULK = 50
+
+
+@frappe.whitelist()
+def request_bulk_pdf(doctype: str, names, template: str = None):
+    """One PDF for a selection from the list view. Printing fifty invoices is a real day's
+    work in ERPNext, and doing it one document at a time is the reason people keep a stack of
+    browser tabs open."""
+    if isinstance(names, str):
+        names = json.loads(names)
+    if not isinstance(names, list) or not names:
+        frappe.throw("Pick at least one document.")
+    names = [str(n) for n in names][:MAX_BULK]
+    for n in names:
+        _authorize(doctype, n)  # every single one, before anything is queued
+    if template and not (
+        frappe.db.exists("DocType", "LumenPDF Template")
+        and frappe.db.exists("LumenPDF Template", {"name": template, "target_doctype": doctype})
+    ):
+        template = None
+    job_id = frappe.generate_hash(length=20)
+    set_state(job_id, {"status": "queued", "total": len(names), "done": 0}, frappe.session.user)
+    frappe.enqueue(
+        "lumenpdf.pdf_job.generate_bulk",
+        queue="long",
+        timeout=(config.conf("render_timeout") or 120) * len(names) + 60,
+        job_token=job_id,
+        doctype=doctype,
+        docnames=names,
+        user=frappe.session.user,
+        template=template,
+    )
+    return {"job_id": job_id, "total": len(names)}
+
+
+def _fresh_render(doctype, name, template):
+    """A file already rendered for this document AND this format, after the document last
+    changed. Printing the same thing twice is the common case: the print screen opens on the
+    default format, the person looks at another one, then comes back."""
+    from lumenpdf import pdf_job  # local: pdf_job imports this module, so not at module level
+
+    try:
+        modified = frappe.db.get_value(doctype, name, "modified")
+        if not modified:
+            return None
+        # The format counts as part of the input: edit it in the builder and the old file is
+        # stale, even though the document itself never moved.
+        if template and frappe.db.exists("DocType", "LumenPDF Template"):
+            tmod = frappe.db.get_value("LumenPDF Template", template, "modified")
+            if tmod and tmod > modified:
+                modified = tmod
+        # The company banner and colours live in Settings, and they print too.
+        if frappe.db.exists("DocType", "LumenPDF Settings"):
+            smod = frappe.db.get_value("LumenPDF Settings", {}, "modified")
+            if smod and smod > modified:
+                modified = smod
+        rows = frappe.get_all(
+            "File",
+            filters={"attached_to_doctype": doctype, "attached_to_name": name,
+                     "file_name": ("like", "%" + pdf_job.file_suffix(template)),
+                     "creation": (">", modified)},
+            fields=["name", "file_name", "file_url"],
+            order_by="creation desc",
+            limit=1,
+        )
+        if not rows:
+            return None
+        return {"file_id": rows[0].name, "file_name": rows[0].file_name, "file_url": rows[0].file_url}
+    except Exception:
+        return None  # a cache miss must never be worse than a render
 
 
 @frappe.whitelist()

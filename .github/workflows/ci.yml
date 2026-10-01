@@ -101,6 +101,12 @@ jobs:
         working-directory: frappe-bench
         run: bench --site test.localhost execute lumenpdf.setup.install_config.check_config
 
+      # A format that prints wrong does not raise anything, it just looks wrong on paper, so
+      # the only way to keep it out of a release is to read every saved format on the way past.
+      - name: Formats must be printable
+        working-directory: frappe-bench
+        run: bench --site test.localhost execute lumenpdf.lint.check_all --kwargs "{'strict': True}"
+
       - name: Smoke tests
         working-directory: frappe-bench
         run: |

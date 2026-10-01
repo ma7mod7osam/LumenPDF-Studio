@@ -161,7 +161,14 @@ lumenpdf.print.select = function (fmt) {
 		method: 'lumenpdf.api.request_pdf',
 		args: { doctype: S.doctype, name: S.name, template: fmt },
 		callback: function (r) {
-			const job = (r.message || {}).job_id;
+			const m = r.message || {};
+			if (m.status === 'done' && m.file_url) {
+				// already rendered since the document last changed, so there is nothing to wait for
+				S.files[fmt] = { file_url: m.file_url, file_name: m.file_name, name: m.file_id };
+				if (S.current === fmt) lumenpdf.print.show(fmt);
+				return;
+			}
+			const job = m.job_id;
 			if (!job) {
 				lumenpdf.print.stage(`<div class="bpdf-msg">${__('Could not start the render.')}</div>`);
 				return;
@@ -251,12 +258,24 @@ lumenpdf.print.doEmail = function () {
 	const S = lumenpdf.print.state;
 	const f = lumenpdf.print.file();
 	if (!f) return;
+	// the format may carry its own covering email, already filled in from the document
+	frappe.call({
+		method: 'lumenpdf.api.format_email',
+		args: { template: S.current, doctype: S.doctype, name: S.name },
+		callback: function (r) { lumenpdf.print.compose(f, (r && r.message) || {}); },
+		error: function () { lumenpdf.print.compose(f, {}); },
+	});
+};
+
+lumenpdf.print.compose = function (f, mail) {
+	const S = lumenpdf.print.state;
 	// ERPNext's own composer, with our file attached and already ticked: the person keeps the
 	// email screen they know. It attaches by File record, which is why the render returns one.
 	new frappe.views.CommunicationComposer({
 		doctype: S.doctype,
 		name: S.name,
-		subject: __(S.doctype) + ': ' + S.name,
+		subject: mail.email_subject || (__(S.doctype) + ': ' + S.name),
+		message: mail.email_body || '',  // the composer reads 'message', not 'content'
 		attach_document_print: false,
 		attachments: [f],
 	});

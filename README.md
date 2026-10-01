@@ -46,7 +46,16 @@ what prints.
 - **A print screen of your own**: every document gets a **Print with LumenPDF** button that
   opens your formats side by side. Pick one, see the actual PDF (not an approximation of it),
   then print it, download it, or email it with the file already attached to ERPNext's own
-  email window. ERPNext's print view stays one click away, untouched.
+  email window. ERPNext's print view stays one click away, untouched. A document already
+  printed opens at once, because the file is reused until the document, the format or the
+  company settings change.
+- **Print a whole selection**: tick the rows in any list view, pick the format once, and the
+  batch comes back as a single PDF in the order they are listed, up to fifty at a time.
+- **A covering email per format**: give a format an email subject and body, with document
+  fields in them, and the Email button opens the composer already written and attached.
+- **No network at print time**: nine font families ship inside the app and are embedded in the
+  page, so a bench that is offline, firewalled, or falling back to wkhtmltopdf still prints in
+  the faces you chose instead of the server's own.
 - **Wired into ERPNext flows**: auto-attach the branded PDF on submit, a "Branded PDF" button on
   every report, optional branding of native report PDFs, and, per doctype, the option to let the
   native Print PDF button produce your branded file instead.
@@ -65,12 +74,6 @@ what prints.
   schema before it reaches the canvas, and one Ctrl+Z puts the page back. Bring your own key.
 - **Page control.** Side margins are adjustable per format (edge-to-edge bands are possible),
   on top of the page background colour.
-
-## Branches
-
-- `version-16` is the Frappe/ERPNext **v16** branch. Its CI installs the app on a real v16
-  bench on every push.
-- `lumenpdf` serves **v14 and v15** and carries the same code.
 
 ## Requirements
 
@@ -104,6 +107,12 @@ deploy.
 
 Company-wide branding (colors, fonts, header/footer banner images) lives in **LumenPDF
 Settings**, one row per company. Formats inherit it and can override or suppress it.
+
+## Branches
+
+- `version-16` is the Frappe/ERPNext **v16** branch. Its CI installs the app on a real v16
+  bench on every push.
+- `lumenpdf` serves **v14 and v15** and carries the same code.
 
 ## PDF engines
 

@@ -57,6 +57,11 @@ TEMPLATE_FIELDS = [
     {"fieldname": "blocks", "fieldtype": "Table", "label": "Blocks (compose your format)", "options": "LumenPDF Block", "depends_on": "eval:doc.source_type=='blocks'"},
     {"fieldname": "jinja_path", "fieldtype": "Data", "label": "Jinja File Path (app-relative)", "depends_on": "eval:doc.source_type=='jinja_file'"},
     {"fieldname": "body", "fieldtype": "Code", "label": "Body (HTML/Jinja)", "options": "HTML", "depends_on": "eval:doc.source_type=='html_body'"},
+    {"fieldname": "email_sb", "fieldtype": "Section Break", "label": "Covering Email"},
+    {"fieldname": "email_subject", "fieldtype": "Data", "label": "Email Subject",
+     "description": "Used when this format is emailed. Document fields work: {{ doc.name }}."},
+    {"fieldname": "email_body", "fieldtype": "Text Editor", "label": "Email Body",
+     "description": "The message the PDF goes out with. Document fields work the same way."},
     {"fieldname": "definition", "fieldtype": "Code", "label": "Definition (visual builder JSON)", "options": "JSON", "read_only": 1, "depends_on": "eval:doc.source_type=='blocks'"},
 ]
 
