@@ -105,7 +105,8 @@ jobs:
       # the only way to keep it out of a release is to read every saved format on the way past.
       - name: Formats must be printable
         working-directory: frappe-bench
-        run: bench --site test.localhost execute lumenpdf.lint.check_all --kwargs "{'strict': True}"
+        run: |
+          bench --site test.localhost execute lumenpdf.lint.check_all --kwargs "{'strict': True}"
 
       - name: Smoke tests
         working-directory: frappe-bench
