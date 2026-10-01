@@ -19,8 +19,10 @@ style}); `render_definition()` turns that into the SAME HTML the builder preview
 PDF matches the builder exactly. Generic elements (heading/text/field/image/divider/box/
 table) are mirrored from the builder's JS renderers.
 """
+import base64
 import io
 import json
+import os
 import re
 
 import frappe
@@ -111,6 +113,109 @@ ARABIC_FONTS = ["Cairo", "Almarai", "Tajawal", "IBM Plex Sans Arabic", "Noto San
                 "El Messiri", "Reem Kufi", "Markazi Text", "Rubik", "Amiri", "Scheherazade New"]
 DEFAULT_FONT_AR = "Cairo"
 SYSTEM_FONTS = ["Arial", "Tahoma"]
+# The faces that ship inside the app, as woff2 under public/fonts. A bundled family needs no
+# network at print time, which matters twice over: a bench can be offline or firewalled, and the
+# wkhtmltopdf fallback deliberately strips the Google import because that fetch can stall it for
+# minutes. Anything not listed here still comes from Google, as before.
+BUNDLED_FONTS = {
+    # family -> weight -> subset -> file. An Arabic family carries its Latin subset too, because
+    # a subset file holds only its own script: without the Latin half, English inside an Arabic
+    # document would fall through to the host face, which is the bug this whole table closes.
+    "Plus Jakarta Sans": {400: {"latin": "plus-jakarta-sans-latin-400-normal.woff2"},
+                          600: {"latin": "plus-jakarta-sans-latin-600-normal.woff2"},
+                          700: {"latin": "plus-jakarta-sans-latin-700-normal.woff2"},
+                          800: {"latin": "plus-jakarta-sans-latin-800-normal.woff2"}},
+    "Inter": {400: {"latin": "inter-latin-400-normal.woff2"},
+              600: {"latin": "inter-latin-600-normal.woff2"},
+              700: {"latin": "inter-latin-700-normal.woff2"}},
+    "Montserrat": {400: {"latin": "montserrat-latin-400-normal.woff2"},
+                   600: {"latin": "montserrat-latin-600-normal.woff2"},
+                   700: {"latin": "montserrat-latin-700-normal.woff2"}},
+    "Cairo": {400: {"latin": "cairo-latin-400-normal.woff2", "arabic": "cairo-arabic-400-normal.woff2"},
+              700: {"latin": "cairo-latin-700-normal.woff2", "arabic": "cairo-arabic-700-normal.woff2"}},
+    "Almarai": {400: {"latin": "almarai-latin-400-normal.woff2", "arabic": "almarai-arabic-400-normal.woff2"},
+                700: {"latin": "almarai-latin-700-normal.woff2", "arabic": "almarai-arabic-700-normal.woff2"}},
+    "Tajawal": {400: {"latin": "tajawal-latin-400-normal.woff2", "arabic": "tajawal-arabic-400-normal.woff2"},
+                700: {"latin": "tajawal-latin-700-normal.woff2", "arabic": "tajawal-arabic-700-normal.woff2"}},
+    "IBM Plex Sans Arabic": {400: {"latin": "ibm-plex-sans-arabic-latin-400-normal.woff2",
+                                   "arabic": "ibm-plex-sans-arabic-arabic-400-normal.woff2"},
+                             700: {"latin": "ibm-plex-sans-arabic-latin-700-normal.woff2",
+                                   "arabic": "ibm-plex-sans-arabic-arabic-700-normal.woff2"}},
+    "Noto Kufi Arabic": {400: {"latin": "noto-kufi-arabic-latin-400-normal.woff2",
+                               "arabic": "noto-kufi-arabic-arabic-400-normal.woff2"},
+                         700: {"latin": "noto-kufi-arabic-latin-700-normal.woff2",
+                               "arabic": "noto-kufi-arabic-arabic-700-normal.woff2"}},
+    "Amiri": {400: {"latin": "amiri-latin-400-normal.woff2", "arabic": "amiri-arabic-400-normal.woff2"},
+              700: {"latin": "amiri-latin-700-normal.woff2", "arabic": "amiri-arabic-700-normal.woff2"}},
+}
+# The ranges fontsource splits those files on. Spelling them out is what lets one family play
+# both halves without the browser downloading a file it has no character for.
+SUBSET_RANGE = {
+    "latin": ("U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,"
+              "U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD"),
+    "arabic": ("U+0600-06FF,U+0750-077F,U+0870-088E,U+0890-0891,U+0898-08E1,U+08E3-08FF,"
+               "U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FEFF"),
+}
+_FACE_CACHE = {}
+
+
+def _font_dir():
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), "public", "fonts")
+
+
+def _face(name):
+    """One @font-face src as a data URI. Embedded rather than linked because the file has to
+    survive every engine we render through, including the ones with no base URL."""
+    if name not in _FACE_CACHE:
+        path = os.path.join(_font_dir(), name)
+        try:
+            with open(path, "rb") as fh:
+                _FACE_CACHE[name] = base64.b64encode(fh.read()).decode("ascii")
+        except OSError:
+            _FACE_CACHE[name] = ""
+    return _FACE_CACHE[name]
+
+
+def font_faces_css(families):
+    """@font-face blocks for the bundled families this document actually uses."""
+    out = []
+    for fam in families:
+        for weight, files in sorted(BUNDLED_FONTS.get(fam, {}).items()):
+            for subset, fname in sorted(files.items()):
+                b64 = _face(fname)
+                if not b64:
+                    continue
+                out.append(f"@font-face{{font-family:'{fam}';font-style:normal;font-weight:{weight};"
+                           f"font-display:block;src:url(data:font/woff2;base64,{b64}) format('woff2');"
+                           f"unicode-range:{SUBSET_RANGE[subset]};}}")
+    return "\n".join(out)
+
+
+def fonts_in_use(definition, branding):
+    """Every family this document can ask for: the two document faces, plus any a block overrides."""
+    used = set()
+    for key in ("font", "font_ar"):
+        v = (branding or {}).get(key)
+        if v in _FONTS:
+            used.add(v)
+    blocks = _list((definition or {}).get("blocks")) if isinstance(definition, dict) else []
+
+    def walk(items):
+        for bl in items:
+            if not isinstance(bl, dict):
+                continue
+            st = bl.get("style") if isinstance(bl.get("style"), dict) else {}
+            for key in ("font", "fontAr"):
+                if st.get(key) in _FONTS:
+                    used.add(st[key])
+            for cell in _list((bl.get("settings") or {}).get("cells")):
+                if isinstance(cell, list):
+                    walk(cell)
+
+    walk(blocks)
+    return used
+
+
 FONT_IMPORT_URL = ("https://fonts.googleapis.com/css2?"
                    + "&".join("family=" + spec for spec in GOOGLE_FONTS.values())
                    + "&display=swap")
@@ -122,6 +227,17 @@ def base_css(b, pw=210.0, ph=297.0):
     font = b.get("font") or "Montserrat"
     font_ar = b.get("font_ar") if b.get("font_ar") in _AR_FONTS else DEFAULT_FONT_AR
     stack = font_stack(font, font_ar)
+    # Families this page needs. Bundled ones are embedded below, the rest still come from Google,
+    # and when everything is bundled the page makes no network request at all.
+    used = b.get("fonts_used")
+    used = set(used) if used else {f for f in (font, font_ar) if f in _FONTS}
+    faces = font_faces_css(sorted(used))
+    remote = sorted(f for f in used if f not in BUNDLED_FONTS and f in GOOGLE_FONTS)
+    import_css = ""
+    if remote:
+        url = ("https://fonts.googleapis.com/css2?"
+               + "&".join("family=" + GOOGLE_FONTS[f] for f in remote) + "&display=swap")
+        import_css = f"@import url('{url}');"
     _pw, _ph = _fmt_num(pw or 210), _fmt_num(ph or 297)
     # page.bg paints EVERY page (html+body), so a tinted stationery look survives pagination and
     # the header/footer overlays compose lays on top.
@@ -129,7 +245,8 @@ def base_css(b, pw=210.0, ph=297.0):
     page_bg = (f"background-color:{pg_bg.strip()} !important; -webkit-print-color-adjust:exact; "
                "print-color-adjust:exact; " if _hexok(pg_bg) else "")
     return f"""<style>
-  @import url('{FONT_IMPORT_URL}');
+  {import_css}
+  {faces}
   @page {{ size: {_pw}mm {_ph}mm; margin: 0; }}
   html, body {{ margin:0 !important; padding:0 !important; {page_bg}}}
   img {{ max-width:100%; }}
@@ -1594,6 +1711,7 @@ def _branding_from_def(definition, doc):
         b["font"] = dbr["font"]
     if dbr.get("font_ar") in _AR_FONTS:
         b["font_ar"] = dbr["font_ar"]
+    b["fonts_used"] = fonts_in_use(definition, b)
     pg = definition.get("page") if isinstance(definition, dict) else None
     if isinstance(pg, dict) and _hexok(pg.get("bg")):
         b["page_bg"] = pg["bg"].strip()
