@@ -19,7 +19,8 @@
 1. **Publisher account**: Frappe Cloud dashboard → Marketplace → Become a Publisher
    (one-time; set publisher display name, e.g. "BSTC" or "Lumen").
 2. **Add the app**: Marketplace → My Apps → Add App → pick the GitHub repo
-   `ma7mod7osam/LumenPDF-Studio`, branch `master` (grant the Frappe Cloud GitHub app access
+   `ma7mod7osam/LumenPDF-Studio`, branch `lumenpdf` for v14 and v15 and `version-16` for v16
+   (grant the Frappe Cloud GitHub app access
    to the repo if not already).
 3. **Listing**: title "LumenPDF Studio", category (likely "ERPNext" / "Utilities"), the
    description auto-imports from README — review it; upload the logo (a 300×300 PNG export of
@@ -34,8 +35,8 @@
 6. **Submit for review.** Frappe's team checks that it installs cleanly on a fresh bench and
    that the listing is honest. The `after_install` + `after_migrate` self-configuration means a plain
    `install-app lumenpdf` works with zero manual steps — that's the main functional check.
-7. After approval, each release = push to `master` + a new git tag; the marketplace builds from
-   the branch you registered.
+7. After approval a push is enough. Frappe Cloud makes a release from the branch on every
+   push and audits it, so there is nothing to submit by hand for a new version.
 
 ## Things to know / decide
 

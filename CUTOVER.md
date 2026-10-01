@@ -1,8 +1,12 @@
 # Cutover: `brandpdf` → `lumenpdf`
 
-The app's internal id is now **`lumenpdf`** on the `lumenpdf` branch (`master` still ships
-`brandpdf`). Everything users see was already "LumenPDF Studio"; this aligns the technical id,
-the DocType names, the desk route, and the asset paths.
+The app's internal id is **`lumenpdf`**. Everything users see was already "LumenPDF Studio";
+this aligned the technical id, the DocType names, the desk route, and the asset paths.
+
+The cutover is finished. No site runs the old `brandpdf` id any more, and the `master` branch
+that carried it has been retired. Its last commit is kept as the tag `legacy/brandpdf-final`,
+so the old id is still readable if it is ever needed. The rest of this file is the history of
+how that was done, kept because the one rule below is still true for anyone renaming an app.
 
 ## ⚠ The one rule
 
@@ -11,8 +15,7 @@ an app by its id; renamed code + an old registration = `ModuleNotFoundError: No 
 'brandpdf'`, which wedges *every* bench command (this is exactly what took the site down on
 6 July). The rename is safe only as a **fresh install of the new id**.
 
-Because of that, `master` intentionally still contains `brandpdf`. Deploying `master` remains
-safe at all times.
+That is why the two ids lived on separate branches while the cutover was in progress.
 
 ---
 
@@ -74,7 +77,8 @@ bench --site <site> migrate
 - `/api/method/lumenpdf.api.engine_diag` should report the engine as before.
 
 ### Rollback
-If anything goes wrong: uninstall `lumenpdf`, re-add the app from **`master`** (still
+If anything goes wrong: uninstall `lumenpdf`, re-add the app from the tag
+**`legacy/brandpdf-final`** (still
 `brandpdf`), install, migrate, re-import the same JSON files. Your exports work in either app —
 the definition format is identical.
 
@@ -96,10 +100,12 @@ Format definition JSON is unchanged, which is why export/import works across the
 
 ---
 
-## Branch policy from here
+## Branches
 
-- **`master`** — `brandpdf`. Keeps your current site deployable and is the rollback path.
-- **`lumenpdf`** — `lumenpdf`. The marketplace branch and all future work.
-
-Once your site is cut over and stable, make `lumenpdf` the default branch on GitHub (and
-optionally retire `master`), so there's only one line of development again.
+- **`lumenpdf`** is the default branch and the one the v14 and v15 marketplace listing builds
+  from. All work lands here.
+- **`version-16`** carries the same app with its own CI, because the marketplace serves v16
+  from a separate source. Keep it in step with a merge, never a second edit: the two branches
+  differ only in the workflow file and one README note.
+- **`legacy/brandpdf-final`** is a tag, not a branch. It is the last commit of the retired
+  `master`, the only place the old `brandpdf` id still exists.
