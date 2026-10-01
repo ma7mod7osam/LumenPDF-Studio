@@ -11,6 +11,8 @@ Hardening from code review:
 - M3: permission failures are reported distinctly; the real traceback is logged.
 - L2: field-level read permissions are applied so permlevel-restricted values never reach the PDF.
 """
+import re
+
 import frappe
 
 from lumenpdf.api import set_state
@@ -21,8 +23,8 @@ from lumenpdf.render_html import render_html
 
 def generate(job_token, doctype, docname, user, template=None, _retry=0):
     job_id = job_token  # frappe.enqueue reserves 'job_id', so callers pass ours as 'job_token'
-    lock = "lumenpdf_render_lock_" + (frappe.local.site or "site")
-    if not _acquire(lock, job_id):
+    lock = _acquire_slot(job_id)
+    if not lock:
         # Another render holds the lock. Re-enqueue; the single long worker runs it next.
         if _retry < 60:
             frappe.enqueue(
@@ -49,7 +51,7 @@ def generate(job_token, doctype, docname, user, template=None, _retry=0):
 
         from lumenpdf.compose import compose_pdf
         pdf_bytes = compose_pdf(doc, template=template)  # chosen format (or default) + running header/footer
-        saved = _save_private_file(doc, pdf_bytes, docname)
+        saved = _save_private_file(doc, pdf_bytes, docname, template)
         set_state(job_id, dict(saved, status="done"), user)
     except Exception:
         frappe.log_error(message=frappe.get_traceback(), title="LumenPDF render failed")
@@ -118,6 +120,23 @@ def generate_preview(job_token, definition, doctype, docname, user, _retry=0):
 
 # --- concurrency lock (H1) -------------------------------------------------
 
+def _acquire_slot(job_id):
+    """Take one of a few renderer slots, and say which. Chromium is heavy, so the count stays
+    small and bounded: that is what keeps a burst of print clicks from stacking up browsers.
+    One slot was too few, two people printing at the same time meant one of them waiting."""
+    site = frappe.local.site or "site"
+    slots = conf("render_slots")
+    try:
+        slots = max(1, min(8, int(slots)))
+    except (TypeError, ValueError):
+        slots = 2
+    for i in range(slots):
+        lock = f"lumenpdf_render_lock_{site}_{i}"
+        if _acquire(lock, job_id):
+            return lock
+    return None
+
+
 def _acquire(lock, job_id):
     try:
         # raw redis SET NX EX; returns True if acquired, None/False if held.
@@ -138,13 +157,20 @@ def _release(lock):
 
 # --- file output -----------------------------------------------------------
 
-def _save_private_file(doc, pdf_bytes, docname):
+def file_suffix(template=None):
+    """The tail of a rendered file name. It carries the format, so a cached file is only reused
+    for the format it was printed with."""
+    slug = re.sub(r"[^a-zA-Z0-9]+", "-", str(template or "default")).strip("-").lower()[:40]
+    return f"-{slug}-lumenpdf.pdf"
+
+
+def _save_private_file(doc, pdf_bytes, docname, template=None):
     """Returns what a caller needs to hand the file on: the url to show it, and the File record
     itself, because the email composer attaches by File name, not by url."""
     f = frappe.get_doc(
         {
             "doctype": "File",
-            "file_name": f"{docname}-lumenpdf.pdf",
+            "file_name": f"{docname}{file_suffix(template)}",
             "is_private": 1,
             "content": pdf_bytes,
             "attached_to_doctype": doc.doctype,

@@ -25,6 +25,9 @@ def request_pdf(doctype: str, name: str, template: str = None):
         and frappe.db.exists("LumenPDF Template", {"name": template, "target_doctype": doctype})
     ):
         template = None
+    ready = _fresh_render(doctype, name, template)
+    if ready:
+        return dict(ready, status="done")  # nothing changed since it was printed, hand it straight back
     job_id = frappe.generate_hash(length=20)
     set_state(job_id, {"status": "queued"}, frappe.session.user)
     frappe.enqueue(
@@ -38,6 +41,43 @@ def request_pdf(doctype: str, name: str, template: str = None):
         template=template,
     )
     return {"job_id": job_id}
+
+
+def _fresh_render(doctype, name, template):
+    """A file already rendered for this document AND this format, after the document last
+    changed. Printing the same thing twice is the common case: the print screen opens on the
+    default format, the person looks at another one, then comes back."""
+    from lumenpdf import pdf_job  # local: pdf_job imports this module, so not at module level
+
+    try:
+        modified = frappe.db.get_value(doctype, name, "modified")
+        if not modified:
+            return None
+        # The format counts as part of the input: edit it in the builder and the old file is
+        # stale, even though the document itself never moved.
+        if template and frappe.db.exists("DocType", "LumenPDF Template"):
+            tmod = frappe.db.get_value("LumenPDF Template", template, "modified")
+            if tmod and tmod > modified:
+                modified = tmod
+        # The company banner and colours live in Settings, and they print too.
+        if frappe.db.exists("DocType", "LumenPDF Settings"):
+            smod = frappe.db.get_value("LumenPDF Settings", {}, "modified")
+            if smod and smod > modified:
+                modified = smod
+        rows = frappe.get_all(
+            "File",
+            filters={"attached_to_doctype": doctype, "attached_to_name": name,
+                     "file_name": ("like", "%" + pdf_job.file_suffix(template)),
+                     "creation": (">", modified)},
+            fields=["name", "file_name", "file_url"],
+            order_by="creation desc",
+            limit=1,
+        )
+        if not rows:
+            return None
+        return {"file_id": rows[0].name, "file_name": rows[0].file_name, "file_url": rows[0].file_url}
+    except Exception:
+        return None  # a cache miss must never be worse than a render
 
 
 @frappe.whitelist()

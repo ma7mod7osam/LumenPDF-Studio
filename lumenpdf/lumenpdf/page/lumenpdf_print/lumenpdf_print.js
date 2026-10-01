@@ -161,7 +161,14 @@ lumenpdf.print.select = function (fmt) {
 		method: 'lumenpdf.api.request_pdf',
 		args: { doctype: S.doctype, name: S.name, template: fmt },
 		callback: function (r) {
-			const job = (r.message || {}).job_id;
+			const m = r.message || {};
+			if (m.status === 'done' && m.file_url) {
+				// already rendered since the document last changed, so there is nothing to wait for
+				S.files[fmt] = { file_url: m.file_url, file_name: m.file_name, name: m.file_id };
+				if (S.current === fmt) lumenpdf.print.show(fmt);
+				return;
+			}
+			const job = m.job_id;
 			if (!job) {
 				lumenpdf.print.stage(`<div class="bpdf-msg">${__('Could not start the render.')}</div>`);
 				return;
