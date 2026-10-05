@@ -197,6 +197,44 @@ def _source(doc, field):
     return None
 
 
+def doc_currency(doc):
+    """The currency the document's money is in, chosen the way ERPNext chooses it for In Words:
+    a Payment Entry by its payment type, a Journal Entry by its total, anything else by its
+    own currency, and the company's when the document has none."""
+    if doc.doctype == "Payment Entry":
+        pay = doc.get("payment_type") in ("Pay", "Internal Transfer")
+        cur = doc.get("paid_from_account_currency" if pay else "paid_to_account_currency")
+    elif doc.doctype == "Journal Entry":
+        cur = doc.get("total_amount_currency")
+    else:
+        cur = doc.get("currency")
+    return cur or _company_currency(doc) or ""
+
+
+# the short form an Arabic document writes after an amount
+_AR_SHORT = {"SAR": "ر.س", "AED": "د.إ", "KWD": "د.ك", "BHD": "د.ب", "OMR": "ر.ع", "QAR": "ر.ق",
+             "JOD": "د.أ", "EGP": "ج.م", "USD": "دولار", "EUR": "يورو", "GBP": "جنيه إسترليني"}
+
+
+def currency_label(code, style="ar"):
+    """A currency as a label: "ar" ر.س, "name" ريال سعودي, "code" SAR, "symbol" the symbol set on
+    the Currency record. A currency without an Arabic form falls back to its symbol, then code."""
+    code = (code or "").upper()
+    if not code:
+        return ""
+    if style == "code":
+        return code
+    if style == "name" and code in _UNITS:
+        return _UNITS[code][0]
+    if style == "ar" and code in _AR_SHORT:
+        return _AR_SHORT[code]
+    try:
+        sym = frappe.db.get_value("Currency", code, "symbol", cache=True)
+    except Exception:
+        sym = None
+    return sym or code
+
+
 def _readable(doc, field):
     try:
         df = frappe.get_meta(doc.doctype).get_field(field)
@@ -236,6 +274,41 @@ def field_words(doc, field, lang):
     if amount is None or not currency:
         return None
     return money(amount, currency, lang)
+
+
+def currency_sample(doc):
+    """The document's currency in every label style, for the builder's canvas."""
+    code = doc_currency(doc)
+    return {"code": code, "labels": {st: currency_label(code, st) for st in ("ar", "name", "code", "symbol")}}
+
+
+def amount_plain(doc, field):
+    """A Currency field as the bare figure, in the number format of its currency, for a layout
+    that prints the currency beside it. None when the field is not a currency amount."""
+    try:
+        df = frappe.get_meta(doc.doctype).get_field(field)
+    except Exception:
+        df = None
+    if not df or df.fieldtype != "Currency" or (df.permlevel or 0):
+        return None
+    v = doc.get(field)
+    if v is None:
+        return None
+    from frappe.utils import fmt_money
+    cur, prec = None, None
+    try:
+        from frappe.model.meta import get_field_currency, get_field_precision
+        cur = get_field_currency(df, doc)
+        prec = get_field_precision(df, doc)
+    except Exception:
+        pass
+    fmt = None
+    if cur:
+        try:
+            fmt = frappe.db.get_value("Currency", cur, "number_format", cache=True)
+        except Exception:
+            fmt = None
+    return fmt_money(v, precision=prec, format=fmt)
 
 
 def sample(doc):
