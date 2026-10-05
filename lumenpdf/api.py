@@ -1011,6 +1011,11 @@ def builder_sample(doctype, name):
         "grand_total": fmt("grand_total") or fmt("rounded_total") or fmt("total"),
         "fields": fields, "items": [], "taxes": [], "payment_schedule": [],
     }
+    try:
+        from lumenpdf import words
+        out["words"] = words.sample(doc)
+    except Exception:
+        out["words"] = {}
     for it in (doc.get("items") or []):
         out["items"].append({
             "n": it.get("item_name") or it.get("item_code") or "",

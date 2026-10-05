@@ -131,9 +131,12 @@ SYSTEM_FONTS = ["Arial", "Tahoma"]
 # wkhtmltopdf fallback deliberately strips the Google import because that fetch can stall it for
 # minutes. Anything not listed here still comes from Google, as before.
 BUNDLED_FONTS = {
-    # family -> weight -> subset -> file. An Arabic family carries its Latin subset too, because
-    # a subset file holds only its own script: without the Latin half, English inside an Arabic
-    # document would fall through to the host face, which is the bug this whole table closes.
+    # family -> weight -> subset -> file. A Latin family ships its Latin subset. An Arabic family
+    # ships ONE file per weight holding its Arabic and Latin glyphs together ("all"), built by
+    # merging fontsource's two subsets. Split into two faces by unicode-range, wkhtmltopdf (every
+    # v15 site without Print Designer) shapes a whole Arabic run with the Arabic half, so the
+    # full stop at the end of an Arabic sentence came out as an empty box, and the Arabic comma
+    # and Arabic-Indic digits dropped to DejaVu Sans. One file has every glyph the run needs.
     "Plus Jakarta Sans": {400: {"latin": "plus-jakarta-sans-latin-400-normal.woff"},
                           600: {"latin": "plus-jakarta-sans-latin-600-normal.woff"},
                           700: {"latin": "plus-jakarta-sans-latin-700-normal.woff"},
@@ -144,22 +147,14 @@ BUNDLED_FONTS = {
     "Montserrat": {400: {"latin": "montserrat-latin-400-normal.woff"},
                    600: {"latin": "montserrat-latin-600-normal.woff"},
                    700: {"latin": "montserrat-latin-700-normal.woff"}},
-    "Cairo": {400: {"latin": "cairo-latin-400-normal.woff", "arabic": "cairo-arabic-400-normal.woff"},
-              700: {"latin": "cairo-latin-700-normal.woff", "arabic": "cairo-arabic-700-normal.woff"}},
-    "Almarai": {400: {"latin": "almarai-latin-400-normal.woff", "arabic": "almarai-arabic-400-normal.woff"},
-                700: {"latin": "almarai-latin-700-normal.woff", "arabic": "almarai-arabic-700-normal.woff"}},
-    "Tajawal": {400: {"latin": "tajawal-latin-400-normal.woff", "arabic": "tajawal-arabic-400-normal.woff"},
-                700: {"latin": "tajawal-latin-700-normal.woff", "arabic": "tajawal-arabic-700-normal.woff"}},
-    "IBM Plex Sans Arabic": {400: {"latin": "ibm-plex-sans-arabic-latin-400-normal.woff",
-                                   "arabic": "ibm-plex-sans-arabic-arabic-400-normal.woff"},
-                             700: {"latin": "ibm-plex-sans-arabic-latin-700-normal.woff",
-                                   "arabic": "ibm-plex-sans-arabic-arabic-700-normal.woff"}},
-    "Noto Kufi Arabic": {400: {"latin": "noto-kufi-arabic-latin-400-normal.woff",
-                               "arabic": "noto-kufi-arabic-arabic-400-normal.woff"},
-                         700: {"latin": "noto-kufi-arabic-latin-700-normal.woff",
-                               "arabic": "noto-kufi-arabic-arabic-700-normal.woff"}},
-    "Amiri": {400: {"latin": "amiri-latin-400-normal.woff", "arabic": "amiri-arabic-400-normal.woff"},
-              700: {"latin": "amiri-latin-700-normal.woff", "arabic": "amiri-arabic-700-normal.woff"}},
+    "Cairo": {400: {"all": "cairo-400-normal.woff"}, 700: {"all": "cairo-700-normal.woff"}},
+    "Almarai": {400: {"all": "almarai-400-normal.woff"}, 700: {"all": "almarai-700-normal.woff"}},
+    "Tajawal": {400: {"all": "tajawal-400-normal.woff"}, 700: {"all": "tajawal-700-normal.woff"}},
+    "IBM Plex Sans Arabic": {400: {"all": "ibm-plex-sans-arabic-400-normal.woff"},
+                             700: {"all": "ibm-plex-sans-arabic-700-normal.woff"}},
+    "Noto Kufi Arabic": {400: {"all": "noto-kufi-arabic-400-normal.woff"},
+                         700: {"all": "noto-kufi-arabic-700-normal.woff"}},
+    "Amiri": {400: {"all": "amiri-400-normal.woff"}, 700: {"all": "amiri-700-normal.woff"}},
     # a tabular face for figures, which is what a receipt's amounts want
     "IBM Plex Mono": {400: {"latin": "ibm-plex-mono-latin-400-normal.woff"},
                       600: {"latin": "ibm-plex-mono-latin-600-normal.woff"}},
@@ -171,6 +166,7 @@ SUBSET_RANGE = {
               "U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD"),
     "arabic": ("U+0600-06FF,U+0750-077F,U+0870-088E,U+0890-0891,U+0898-08E1,U+08E3-08FF,"
                "U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FEFF"),
+    "all": None,   # a whole file: no range, the face answers for every glyph it has
 }
 _FACE_CACHE = {}
 
@@ -209,7 +205,8 @@ def font_faces_css(families):
                 # space, so a comment in between leaves the source untouched on v14, v15 and v16.
                 out.append(f"@font-face{{font-family:'{fam}';font-style:normal;font-weight:{weight};"
                            f"font-display:block;src:/*lumenpdf*/url(data:font/woff;base64,{b64}) format('woff');"
-                           f"unicode-range:{SUBSET_RANGE[subset]};}}")
+                           + (f"unicode-range:{SUBSET_RANGE[subset]};" if SUBSET_RANGE.get(subset) else "")
+                           + "}")
     return "\n".join(out)
 
 
@@ -773,6 +770,13 @@ def _field_is_rich(doc, field):
 def _e_field(doc, b, s, ctx):
     field = s.get("field")
     prefix = _esc(s.get("prefix") or "")
+    if s.get("words") in ("ar", "en"):
+        # the amount in words, written now in the chosen language rather than the sentence
+        # ERPNext stored in whatever language the person who saved the document was using
+        from lumenpdf import words
+        w = words.field_words(doc, field, s["words"])
+        if w is not None:
+            return prefix + _esc(w)
     val = _field_value(doc, field)
     # settings.html opts a plain field into HTML rendering: ERPNext stores address_display and
     # similar as Small Text that already CONTAINS <br> tags, which would otherwise print raw.
