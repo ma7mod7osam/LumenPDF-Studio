@@ -20,6 +20,7 @@ PDF matches the builder exactly. Generic elements (heading/text/field/image/divi
 table) are mirrored from the builder's JS renderers.
 """
 import base64
+import html as html_mod
 import io
 import json
 import os
@@ -122,7 +123,10 @@ ARABIC_FONTS = ["Cairo", "Almarai", "Tajawal", "IBM Plex Sans Arabic", "Noto San
                 "El Messiri", "Reem Kufi", "Markazi Text", "Rubik", "Amiri", "Scheherazade New"]
 DEFAULT_FONT_AR = "Cairo"
 SYSTEM_FONTS = ["Arial", "Tahoma"]
-# The faces that ship inside the app, as woff2 under public/fonts. A bundled family needs no
+# The faces that ship inside the app, as WOFF under public/fonts. WOFF rather than the smaller
+# WOFF2 on purpose: wkhtmltopdf renders through an old WebKit that cannot read WOFF2 at all, and
+# a Frappe v14 site has no other PDF engine, so a WOFF2-only bundle silently leaves those sites
+# on the host's fonts. The difference in size is about three per cent. A bundled family needs no
 # network at print time, which matters twice over: a bench can be offline or firewalled, and the
 # wkhtmltopdf fallback deliberately strips the Google import because that fetch can stall it for
 # minutes. Anything not listed here still comes from Google, as before.
@@ -130,35 +134,35 @@ BUNDLED_FONTS = {
     # family -> weight -> subset -> file. An Arabic family carries its Latin subset too, because
     # a subset file holds only its own script: without the Latin half, English inside an Arabic
     # document would fall through to the host face, which is the bug this whole table closes.
-    "Plus Jakarta Sans": {400: {"latin": "plus-jakarta-sans-latin-400-normal.woff2"},
-                          600: {"latin": "plus-jakarta-sans-latin-600-normal.woff2"},
-                          700: {"latin": "plus-jakarta-sans-latin-700-normal.woff2"},
-                          800: {"latin": "plus-jakarta-sans-latin-800-normal.woff2"}},
-    "Inter": {400: {"latin": "inter-latin-400-normal.woff2"},
-              600: {"latin": "inter-latin-600-normal.woff2"},
-              700: {"latin": "inter-latin-700-normal.woff2"}},
-    "Montserrat": {400: {"latin": "montserrat-latin-400-normal.woff2"},
-                   600: {"latin": "montserrat-latin-600-normal.woff2"},
-                   700: {"latin": "montserrat-latin-700-normal.woff2"}},
-    "Cairo": {400: {"latin": "cairo-latin-400-normal.woff2", "arabic": "cairo-arabic-400-normal.woff2"},
-              700: {"latin": "cairo-latin-700-normal.woff2", "arabic": "cairo-arabic-700-normal.woff2"}},
-    "Almarai": {400: {"latin": "almarai-latin-400-normal.woff2", "arabic": "almarai-arabic-400-normal.woff2"},
-                700: {"latin": "almarai-latin-700-normal.woff2", "arabic": "almarai-arabic-700-normal.woff2"}},
-    "Tajawal": {400: {"latin": "tajawal-latin-400-normal.woff2", "arabic": "tajawal-arabic-400-normal.woff2"},
-                700: {"latin": "tajawal-latin-700-normal.woff2", "arabic": "tajawal-arabic-700-normal.woff2"}},
-    "IBM Plex Sans Arabic": {400: {"latin": "ibm-plex-sans-arabic-latin-400-normal.woff2",
-                                   "arabic": "ibm-plex-sans-arabic-arabic-400-normal.woff2"},
-                             700: {"latin": "ibm-plex-sans-arabic-latin-700-normal.woff2",
-                                   "arabic": "ibm-plex-sans-arabic-arabic-700-normal.woff2"}},
-    "Noto Kufi Arabic": {400: {"latin": "noto-kufi-arabic-latin-400-normal.woff2",
-                               "arabic": "noto-kufi-arabic-arabic-400-normal.woff2"},
-                         700: {"latin": "noto-kufi-arabic-latin-700-normal.woff2",
-                               "arabic": "noto-kufi-arabic-arabic-700-normal.woff2"}},
-    "Amiri": {400: {"latin": "amiri-latin-400-normal.woff2", "arabic": "amiri-arabic-400-normal.woff2"},
-              700: {"latin": "amiri-latin-700-normal.woff2", "arabic": "amiri-arabic-700-normal.woff2"}},
+    "Plus Jakarta Sans": {400: {"latin": "plus-jakarta-sans-latin-400-normal.woff"},
+                          600: {"latin": "plus-jakarta-sans-latin-600-normal.woff"},
+                          700: {"latin": "plus-jakarta-sans-latin-700-normal.woff"},
+                          800: {"latin": "plus-jakarta-sans-latin-800-normal.woff"}},
+    "Inter": {400: {"latin": "inter-latin-400-normal.woff"},
+              600: {"latin": "inter-latin-600-normal.woff"},
+              700: {"latin": "inter-latin-700-normal.woff"}},
+    "Montserrat": {400: {"latin": "montserrat-latin-400-normal.woff"},
+                   600: {"latin": "montserrat-latin-600-normal.woff"},
+                   700: {"latin": "montserrat-latin-700-normal.woff"}},
+    "Cairo": {400: {"latin": "cairo-latin-400-normal.woff", "arabic": "cairo-arabic-400-normal.woff"},
+              700: {"latin": "cairo-latin-700-normal.woff", "arabic": "cairo-arabic-700-normal.woff"}},
+    "Almarai": {400: {"latin": "almarai-latin-400-normal.woff", "arabic": "almarai-arabic-400-normal.woff"},
+                700: {"latin": "almarai-latin-700-normal.woff", "arabic": "almarai-arabic-700-normal.woff"}},
+    "Tajawal": {400: {"latin": "tajawal-latin-400-normal.woff", "arabic": "tajawal-arabic-400-normal.woff"},
+                700: {"latin": "tajawal-latin-700-normal.woff", "arabic": "tajawal-arabic-700-normal.woff"}},
+    "IBM Plex Sans Arabic": {400: {"latin": "ibm-plex-sans-arabic-latin-400-normal.woff",
+                                   "arabic": "ibm-plex-sans-arabic-arabic-400-normal.woff"},
+                             700: {"latin": "ibm-plex-sans-arabic-latin-700-normal.woff",
+                                   "arabic": "ibm-plex-sans-arabic-arabic-700-normal.woff"}},
+    "Noto Kufi Arabic": {400: {"latin": "noto-kufi-arabic-latin-400-normal.woff",
+                               "arabic": "noto-kufi-arabic-arabic-400-normal.woff"},
+                         700: {"latin": "noto-kufi-arabic-latin-700-normal.woff",
+                               "arabic": "noto-kufi-arabic-arabic-700-normal.woff"}},
+    "Amiri": {400: {"latin": "amiri-latin-400-normal.woff", "arabic": "amiri-arabic-400-normal.woff"},
+              700: {"latin": "amiri-latin-700-normal.woff", "arabic": "amiri-arabic-700-normal.woff"}},
     # a tabular face for figures, which is what a receipt's amounts want
-    "IBM Plex Mono": {400: {"latin": "ibm-plex-mono-latin-400-normal.woff2"},
-                      600: {"latin": "ibm-plex-mono-latin-600-normal.woff2"}},
+    "IBM Plex Mono": {400: {"latin": "ibm-plex-mono-latin-400-normal.woff"},
+                      600: {"latin": "ibm-plex-mono-latin-600-normal.woff"}},
 }
 # The ranges fontsource splits those files on. Spelling them out is what lets one family play
 # both halves without the browser downloading a file it has no character for.
@@ -198,7 +202,7 @@ def font_faces_css(families):
                 if not b64:
                     continue
                 out.append(f"@font-face{{font-family:'{fam}';font-style:normal;font-weight:{weight};"
-                           f"font-display:block;src:url(data:font/woff2;base64,{b64}) format('woff2');"
+                           f"font-display:block;src:url(data:font/woff;base64,{b64}) format('woff');"
                            f"unicode-range:{SUBSET_RANGE[subset]};}}")
     return "\n".join(out)
 
@@ -314,10 +318,10 @@ def _b_title(doc, b, row, ctx):
     title = (row.get("label") or "QUOTATION")
     meta = [
         ("Quotation No", doc.name),
-        ("Date", doc.get_formatted("transaction_date")),
+        ("Date", _plain(doc.get_formatted("transaction_date"))),
     ]
     if doc.get("valid_till"):
-        meta.append(("Valid Till", doc.get_formatted("valid_till")))
+        meta.append(("Valid Till", _plain(doc.get_formatted("valid_till"))))
     rows = "".join(f'<tr><td class="k">{frappe.utils.escape_html(k)}</td><td><bdi>{frappe.utils.escape_html(v)}</bdi></td></tr>' for k, v in meta)
     return (
         '<table class="bs-head"><tr>'
@@ -363,26 +367,26 @@ def _b_items(doc, b, row, ctx):
         body.append(
             f'<tr><td class="num">{i}</td>'
             f'<td><div class="it-name">{nm}</div>{desc_html}</td>'
-            f'<td class="num"><bdi>{it.get_formatted("qty")} {frappe.utils.escape_html(it.get("uom") or "")}</bdi></td>'
-            f'<td class="num"><bdi>{it.get_formatted("rate")}</bdi></td>'
-            f'<td class="num"><bdi>{it.get_formatted("amount")}</bdi></td></tr>'
+            f'<td class="num"><bdi>{_plain(it.get_formatted("qty"))} {frappe.utils.escape_html(it.get("uom") or "")}</bdi></td>'
+            f'<td class="num"><bdi>{_plain(it.get_formatted("rate"))}</bdi></td>'
+            f'<td class="num"><bdi>{_plain(it.get_formatted("amount"))}</bdi></td></tr>'
         )
     return head + "".join(body) + "</tbody></table>"
 
 
 def _b_totals(doc, b, row, ctx):
     primary = b.get("primary", "#1C75BC")
-    lines = [f'<tr><td class="lbl">Subtotal</td><td class="val"><bdi>{doc.get_formatted("total")}</bdi></td></tr>']
+    lines = [f'<tr><td class="lbl">Subtotal</td><td class="val"><bdi>{_plain(doc.get_formatted("total"))}</bdi></td></tr>']
     if doc.get("discount_amount"):
-        lines.append(f'<tr><td class="lbl">Discount</td><td class="val"><bdi>- {doc.get_formatted("discount_amount")}</bdi></td></tr>')
+        lines.append(f'<tr><td class="lbl">Discount</td><td class="val"><bdi>- {_plain(doc.get_formatted("discount_amount"))}</bdi></td></tr>')
     for tax in (doc.get("taxes") or []):
         if tax.tax_amount:
             d = frappe.utils.escape_html(frappe.utils.strip_html_tags(tax.description or ""))
-            lines.append(f'<tr><td class="lbl">{d}</td><td class="val"><bdi>{tax.get_formatted("tax_amount")}</bdi></td></tr>')
+            lines.append(f'<tr><td class="lbl">{d}</td><td class="val"><bdi>{_plain(tax.get_formatted("tax_amount"))}</bdi></td></tr>')
     grand = (
         f'<tr class="grand">'
         f'<td style="background-color:{primary} !important;color:#fff !important;font-weight:700;font-size:10pt;text-align:right;padding:6px 8px;-webkit-print-color-adjust:exact;">Grand Total</td>'
-        f'<td style="background-color:{primary} !important;color:#fff !important;font-weight:700;font-size:10pt;text-align:right;white-space:nowrap;padding:6px 8px;-webkit-print-color-adjust:exact;"><bdi>{doc.get_formatted("grand_total")}</bdi></td></tr>'
+        f'<td style="background-color:{primary} !important;color:#fff !important;font-weight:700;font-size:10pt;text-align:right;white-space:nowrap;padding:6px 8px;-webkit-print-color-adjust:exact;"><bdi>{_plain(doc.get_formatted("grand_total"))}</bdi></td></tr>'
     )
     return (
         '<table style="width:100%;border-collapse:collapse;table-layout:fixed;"><tr><td style="border:0;"></td>'
@@ -404,9 +408,9 @@ def _b_payment_schedule(doc, b, row, ctx):
         term = frappe.utils.escape_html(ps.get("payment_term") or ps.get("description") or "")
         body.append(
             f'<tr><td class="num">{i}</td><td><div class="it-name">{term}</div></td>'
-            f'<td class="num"><bdi>{ps.get_formatted("due_date")}</bdi></td>'
-            f'<td class="num"><bdi>{ps.get_formatted("invoice_portion")}</bdi></td>'
-            f'<td class="num"><bdi>{ps.get_formatted("payment_amount")}</bdi></td></tr>'
+            f'<td class="num"><bdi>{_plain(ps.get_formatted("due_date"))}</bdi></td>'
+            f'<td class="num"><bdi>{_plain(ps.get_formatted("invoice_portion"))}</bdi></td>'
+            f'<td class="num"><bdi>{_plain(ps.get_formatted("payment_amount"))}</bdi></td></tr>'
         )
     return head + "".join(body) + "</tbody></table></div>"
 
@@ -556,6 +560,32 @@ def _hexok(v):
     return isinstance(v, str) and bool(_HEX.match(v.strip()))
 
 
+_ICON_TAG = re.compile(r"<\s*i[^>]*>\s*</\s*i\s*>", re.I)
+_ANY_TAG = re.compile(r"<[^>]+>")
+
+
+def _plain(v):
+    """A formatted value as text.
+
+    ERPNext does not always hand back a plain string: a Saudi Riyal amount comes out as
+    '<i class="sicon-sar"></i> 69,000.00', because the desk draws the new currency symbol with
+    an icon font. Printed through a block that escapes its input, that markup appears on the
+    page as literal angle brackets and wrecks the line. The tag is dropped here, at the one
+    place every field value passes through, rather than in each renderer."""
+    if v is None:
+        return ""
+    v = str(v)
+    if "<" not in v:
+        return v
+    v = _ICON_TAG.sub("", v)
+    if "<" in v:
+        v = _ANY_TAG.sub("", v)
+    # entities too: the markup often carries &nbsp; between the symbol and the figure, and an
+    # escaped page would print the entity itself
+    v = html_mod.unescape(v)
+    return " ".join(v.split())
+
+
 def _field_value(doc, field):
     """Resolve a parent-doc field for Field blocks / {token} table cells. Permission-gated
     fields (permlevel > 0) never render — same safety rule as _d_datatable's column filter, so a
@@ -576,7 +606,7 @@ def _field_value(doc, field):
         v = doc.get_formatted(field)
     except Exception:
         v = doc.get(field)
-    return "" if v is None else str(v)
+    return _plain(v)
 
 
 def _linked_field_value(doc, field):
@@ -923,9 +953,9 @@ def _d_title(doc, b, s, ctx):
     if meta_cfg.get("name"):
         m.append((ml.get("name") or "Quotation No", doc.name))
     if meta_cfg.get("date"):
-        m.append((ml.get("date") or "Date", doc.get_formatted("transaction_date")))
+        m.append((ml.get("date") or "Date", _plain(doc.get_formatted("transaction_date"))))
     if meta_cfg.get("valid_till") and doc.get("valid_till"):
-        m.append((ml.get("valid_till") or "Valid Till", doc.get_formatted("valid_till")))
+        m.append((ml.get("valid_till") or "Valid Till", _plain(doc.get_formatted("valid_till"))))
     mlc = f'color:{s["metaLabelColor"].strip()};' if _hexok(s.get("metaLabelColor")) else ""
     mvc = f'color:{s["metaValueColor"].strip()};' if _hexok(s.get("metaValueColor")) else ""
     mbc = f'border-color:{s["metaBorderColor"].strip()};' if _hexok(s.get("metaBorderColor")) else ""
@@ -1133,11 +1163,11 @@ def _d_items(doc, b, s, ctx):
             inner_cell = ih + txt
         tds = f'<td class="num" style="{c_num}">{i}</td><td style="{c_item}">{inner_cell}</td>'
         if cols_cfg.get("qty"):
-            tds += f'<td class="num" style="{c_qty}"><bdi>{_esc(it.get_formatted("qty"))} {_esc(it.get("uom") or "")}</bdi></td>'
+            tds += f'<td class="num" style="{c_qty}"><bdi>{_esc(_plain(it.get_formatted("qty")))} {_esc(it.get("uom") or "")}</bdi></td>'
         if cols_cfg.get("rate"):
-            tds += f'<td class="num" style="{c_rate}"><bdi>{_esc(it.get_formatted("rate"))}</bdi></td>'
+            tds += f'<td class="num" style="{c_rate}"><bdi>{_esc(_plain(it.get_formatted("rate")))}</bdi></td>'
         if cols_cfg.get("amount"):
-            tds += f'<td class="num" style="{c_amount}"><bdi>{_esc(it.get_formatted("amount"))}</bdi></td>'
+            tds += f'<td class="num" style="{c_amount}"><bdi>{_esc(_plain(it.get_formatted("amount")))}</bdi></td>'
         rowstyle = f' style="{zbg}"' if (zbg and i % 2 == 0) else ""
         body.append(f"<tr{rowstyle}>{tds}</tr>")
     if sk["th_first"]:  # rounded first/last header cells
@@ -1312,16 +1342,16 @@ def _d_totals(doc, b, s, ctx):
     vszc = f"font-size:{_fmt_num(min(72, max(4, vsz)))}pt;" if vsz else ""
     wmm = _num(s.get("width"), 82) or 82
     wmm = _fmt_num(min(200, max(40, wmm)))
-    lines = [f'<tr><td class="lbl" style="{lc}{vszc}">{_label(s.get("subtotalLabel") or "Subtotal")}</td><td class="val" style="{vc}{vszc}"><bdi>{_esc(doc.get_formatted("total"))}</bdi></td></tr>']
+    lines = [f'<tr><td class="lbl" style="{lc}{vszc}">{_label(s.get("subtotalLabel") or "Subtotal")}</td><td class="val" style="{vc}{vszc}"><bdi>{_esc(_plain(doc.get_formatted("total")))}</bdi></td></tr>']
     if doc.get("discount_amount"):
-        lines.append(f'<tr><td class="lbl" style="{lc}{vszc}">{_label(s.get("discountLabel") or "Discount")}</td><td class="val" style="{vc}{vszc}"><bdi>- {_esc(doc.get_formatted("discount_amount"))}</bdi></td></tr>')
+        lines.append(f'<tr><td class="lbl" style="{lc}{vszc}">{_label(s.get("discountLabel") or "Discount")}</td><td class="val" style="{vc}{vszc}"><bdi>- {_esc(_plain(doc.get_formatted("discount_amount")))}</bdi></td></tr>')
     for tax in (doc.get("taxes") or []):
         if tax.tax_amount:
             d = _esc(frappe.utils.strip_html_tags(tax.description or ""))
-            lines.append(f'<tr><td class="lbl" style="{lc}{vszc}">{d}</td><td class="val" style="{vc}{vszc}"><bdi>{_esc(tax.get_formatted("tax_amount"))}</bdi></td></tr>')
+            lines.append(f'<tr><td class="lbl" style="{lc}{vszc}">{d}</td><td class="val" style="{vc}{vszc}"><bdi>{_esc(_plain(tax.get_formatted("tax_amount")))}</bdi></td></tr>')
     grand = (
         f'<tr class="grand"><td style="background-color:{gc} !important;color:{gtc} !important;font-weight:700;{gszc}text-align:right;padding:6px 8px;-webkit-print-color-adjust:exact;">{_label(s.get("grandLabel") or "Grand Total")}</td>'
-        f'<td style="background-color:{gc} !important;color:{gtc} !important;font-weight:700;{gszc}text-align:right;white-space:nowrap;padding:6px 8px;-webkit-print-color-adjust:exact;"><bdi>{_esc(doc.get_formatted("grand_total"))}</bdi></td></tr>'
+        f'<td style="background-color:{gc} !important;color:{gtc} !important;font-weight:700;{gszc}text-align:right;white-space:nowrap;padding:6px 8px;-webkit-print-color-adjust:exact;"><bdi>{_esc(_plain(doc.get_formatted("grand_total")))}</bdi></td></tr>'
     )
     return (
         f'<div style="width:{wmm}mm;max-width:100%;margin-left:auto;">'
@@ -1361,9 +1391,9 @@ def _d_payment_schedule(doc, b, s, ctx):
         rowstyle = f' style="{zbg}"' if (zbg and i % 2 == 0) else ""
         body.append(
             f'<tr{rowstyle}><td class="num" style="{c_num}">{i}</td><td style="{c_term}"><div class="it-name">{term}</div></td>'
-            f'<td class="num" style="{c_due}"><bdi>{_esc(ps.get_formatted("due_date"))}</bdi></td>'
-            f'<td class="num" style="{c_pct}"><bdi>{_esc(ps.get_formatted("invoice_portion"))}</bdi></td>'
-            f'<td class="num" style="{c_amount}"><bdi>{_esc(ps.get_formatted("payment_amount"))}</bdi></td></tr>'
+            f'<td class="num" style="{c_due}"><bdi>{_esc(_plain(ps.get_formatted("due_date")))}</bdi></td>'
+            f'<td class="num" style="{c_pct}"><bdi>{_esc(_plain(ps.get_formatted("invoice_portion")))}</bdi></td>'
+            f'<td class="num" style="{c_amount}"><bdi>{_esc(_plain(ps.get_formatted("payment_amount")))}</bdi></td></tr>'
         )
     return (
         f'<div class="bs-sec-lbl" style="{hcolor}">{heading}</div>'
