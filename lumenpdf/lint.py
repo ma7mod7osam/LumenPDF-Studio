@@ -20,7 +20,7 @@ import frappe
 
 from lumenpdf import blocks as B
 
-A4 = {"portrait": (210.0, 297.0), "landscape": (297.0, 210.0)}
+# the page the format says it prints on, so a width check means something
 FIT_TOLERANCE = 2.0  # mm. Below this a gap is a rounding artifact, above it is visible on paper.
 
 
@@ -35,7 +35,7 @@ def _num(v, default=None):
 
 def _page(definition):
     page = definition.get("page") if isinstance(definition.get("page"), dict) else {}
-    pw, ph = A4["landscape" if page.get("orientation") == "landscape" else "portrait"]
+    pw, ph = B.page_dims(definition)
     margin_x = _num(page.get("margin_x"), 14.0)
     return pw, ph, margin_x
 

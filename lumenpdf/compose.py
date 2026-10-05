@@ -291,7 +291,7 @@ def _compose(doc, definition, renderer):
             if key not in cache:
                 ov = B._absolute_page_html(
                     doc, branding, bands, {"terms_html": terms_html, "page": i + 1, "total": n, "body_w": pw - 2 * mx}, grow=False,
-                    pw=pw, ph=ph,
+                    pw=pw, ph=ph, overlay=True,
                 )
                 cache[key] = PdfReader(io.BytesIO(_finish(ov, allowed, renderer, page=(pw, ph)))).pages[0]
             try:

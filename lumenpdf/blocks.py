@@ -49,13 +49,22 @@ def _pf_css(top=0, bottom=0, left=0, right=0, pw=None, ph=None):
             "}</style>")
 
 
+PAPER_SIZES = {"A4": (210.0, 297.0), "Letter": (215.9, 279.4), "Legal": (215.9, 355.6),
+               "A5": (148.0, 210.0), "A3": (297.0, 420.0)}
+DEFAULT_PAPER = "A4"
+
+
 def page_dims(definition):
-    """(width_mm, height_mm) for the definition's page setup. A4 portrait unless
-    page.orientation == 'landscape'."""
+    """(width_mm, height_mm) for the definition's page setup. A4 unless page.size names another
+    paper, and swapped when page.orientation is landscape. A document modelled on US Letter
+    prints on Letter: the difference is 6mm of width and 18mm of height, which is the kind of
+    thing nobody notices until the margins look wrong on every page."""
     pg = definition.get("page") if isinstance(definition, dict) else None
-    if isinstance(pg, dict) and (pg.get("orientation") or "").lower() == "landscape":
-        return 297.0, 210.0
-    return 210.0, 297.0
+    pg = pg if isinstance(pg, dict) else {}
+    w, h = PAPER_SIZES.get(str(pg.get("size") or DEFAULT_PAPER), PAPER_SIZES[DEFAULT_PAPER])
+    if (pg.get("orientation") or "").lower() == "landscape":
+        return h, w
+    return w, h
 
 
 def page_margin_x(definition):
@@ -147,6 +156,9 @@ BUNDLED_FONTS = {
                                "arabic": "noto-kufi-arabic-arabic-700-normal.woff2"}},
     "Amiri": {400: {"latin": "amiri-latin-400-normal.woff2", "arabic": "amiri-arabic-400-normal.woff2"},
               700: {"latin": "amiri-latin-700-normal.woff2", "arabic": "amiri-arabic-700-normal.woff2"}},
+    # a tabular face for figures, which is what a receipt's amounts want
+    "IBM Plex Mono": {400: {"latin": "ibm-plex-mono-latin-400-normal.woff2"},
+                      600: {"latin": "ibm-plex-mono-latin-600-normal.woff2"}},
 }
 # The ranges fontsource splits those files on. Spelling them out is what lets one family play
 # both halves without the browser downloading a file it has no character for.
@@ -221,7 +233,7 @@ FONT_IMPORT_URL = ("https://fonts.googleapis.com/css2?"
                    + "&display=swap")
 
 
-def base_css(b, pw=210.0, ph=297.0):
+def base_css(b, pw=210.0, ph=297.0, paint_bg=True):
     primary = b.get("primary", "#1C75BC")
     navy = b.get("navy", "#1A1E2A")
     font = b.get("font") or "Montserrat"
@@ -241,7 +253,7 @@ def base_css(b, pw=210.0, ph=297.0):
     _pw, _ph = _fmt_num(pw or 210), _fmt_num(ph or 297)
     # page.bg paints EVERY page (html+body), so a tinted stationery look survives pagination and
     # the header/footer overlays compose lays on top.
-    pg_bg = b.get("page_bg")
+    pg_bg = b.get("page_bg") if paint_bg else None
     page_bg = (f"background-color:{pg_bg.strip()} !important; -webkit-print-color-adjust:exact; "
                "print-color-adjust:exact; " if _hexok(pg_bg) else "")
     return f"""<style>
@@ -1248,8 +1260,16 @@ def _d_datatable(doc, b, s, ctx):
         return c.get("align") if c.get("align") in ("left", "center", "right") else "left"
 
     sk = _tbl_skin(s, b, hc)
-    hs_size = _num((s.get("headerStyle") or {}).get("size")) if isinstance(s.get("headerStyle"), dict) else None
-    th_extra = ("" if hs_size else "font-size:7.5pt;") + (sk["pad"] or "padding:6px 8px;") + sk["td_border"]
+    hs = s.get("headerStyle") if isinstance(s.get("headerStyle"), dict) else {}
+    hs_size = _num(hs.get("size"))
+    # The line under the header is its own design decision. A gold rule under grey labels with
+    # hairlines between the rows is a common pairing, and one border colour for the whole table
+    # cannot say it.
+    hb = ""
+    if _hexok(hs.get("borderBottom")):
+        hbw = _fmt_num(min(10, max(0, _num(hs.get("borderBottomW"), 1) or 1)))
+        hb = f'border-bottom:{hbw}px solid {_esc(hs["borderBottom"].strip())};'
+    th_extra = ("" if hs_size else "font-size:7.5pt;") + (sk["pad"] or "padding:6px 8px;") + (hb or sk["td_border"])
     heads = "".join(
         f'<th style="{sk["th"]}{"color:#fff !important;" if "color:" not in sk["th"] else ""}'
         f'text-align:{_al(c)};font-weight:600;{th_extra}'
@@ -1535,8 +1555,16 @@ def _d_report_table(doc, b, s, ctx):
     navy = b.get("navy", "#1A1E2A")
     hc = navy if s.get("headerColor") == "navy" else primary
     sk = _tbl_skin(s, b, hc)
-    hs_size = _num((s.get("headerStyle") or {}).get("size")) if isinstance(s.get("headerStyle"), dict) else None
-    th_extra = ("" if hs_size else "font-size:7.5pt;") + (sk["pad"] or "padding:6px 8px;") + sk["td_border"]
+    hs = s.get("headerStyle") if isinstance(s.get("headerStyle"), dict) else {}
+    hs_size = _num(hs.get("size"))
+    # The line under the header is its own design decision. A gold rule under grey labels with
+    # hairlines between the rows is a common pairing, and one border colour for the whole table
+    # cannot say it.
+    hb = ""
+    if _hexok(hs.get("borderBottom")):
+        hbw = _fmt_num(min(10, max(0, _num(hs.get("borderBottomW"), 1) or 1)))
+        hb = f'border-bottom:{hbw}px solid {_esc(hs["borderBottom"].strip())};'
+    th_extra = ("" if hs_size else "font-size:7.5pt;") + (sk["pad"] or "padding:6px 8px;") + (hb or sk["td_border"])
     colgroup = "<colgroup>" + "".join(
         (f'<col style="width:{_fmt_num(c.get("width"))}mm">' if c.get("width") else "<col>") for c in cols
     ) + "</colgroup>"
@@ -1837,7 +1865,7 @@ def render_definition(doc, definition, terms_html=""):
     return "".join(parts)
 
 
-def _absolute_page_html(doc, branding, blocks_list, ctx, grow=False, top_mm=0.0, bottom_mm=0.0, y_shift=0.0, pw=210.0, ph=297.0):
+def _absolute_page_html(doc, branding, blocks_list, ctx, grow=False, top_mm=0.0, bottom_mm=0.0, y_shift=0.0, pw=210.0, ph=297.0, overlay=False):
     """Render blocks absolutely positioned on the page (A4 portrait or landscape via pw/ph).
     grow=True -> page may flow onto multiple pages (min-height, no clipping).
     top_mm/bottom_mm reserve @page margins so a flowing body stays clear of the running header/
@@ -1845,7 +1873,10 @@ def _absolute_page_html(doc, branding, blocks_list, ctx, grow=False, top_mm=0.0,
     once a top margin is reserved."""
     font = branding.get("font") or "Montserrat"
     navy = branding.get("navy", "#1A1E2A")
-    parts = [base_css(branding, pw, ph)]
+    # An overlay is painted ON TOP of the finished page. If it carried the page background it
+    # would be an opaque sheet over the body, and the document would come out blank with only
+    # its bands showing. Only the base render paints the paper.
+    parts = [base_css(branding, pw, ph, paint_bg=not overlay)]
     parts.append(_pf_css(top_mm or 0, bottom_mm or 0, pw=pw, ph=ph))  # host-parsed margin contract (0 = full-bleed overlays)
     if top_mm or bottom_mm:
         parts.append(f"<style>@page{{margin:{_fmt_num(top_mm)}mm 0mm {_fmt_num(bottom_mm)}mm 0mm;}}</style>")
