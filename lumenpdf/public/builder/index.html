@@ -640,8 +640,12 @@ function fontOptionsAr(cur){return AR_FONTS.map(f=>`<option ${cur===f?'selected'
 function fontOptions(cur){return FONT_GROUPS.map(g=>`<optgroup label="${g[0]}">`+g[1].map(f=>`<option ${cur===f?'selected':''}>${f}</option>`).join("")+`</optgroup>`).join("");}
 function MX(){var v=parseFloat((state.page&&state.page.margin_x));if(isNaN(v))v=14;return Math.max(0,Math.min(PW()/2-10,v));}
 function LAND(){return !!(state&&state.page&&state.page.orientation==="landscape");}
-function PW(){return LAND()?297:210;}
-function PH(){return LAND()?210:297;}
+/* Paper sizes, mirroring PAPER_SIZES in blocks.py. A design copied from a Letter page has to
+   print on Letter, otherwise every margin in it is 6mm out across and 18mm out down. */
+const PAPERS={"A4":[210,297],"Letter":[215.9,279.4],"Legal":[215.9,355.6],"A5":[148,210],"A3":[297,420]};
+function PAPER(){const p=PAPERS[(state&&state.page&&state.page.size)||"A4"];return p||PAPERS.A4;}
+function PW(){return LAND()?PAPER()[1]:PAPER()[0];}
+function PH(){return LAND()?PAPER()[0]:PAPER()[1];}
 const BASE_SAMPLE={name:"SAL-QTN-2026-00006",transaction_date:"25-06-2026",valid_till:"25-07-2026",customer_name:"Hasan Najem",company:"Your Company W.L.L",
   address_display:"Seef 436, Road 3620, Building 925<br>SR360 Tower, Office 112, Bahrain",total:"BHD 1,685.000",grand_total:"BHD 1,853.500",
   items:[{n:"CCTV",q:"1 Service",r:"BHD 0.000",a:"BHD 0.000"},{n:"HIKVISION 6 MP ColorVu 3.0 Fixed Bullet Network Camera",q:"38 Pcs",r:"BHD 27.500",a:"BHD 1,045.000",d:"High quality imaging, 8 MP"},{n:"HIKVISION 64-ch 2U 4K AcuSense NVR",q:"2 Pcs",r:"BHD 322.500",a:"BHD 645.000"}],
@@ -2692,8 +2696,14 @@ function renderPage(){const mk=(name,key,z)=>{const bk=key+"_image",bv=state.bra
   +(Array.isArray(w.rules)?w.rules.map(function(r,i){return `<div style="border-bottom:1px solid var(--line);padding:6px 0;margin-bottom:4px"><div class="row2"><select onchange="setWMRule(${i},'field',this.value)">`+DOCFIELDS.map(f=>`<option value="${esc(f.f)}" ${r.field===f.f?'selected':''}>${esc(f.l)}</option>`).join("")+`</select><select onchange="setWMRule(${i},'op',this.value)">`+["=","!=","like",">","<",">=","<="].map(o=>`<option ${r.op===o?'selected':''}>${o}</option>`).join("")+`</select></div><div class="row2"><input type="text" value="${esc(r.value||'')}" placeholder="value (e.g. Paid)" oninput="setWMRule(${i},'value',this.value)"><input type="text" value="${esc(r.text||'')}" placeholder="watermark text" oninput="setWMRule(${i},'text',this.value)"></div><button class="btn ghost" style="width:100%;margin-top:4px" onclick="delWMRule(${i})">${UI.close} Remove rule</button></div>`;}).join(""):"")
   +`<button class="btn ghost" style="width:100%;margin-top:6px" onclick="addWMRule()">+ Add condition rule</button>`;
   const orient=(state.page&&state.page.orientation)||"portrait";
-  const orientUI=`<div class="ptitle">Page setup</div><div class="fld"><label>Orientation</label><div class="segrow">`
-    +[["portrait","Portrait","210 × 297"],["landscape","Landscape","297 × 210"]].map(o=>`<button class="segbtn ${orient===o[0]?'on':''}" onclick="setOrientation('${o[0]}')">${o[1]}<small>${o[2]} mm</small></button>`).join("")
+  const paper=(state.page&&state.page.size)||"A4";
+  const dims=PAPER();
+  const orientUI=`<div class="ptitle">Page setup</div>`
+    +`<div class="fld"><label>Paper</label><select onchange="setPaper(this.value)">`
+    +Object.keys(PAPERS).map(k=>`<option value="${k}" ${paper===k?'selected':''}>${k} (${PAPERS[k][0]} × ${PAPERS[k][1]} mm)</option>`).join("")
+    +`</select></div>`
+    +`<div class="fld"><label>Orientation</label><div class="segrow">`
+    +[["portrait","Portrait",dims[0]+" × "+dims[1]],["landscape","Landscape",dims[1]+" × "+dims[0]]].map(o=>`<button class="segbtn ${orient===o[0]?'on':''}" onclick="setOrientation('${o[0]}')">${o[1]}<small>${o[2]} mm</small></button>`).join("")
     +`</div></div><div style="height:14px"></div>`;
   const pmx=(state.page&&state.page.margin_x);
   const mxUI=`<div class="fld"><label>Side margins (mm)</label><input type="text" value="${pmx==null?'':esc(String(pmx))}" placeholder="14" oninput="setPageMarginX(this.value)"><div class="hint" style="padding:6px 0 0">Left and right margin of the flowing body. Lower it for edge-to-edge bands; blocks you pinned by position are unaffected.</div></div>`;
@@ -2704,6 +2714,7 @@ function renderPage(){const mk=(name,key,z)=>{const bk=key+"_image",bv=state.bra
     +(pbg?`<button class="btn ghost" title="Back to white" onclick="setPageBg('')">${UI.close}</button>`:"")
     +`</div><div class="hint" style="padding:6px 0 0">Prints on every page, behind everything.</div></div>`;
   document.getElementById("propsPage").innerHTML=orientUI+mxUI+bgUI+`<div class="ptitle">Page header &amp; footer</div>`+mk("Header","header",state.header)+`<div style="height:12px"></div>`+mk("Footer","footer",state.footer)+`<div class="hint" style="padding:12px 0 0">Drop a logo, text, or a <b>Page No</b> element into the shaded band on the page. With “Repeat on every page” on, they print on every page (with real page numbers) after you deploy.</div>`+wm+`<div class="hint" style="padding:8px 0 0">A watermark prints behind the content on every page.</div>`;}
+function setPaper(v){if(!PAPERS[v])return;state.page=state.page||{};state.page.size=v;userTouched=true;render();renderPage();}
 function setPageMarginX(v){if(!state.page)state.page={};const t=String(v||"").trim();
   if(t===""){delete state.page.margin_x;}else{const n=parseFloat(t);if(isNaN(n))return;state.page.margin_x=Math.max(0,Math.min(PW()/2-10,n));}
   touch();render();}
