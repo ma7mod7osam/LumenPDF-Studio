@@ -429,7 +429,7 @@
 <body>
 <div class="app">
   <div class="top">
-    <div class="brand" title="LumenPDF Studio"><svg width="24" height="24" viewBox="0 0 48 48" fill="none" aria-label="LumenPDF Studio"><rect x="9" y="4" width="30" height="40" rx="4" style="stroke:var(--logoA)" stroke-width="3"/><rect x="14.5" y="10" width="19" height="3.6" rx="1.8" style="fill:var(--logoB)"/><rect x="14.5" y="18" width="19" height="9" rx="2.4" style="fill:var(--logoA)"/><rect x="14.5" y="31.5" width="12" height="3.6" rx="1.8" style="fill:var(--logoB)"/></svg><small>Studio · b78</small></div>
+    <div class="brand" title="LumenPDF Studio"><svg width="24" height="24" viewBox="0 0 48 48" fill="none" aria-label="LumenPDF Studio"><rect x="9" y="4" width="30" height="40" rx="4" style="stroke:var(--logoA)" stroke-width="3"/><rect x="14.5" y="10" width="19" height="3.6" rx="1.8" style="fill:var(--logoB)"/><rect x="14.5" y="18" width="19" height="9" rx="2.4" style="fill:var(--logoA)"/><rect x="14.5" y="31.5" width="12" height="3.6" rx="1.8" style="fill:var(--logoB)"/></svg><small>Studio · b79</small></div>
     <button class="btn ghost iconbtn" id="homeBtn" onclick="goHome()" title="Home — all formats"><svg class="icn" viewBox="0 0 24 24"><path d="M4 11l8-6.5 8 6.5"/><path d="M6 10v9a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-9"/></svg></button>
     <div class="menuwrap"><button class="btn ghost" id="copilotBtn" onclick="openCopilot()" title="Design copilot: describe a change, a new format, or a design to imitate"><svg class="icn" viewBox="0 0 24 24"><path d="M12 3l1.8 4.6L18.5 9l-4.7 1.4L12 15l-1.8-4.6L5.5 9l4.7-1.4z"/><path d="M18 15l.9 2.3 2.3.7-2.3.9-.9 2.1-.9-2.1-2.3-.9 2.3-.7z"/></svg> AI</button><button class="btn ghost" id="fileBtn" onclick="toggleFileMenu(event)" title="New, open, duplicate, import/export"><svg class="icn" viewBox="0 0 24 24"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg> File</button>
       <div class="menu" id="fileMenu">
@@ -737,7 +737,7 @@ const LYI={up:TOOLI.up,down:TOOLI.down,
   pin:'<svg class="lypin" viewBox="0 0 24 24"><path d="M9 3h6"/><path d="M10.5 3v6L8 13h8l-2.5-4V3"/><path d="M12 13v8"/></svg>'};
 /* the crossed-eye badge stamped on a hidden block on the canvas */
 const HIDB='<span class="hidb" title="Hidden — will not print">'+TOOLI.eyeOff+'</span>';
-const META={qr:{l:"QR code"},heading:{l:"Heading"},text:{l:"Text"},field:{l:"Field"},image:{l:"Image"},divider:{l:"Line"},box:{l:"Box"},row:{l:"Row / Columns"},table:{l:"Table"},pagenum:{l:"Page No"},header_banner:{l:"Header"},customer:{l:"Customer"},items:{l:"Items"},datatable:{l:"Data Table"},totals:{l:"Totals"},payment_schedule:{l:"Payment"},terms:{l:"Terms"},signature:{l:"Signature"},footer_banner:{l:"Footer"},title:{l:"Title"},report_title:{l:"Report Title"},report_filters:{l:"Filters"},report_table:{l:"Report Table"}};
+const META={spacer:{l:"Spacer"},qr:{l:"QR code"},heading:{l:"Heading"},text:{l:"Text"},field:{l:"Field"},image:{l:"Image"},divider:{l:"Line"},box:{l:"Box"},row:{l:"Row / Columns"},table:{l:"Table"},pagenum:{l:"Page No"},header_banner:{l:"Header"},customer:{l:"Customer"},items:{l:"Items"},datatable:{l:"Data Table"},totals:{l:"Totals"},payment_schedule:{l:"Payment"},terms:{l:"Terms"},signature:{l:"Signature"},footer_banner:{l:"Footer"},title:{l:"Title"},report_title:{l:"Report Title"},report_filters:{l:"Filters"},report_table:{l:"Report Table"}};
 ICONS.report_title=ICONS.title;ICONS.report_filters=ICONS.terms;ICONS.report_table=ICONS.datatable;
 const ELEM=["heading","text","field","image","divider","box","row","table","pagenum","qr"];
 /* Row column widths that always FIT the row. Fixed widths are kept as the user set them unless,
@@ -765,6 +765,11 @@ function esc(s){return(s==null?"":String(s)).replace(/&/g,"&amp;").replace(/</g,
 function BIMG(v){return (v&&v!=="none")?v:"";}
 /* Table header labels may hold two stacked lines (Arabic over English). A real newline, or
    the two characters \n typed into the label box, both become a line break. */
+/* A format can carry a block type this builder does not draw yet: one made by the AI, by a newer
+   version, or by hand. Without a fallback the first unknown type threw inside the renderer and the
+   canvas kept showing whatever format was open before, which looks exactly like the import did
+   nothing. */
+function metaOf(t){return META[t]||{l:String(t||"Block")};}
 function lbl(v){return esc(v==null?"":String(v)).replace(/\\n|\n/g,"<br>");}
 /* Canvas QR: a scannable code needs the document's data, which only the server has — so the
    canvas draws a representative pattern at the exact print size instead. */
@@ -825,6 +830,9 @@ const R={
     return `<div class="bs-sign-box" style="width:${bw}mm;margin-left:auto;border-top:${lw}px solid ${lc2};${tc2}${tsc}">${esc(s.label)}</div>`;},
   heading:(s)=>`<div class="inl">${esc(s.text)}</div>`,text:(s)=>`<div class="inl">${esc(s.text)}</div>`,field:(s)=>s.html?(esc(s.prefix||"")+String(fieldVal(s.field))):esc((s.prefix||"")+fieldVal(s.field)),
   image:(s)=>s.src?`<img src="${esc(s.src)}" style="width:${(+s.width||100)}%">`:`<div style="border:1px dashed #b9c6e0;color:#9aa6c2;padding:14px;text-align:center;font-size:8pt">Image — set a URL</div>`,
+  // a spacer prints as empty height; the canvas shows that height as a faint box so it can
+  // be found, selected and resized rather than being an invisible gap
+  spacer:(s)=>`<div style="height:${Math.max(1,+s.height||8)}mm;border:1px dashed #c9d3e6;border-radius:4px;color:#9aa6c2;font-size:7pt;display:flex;align-items:center;justify-content:center">Spacer ${Math.max(1,+s.height||8)} mm</div>`,
   divider:(s)=>`<div style="border-top:${(+s.thickness||1)}px ${s.lstyle||'solid'} ${s.color||'#cfe5f6'}"></div>`,
   box:(s)=>`<div class="inl">${s.html||""}</div>`,
   row:(s,b,bl)=>{const cols=Math.max(1,Math.min(4,+s.cols||2)),gap=Math.max(0,+s.gap||6),widths=s.widths||[],cells=s.cells||[];const pct=Math.max(20,Math.min(100,+s.width||100));
@@ -1675,19 +1683,19 @@ function absBlk(bl,b,dim){  // `dim` = this band is not the one being edited (NO
   const sel=bl.id===selId;
   const handles=(sel&&!bl.locked)?'<div class="rh e" data-rh="e"></div><div class="rh s" data-rh="s"></div><div class="rh se" data-rh="se"></div>':'';
   const tools=bl.locked?'':`<div class="tools">${quickBar(bl,false)}</div>`;
-  return `<div class="blk ${sel?'sel':''}${bl.locked?' lockd':''}" data-id="${bl.id}" style="${box}${styleCss(bl.style)}"><span class="tag">${META[bl.type].l}</span>${bl.hidden?HIDB:''}${tools}${inner}${handles}</div>`;
+  return `<div class="blk ${sel?'sel':''}${bl.locked?' lockd':''}" data-id="${bl.id}" style="${box}${styleCss(bl.style)}"><span class="tag">${metaOf(bl.type).l}</span>${bl.hidden?HIDB:''}${tools}${inner}${handles}</div>`;
 }
 function flowBlk(bl,b){
   const inner=_inert(bl,_ghost(bl,(R[bl.type]||(()=>""))(bl.settings,b,bl)));const sel=bl.id===selId;
   const tools=bl.locked?'':`<div class="tools">${quickBar(bl,true)}</div>`;
-  return `<div class="blk flow ${sel?'sel':''}${bl.locked?' lockd':''}" data-id="${bl.id}" style="position:relative;margin-bottom:4mm;${bl.locked?'cursor:default;':''}${styleCss(bl.style)}"><span class="tag">${META[bl.type].l}</span>${bl.hidden?HIDB:''}${tools}${inner}</div>`;
+  return `<div class="blk flow ${sel?'sel':''}${bl.locked?' lockd':''}" data-id="${bl.id}" style="position:relative;margin-bottom:4mm;${bl.locked?'cursor:default;':''}${styleCss(bl.style)}"><span class="tag">${metaOf(bl.type).l}</span>${bl.hidden?HIDB:''}${tools}${inner}</div>`;
 }
 function flowBlkStatic(bl,b){const inner=_inert(bl,_ghost(bl,(R[bl.type]||(()=>""))(bl.settings,b,bl)));const sel=bl.id===selId;
   // Selectable clone for continuation pages: click selects the real block (edit via the panel);
   // the move/duplicate/delete tools operate on state by id, so they work from any page. Chrome is display:none
   // by default and absolutely positioned, so measurement (computeBreaks) is unaffected.
   // Clones keep the SIMPLE tools (no quick bar) — the styling bar belongs on the live page-1 block.
-  const chrome=bl.locked?`<span class="tag">${META[bl.type].l}</span>`:`<span class="tag">${META[bl.type].l}</span><div class="tools"><button title="Move up" onclick="moveBody(event,'${bl.id}',-1)">${TOOLI.up}</button><button title="Move down" onclick="moveBody(event,'${bl.id}',1)">${TOOLI.down}</button><button title="Duplicate" onclick="duplicate('${bl.id}')">${TOOLI.copy}</button><button title="Delete" onclick="del(event,'${bl.id}')">${TOOLI.trash}</button></div>`;
+  const chrome=bl.locked?`<span class="tag">${metaOf(bl.type).l}</span>`:`<span class="tag">${metaOf(bl.type).l}</span><div class="tools"><button title="Move up" onclick="moveBody(event,'${bl.id}',-1)">${TOOLI.up}</button><button title="Move down" onclick="moveBody(event,'${bl.id}',1)">${TOOLI.down}</button><button title="Duplicate" onclick="duplicate('${bl.id}')">${TOOLI.copy}</button><button title="Delete" onclick="del(event,'${bl.id}')">${TOOLI.trash}</button></div>`;
   return `<div class="sblk${sel?' sel':''}" data-sid="${bl.id}" data-type="${bl.type}" style="position:relative;margin-bottom:4mm;${bl.locked?'cursor:default;':''}${styleCss(bl.style)}">${chrome}${bl.hidden?HIDB:''}${inner}</div>`;}
 function rowChildBlk(c,b){const inner=_inert(c,(R[c.type]||(()=>""))(c.settings,b,c));const sel=c.id===selId;
   const tools=c.locked?'':`<div class="tools"><button title="Duplicate" onclick="duplicate('${c.id}')">${TOOLI.copy}</button><button title="Delete" onclick="del(event,'${c.id}')">${TOOLI.trash}</button></div>`;
@@ -2108,7 +2116,7 @@ function _lyHint(bl){const s=bl.settings||{};let v="";
   if(!v)return "";
   return esc(v.length>18?v.slice(0,18)+"…":v);}
 function _lyRow(bl,o){o=o||{};
-  const lbl=esc(META[bl.type]?META[bl.type].l:bl.type),hint=_lyHint(bl);
+  const lbl=esc(META[bl.type]?metaOf(bl.type).l:bl.type),hint=_lyHint(bl);
   let acts="";
   if(o.ord)acts+=`<button title="Move up" onclick="event.stopPropagation();moveBody(event,'${bl.id}',-1)">${LYI.up}</button>`
                 +`<button title="Move down" onclick="event.stopPropagation();moveBody(event,'${bl.id}',1)">${LYI.down}</button>`;
@@ -2363,7 +2371,7 @@ function rowControls(b){const s=b.settings;const cols=Math.max(1,Math.min(4,+s.c
   h+=`<div class="hint" style="padding:0 0 6px">Tip: drag the divider between columns on the page to resize them.</div>`;
   for(let i=0;i<cols;i++){const w=(s.widths||[])[i];const ch=(s.cells||[])[i]||[];
     h+=`<div class="styhead">Column ${i+1}</div><div class="fld"><label>Width (mm · blank = auto)</label><input type="text" value="${w==null?'':w}" placeholder="auto" oninput="setRowWidth(${i},this.value)"></div>`;
-    ch.forEach(c=>{h+=`<div class="hint" style="display:flex;justify-content:space-between;align-items:center;padding:3px 0"><span>${META[c.type]?META[c.type].l:c.type}</span><span><button class="btn ghost" style="padding:3px 8px" onclick="select('${c.id}')">edit</button> <button class="btn ghost" style="padding:3px 8px" onclick="del(null,'${c.id}')">${UI.close}</button></span></div>`;});
+    ch.forEach(c=>{h+=`<div class="hint" style="display:flex;justify-content:space-between;align-items:center;padding:3px 0"><span>${META[c.type]?metaOf(c.type).l:c.type}</span><span><button class="btn ghost" style="padding:3px 8px" onclick="select('${c.id}')">edit</button> <button class="btn ghost" style="padding:3px 8px" onclick="del(null,'${c.id}')">${UI.close}</button></span></div>`;});
     h+=`<div class="fld"><select onchange="addRowChild('${b.id}',${i},this.value)"><option value="">+ Add block to column ${i+1}…</option>`+ROWCHILDTYPES.map(t=>`<option value="${t}">${META[t].l}</option>`).join("")+`</select></div>`;
     h+=rowCellStyle(s,i);
   }
@@ -2459,6 +2467,7 @@ function renderProps(){const host=document.getElementById("propsBlock"),b=cur();
     h+=`<label class="chk"><input type="checkbox" ${s.html?'checked':''} onchange="setS('html',this.checked)"> Field already contains HTML (e.g. an address with line breaks)</label>`;
   }
   else if(t==="image"){h+=imgAttach("Image","src",s.src,"setS");h+=tx("Width inside box (%)","width",s.width);}
+  else if(t==="spacer"){h+=`<div class="fld"><label>Height (mm)</label><input type="text" value="${s.height==null?'':s.height}" placeholder="8" oninput="setSNum('height',this.value)"></div><div class="hint" style="padding:4px 0 0">Empty space that pushes everything below it down. Prints as nothing.</div>`;}
   else if(t==="divider"){h+=tx("Thickness (px)","thickness",s.thickness);h+=`<div class="fld"><label>Color</label><div class="color"><input type="color" value="${s.color}" oninput="setS('color',this.value)"><input type="text" value="${esc(s.color)}" oninput="setS('color',this.value)"></div></div>`+sg("Style","lstyle",s.lstyle,[["solid","Solid"],["dashed","Dashed"],["dotted","Dotted"]]);}
   else if(t==="box"){h+=ta("Content (HTML allowed)","html",s.html);}
   else if(t==="pagenum"){h+=tx("Format ({p}=page, {n}=total)","format",s.format);}
@@ -2785,8 +2794,14 @@ function importJSON(){const inp=document.createElement("input");inp.type="file";
   inp.onchange=function(){const f=inp.files&&inp.files[0];if(!f)return;const r=new FileReader();
     r.onload=function(){let def;try{def=JSON.parse(r.result);}catch(e){toast("Could not read that file — is it a valid format .json?",true);return;}
       if(!def||typeof def!=="object"||!Array.isArray(def.blocks)){toast("That doesn't look like a LumenPDF format export.",true);return;}
-      clearDraft();loadDefinition(def);commitHistory();
-      toast("Format imported — click Save to store it"+(EMBED?"":" (demo)")+".");};
+      // Save finds the record by name. Importing into a format that is already saved keeps that
+      // name, so Save updates it; importing into a new, unsaved format takes the file's name.
+      const nameBox=document.getElementById("fmtName");
+      const keep=(fmtSaved&&nameBox&&nameBox.value.trim())?nameBox.value.trim():"";
+      clearDraft();loadDefinition(def);
+      if(keep){nameBox.value=keep;fmtSaved=true;fmtDirty=true;userTouched=true;renderStatus();}
+      commitHistory();
+      toast(keep?('Imported into "'+keep+'". Save to update it.'):("Format imported. Save to store it"+(EMBED?"":" (demo)")+"."));};
     r.readAsText(f);};
   inp.click();}
 function toast(msg,err){let t=document.getElementById("bpToast");if(!t){t=document.createElement("div");t.id="bpToast";document.body.appendChild(t);}
@@ -2920,7 +2935,10 @@ function loadDefinition(def){try{userTouched=false;fmtSaved=false;fmtIsDefault=f
     buildPalette();
     if(def.target_doctype){state.target=def.target_doctype;const ds=document.getElementById("doctypeSel");if(ds)ds.value=def.target_doctype;loadDoctypeMeta(state.target);}
   }
-  if(def.name)document.getElementById("fmtName").value=def.name;ensureBanners();selId=null;renderNowSync();renderProps();renderBrand();renderStatus();resetHistory();}catch(e){console.error("LumenPDF load failed",e);}}
+  if(def.name)document.getElementById("fmtName").value=def.name;ensureBanners();selId=null;renderNowSync();renderProps();renderBrand();renderStatus();resetHistory();}catch(e){console.error("LumenPDF load failed",e);
+    // say it on screen: a silent failure leaves the previous format on the canvas, and that
+    // reads as if the new one loaded and looks wrong
+    try{toast("This format could not be drawn in the builder ("+(e&&e.message||e)+"). Preview and print are not affected.",true);}catch(_e){}}}
 /* ---- embedded RPC bridge to the desk page ---- */
 let _rpcId=0; const _rpcCbs={};
 function rpc(method,args){return new Promise(function(res){if(!EMBED){res(null);return;}const id="r"+(_rpcId++);_rpcCbs[id]=res;window.parent.postMessage({type:"lumenpdf-rpc",reqId:id,method:method,args:args||{}},window.location.origin);setTimeout(function(){if(_rpcCbs[id]){delete _rpcCbs[id];res(null);}},15000);});}
