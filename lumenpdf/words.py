@@ -235,6 +235,41 @@ def currency_label(code, style="ar"):
     return sym or code
 
 
+# The Saudi riyal sign approved in February 2025, drawn from the Saudi Central Bank's own SVG
+# (sama.gov.sa, Saudi_Riyal_Symbol-2.svg), paths unchanged. Few fonts carry U+20C1 yet, so it is
+# printed as a vector. SAMA's rules: left of the number in Arabic and English alike, a space
+# between, the height of the text, proportions kept, enough contrast. The size below keeps the
+# official 1124.14 x 1256.39 proportion, and currentColor gives it the colour of its text.
+SAR_SIGN_PATHS = (
+    "M699.62,1113.02h0c-20.06,44.48-33.32,92.75-38.4,143.37l424.51-90.24c20.06-44.47,33.31-92.75,38.4-143.37l-424.51,90.24Z",
+    "M1085.73,895.8c20.06-44.47,33.32-92.75,38.4-143.37l-330.68,70.33v-135.2l292.27-62.11c20.06-44.47,33.32-92.75,38.4-143.37l-330.68,70.27V66.13c-50.67,28.45-95.67,66.32-132.25,110.99v403.35l-132.25,28.11V0c-50.67,28.44-95.67,66.32-132.25,110.99v525.69l-295.91,62.88c-20.06,44.47-33.33,92.75-38.42,143.37l334.33-71.05v170.26l-358.3,76.14c-20.06,44.47-33.32,92.75-38.4,143.37l375.04-79.7c30.53-6.35,56.77-24.4,73.83-49.24l68.78-101.97v-.02c7.14-10.55,11.3-23.27,11.3-36.97v-149.98l132.25-28.11v270.4l424.53-90.28Z",
+)
+
+
+def sar_sign_svg():
+    return ('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1124.14 1256.39" role="img" '
+            'aria-label="SAR" style="height:.75em;width:.671em;vertical-align:baseline;fill:currentColor">'
+            + "".join(f'<path d="{d}"/>' for d in SAR_SIGN_PATHS) + "</svg>")
+
+
+def sign_html(code):
+    """The currency's sign as HTML: the official riyal sign for SAR, the Currency record's
+    symbol for anything else."""
+    code = (code or "").upper()
+    if code == "SAR":
+        return sar_sign_svg()
+    return frappe.utils.escape_html(currency_label(code, "symbol"))
+
+
+def field_currency(doc, field):
+    try:
+        df = frappe.get_meta(doc.doctype).get_field(field)
+        from frappe.model.meta import get_field_currency
+        return get_field_currency(df, doc) if df else None
+    except Exception:
+        return None
+
+
 def _readable(doc, field):
     try:
         df = frappe.get_meta(doc.doctype).get_field(field)
@@ -280,6 +315,19 @@ def currency_sample(doc):
     """The document's currency in every label style, for the builder's canvas."""
     code = doc_currency(doc)
     return {"code": code, "labels": {st: currency_label(code, st) for st in ("ar", "name", "code", "symbol")}}
+
+
+def sign_sample(doc):
+    """{field: currency code} for every Currency field, so the canvas draws the right sign."""
+    out = {}
+    try:
+        fields = frappe.get_meta(doc.doctype).fields
+    except Exception:
+        return out
+    for df in fields:
+        if df.fieldtype == "Currency" and df.fieldname and not (df.permlevel or 0):
+            out[df.fieldname] = field_currency(doc, df.fieldname) or ""
+    return out
 
 
 def amount_plain(doc, field):

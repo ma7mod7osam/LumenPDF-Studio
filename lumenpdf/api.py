@@ -1015,6 +1015,7 @@ def builder_sample(doctype, name):
         from lumenpdf import words
         out["words"] = words.sample(doc)
         out["currency"] = words.currency_sample(doc)
+        out["currency"]["fields"] = words.sign_sample(doc)
     except Exception:
         out["words"] = {}
     for it in (doc.get("items") or []):
