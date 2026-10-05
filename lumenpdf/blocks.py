@@ -756,6 +756,10 @@ def _e_text(doc, b, s, ctx):
     if s.get("source") == "currency":
         # a label that follows the document: ر.س on a riyal receipt, دولار on a dollar one
         from lumenpdf import words
+        if s.get("curStyle") == "sign":
+            sign = words.sign_html(words.doc_currency(doc))
+            if sign:
+                return sign
         label = words.currency_label(words.doc_currency(doc), s.get("curStyle") or "ar")
         if label:
             return _esc(label)
@@ -783,6 +787,15 @@ def _e_field(doc, b, s, ctx):
         w = words.field_words(doc, field, s["words"])
         if w is not None:
             return prefix + _esc(w)
+    if s.get("sign"):
+        # the currency's sign left of the figure, as SAMA asks for the riyal sign, in Arabic
+        # text as much as English: the run is held left-to-right so the sign stays on the left
+        from lumenpdf import words
+        plain = words.amount_plain(doc, field)
+        if plain is not None:
+            sign = words.sign_html(words.field_currency(doc, field))
+            return (prefix + '<span dir="ltr" style="unicode-bidi:embed;white-space:nowrap">'
+                    + (sign + "&nbsp;" if sign else "") + _esc(plain) + "</span>")
     if s.get("nosym"):
         # the figure alone, for a layout that prints the currency beside it
         from lumenpdf import words

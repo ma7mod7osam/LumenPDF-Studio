@@ -433,7 +433,7 @@
 <body>
 <div class="app">
   <div class="top">
-    <div class="brand" title="LumenPDF Studio"><svg width="24" height="24" viewBox="0 0 48 48" fill="none" aria-label="LumenPDF Studio"><rect x="9" y="4" width="30" height="40" rx="4" style="stroke:var(--logoA)" stroke-width="3"/><rect x="14.5" y="10" width="19" height="3.6" rx="1.8" style="fill:var(--logoB)"/><rect x="14.5" y="18" width="19" height="9" rx="2.4" style="fill:var(--logoA)"/><rect x="14.5" y="31.5" width="12" height="3.6" rx="1.8" style="fill:var(--logoB)"/></svg><small>Studio · b82</small></div>
+    <div class="brand" title="LumenPDF Studio"><svg width="24" height="24" viewBox="0 0 48 48" fill="none" aria-label="LumenPDF Studio"><rect x="9" y="4" width="30" height="40" rx="4" style="stroke:var(--logoA)" stroke-width="3"/><rect x="14.5" y="10" width="19" height="3.6" rx="1.8" style="fill:var(--logoB)"/><rect x="14.5" y="18" width="19" height="9" rx="2.4" style="fill:var(--logoA)"/><rect x="14.5" y="31.5" width="12" height="3.6" rx="1.8" style="fill:var(--logoB)"/></svg><small>Studio · b83</small></div>
     <button class="btn ghost iconbtn" id="homeBtn" onclick="goHome()" title="Home — all formats"><svg class="icn" viewBox="0 0 24 24"><path d="M4 11l8-6.5 8 6.5"/><path d="M6 10v9a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-9"/></svg></button>
     <div class="menuwrap"><button class="btn ghost" id="copilotBtn" onclick="openCopilot()" title="Design copilot: describe a change, a new format, or a design to imitate"><svg class="icn" viewBox="0 0 24 24"><path d="M12 3l1.8 4.6L18.5 9l-4.7 1.4L12 15l-1.8-4.6L5.5 9l4.7-1.4z"/><path d="M18 15l.9 2.3 2.3.7-2.3.9-.9 2.1-.9-2.1-2.3-.9 2.3-.7z"/></svg> AI</button><button class="btn ghost" id="fileBtn" onclick="toggleFileMenu(event)" title="New, open, duplicate, import/export"><svg class="icn" viewBox="0 0 24 24"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg> File</button>
       <div class="menu" id="fileMenu">
@@ -681,6 +681,11 @@ function wordsVal(f,lang){
   return WORDS_DEMO[lang]||"";}
 /* A Text block can show the document's currency instead of fixed text. */
 const CUR_DEMO={ar:"ر.س",name:"ريال سعودي",code:"SAR",symbol:"SAR"};
+const SAR_SVG='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1124.14 1256.39" role="img" aria-label="SAR" style="height:.75em;width:.671em;vertical-align:baseline;fill:currentColor"><path d="M699.62,1113.02h0c-20.06,44.48-33.32,92.75-38.4,143.37l424.51-90.24c20.06-44.47,33.31-92.75,38.4-143.37l-424.51,90.24Z"/><path d="M1085.73,895.8c20.06-44.47,33.32-92.75,38.4-143.37l-330.68,70.33v-135.2l292.27-62.11c20.06-44.47,33.32-92.75,38.4-143.37l-330.68,70.27V66.13c-50.67,28.45-95.67,66.32-132.25,110.99v403.35l-132.25,28.11V0c-50.67,28.44-95.67,66.32-132.25,110.99v525.69l-295.91,62.88c-20.06,44.47-33.33,92.75-38.42,143.37l334.33-71.05v170.26l-358.3,76.14c-20.06,44.47-33.32,92.75-38.4,143.37l375.04-79.7c30.53-6.35,56.77-24.4,73.83-49.24l68.78-101.97v-.02c7.14-10.55,11.3-23.27,11.3-36.97v-149.98l132.25-28.11v270.4l424.53-90.28Z"/></svg>';
+/* the official riyal sign for SAR (Saudi Central Bank artwork), the currency's symbol otherwise */
+function signHtml(code){code=String(code||"SAR").toUpperCase();if(code==="SAR")return SAR_SVG;
+  if(CURVALS&&CURVALS.code===code&&CURVALS.labels&&CURVALS.labels.symbol)return esc(CURVALS.labels.symbol);return esc(code);}
+function fieldCur(f){return (CURVALS&&CURVALS.fields&&CURVALS.fields[f])||(CURVALS&&CURVALS.code)||"SAR";}
 function curLabel(st){st=st||"ar";return (CURVALS&&CURVALS.labels&&CURVALS.labels[st])||CUR_DEMO[st]||"";}
 function isCurrencyField(f){const d=DOCFIELDS.find(z=>z.f===f);return !!(d&&d.t==="Currency");}
 function wordsOk(f){
@@ -846,7 +851,7 @@ const R={
     :`<div style="border:1px dashed #b9c6e0;border-radius:4px;padding:8px;font-size:7.5pt;color:#9aa6c2"><b>${esc(s.heading)}</b> — this document has no Terms, so this block prints EMPTY. Set the Terms (or pick a Terms &amp; Conditions template) on the document itself.</div>`;},
   signature:(s,b)=>{const bw=Math.min(160,Math.max(25,parseFloat(s.boxW)||60));const lw=Math.min(6,Math.max(0.5,parseFloat(s.lineW)||1.5));const lc2=HX.test(s.lineColor||'')?s.lineColor:'#0C1322';const tc2=HX.test(s.labelColor||'')?`color:${s.labelColor};`:'';const ts2=parseFloat(s.labelSize);const tsc=(ts2&&!isNaN(ts2))?`font-size:${Math.min(72,Math.max(4,ts2))}pt;`:'';
     return `<div class="bs-sign-box" style="width:${bw}mm;margin-left:auto;border-top:${lw}px solid ${lc2};${tc2}${tsc}">${esc(s.label)}</div>`;},
-  heading:(s)=>`<div class="inl">${esc(s.text)}</div>`,text:(s)=>s.source==="currency"?`<div class="inl">${esc(curLabel(s.curStyle))}</div>`:`<div class="inl">${esc(s.text)}</div>`,field:(s)=>(s.nosym&&!s.words&&isCurrencyField(s.field))?esc((s.prefix||"")+String(fieldVal(s.field)).replace(/^[^\d-]+|[^\d]+$/g,"")):(s.words&&wordsOk(s.field))?esc((s.prefix||"")+wordsVal(s.field,s.words)):s.html?(esc(s.prefix||"")+String(fieldVal(s.field))):esc((s.prefix||"")+fieldVal(s.field)),
+  heading:(s)=>`<div class="inl">${esc(s.text)}</div>`,text:(s)=>s.source==="currency"?(s.curStyle==="sign"?`<div class="inl">${signHtml(CURVALS&&CURVALS.code)}</div>`:`<div class="inl">${esc(curLabel(s.curStyle))}</div>`):`<div class="inl">${esc(s.text)}</div>`,field:(s)=>(s.sign&&!s.words&&isCurrencyField(s.field))?(esc(s.prefix||"")+'<span dir="ltr" style="unicode-bidi:embed;white-space:nowrap">'+signHtml(fieldCur(s.field))+"&nbsp;"+esc(String(fieldVal(s.field)).replace(/^[^\d-]+|[^\d]+$/g,""))+"</span>"):(s.nosym&&!s.words&&isCurrencyField(s.field))?esc((s.prefix||"")+String(fieldVal(s.field)).replace(/^[^\d-]+|[^\d]+$/g,"")):(s.words&&wordsOk(s.field))?esc((s.prefix||"")+wordsVal(s.field,s.words)):s.html?(esc(s.prefix||"")+String(fieldVal(s.field))):esc((s.prefix||"")+fieldVal(s.field)),
   image:(s)=>s.src?`<img src="${esc(s.src)}" style="width:${(+s.width||100)}%">`:`<div style="border:1px dashed #b9c6e0;color:#9aa6c2;padding:14px;text-align:center;font-size:8pt">Image — set a URL</div>`,
   // a spacer prints as empty height; the canvas shows that height as a faint box so it can
   // be found, selected and resized rather than being an invisible gap
@@ -2506,7 +2511,7 @@ function renderProps(){const host=document.getElementById("propsBlock"),b=cur();
   else if(t==="text"){
     h+=sg("Shows","source",s.source||"",[["","Fixed text"],["currency","Document currency"]]);
     if(s.source==="currency"){
-      h+=sg("Currency as","curStyle",s.curStyle||"ar",[["ar","ر.س"],["name","ريال سعودي"],["code","SAR"],["symbol","Symbol"]]);
+      h+=sg("Currency as","curStyle",s.curStyle||"ar",[["ar","ر.س"],["name","ريال سعودي"],["code","SAR"],["symbol","Symbol"],["sign","Riyal sign"]]);
       h+=`<div class="hint" style="padding:2px 0 0">Follows each document: ر.س on a riyal receipt, دولار on a dollar one. On a Payment Entry it is the currency of the account the money moved through.</div>`;}
     else h+=ta("Text","text",s.text);}
   else if(t==="field"){
@@ -2515,7 +2520,8 @@ function renderProps(){const host=document.getElementById("propsBlock"),b=cur();
     h+=`<div class="fld"><label>Field</label><select onchange="setS('field',this.value)">`+opts+`</select></div>`+tx("Prefix","prefix",s.prefix);
     if(String(s.field||"").indexOf(".")>=0){const lk=s.field.split(".")[0];h+=`<div class="hint" style="padding:2px 0 0">Pulled from the linked <b>${esc(lk)}</b> record. Empty if that link is blank or you can't read it.</div>`;}
     h+=`<label class="chk"><input type="checkbox" ${s.html?'checked':''} onchange="setS('html',this.checked)"> Field already contains HTML (e.g. an address with line breaks)</label>`;
-    if(isCurrencyField(s.field)&&!s.words)h+=`<label class="chk"><input type="checkbox" ${s.nosym?'checked':''} onchange="setS('nosym',this.checked)"> Number only, without the currency symbol</label>`;
+    if(isCurrencyField(s.field)&&!s.words)h+=`<label class="chk"><input type="checkbox" ${s.nosym?'checked':''} onchange="setS('nosym',this.checked)"> Number only, without the currency symbol</label>`
+      +`<label class="chk"><input type="checkbox" ${s.sign?'checked':''} onchange="setS('sign',this.checked)"> Currency sign left of the number (the official riyal sign for SAR)</label>`;
     if(wordsOk(s.field)){
       h+=sg("Amount in words","words",s.words||"",[["","As saved"],["ar","Arabic"],["en","English"]]);
       h+=`<div class="hint" style="padding:2px 0 0">${/(^|_)in_words$/.test(s.field)
