@@ -753,6 +753,12 @@ def _e_heading(doc, b, s, ctx):
 
 
 def _e_text(doc, b, s, ctx):
+    if s.get("source") == "currency":
+        # a label that follows the document: ر.س on a riyal receipt, دولار on a dollar one
+        from lumenpdf import words
+        label = words.currency_label(words.doc_currency(doc), s.get("curStyle") or "ar")
+        if label:
+            return _esc(label)
     return _esc(s.get("text") or "")
 
 
@@ -777,6 +783,12 @@ def _e_field(doc, b, s, ctx):
         w = words.field_words(doc, field, s["words"])
         if w is not None:
             return prefix + _esc(w)
+    if s.get("nosym"):
+        # the figure alone, for a layout that prints the currency beside it
+        from lumenpdf import words
+        plain = words.amount_plain(doc, field)
+        if plain is not None:
+            return prefix + _esc(plain)
     val = _field_value(doc, field)
     # settings.html opts a plain field into HTML rendering: ERPNext stores address_display and
     # similar as Small Text that already CONTAINS <br> tags, which would otherwise print raw.
