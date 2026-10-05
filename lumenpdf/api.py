@@ -13,7 +13,7 @@ import json
 
 import frappe
 
-from lumenpdf import config
+from lumenpdf import blocks, config
 
 
 @frappe.whitelist()
@@ -989,7 +989,9 @@ def builder_sample(doctype, name):
             v = doc.get_formatted(f)
         except Exception:
             v = doc.get(f)
-        return "" if v is None else str(v)
+        # the same cleaner the printed page uses: a Saudi Riyal amount arrives wrapped in the
+        # desk's icon markup, and the builder would draw the tag on its canvas
+        return blocks._plain(v)
 
     skip = {"Section Break", "Column Break", "Tab Break", "HTML", "Table", "Table MultiSelect",
             "Button", "Image", "Geolocation", "Signature", "Barcode"}
@@ -1012,19 +1014,19 @@ def builder_sample(doctype, name):
     for it in (doc.get("items") or []):
         out["items"].append({
             "n": it.get("item_name") or it.get("item_code") or "",
-            "q": (f'{it.get_formatted("qty")} {it.get("uom") or it.get("stock_uom") or ""}').strip(),
-            "r": it.get_formatted("rate") if it.get("rate") is not None else "",
-            "a": it.get_formatted("amount") if it.get("amount") is not None else "",
+            "q": (f'{blocks._plain(it.get_formatted("qty"))} {it.get("uom") or it.get("stock_uom") or ""}').strip(),
+            "r": blocks._plain(it.get_formatted("rate")) if it.get("rate") is not None else "",
+            "a": blocks._plain(it.get_formatted("amount")) if it.get("amount") is not None else "",
             "d": strip_html_tags(it.get("description") or "").strip(),
             "i": it.get("image") or "",  # product photo (items block showImage preview)
         })
     for tx in (doc.get("taxes") or []):
         if tx.get("tax_amount"):
-            out["taxes"].append({"desc": strip_html_tags(tx.get("description") or ""), "amt": tx.get_formatted("tax_amount")})
+            out["taxes"].append({"desc": strip_html_tags(tx.get("description") or ""), "amt": blocks._plain(tx.get_formatted("tax_amount"))})
     for ps in (doc.get("payment_schedule") or []):
         out["payment_schedule"].append({
             "t": ps.get("payment_term") or ps.get("description") or "",
-            "due": ps.get_formatted("due_date"), "pct": ps.get_formatted("invoice_portion"), "amt": ps.get_formatted("payment_amount"),
+            "due": blocks._plain(ps.get_formatted("due_date")), "pct": blocks._plain(ps.get_formatted("invoice_portion")), "amt": blocks._plain(ps.get_formatted("payment_amount")),
         })
 
     # Generic child-table rows (all child tables, all displayable fields, formatted) for the Data Table block.
