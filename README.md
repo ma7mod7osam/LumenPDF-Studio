@@ -28,8 +28,11 @@ what prints.
 - **Documents and reports**: brand any DocType's print format, and any Query/Script report
   (General Ledger, Trial Balance, ...) in portrait or landscape, with a dynamic report table whose
   columns you choose or inherit from the report.
-- **Ready-made templates**: 10 invoice/quotation designs and 8 financial report formats, each a
-  complete starting point you can restyle freely. Publish your own formats to a site-wide
+- **Ready-made templates, sorted by document**: 10 invoice designs, 11 quotation designs and 2
+  payment vouchers (one in Arabic), plus 8 report designs each drawn for a specific report
+  (General Ledger, Trial Balance, Balance Sheet, Profit and Loss and more). The gallery shows the
+  designs made for the document you picked first, and any design can still be used on any
+  document. Publish your own formats to a site-wide
   gallery, export/import them as JSON, and save any configured block to a reusable **block
   library** ("My blocks") you can insert into any format.
 - **Product-catalog documents**: per-item **product photos** in the items table, pulled from
