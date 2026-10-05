@@ -2,4 +2,4 @@
 # SPDX-License-Identifier: LicenseRef-Lumen-Proprietary
 # Proprietary and confidential. See license.txt. "LumenPDF" and "LumenPDF Studio" are
 # trademarks of Lumen Solutions.
-__version__ = "1.9.1"
+__version__ = "1.10.0"
