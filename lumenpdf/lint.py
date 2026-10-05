@@ -153,3 +153,23 @@ def check_all(strict=False):
     print(f"LumenPDF lint: {bad} error(s).")
     if strict and bad:
         raise RuntimeError(f"LumenPDF lint found {bad} error(s).")
+
+
+def check_print_pipeline():
+    """The fonts must survive Frappe's own preprocessing, not only our renderer.
+
+    Frappe's get_pdf runs scrub_urls, which appends " !important" after every ":url(...)". Inside
+    @font-face that is invalid CSS: the engine drops the face and the whole page prints in the
+    host's DejaVu Sans with no error anywhere. It went unnoticed for a release because every test
+    rendered our HTML directly. This runs the real scrub_urls of the bench it is on, so CI checks
+    it on each Frappe version the app supports."""
+    from frappe.utils.pdf import scrub_urls
+
+    css = B.font_faces_css(["Almarai", "IBM Plex Mono"])
+    if "@font-face" not in css:
+        raise RuntimeError("LumenPDF: no bundled font faces were produced.")
+    out = scrub_urls(css)
+    broken = [chunk[:80] for chunk in out.split("@font-face")[1:] if "!important" in chunk.split("format(")[0]]
+    if broken:
+        raise RuntimeError("LumenPDF: Frappe's url rewrite corrupts the font faces: " + "; ".join(broken))
+    print(f"LumenPDF print pipeline: {css.count('@font-face')} font faces survive Frappe's url rewrite.")

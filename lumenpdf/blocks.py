@@ -201,8 +201,14 @@ def font_faces_css(families):
                 b64 = _face(fname)
                 if not b64:
                     continue
+                # The comment between "src:" and "url(" is load-bearing. Frappe's get_pdf runs
+                # scrub_urls, which appends " !important" after every ":url(...)" it finds (a
+                # wkhtmltopdf workaround for background images). Inside @font-face that turns the
+                # src into invalid CSS, the engine drops the face, and every page silently prints
+                # in the host's DejaVu Sans. Its pattern needs ":url" or ": url" with at most one
+                # space, so a comment in between leaves the source untouched on v14, v15 and v16.
                 out.append(f"@font-face{{font-family:'{fam}';font-style:normal;font-weight:{weight};"
-                           f"font-display:block;src:url(data:font/woff;base64,{b64}) format('woff');"
+                           f"font-display:block;src:/*lumenpdf*/url(data:font/woff;base64,{b64}) format('woff');"
                            f"unicode-range:{SUBSET_RANGE[subset]};}}")
     return "\n".join(out)
 

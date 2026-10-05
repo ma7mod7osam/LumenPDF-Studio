@@ -107,6 +107,8 @@ jobs:
         working-directory: frappe-bench
         run: |
           bench --site test.localhost execute lumenpdf.lint.check_all --kwargs "{'strict': True}"
+          # the fonts have to survive Frappe's own get_pdf preprocessing on this version
+          bench --site test.localhost execute lumenpdf.lint.check_print_pipeline
 
       - name: Smoke tests
         working-directory: frappe-bench
