@@ -939,6 +939,8 @@ def child_tables(doctype="Quotation"):
             if cf.fieldtype in colskip or not cf.fieldname or (cf.permlevel or 0) != 0:
                 continue  # permlevel>0 fields are permission-gated; don't offer them in a print column
             cols.append({"fieldname": cf.fieldname, "label": cf.label or cf.fieldname})
+        if df.fieldname == "items" and frappe.get_meta(doctype).has_field("taxes"):
+            cols += [{"fieldname": k, "label": v} for k, v in blocks.ROW_CALC_FIELDS.items()]
         out.append({"fieldname": df.fieldname, "label": df.label or df.fieldname,
                     "child_doctype": df.options, "fields": cols})
     return out
@@ -1050,14 +1052,19 @@ def builder_sample(doctype, name):
         cfields = [cf.fieldname for cf in cmeta.fields
                    if cf.fieldtype not in colskip and cf.fieldname and (cf.permlevel or 0) == 0]
         rows = []
+        taxes = blocks.row_taxes(doc, doc.get("items") or []) if (
+            df.fieldname == "items" and doc.meta.has_field("taxes")) else None
         for row in (doc.get(df.fieldname) or []):
             rd = {"idx": row.idx}
+            if taxes is not None:
+                for k in blocks.ROW_CALC_FIELDS:
+                    rd[k] = blocks.row_calc_value(doc, row, k, taxes)
             for cf in cfields:
                 try:
                     v = row.get_formatted(cf)
                 except Exception:
                     v = row.get(cf)
-                rd[cf] = "" if v is None else strip_html_tags(str(v)).strip()
+                rd[cf] = "" if v is None else blocks.html_text(v)
             rows.append(rd)
         tables[df.fieldname] = rows
     out["tables"] = tables
