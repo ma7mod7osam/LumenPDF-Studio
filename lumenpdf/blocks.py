@@ -820,8 +820,65 @@ def _e_field(doc, b, s, ctx):
     return prefix + _esc(val)
 
 
+_SRC_TOKEN = re.compile(r"\{\{\s*doc\.([A-Za-z0-9_]+)\s*\}\}|\{([A-Za-z0-9_]+)\}")
+
+
+def _is_dynamic_image(s):
+    return bool(s.get("field")) or "{" in str(s.get("src") or "")
+
+
+def image_src(doc, s):
+    """Where an Image block's picture comes from for THIS document.
+
+    Three ways: a fixed link (a logo), a link carrying the document's values
+    ("/files/QR_image_{{doc.name}}.png", the file an e-invoicing app saves for each invoice), or
+    an Attach / Attach Image field of the document. A link worked out from the document only ever
+    points at this site's own files, and a value it carries must be one the reader may see."""
+    field = s.get("field")
+    if field:
+        if "." in field:
+            return ""
+        try:
+            df = doc.meta.get_field(field)
+        except Exception:
+            df = None
+        if not df or (df.permlevel or 0) or df.fieldtype not in ("Attach", "Attach Image"):
+            return ""
+        v = str(doc.get(field) or "").strip()
+        return v if _dt_is_file(v) else ""
+    src = str(s.get("src") or "").strip()
+    if "{" not in src:
+        return src
+
+    def fill(m):
+        name = m.group(1) or m.group(2)
+        if name != "name":
+            try:
+                df = doc.meta.get_field(name)
+            except Exception:
+                df = None
+            if not df or (df.permlevel or 0):
+                return "\x00"
+        v = doc.get(name)
+        return "\x00" if v in (None, "") else str(v)
+
+    out = _SRC_TOKEN.sub(fill, src)
+    if "\x00" in out or "/files/" not in out:
+        return ""
+    return out
+
+
+def _local_file_exists(src):
+    from urllib.parse import urlparse
+    from lumenpdf import assets
+    disk = assets._safe_local_path(urlparse(src).path)
+    return bool(disk and os.path.exists(disk))
+
+
 def _e_image(doc, b, s, ctx):
-    src = s.get("src") or ""
+    src = image_src(doc, s)
+    if src and _is_dynamic_image(s) and not _local_file_exists(src):
+        src = ""   # this document has no such file yet (a draft before its QR is made): print nothing
     if not src:
         return ""
     w = _num(s.get("width"), 40)
@@ -1959,13 +2016,16 @@ def collect_doc_image_srcs(doc, definition):
     # (table, field) pairs whose row values print as images: the items block's photo, plus every
     # image-kind line of a Data Table column (top-level or nested inside a Row's cells).
     wanted = set()
+    dynamic = []   # Image blocks whose picture depends on the document
 
     def _walk(blocks_list):
         for bl in blocks_list or []:
             if not isinstance(bl, dict):
                 continue
             st = bl.get("settings") or {}
-            if bl.get("type") == "items" and st.get("showImage"):
+            if bl.get("type") == "image" and _is_dynamic_image(st):
+                dynamic.append(st)
+            elif bl.get("type") == "items" and st.get("showImage"):
                 wanted.add(("items", "image"))
             elif bl.get("type") == "datatable":
                 for c in _list(st.get("columns")):
@@ -1980,6 +2040,14 @@ def collect_doc_image_srcs(doc, definition):
 
     _walk(definition.get("blocks"))
     srcs = set()
+    for st in dynamic:
+        try:
+            src = image_src(doc, st)
+        except Exception:
+            src = ""
+        if src:
+            from urllib.parse import urlparse
+            srcs.update({src, urlparse(src).path})
     for table, field in wanted:
         try:
             for row in (doc.get(table) or []):
