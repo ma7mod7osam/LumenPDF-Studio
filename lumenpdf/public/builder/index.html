@@ -433,7 +433,7 @@
 <body>
 <div class="app">
   <div class="top">
-    <div class="brand" title="LumenPDF Studio"><svg width="24" height="24" viewBox="0 0 48 48" fill="none" aria-label="LumenPDF Studio"><rect x="9" y="4" width="30" height="40" rx="4" style="stroke:var(--logoA)" stroke-width="3"/><rect x="14.5" y="10" width="19" height="3.6" rx="1.8" style="fill:var(--logoB)"/><rect x="14.5" y="18" width="19" height="9" rx="2.4" style="fill:var(--logoA)"/><rect x="14.5" y="31.5" width="12" height="3.6" rx="1.8" style="fill:var(--logoB)"/></svg><small>Studio · b84</small></div>
+    <div class="brand" title="LumenPDF Studio"><svg width="24" height="24" viewBox="0 0 48 48" fill="none" aria-label="LumenPDF Studio"><rect x="9" y="4" width="30" height="40" rx="4" style="stroke:var(--logoA)" stroke-width="3"/><rect x="14.5" y="10" width="19" height="3.6" rx="1.8" style="fill:var(--logoB)"/><rect x="14.5" y="18" width="19" height="9" rx="2.4" style="fill:var(--logoA)"/><rect x="14.5" y="31.5" width="12" height="3.6" rx="1.8" style="fill:var(--logoB)"/></svg><small>Studio · b85</small></div>
     <button class="btn ghost iconbtn" id="homeBtn" onclick="goHome()" title="Home — all formats"><svg class="icn" viewBox="0 0 24 24"><path d="M4 11l8-6.5 8 6.5"/><path d="M6 10v9a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-9"/></svg></button>
     <div class="menuwrap"><button class="btn ghost" id="copilotBtn" onclick="openCopilot()" title="Design copilot: describe a change, a new format, or a design to imitate"><svg class="icn" viewBox="0 0 24 24"><path d="M12 3l1.8 4.6L18.5 9l-4.7 1.4L12 15l-1.8-4.6L5.5 9l4.7-1.4z"/><path d="M18 15l.9 2.3 2.3.7-2.3.9-.9 2.1-.9-2.1-2.3-.9 2.3-.7z"/></svg> AI</button><button class="btn ghost" id="fileBtn" onclick="toggleFileMenu(event)" title="New, open, duplicate, import/export"><svg class="icn" viewBox="0 0 24 24"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg> File</button>
       <div class="menu" id="fileMenu">
@@ -852,7 +852,8 @@ const R={
   signature:(s,b)=>{const bw=Math.min(160,Math.max(25,parseFloat(s.boxW)||60));const lw=Math.min(6,Math.max(0.5,parseFloat(s.lineW)||1.5));const lc2=HX.test(s.lineColor||'')?s.lineColor:'#0C1322';const tc2=HX.test(s.labelColor||'')?`color:${s.labelColor};`:'';const ts2=parseFloat(s.labelSize);const tsc=(ts2&&!isNaN(ts2))?`font-size:${Math.min(72,Math.max(4,ts2))}pt;`:'';
     return `<div class="bs-sign-box" style="width:${bw}mm;margin-left:auto;border-top:${lw}px solid ${lc2};${tc2}${tsc}">${esc(s.label)}</div>`;},
   heading:(s)=>`<div class="inl">${esc(s.text)}</div>`,text:(s)=>s.source==="currency"?(s.curStyle==="sign"?`<div class="inl">${signHtml(CURVALS&&CURVALS.code)}</div>`:`<div class="inl">${esc(curLabel(s.curStyle))}</div>`):`<div class="inl">${esc(s.text)}</div>`,field:(s)=>(s.sign&&!s.words&&isCurrencyField(s.field))?(esc(s.prefix||"")+'<span dir="ltr" style="unicode-bidi:embed;white-space:nowrap">'+signHtml(fieldCur(s.field))+"&nbsp;"+esc(String(fieldVal(s.field)).replace(/^[^\d-]+|[^\d]+$/g,""))+"</span>"):(s.nosym&&!s.words&&isCurrencyField(s.field))?esc((s.prefix||"")+String(fieldVal(s.field)).replace(/^[^\d-]+|[^\d]+$/g,"")):(s.words&&wordsOk(s.field))?esc((s.prefix||"")+wordsVal(s.field,s.words)):s.html?(esc(s.prefix||"")+String(fieldVal(s.field))):esc((s.prefix||"")+fieldVal(s.field)),
-  image:(s)=>s.src?`<img src="${esc(s.src)}" style="width:${(+s.width||100)}%">`:`<div style="border:1px dashed #b9c6e0;color:#9aa6c2;padding:14px;text-align:center;font-size:8pt">Image — set a URL</div>`,
+  image:(s)=>{const src=imgSrcOf(s);if(src)return `<img src="${esc(src)}" style="width:${(+s.width||100)}%">`;
+    return `<div style="border:1px dashed #b9c6e0;color:#9aa6c2;padding:14px;text-align:center;font-size:8pt">${(s.field||String(s.src||"").indexOf("{")>=0)?"Image from the document. Pick sample data to see it.":"Image. Set a link or upload one."}</div>`;},
   // a spacer prints as empty height; the canvas shows that height as a faint box so it can
   // be found, selected and resized rather than being an invisible gap
   spacer:(s)=>`<div style="height:${Math.max(1,+s.height||8)}mm;border:1px dashed #c9d3e6;border-radius:4px;color:#9aa6c2;font-size:7pt;display:flex;align-items:center;justify-content:center">Spacer ${Math.max(1,+s.height||8)} mm</div>`,
@@ -2528,7 +2529,15 @@ function renderProps(){const host=document.getElementById("propsBlock"),b=cur();
         ?"ERPNext saves In Words once, in the language of whoever saved the document. Arabic or English writes it fresh from the amount every time it prints."
         :"Prints this amount as words, with its currency, instead of the figure."}</div>`;}
   }
-  else if(t==="image"){h+=imgAttach("Image","src",s.src,"setS");h+=tx("Width inside box (%)","width",s.width);}
+  else if(t==="image"){
+    const fromField=Object.prototype.hasOwnProperty.call(s,"field");
+    h+=`<div class="fld"><label>Picture from</label><div class="seg">`+[["","Upload or link"],["field","Document field"]].map(x=>`<button class="${(fromField?"field":"")===x[0]?'on':''}" onclick="setImgFrom('${x[0]}')">${x[1]}</button>`).join("")+`</div></div>`;
+    if(fromField){const fl=imgFields();
+      h+=fl.length?`<div class="fld"><label>Image field</label><select onchange="setS('field',this.value)">`+fl.map(f=>`<option value="${esc(f.f)}" ${s.field===f.f?'selected':''}>${esc(f.l)}</option>`).join("")+`</select></div><div class="hint" style="padding:2px 0 0">Each document prints its own picture, such as the e-invoicing QR saved on the invoice.</div>`
+        :`<div class="hint" style="padding:2px 0 0">This document type has no image fields. Use a link with {{doc.name}} instead.</div>`;}
+    else{h+=imgAttach("Image","src",s.src,"setS");
+      h+=`<div class="hint" style="padding:2px 0 0">A link can carry the document's values, for example /files/QR_image_{{doc.name}}.png prints each invoice's own file.</div>`;}
+    h+=tx("Width inside box (%)","width",s.width);}
   else if(t==="spacer"){h+=`<div class="fld"><label>Height (mm)</label><input type="text" value="${s.height==null?'':s.height}" placeholder="8" oninput="setSNum('height',this.value)"></div><div class="hint" style="padding:4px 0 0">Empty space that pushes everything below it down. Prints as nothing.</div>`;}
   else if(t==="divider"){h+=tx("Thickness (px)","thickness",s.thickness);h+=`<div class="fld"><label>Color</label><div class="color"><input type="color" value="${s.color}" oninput="setS('color',this.value)"><input type="text" value="${esc(s.color)}" oninput="setS('color',this.value)"></div></div>`+sg("Style","lstyle",s.lstyle,[["solid","Solid"],["dashed","Dashed"],["dotted","Dotted"]]);}
   else if(t==="box"){h+=ta("Content (HTML allowed)","html",s.html);}
@@ -2825,6 +2834,17 @@ function autoSizeBand(isH,url){
   try{const img=new Image();img.onload=function(){if(!img.naturalWidth)return;let mm=PW()*(img.naturalHeight/img.naturalWidth);mm=Math.max(8,Math.min(140,Math.round(mm*10)/10));if(isH)state.header.height=mm;else state.footer.height=mm;render();if(typeof renderPage==="function"&&tab==="page")renderPage();};img.src=url;}catch(e){}
 }
 function ensureBanners(){state.blocks=state.blocks.filter(bl=>bl.type!=="header_banner"&&bl.type!=="footer_banner");if(BIMG(state.branding.header_image))state.header.enabled=true;if(BIMG(state.branding.footer_image))state.footer.enabled=true;}
+/* An Image block's picture for the canvas: a fixed link, a link carrying the sample document's
+   values ({{doc.name}}), or an image field of the sample document. Mirrors blocks.image_src. */
+function imgSrcOf(s){
+  if(s.field){const v=FIELDVALS&&FIELDVALS[s.field];return (v&&String(v).indexOf("/files/")>=0)?String(v):"";}
+  let src=String(s.src||"");if(src.indexOf("{")<0)return src;
+  if(!FIELDVALS)return "";
+  let ok=true;
+  src=src.replace(/\{\{\s*doc\.([A-Za-z0-9_]+)\s*\}\}|\{([A-Za-z0-9_]+)\}/g,function(_m,a,b){const v=FIELDVALS[a||b];if(v==null||v===""){ok=false;return "";}return String(v);});
+  return (ok&&src.indexOf("/files/")>=0)?src:"";}
+function imgFields(){return DOCFIELDS.filter(f=>f.t==="Attach"||f.t==="Attach Image");}
+function setImgFrom(v){const b=cur();if(!b)return;if(v==="field"){b.settings.field=b.settings.field||((imgFields()[0]||{}).f)||"";}else delete b.settings.field;render();renderProps();}
 function imgAttach(lbl,key,val,setter){const after=(setter==="setB")?"renderBrand":"renderProps";
   return `<div class="fld"><label>${lbl}</label><div style="display:flex;gap:6px"><button class="btn ghost" style="flex:1" onclick="uploadImage(function(u){${setter}('${key}',u);${after}();})">${UI.upload} Attach image</button>${val?`<button class="btn ghost" title="Remove" onclick="${setter}('${key}','');${after}()">${UI.close}</button>`:''}</div><div class="hint" style="padding:4px 0 0;word-break:break-all">${val?esc(val):'No image — or build the band from blocks.'}</div></div>`;}
 function renderBrand(){const b=state.branding;document.getElementById("propsBrand").innerHTML=`<div class="ptitle">Branding</div><div class="fld"><label>Primary color</label><div class="color"><input type="color" value="${b.primary}" oninput="setB('primary',this.value)"><input type="text" value="${esc(b.primary)}" oninput="setB('primary',this.value)"></div></div><div class="fld"><label>Secondary / navy</label><div class="color"><input type="color" value="${b.navy}" oninput="setB('navy',this.value)"><input type="text" value="${esc(b.navy)}" oninput="setB('navy',this.value)"></div></div><div class="fld"><label>Font (Latin)</label><select onchange="setB('font',this.value)">`+fontOptions(b.font)+`</select></div><div class="fld"><label>Font (Arabic)</label><select onchange="setB('font_ar',this.value)">`+fontOptionsAr(b.font_ar||DEFAULT_FONT_AR)+`</select><div class="hint" style="padding:6px 0 0">Arabic text uses this one. A Latin font has no Arabic letters, so without it the PDF falls back to whatever face the server happens to have.</div><div style="margin-top:8px;padding:9px 11px;border:1px solid var(--line);border-radius:8px;direction:rtl;text-align:right;font-size:15px;font-family:'${b.font_ar||DEFAULT_FONT_AR}',Tahoma,sans-serif">فاتورة ضريبية · الإجمالي المستحق</div></div><div class="hint" style="padding:10px 0 0">Header &amp; footer banner images are now in the <b>Page</b> tab, next to the band height.</div>`;}
