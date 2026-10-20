@@ -433,7 +433,7 @@
 <body>
 <div class="app">
   <div class="top">
-    <div class="brand" title="LumenPDF Studio"><svg width="24" height="24" viewBox="0 0 48 48" fill="none" aria-label="LumenPDF Studio"><rect x="9" y="4" width="30" height="40" rx="4" style="stroke:var(--logoA)" stroke-width="3"/><rect x="14.5" y="10" width="19" height="3.6" rx="1.8" style="fill:var(--logoB)"/><rect x="14.5" y="18" width="19" height="9" rx="2.4" style="fill:var(--logoA)"/><rect x="14.5" y="31.5" width="12" height="3.6" rx="1.8" style="fill:var(--logoB)"/></svg><small>Studio · b83</small></div>
+    <div class="brand" title="LumenPDF Studio"><svg width="24" height="24" viewBox="0 0 48 48" fill="none" aria-label="LumenPDF Studio"><rect x="9" y="4" width="30" height="40" rx="4" style="stroke:var(--logoA)" stroke-width="3"/><rect x="14.5" y="10" width="19" height="3.6" rx="1.8" style="fill:var(--logoB)"/><rect x="14.5" y="18" width="19" height="9" rx="2.4" style="fill:var(--logoA)"/><rect x="14.5" y="31.5" width="12" height="3.6" rx="1.8" style="fill:var(--logoB)"/></svg><small>Studio · b84</small></div>
     <button class="btn ghost iconbtn" id="homeBtn" onclick="goHome()" title="Home — all formats"><svg class="icn" viewBox="0 0 24 24"><path d="M4 11l8-6.5 8 6.5"/><path d="M6 10v9a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-9"/></svg></button>
     <div class="menuwrap"><button class="btn ghost" id="copilotBtn" onclick="openCopilot()" title="Design copilot: describe a change, a new format, or a design to imitate"><svg class="icn" viewBox="0 0 24 24"><path d="M12 3l1.8 4.6L18.5 9l-4.7 1.4L12 15l-1.8-4.6L5.5 9l4.7-1.4z"/><path d="M18 15l.9 2.3 2.3.7-2.3.9-.9 2.1-.9-2.1-2.3-.9 2.3-.7z"/></svg> AI</button><button class="btn ghost" id="fileBtn" onclick="toggleFileMenu(event)" title="New, open, duplicate, import/export"><svg class="icn" viewBox="0 0 24 24"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg> File</button>
       <div class="menu" id="fileMenu">
@@ -628,7 +628,7 @@ function dtCellHtml(c,r,i,ph,table){const lines=dtLinesOf(c),al=dtAl(c),parts=[]
     let v;if(ph)v=f==="idx"?String(i):"«"+((lines.length===1&&c.label)?c.label:dtFieldLabel(table,f))+"»";
     else{v=r[f];if(v===undefined||v===null||v==="")v=(f==="idx"?i:"");v=String(v).trim();}
     if(!v)return;if(!ph&&l.skipDup&&prev!==null&&v===prev)return;prev=v;
-    parts.push(["text",`<bdi>${esc(l.prefix||"")}${esc(v)}${esc(l.suffix||"")}</bdi>`,dtLineCss(l)]);});
+    parts.push(["text",`<bdi>${esc(l.prefix||"")}${esc(v)}${esc(l.suffix||"")}</bdi>`,(v.indexOf("\n")>=0?"white-space:pre-line;":"")+dtLineCss(l)]);});
   return parts.map((p,k)=>{const gap=k===0?"":((p[0]==="image"||parts[k-1][0]==="image")?"margin-top:1mm;":"margin-top:1px;");return `<div class="dt-ln" style="${gap}${p[2]}">${p[1]}</div>`;}).join("");}
 function skinHeads(th,sk){if(!sk.thFirst)return th;th=th.replace('style="','style="'+sk.thFirst);const k=th.lastIndexOf('style="');return th.slice(0,k)+'style="'+sk.thLast+th.slice(k+7);}
 /* Fonts: mirrors blocks.GOOGLE_FONTS (all @import-loaded above) + system fonts, grouped. */
@@ -657,7 +657,7 @@ const BASE_SAMPLE={name:"SAL-QTN-2026-00006",transaction_date:"25-06-2026",valid
   payment_schedule:[{t:"Advance",due:"25-06-2026",pct:"50.0",amt:"BHD 926.750"},{t:"On Delivery",due:"25-07-2026",pct:"50.0",amt:"BHD 926.750"}],
   terms:"Prices valid for 30 days. Payment due Net 30. Warranty per manufacturer terms.",
   tables:{
-    items:[{idx:1,item_code:"CCTV",item_name:"CCTV",description:"CCTV",qty:"1",uom:"Service",rate:"BHD 0.000",amount:"BHD 0.000"},{idx:2,item_code:"DS-2CD",item_name:"HIKVISION 6 MP ColorVu",description:"High quality imaging, 8 MP",qty:"38",uom:"Pcs",rate:"BHD 27.500",amount:"BHD 1,045.000"},{idx:3,item_code:"NVR-64",item_name:"HIKVISION 64-ch 2U 4K NVR",description:"",qty:"2",uom:"Pcs",rate:"BHD 322.500",amount:"BHD 645.000"}],
+    items:[{idx:1,item_code:"CCTV",item_name:"CCTV",description:"CCTV",qty:"1",uom:"Service",rate:"BHD 0.000",amount:"BHD 0.000",lp_tax_amount:"BHD 0.000",lp_amount_with_tax:"BHD 0.000"},{idx:2,item_code:"DS-2CD",item_name:"HIKVISION 6 MP ColorVu",description:"High quality imaging, 8 MP",qty:"38",uom:"Pcs",rate:"BHD 27.500",amount:"BHD 1,045.000",lp_tax_amount:"BHD 104.500",lp_amount_with_tax:"BHD 1,149.500"},{idx:3,item_code:"NVR-64",item_name:"HIKVISION 64-ch 2U 4K NVR",description:"",qty:"2",uom:"Pcs",rate:"BHD 322.500",amount:"BHD 645.000",lp_tax_amount:"BHD 64.500",lp_amount_with_tax:"BHD 709.500"}],
     taxes:[{idx:1,description:"VAT 10%",rate:"10",tax_amount:"BHD 168.500"}],
     payment_schedule:[{idx:1,payment_term:"Advance",due_date:"25-06-2026",invoice_portion:"50.0",payment_amount:"BHD 926.750"},{idx:2,payment_term:"On Delivery",due_date:"25-07-2026",invoice_portion:"50.0",payment_amount:"BHD 926.750"}]
   }};
@@ -669,7 +669,7 @@ let DOCFIELDS=FIELDS.slice();  // replaced with the real doctype field list when
 let LINKFIELDS=[];  // per Link field, the linked doctype's fields -> one-hop paths like customer.email_id
 // child tables + their fields (replaced with the real doctype meta when embedded); used by the Data Table block
 let CTABLES=[
-  {fieldname:"items",label:"Items",child_doctype:"",fields:[{fieldname:"idx",label:"#"},{fieldname:"item_code",label:"Item Code"},{fieldname:"item_name",label:"Item"},{fieldname:"description",label:"Description"},{fieldname:"qty",label:"Qty"},{fieldname:"uom",label:"UOM"},{fieldname:"rate",label:"Rate"},{fieldname:"amount",label:"Amount"},{fieldname:"image",label:"Image"}]},
+  {fieldname:"items",label:"Items",child_doctype:"",fields:[{fieldname:"idx",label:"#"},{fieldname:"item_code",label:"Item Code"},{fieldname:"item_name",label:"Item"},{fieldname:"description",label:"Description"},{fieldname:"qty",label:"Qty"},{fieldname:"uom",label:"UOM"},{fieldname:"rate",label:"Rate"},{fieldname:"amount",label:"Amount"},{fieldname:"image",label:"Image"},{fieldname:"lp_tax_amount",label:"VAT amount (calculated)"},{fieldname:"lp_amount_with_tax",label:"Total incl. VAT (calculated)"}]},
   {fieldname:"taxes",label:"Taxes and Charges",child_doctype:"",fields:[{fieldname:"idx",label:"#"},{fieldname:"description",label:"Description"},{fieldname:"rate",label:"Rate"},{fieldname:"tax_amount",label:"Amount"}]},
   {fieldname:"payment_schedule",label:"Payment Schedule",child_doctype:"",fields:[{fieldname:"idx",label:"#"},{fieldname:"payment_term",label:"Payment Term"},{fieldname:"due_date",label:"Due Date"},{fieldname:"invoice_portion",label:"Portion %"},{fieldname:"payment_amount",label:"Amount"}]}
 ];

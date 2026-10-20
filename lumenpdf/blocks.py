@@ -284,6 +284,10 @@ def base_css(b, pw=210.0, ph=297.0, paint_bg=True):
   .bs-billto .addr {{ color:#6b6b6e; font-size:8pt; line-height:1.5; }}
   table.bs-items {{ width:100%; border-collapse:collapse; margin-bottom:6mm; table-layout:fixed; }}
   table.bs-items th, table.bs-items td {{ word-wrap:break-word; }}
+  /* The page renders without a doctype, and in that mode a table does not inherit line-height:
+     it fell back to the font's "normal", which for Cairo is nearly double spacing. A table
+     follows the line height its block sets; one that sets none keeps the old look. */
+  div[style*="line-height"] > table.bs-items {{ line-height:inherit; }}
   table.bs-items thead th {{ background-color:{primary} !important; color:#fff !important; font-weight:600; font-size:0.9em; padding:6px 8px; text-align:left; -webkit-print-color-adjust:exact; print-color-adjust:exact; }}
   table.bs-items thead th.num {{ text-align:right; }}
   table.bs-items tbody td {{ padding:6px 8px; border-bottom:1px solid #cfe5f6; vertical-align:top; font-weight:normal; }}
@@ -589,7 +593,7 @@ def _plain(v):
     return " ".join(v.split())
 
 
-def _field_value(doc, field):
+def _field_value(doc, field, keep_html=False):
     """Resolve a parent-doc field for Field blocks / {token} table cells. Permission-gated
     fields (permlevel > 0) never render — same safety rule as _d_datatable's column filter, so a
     saved format can't print e.g. cost/margin to whoever holds print permission (defense in
@@ -609,6 +613,10 @@ def _field_value(doc, field):
         v = doc.get_formatted(field)
     except Exception:
         v = doc.get(field)
+    if keep_html and v is not None:
+        # a field printed as HTML keeps its markup: an address's line breaks are its layout.
+        # Only the desk's currency icon goes, it means nothing on paper.
+        return _ICON_TAG.sub("", str(v))
     return _plain(v)
 
 
@@ -802,10 +810,11 @@ def _e_field(doc, b, s, ctx):
         plain = words.amount_plain(doc, field)
         if plain is not None:
             return prefix + _esc(plain)
-    val = _field_value(doc, field)
+    rich = bool(s.get("html") or _field_is_rich(doc, field))
+    val = _field_value(doc, field, keep_html=rich)
     # settings.html opts a plain field into HTML rendering: ERPNext stores address_display and
     # similar as Small Text that already CONTAINS <br> tags, which would otherwise print raw.
-    if val and (s.get("html") or _field_is_rich(doc, field)):
+    if val and rich:
         from frappe.utils.html_utils import sanitize_html
         return prefix + sanitize_html(val)  # rich fields (e.g. Terms) print STYLED, not as raw tags
     return prefix + _esc(val)
@@ -1245,7 +1254,96 @@ def _dt_line_css(ln):
     return css
 
 
-def _dt_cell(row, i, lines, align):
+_EMPTY_PARA_BR = re.compile(r"<\s*br\s*/?>\s*(?=<\s*/\s*(p|div)\s*>)", re.I)
+_LINE_BREAK = re.compile(r"<\s*br\s*/?>|<\s*/\s*(p|div|li|h[1-6])\s*>", re.I)
+
+
+def html_text(v):
+    """Rich text as plain lines. A description typed in the desk editor arrives as paragraphs,
+    and stripping the tags alone ran them into one line. Paragraph and line breaks become real
+    line breaks, an empty paragraph stays one blank line, everything else is dropped."""
+    s = _EMPTY_PARA_BR.sub("", str(v or ""))
+    s = _LINE_BREAK.sub("\n", s)
+    s = html_mod.unescape(frappe.utils.strip_html_tags(s))
+    lines = [" ".join(ln.split()) for ln in s.split("\n")]
+    return "\n".join(lines).strip("\n").strip()
+
+
+# Columns an items table can show that ERPNext does not store on the item row. A Saudi tax
+# invoice prints the VAT of each line and the line total including VAT, and ERPNext keeps the tax
+# on the invoice's tax rows, not on the items. Worked out per print from those tax rows.
+ROW_CALC_FIELDS = {"lp_tax_amount": "VAT amount (calculated)",
+                   "lp_amount_with_tax": "Total incl. VAT (calculated)"}
+
+
+def _row_base(r):
+    return frappe.utils.flt(r.get("net_amount") if r.get("net_amount") is not None else r.get("amount"))
+
+
+def row_taxes(doc, rows):
+    """{id(row): tax} in the document's currency, for the rows of its items table.
+
+    v16 keeps one record per item row and tax row (item_wise_tax_details) and that is used as it
+    stands. Before it, each tax row carries item_wise_tax_detail, JSON keyed by item code (or item
+    name) and summed over every row with that code, so the amount is shared between those rows
+    by their net amount. A document with neither falls back to the rates of its On Net Total
+    taxes."""
+    flt = frappe.utils.flt
+    out = {}
+    if not rows:
+        return out
+    det = doc.get("item_wise_tax_details") or []
+    if det:
+        by = {}
+        for t in det:
+            by[t.get("item_row")] = by.get(t.get("item_row"), 0.0) + flt(t.get("amount"))
+        return {id(r): by.get(r.name, 0.0) for r in rows}
+    per_key, found = {}, False
+    for tax in (doc.get("taxes") or []):
+        raw = tax.get("item_wise_tax_detail")
+        if not raw:
+            continue
+        try:
+            data = json.loads(raw) if isinstance(raw, str) else raw
+        except Exception:
+            continue
+        sign = -1 if tax.get("add_deduct_tax") == "Deduct" else 1
+        for key, v in (data or {}).items():
+            if isinstance(v, (list, tuple)):
+                amt = v[1] if len(v) > 1 else 0
+            elif isinstance(v, dict):
+                amt = v.get("tax_amount") or 0
+            else:
+                amt = 0
+            per_key[key] = per_key.get(key, 0.0) + sign * flt(amt)
+            found = True
+    if found:
+        groups = {}
+        for r in rows:
+            groups.setdefault(r.get("item_code") or r.get("item_name"), []).append(r)
+        for key, rs in groups.items():
+            total = per_key.get(key, 0.0)
+            base = sum(_row_base(r) for r in rs)
+            for r in rs:
+                out[id(r)] = total * (_row_base(r) / base if base else 1.0 / len(rs))
+        return out
+    rate = sum(flt(t.get("rate")) for t in (doc.get("taxes") or []) if t.get("charge_type") == "On Net Total")
+    return {id(r): _row_base(r) * rate / 100 for r in rows}
+
+
+def row_calc_value(doc, row, field, taxes):
+    """The formatted value of a calculated column, the way the document formats its amounts."""
+    tax = taxes.get(id(row))
+    if tax is None:
+        return ""
+    v = tax if field == "lp_tax_amount" else _row_base(row) + tax
+    try:
+        return _plain(frappe.format_value(v, {"fieldtype": "Currency"}, currency=doc.get("currency")))
+    except Exception:
+        return f"{v:,.2f}"
+
+
+def _dt_cell(row, i, lines, align, calc=None):
     """One composed cell: a <div class="dt-ln"> per NON-EMPTY line (an empty value leaves no
     gap; prefix/suffix only print around a real value). `dt-ln` is exempt from the bs-items
     reset rule in base_css, which would otherwise force every nested element back to normal
@@ -1266,19 +1364,22 @@ def _dt_cell(row, i, lines, align):
             continue
         if f == "idx":
             val = str(getattr(row, "idx", None) or i)
+        elif f in ROW_CALC_FIELDS:
+            val = calc(row, f) if calc else ""
         else:
             try:
                 val = row.get_formatted(f)
             except Exception:
                 val = row.get(f)
-            val = "" if val is None else frappe.utils.strip_html_tags(str(val)).strip()
+            val = "" if val is None else html_text(val)
         if not val:
             continue
         if ln.get("skipDup") and prev is not None and val == prev:
             continue  # e.g. a description that merely repeats the item name (ERPNext default)
         prev = val
         pre, suf = str(ln.get("prefix") or ""), str(ln.get("suffix") or "")
-        parts.append(("text", f"<bdi>{_esc(pre)}{_esc(val)}{_esc(suf)}</bdi>", _dt_line_css(ln)))
+        brk = "white-space:pre-line;" if "\n" in val else ""
+        parts.append(("text", f"<bdi>{_esc(pre)}{_esc(val)}{_esc(suf)}</bdi>", brk + _dt_line_css(ln)))
     out = []
     for k, (kind, inner, css) in enumerate(parts):
         gap = "" if k == 0 else ("margin-top:1mm;" if (kind == "image" or parts[k - 1][0] == "image") else "margin-top:1px;")
@@ -1306,6 +1407,8 @@ def _d_datatable(doc, b, s, ctx):
         if tf and tf.options:
             allowed = {"idx"} | {cf.fieldname for cf in frappe.get_meta(tf.options).fields
                                  if cf.fieldname and (cf.permlevel or 0) == 0}
+            if table == "items" and doc.meta.has_field("taxes"):
+                allowed |= set(ROW_CALC_FIELDS)
             columns = [(c, [ln for ln in lines if ln.get("field") in allowed]) for c, lines in columns]
             columns = [(c, lines) for c, lines in columns if lines]
     except Exception:
@@ -1317,6 +1420,12 @@ def _d_datatable(doc, b, s, ctx):
     hc = navy if s.get("headerColor") == "navy" else primary
     zebra = s.get("zebra", True)
     rows = doc.get(table) or []
+    calc = None
+    if any(ln.get("field") in ROW_CALC_FIELDS for _c, lines in columns for ln in lines):
+        taxes = row_taxes(doc, rows)
+
+        def calc(row, f):
+            return row_calc_value(doc, row, f, taxes)
     colgroup = "<colgroup>" + "".join(
         (f'<col style="width:{_fmt_num(c.get("width"))}mm">' if _num(c.get("width")) else "<col>") for c, _l in columns
     ) + "</colgroup>"
@@ -1356,7 +1465,7 @@ def _d_datatable(doc, b, s, ctx):
             valign = "middle" if c.get("valign") == "middle" else "top"
             td_num = sk["num"] if align == "right" else ""
             tds += (f'<td style="text-align:{align};vertical-align:{valign};{td_pad}{td_bor}{td_num}'
-                    f'word-wrap:break-word;">{_dt_cell(row, i, lines, align)}</td>')
+                    f'word-wrap:break-word;">{_dt_cell(row, i, lines, align, calc)}</td>')
         body.append(f"<tr>{tds}</tr>")
     zcls, zbg = _zebra_parts(s)
     if zbg:
